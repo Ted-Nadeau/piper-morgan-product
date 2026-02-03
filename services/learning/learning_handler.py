@@ -13,7 +13,7 @@ Architecture:
 Issue #300: CORE-ALPHA-LEARNING-BASIC - Foundation Stone #1
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
 
@@ -74,7 +74,7 @@ class LearningHandler:
 
         Performance Target: <10ms
         """
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
 
         try:
             # Extract pattern features
@@ -132,7 +132,7 @@ class LearningHandler:
             await session.commit()
 
             # Performance monitoring
-            elapsed_ms = (datetime.utcnow() - start_time).total_seconds() * 1000
+            elapsed_ms = (datetime.now(timezone.utc) - start_time).total_seconds() * 1000
             self.logger.debug(
                 "Pattern capture complete",
                 elapsed_ms=round(elapsed_ms, 2),
@@ -175,7 +175,7 @@ class LearningHandler:
 
         Performance Target: <5ms
         """
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
 
         try:
             # Find the pattern
@@ -209,7 +209,7 @@ class LearningHandler:
             await session.commit()
 
             # Performance monitoring
-            elapsed_ms = (datetime.utcnow() - start_time).total_seconds() * 1000
+            elapsed_ms = (datetime.now(timezone.utc) - start_time).total_seconds() * 1000
 
             self.logger.info(
                 "Outcome recorded",
@@ -254,7 +254,7 @@ class LearningHandler:
 
         Performance Target: <1ms (cached)
         """
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
 
         try:
             # Query high-confidence patterns for user
@@ -287,7 +287,7 @@ class LearningHandler:
                 )
 
             # Performance monitoring
-            elapsed_ms = (datetime.utcnow() - start_time).total_seconds() * 1000
+            elapsed_ms = (datetime.now(timezone.utc) - start_time).total_seconds() * 1000
 
             self.logger.debug(
                 "Suggestions retrieved",

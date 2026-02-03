@@ -13,7 +13,7 @@ import asyncio
 import json
 import logging
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 from unittest.mock import AsyncMock, patch
 
@@ -56,7 +56,7 @@ class SlackPipelineInspector:
     @staticmethod
     def get_recent_pipelines(minutes: int = 30) -> List[SlackPipelineMetrics]:
         """Get pipelines from the last N minutes"""
-        cutoff_time = datetime.utcnow() - timedelta(minutes=minutes)
+        cutoff_time = datetime.now(timezone.utc) - timedelta(minutes=minutes)
 
         recent_pipelines = []
         for pipeline in ACTIVE_PIPELINES.values():
@@ -110,7 +110,7 @@ class SlackPipelineInspector:
             print(f"🎯 Final Status: {metrics.final_status or 'unknown'}")
         else:
             print(
-                f"🔄 Status: RUNNING (duration: {(datetime.utcnow() - metrics.started_at).total_seconds() * 1000:.2f}ms)"
+                f"🔄 Status: RUNNING (duration: {(datetime.now(timezone.utc) - metrics.started_at).total_seconds() * 1000:.2f}ms)"
             )
 
         if metrics.error_details:
@@ -161,7 +161,7 @@ class SlackPipelineInspector:
         print(f"{'-'*100}")
 
         for pipeline in sorted(active_pipelines, key=lambda p: p.started_at):
-            duration = (datetime.utcnow() - pipeline.started_at).total_seconds() * 1000
+            duration = (datetime.now(timezone.utc) - pipeline.started_at).total_seconds() * 1000
             current_stage = "unknown"
 
             # Find the most recent stage
@@ -307,7 +307,7 @@ class SlackPipelineInspector:
 
         # Check for stuck pipelines (running > 5 minutes)
         stuck_pipelines = []
-        cutoff_time = datetime.utcnow() - timedelta(minutes=5)
+        cutoff_time = datetime.now(timezone.utc) - timedelta(minutes=5)
 
         for pipeline in active_pipelines:
             if pipeline.started_at < cutoff_time and not pipeline.completed_at:
@@ -315,14 +315,14 @@ class SlackPipelineInspector:
                     {
                         "correlation_id": pipeline.correlation_id,
                         "duration_minutes": (
-                            datetime.utcnow() - pipeline.started_at
+                            datetime.now(timezone.utc) - pipeline.started_at
                         ).total_seconds()
                         / 60,
                     }
                 )
 
         return {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "active_pipelines": len(active_pipelines),
             "stuck_pipelines": len(stuck_pipelines),
             "stuck_pipeline_details": stuck_pipelines,

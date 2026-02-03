@@ -16,7 +16,7 @@ Anti-Pattern Detection:
 - Never mock _check_portfolio_onboarding, _get_onboarding_components, etc.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Optional
 from uuid import uuid4
 
@@ -316,7 +316,7 @@ async def test_user_no_projects(integration_db_session):
             "username": username,
             "email": email,
             "password_hash": password_hash,
-            "now": datetime.utcnow(),
+            "now": datetime.now(timezone.utc),
         },
     )
     await integration_db_session.commit()

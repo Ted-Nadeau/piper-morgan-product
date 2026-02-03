@@ -5,7 +5,7 @@ Comprehensive testing of advanced ethics features and user transparency
 
 import asyncio
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict
 from unittest.mock import AsyncMock, Mock, patch
 
@@ -135,8 +135,8 @@ class TestAdaptiveBoundaries:
         old_pattern = PatternMetadata(
             pattern_hash="old_pattern_123",
             frequency=1,
-            first_seen=datetime.utcnow() - timedelta(days=40),
-            last_seen=datetime.utcnow() - timedelta(days=35),
+            first_seen=datetime.now(timezone.utc) - timedelta(days=40),
+            last_seen=datetime.now(timezone.utc) - timedelta(days=35),
         )
         old_pattern.boundary_type = "test"
 

@@ -217,7 +217,7 @@ async def _execute_transaction(test_id: str):
     """Execute a transaction with INSERT"""
     async with AsyncSessionFactory.session_scope_fresh() as session:
         # Use token_blacklist table for testing (temporary data)
-        from datetime import datetime, timedelta
+        from datetime import datetime, timedelta, timezone
 
         query = text(
             """
@@ -232,8 +232,8 @@ async def _execute_transaction(test_id: str):
                 "token_id": test_id,
                 "user_id": "perf_test_user",
                 "reason": "performance_test",
-                "expires_at": datetime.utcnow() + timedelta(seconds=10),
-                "created_at": datetime.utcnow(),
+                "expires_at": datetime.now(timezone.utc) + timedelta(seconds=10),
+                "created_at": datetime.now(timezone.utc),
             },
         )
 

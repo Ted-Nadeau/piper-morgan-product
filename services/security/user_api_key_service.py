@@ -8,7 +8,7 @@ Issue #228 CORE-USERS-API Phase 1C
 """
 
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
@@ -164,8 +164,8 @@ class UserAPIKeyService:
             existing_key.key_reference = key_reference
             existing_key.is_active = True
             existing_key.is_validated = is_valid
-            existing_key.last_validated_at = datetime.utcnow() if is_valid else None
-            existing_key.updated_at = datetime.utcnow()
+            existing_key.last_validated_at = datetime.now(timezone.utc) if is_valid else None
+            existing_key.updated_at = datetime.now(timezone.utc)
 
             # Audit log (Issue #249)
             await audit_logger.log_api_key_event(
@@ -194,7 +194,7 @@ class UserAPIKeyService:
                 key_reference=key_reference,
                 is_active=True,
                 is_validated=is_valid,
-                last_validated_at=datetime.utcnow() if is_valid else None,
+                last_validated_at=datetime.now(timezone.utc) if is_valid else None,
                 created_by=user_id,
             )
             session.add(user_key)
@@ -404,7 +404,7 @@ class UserAPIKeyService:
 
             if user_key:
                 user_key.is_validated = is_valid
-                user_key.last_validated_at = datetime.utcnow()
+                user_key.last_validated_at = datetime.now(timezone.utc)
                 await session.commit()
 
             return is_valid
@@ -494,10 +494,10 @@ class UserAPIKeyService:
         # Update database record with rotation info
         existing_key.key_reference = new_key_reference
         existing_key.previous_key_reference = old_key_reference
-        existing_key.rotated_at = datetime.utcnow()
+        existing_key.rotated_at = datetime.now(timezone.utc)
         existing_key.is_validated = validate
-        existing_key.last_validated_at = datetime.utcnow() if validate else None
-        existing_key.updated_at = datetime.utcnow()
+        existing_key.last_validated_at = datetime.now(timezone.utc) if validate else None
+        existing_key.updated_at = datetime.now(timezone.utc)
 
         # Audit log (Issue #249)
         await audit_logger.log_api_key_event(

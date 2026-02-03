@@ -29,6 +29,48 @@ XIAN_USER_ID = UUID("3f4593ae-5bc9-468d-b08d-8c4c02a5b963")
 
 
 # ============================================================================
+# Load API keys from macOS Keychain for LLM tests (#742)
+# ============================================================================
+def pytest_configure(config):
+    """
+    Load API keys from macOS Keychain before test collection.
+
+    This allows LLM tests to run when keys are stored securely in keychain
+    rather than requiring them to be exported to shell environment.
+
+    Keys are loaded from the "piper-morgan" keychain service.
+    """
+    # Only attempt keychain loading if keys aren't already in environment
+    if os.environ.get("OPENAI_API_KEY") or os.environ.get("ANTHROPIC_API_KEY"):
+        return  # Keys already available, skip keychain loading
+
+    try:
+        # Import here to avoid dependency issues if keyring not installed
+        from services.infrastructure.keychain_service import get_keychain_service
+
+        keychain = get_keychain_service()
+
+        # Try to load OpenAI key
+        openai_key = keychain.get_api_key("openai")
+        if openai_key:
+            os.environ["OPENAI_API_KEY"] = openai_key
+            print("  [conftest] Loaded OPENAI_API_KEY from keychain")
+
+        # Try to load Anthropic key
+        anthropic_key = keychain.get_api_key("anthropic")
+        if anthropic_key:
+            os.environ["ANTHROPIC_API_KEY"] = anthropic_key
+            print("  [conftest] Loaded ANTHROPIC_API_KEY from keychain")
+
+    except ImportError:
+        # keyring or keychain_service not available - skip silently
+        pass
+    except Exception as e:
+        # Log but don't fail - tests will just skip LLM tests
+        print(f"  [conftest] Warning: Could not load API keys from keychain: {e}")
+
+
+# ============================================================================
 # Auto-skip LLM tests when API keys not available
 # ============================================================================
 def pytest_collection_modifyitems(config, items):

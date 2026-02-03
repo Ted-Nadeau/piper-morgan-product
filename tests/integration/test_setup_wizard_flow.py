@@ -10,7 +10,7 @@ Issue #440 - ALPHA-SETUP-INTEGRATION-TEST
 """
 
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
 
@@ -44,8 +44,8 @@ class TestSetupWizardIntegrationFlow:
                 "id": test_user_id,
                 "username": test_username,
                 "email": test_email,
-                "created_at": datetime.utcnow(),
-                "updated_at": datetime.utcnow(),
+                "created_at": datetime.now(timezone.utc),
+                "updated_at": datetime.now(timezone.utc),
             },
         )
         await integration_db.flush()
@@ -80,8 +80,8 @@ class TestSetupWizardIntegrationFlow:
                 "id": test_user_id,
                 "username": test_username,
                 "email": f"{test_username}@test.local",
-                "created_at": datetime.utcnow(),
-                "updated_at": datetime.utcnow(),
+                "created_at": datetime.now(timezone.utc),
+                "updated_at": datetime.now(timezone.utc),
             },
         )
         await integration_db.flush()
@@ -100,8 +100,8 @@ class TestSetupWizardIntegrationFlow:
                 "user_id": test_user_id,
                 "provider": "openai",
                 "encrypted_key": test_api_key,  # Normally encrypted, but we test storage
-                "created_at": datetime.utcnow(),
-                "updated_at": datetime.utcnow(),
+                "created_at": datetime.now(timezone.utc),
+                "updated_at": datetime.now(timezone.utc),
             },
         )
         await integration_db.flush()
@@ -356,8 +356,8 @@ class TestSetupWizardIntegrationFlow:
                     "id": user_id,
                     "username": username,
                     "email": f"{username}@test.local",
-                    "created_at": datetime.utcnow(),
-                    "updated_at": datetime.utcnow(),
+                    "created_at": datetime.now(timezone.utc),
+                    "updated_at": datetime.now(timezone.utc),
                     "is_alpha": is_alpha,
                 },
             )
@@ -394,8 +394,8 @@ class TestSetupWizardIntegrationFlow:
                 "id": test_user_id,
                 "username": test_username,
                 "email": f"{test_username}@test.local",
-                "created_at": datetime.utcnow(),
-                "updated_at": datetime.utcnow(),
+                "created_at": datetime.now(timezone.utc),
+                "updated_at": datetime.now(timezone.utc),
             },
         )
         await integration_db.flush()

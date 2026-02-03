@@ -12,7 +12,7 @@ If tables don't exist, tests will fail with "relation does not exist" errors.
 See: dev/2025/11/22/issue-349-analysis-and-fixture.md for more details.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import UUID
 
 import pytest
@@ -140,8 +140,8 @@ async def create_test_user():
                 "id": user_id,
                 "username": username,
                 "email": email,
-                "created_at": datetime.utcnow(),
-                "updated_at": datetime.utcnow(),
+                "created_at": datetime.now(timezone.utc),
+                "updated_at": datetime.now(timezone.utc),
             },
         )
         await session.commit()

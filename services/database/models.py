@@ -5,7 +5,7 @@ SQLAlchemy models for persistent storage
 
 import enum
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import (
     JSON,
@@ -51,8 +51,12 @@ from .connection import Base
 class TimestampMixin:
     """Mixin to add created_at and updated_at timestamps to models"""
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
 
 
 class User(Base):
@@ -85,15 +89,22 @@ class User(Base):
 
     # Setup tracking (Issue #389)
     setup_complete = Column(Boolean, default=False, nullable=False)
-    setup_completed_at = Column(DateTime, nullable=True)  # When setup was completed
+    setup_completed_at = Column(DateTime(timezone=True), nullable=True)  # When setup was completed
 
     # Orientation tracking (Issue #549)
     orientation_seen = Column(Boolean, default=False, nullable=False)
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
-    last_login_at = Column(DateTime, nullable=True)
+    created_at = Column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False
+    )
+    updated_at = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+        nullable=False,
+    )
+    last_login_at = Column(DateTime(timezone=True), nullable=True)
 
     # Relationships (Issue #262/#291 - FK constraints restored with UUID)
     personality_profiles = relationship(
@@ -158,16 +169,22 @@ class UserAPIKey(Base):
     # Key metadata
     is_active = Column(Boolean, default=True, nullable=False)
     is_validated = Column(Boolean, default=False)
-    last_validated_at = Column(DateTime, nullable=True)
+    last_validated_at = Column(DateTime(timezone=True), nullable=True)
 
     # Audit fields
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False
+    )
+    updated_at = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
     created_by = Column(String(255), nullable=True)
 
     # Rotation support
     previous_key_reference = Column(String(500), nullable=True)
-    rotated_at = Column(DateTime, nullable=True)
+    rotated_at = Column(DateTime(timezone=True), nullable=True)
 
     # Relationships (Issue #262 - restored with UUID)
     user = relationship("User", back_populates="api_keys")
@@ -263,8 +280,12 @@ class Product(Base):
     name = Column(String, nullable=False)
     vision = Column(Text)
     strategy = Column(Text)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
 
     # Relationships
     features = relationship("Feature", back_populates="product")
@@ -283,8 +304,12 @@ class Feature(Base):
     hypothesis = Column(Text)
     acceptance_criteria = Column(JSON)  # List of criteria
     status = Column(String, default="draft")
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
 
     # Relationships
     product = relationship("Product", back_populates="features")
@@ -315,8 +340,12 @@ class WorkItem(Base):
     # External system references
     external_refs = Column(JSON)  # {"github": "issue-123", "jira": "PROJ-456"}
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
     # MUX Lifecycle (#710) - optional lifecycle state for MUX UI indicators
     lifecycle_state = Column(String(50), nullable=True)
 
@@ -383,7 +412,7 @@ class Intent(Base):
     confidence = Column(Float)
     context = Column(JSON)
     original_message = Column(Text)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     # Relationship to workflow if one was created
     workflow_id = Column(String, ForeignKey("workflows.id"))
@@ -405,10 +434,14 @@ class Workflow(Base):
     error = Column(Text)
     intent_id = Column(String(255), nullable=True)  # Matches domain Optional[str]
 
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     started_at = Column(DateTime)
     completed_at = Column(DateTime)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
 
     # Relationships
     intent = relationship("Intent", back_populates="workflow", uselist=False)
@@ -479,7 +512,7 @@ class Stakeholder(Base):
     interests = Column(JSON)  # List of interest areas
     influence_level = Column(Integer, default=1)
     satisfaction = Column(Float)  # Stakeholder satisfaction level
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
 class ProjectDB(Base):
@@ -500,8 +533,12 @@ class ProjectDB(Base):
     shared_with = Column(JSON, default=lambda: [])
     is_default = Column(Boolean, default=False)
     is_archived = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
     # MUX Lifecycle (#718) - optional lifecycle state for MUX UI indicators
     lifecycle_state = Column(String(50), nullable=True)
 
@@ -575,7 +612,7 @@ class ProjectIntegrationDB(Base):
     name = Column(String, nullable=False)
     config = Column(JSON, nullable=False)
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     # Relationships
     project = relationship("ProjectDB", back_populates="integrations")
@@ -616,8 +653,8 @@ class UploadedFileDB(Base):
     file_type = Column(String(255))
     file_size = Column(Integer)
     storage_path = Column(String(1000))
-    upload_time = Column(DateTime, default=datetime.utcnow)
-    last_referenced = Column(DateTime, nullable=True)
+    upload_time = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    last_referenced = Column(DateTime(timezone=True), nullable=True)
     reference_count = Column(Integer, default=0)
     file_metadata = Column(JSON, default=dict)
 
@@ -668,9 +705,9 @@ class ConversationDB(Base):
     title = Column(String, nullable=False, default="")
     context = Column(postgresql.JSONB, nullable=False, default={})
     is_active = Column(Boolean, nullable=False, default=True)
-    created_at = Column(DateTime, nullable=False, server_default=func.now())
-    updated_at = Column(DateTime, nullable=False, server_default=func.now())
-    last_activity_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    last_activity_at = Column(DateTime(timezone=True), nullable=True)
 
     __table_args__ = (
         Index("idx_conversations_user_session", "user_id", "session_id"),
@@ -721,8 +758,8 @@ class ConversationTurnDB(Base):
     context_used = Column(postgresql.JSONB, nullable=False, default={})
     turn_metadata = Column("metadata", postgresql.JSONB, nullable=False, default={})
     processing_time = Column(Float, nullable=True)
-    created_at = Column(DateTime, nullable=False, server_default=func.now())
-    completed_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    completed_at = Column(DateTime(timezone=True), nullable=True)
 
     __table_args__ = (
         ForeignKeyConstraint(["conversation_id"], ["conversations.id"], ondelete="CASCADE"),
@@ -773,7 +810,7 @@ class KnowledgeNodeDB(Base):
 
     id = Column(String, primary_key=True)
     name = Column(String, nullable=False)
-    node_type = Column(Enum(NodeType), nullable=False)
+    node_type = Column(String, nullable=False)  # String per ADR-041, convert to enum in to_domain()
     description = Column(Text)
     node_metadata = Column(JSON, default=dict)
     properties = Column(JSON, default=dict)
@@ -781,8 +818,12 @@ class KnowledgeNodeDB(Base):
     # owner_id is UUID in database - must match schema (Issue #479)
     owner_id = Column(postgresql.UUID(as_uuid=False), ForeignKey("users.id"), nullable=True)
     embedding_vector = Column(JSON)  # Will be upgraded to pgvector VECTOR type later
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
 
     # Relationships
     outgoing_edges = relationship(
@@ -806,7 +847,7 @@ class KnowledgeNodeDB(Base):
         return domain.KnowledgeNode(
             id=self.id,
             name=self.name,
-            node_type=self.node_type,
+            node_type=NodeType(self.node_type),  # String → Enum (ADR-041)
             description=self.description,
             metadata=self.node_metadata or {},
             properties=self.properties or {},
@@ -820,7 +861,9 @@ class KnowledgeNodeDB(Base):
         return cls(
             id=node.id,
             name=node.name,
-            node_type=node.node_type,
+            node_type=(
+                node.node_type.value if isinstance(node.node_type, NodeType) else node.node_type
+            ),  # Enum → String (ADR-041)
             description=node.description,
             node_metadata=node.metadata,
             properties=node.properties,
@@ -838,15 +881,19 @@ class KnowledgeEdgeDB(Base):
     id = Column(String, primary_key=True)
     source_node_id = Column(String, ForeignKey("knowledge_nodes.id"), nullable=False)
     target_node_id = Column(String, ForeignKey("knowledge_nodes.id"), nullable=False)
-    edge_type = Column(Enum(EdgeType), nullable=False)
+    edge_type = Column(String, nullable=False)  # String per ADR-041, convert to enum in to_domain()
     weight = Column(Float, default=1.0)
     node_metadata = Column(JSON, default=dict)
     properties = Column(JSON, default=dict)
     session_id = Column(String)  # Legacy - kept for backward compatibility
     # owner_id is UUID in database - must match schema (Issue #479)
     owner_id = Column(postgresql.UUID(as_uuid=False), ForeignKey("users.id"), nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
 
     # Relationships
     source_node = relationship(
@@ -869,7 +916,7 @@ class KnowledgeEdgeDB(Base):
             id=self.id,
             source_node_id=self.source_node_id,
             target_node_id=self.target_node_id,
-            edge_type=self.edge_type,
+            edge_type=EdgeType(self.edge_type),  # String → Enum (ADR-041)
             weight=self.weight,
             metadata=self.node_metadata or {},
             properties=self.properties,
@@ -884,7 +931,9 @@ class KnowledgeEdgeDB(Base):
             id=edge.id,
             source_node_id=edge.source_node_id,
             target_node_id=edge.target_node_id,
-            edge_type=edge.edge_type,
+            edge_type=(
+                edge.edge_type.value if isinstance(edge.edge_type, EdgeType) else edge.edge_type
+            ),  # Enum → String (ADR-041)
             weight=edge.weight,
             node_metadata=edge.metadata,
             properties=edge.properties,
@@ -924,8 +973,15 @@ class TodoListDB(Base):
     tags = Column(postgresql.JSONB, default=list)  # Array of tag strings
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    created_at = Column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False
+    )
+    updated_at = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+        nullable=False,
+    )
 
     # Ownership and sharing - owner_id is UUID in database (Issue #484)
     owner_id = Column(postgresql.UUID(as_uuid=False), ForeignKey("users.id"), nullable=False)
@@ -1013,7 +1069,9 @@ class ListMembershipDB(Base):
     position = Column(Integer, default=0, nullable=False)
 
     # Membership metadata
-    added_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    added_at = Column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False
+    )
     added_by = Column(String, nullable=False)
 
     # List-specific overrides
@@ -1114,8 +1172,15 @@ class ListDB(Base):
     project_ids = Column(postgresql.JSONB, default=list)  # Array of project IDs
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    created_at = Column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False
+    )
+    updated_at = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+        nullable=False,
+    )
 
     # Ownership and sharing - owner_id is UUID in database (Issue #484)
     owner_id = Column(postgresql.UUID(as_uuid=False), ForeignKey("users.id"), nullable=False)
@@ -1210,7 +1275,9 @@ class ListItemDB(Base):
     position = Column(Integer, default=0, nullable=False)
 
     # Membership metadata
-    added_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    added_at = Column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False
+    )
     added_by = Column(String, nullable=False)
 
     # List-specific overrides
@@ -1453,8 +1520,10 @@ class TokenBlacklist(Base):
 
     # Blacklist metadata
     reason = Column(String(50), nullable=False)  # logout, security, admin
-    expires_at = Column(DateTime, nullable=False, index=True)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    expires_at = Column(DateTime(timezone=True), nullable=False, index=True)
+    created_at = Column(
+        DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc)
+    )
 
     # Relationships (Issue #291 - restored)
     user = relationship("User", back_populates="blacklisted_tokens")
@@ -1498,8 +1567,15 @@ class ItemDB(Base):
     item_type = Column(String(50), nullable=False, default="item")  # Discriminator
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    created_at = Column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False
+    )
+    updated_at = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+        nullable=False,
+    )
 
     # Polymorphic configuration for future inheritance
     __mapper_args__ = {
@@ -1775,7 +1851,7 @@ class LearnedPattern(Base, TimestampMixin):
     enabled = Column(Boolean, default=True, nullable=False)
 
     # Timestamps (from TimestampMixin: created_at, updated_at)
-    last_used_at = Column(DateTime, nullable=True)
+    last_used_at = Column(DateTime(timezone=True), nullable=True)
 
     # Relationships
     user = relationship("User", back_populates="learned_patterns")
@@ -1813,7 +1889,7 @@ class LearnedPattern(Base, TimestampMixin):
         if self.confidence < 0.3:
             self.enabled = False
 
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(timezone.utc)
 
 
 class LearningSettings(Base, TimestampMixin):
@@ -1912,8 +1988,10 @@ class UserTrustProfileDB(Base, TimestampMixin):
     stage_history = Column(JSON, default=list, nullable=False)
 
     # Timestamps (beyond TimestampMixin)
-    last_interaction_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    last_stage_change_at = Column(DateTime, nullable=True)
+    last_interaction_at = Column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False
+    )
+    last_stage_change_at = Column(DateTime(timezone=True), nullable=True)
 
     # Relationship
     user = relationship("User", backref="trust_profile")

@@ -9,7 +9,7 @@ Usage:
     await blacklist.initialize()
 
     # Add token to blacklist
-    await blacklist.add(token_id="abc123", reason="logout", expires_at=datetime.utcnow() + timedelta(hours=1))
+    await blacklist.add(token_id="abc123", reason="logout", expires_at=datetime.now(timezone.utc) + timedelta(hours=1))
 
     # Check if blacklisted
     is_blocked = await blacklist.is_blacklisted("abc123")
@@ -96,7 +96,7 @@ class TokenBlacklist:
         try:
             # Calculate TTL (seconds until expiration)
             # Use UTC for consistent timezone handling
-            now = datetime.utcnow()
+            now = datetime.now(timezone.utc)
             ttl = max(int((expires_at - now).total_seconds()), 0)
 
             if ttl == 0:
@@ -234,7 +234,7 @@ class TokenBlacklist:
                     reason=reason,
                     user_id=user_id,
                     expires_at=expires_at,
-                    created_at=datetime.utcnow(),
+                    created_at=datetime.now(timezone.utc),
                 )
                 session.add(entry)
                 await session.commit()
@@ -272,7 +272,7 @@ class TokenBlacklist:
 
                 query = select(DBTokenBlacklist).where(
                     DBTokenBlacklist.token_id == token_id,
-                    DBTokenBlacklist.expires_at > datetime.utcnow(),
+                    DBTokenBlacklist.expires_at > datetime.now(timezone.utc),
                 )
                 result = await session.execute(query)
                 entry = result.scalar_one_or_none()
@@ -302,7 +302,7 @@ class TokenBlacklist:
                 from services.database.models import TokenBlacklist as DBTokenBlacklist
 
                 query = delete(DBTokenBlacklist).where(
-                    DBTokenBlacklist.expires_at <= datetime.utcnow()
+                    DBTokenBlacklist.expires_at <= datetime.now(timezone.utc)
                 )
                 result = await session.execute(query)
                 await session.commit()

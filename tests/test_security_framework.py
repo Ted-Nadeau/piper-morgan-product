@@ -16,7 +16,7 @@ bulletproof security standards. Framework ready for TDD validation before Code c
 
 import json
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -60,8 +60,8 @@ class TestSecurityAuthentication:
             "sub": "test_user_123",
             "iss": TEST_ISSUER,
             "aud": TEST_AUDIENCE,
-            "exp": datetime.utcnow() + timedelta(hours=1),
-            "iat": datetime.utcnow(),
+            "exp": datetime.now(timezone.utc) + timedelta(hours=1),
+            "iat": datetime.now(timezone.utc),
             "user_id": "test_user_123",
             "email": "test@example.com",
             "permissions": ["read", "write"],
@@ -75,8 +75,8 @@ class TestSecurityAuthentication:
             "sub": "test_user_123",
             "iss": TEST_ISSUER,
             "aud": TEST_AUDIENCE,
-            "exp": datetime.utcnow() - timedelta(hours=1),  # Expired
-            "iat": datetime.utcnow() - timedelta(hours=2),
+            "exp": datetime.now(timezone.utc) - timedelta(hours=1),  # Expired
+            "iat": datetime.now(timezone.utc) - timedelta(hours=2),
             "user_id": "test_user_123",
             "email": "test@example.com",
             "permissions": ["read", "write"],
@@ -90,8 +90,8 @@ class TestSecurityAuthentication:
             "sub": "test_user_123",
             "iss": TEST_ISSUER,
             "aud": TEST_AUDIENCE,
-            "exp": datetime.utcnow() + timedelta(hours=1),
-            "iat": datetime.utcnow(),
+            "exp": datetime.now(timezone.utc) + timedelta(hours=1),
+            "iat": datetime.now(timezone.utc),
             "user_id": "test_user_123",
             "email": "test@example.com",
             "permissions": ["read", "write"],
@@ -180,8 +180,8 @@ class TestSecurityAuthentication:
             "sub": "test_user_123",
             "iss": TEST_ISSUER,
             "aud": TEST_AUDIENCE,
-            "exp": datetime.utcnow() + timedelta(hours=1),
-            "iat": datetime.utcnow(),
+            "exp": datetime.now(timezone.utc) + timedelta(hours=1),
+            "iat": datetime.now(timezone.utc),
             "user_id": "test_user_123",
         }
 
@@ -215,9 +215,9 @@ class TestProtocolPortability:
             "sub": "test_user_123",  # Standard: Subject
             "iss": TEST_ISSUER,  # Standard: Issuer
             "aud": TEST_AUDIENCE,  # Standard: Audience
-            "exp": datetime.utcnow() + timedelta(hours=1),  # Standard: Expiration
-            "iat": datetime.utcnow(),  # Standard: Issued At
-            "nbf": datetime.utcnow(),  # Standard: Not Before
+            "exp": datetime.now(timezone.utc) + timedelta(hours=1),  # Standard: Expiration
+            "iat": datetime.now(timezone.utc),  # Standard: Issued At
+            "nbf": datetime.now(timezone.utc),  # Standard: Not Before
             "jti": "unique_token_id_123",  # Standard: JWT ID
             "typ": "JWT",  # Standard: Type
             "cty": "JWT",  # Standard: Content Type
@@ -258,7 +258,7 @@ class TestProtocolPortability:
         token_data = {
             "token": standard_jwt_token,
             "metadata": {
-                "created_at": datetime.utcnow().isoformat(),
+                "created_at": datetime.now(timezone.utc).isoformat(),
                 "algorithm": TEST_ALGORITHM,
                 "issuer": TEST_ISSUER,
                 "audience": TEST_AUDIENCE,
@@ -302,7 +302,7 @@ class TestProtocolPortability:
 
         # Create audit log entry
         audit_log = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "user_id": "test_user_123",
             "action": "token_generated",
             "token_id": "unique_token_id_123",
@@ -358,8 +358,8 @@ class TestFederationReadiness:
             "sub": "oauth2_user_123",
             "iss": "https://oauth2.provider.com",
             "aud": "piper-morgan-api",
-            "exp": datetime.utcnow() + timedelta(hours=1),
-            "iat": datetime.utcnow(),
+            "exp": datetime.now(timezone.utc) + timedelta(hours=1),
+            "iat": datetime.now(timezone.utc),
             "scope": "read write admin",
             "client_id": "piper_morgan_client",
             "token_type": "Bearer",
@@ -468,8 +468,8 @@ class TestPerformanceValidation:
             "sub": "test_user_123",
             "iss": TEST_ISSUER,
             "aud": TEST_AUDIENCE,
-            "exp": datetime.utcnow() + timedelta(hours=1),
-            "iat": datetime.utcnow(),
+            "exp": datetime.now(timezone.utc) + timedelta(hours=1),
+            "iat": datetime.now(timezone.utc),
             "user_id": "test_user_123",
             "email": "test@example.com",
             "permissions": ["read", "write"],

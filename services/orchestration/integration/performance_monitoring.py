@@ -4,7 +4,7 @@ Purpose: Track coordination performance and health
 """
 
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List
 
 from services.domain.models import Intent
@@ -39,7 +39,7 @@ class PerformanceMonitor:
                 "response_time_ms": duration_ms,
                 "target_met": duration_ms < 1000,
                 "coordination_success": result.status == CoordinationStatus.COMPLETED,
-                "last_check": datetime.utcnow().isoformat(),
+                "last_check": datetime.now(timezone.utc).isoformat(),
                 "performance_target": "<1000ms",
             }
 
@@ -56,7 +56,7 @@ class PerformanceMonitor:
             error_status = {
                 "status": "unhealthy",
                 "error": str(e),
-                "last_check": datetime.utcnow().isoformat(),
+                "last_check": datetime.now(timezone.utc).isoformat(),
             }
 
             self.performance_history.append(error_status)

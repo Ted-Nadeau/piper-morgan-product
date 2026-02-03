@@ -15,7 +15,7 @@ import logging
 import time
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from functools import wraps
 from typing import Any, Awaitable, Callable, Dict, Optional, Set
 
@@ -38,11 +38,11 @@ class TaskMetrics:
 
     def mark_started(self):
         """Mark task as started"""
-        self.started_at = datetime.utcnow()
+        self.started_at = datetime.now(timezone.utc)
 
     def mark_completed(self, success: bool = True, error: Optional[str] = None):
         """Mark task as completed with success/failure status"""
-        self.completed_at = datetime.utcnow()
+        self.completed_at = datetime.now(timezone.utc)
         self.success = success
         self.error = error
 
@@ -101,7 +101,7 @@ class RobustTaskManager:
         metrics = TaskMetrics(
             task_id=task_id,
             name=task_name,
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
             context_data=metadata or {},
         )
         self.task_metrics[task_id] = metrics
@@ -259,7 +259,7 @@ class RobustTaskManager:
 
     def cleanup_completed_tasks(self, max_age_minutes: int = 60):
         """Clean up old task metrics and results to prevent memory leaks"""
-        cutoff_time = datetime.utcnow().timestamp() - (max_age_minutes * 60)
+        cutoff_time = datetime.now(timezone.utc).timestamp() - (max_age_minutes * 60)
 
         tasks_to_remove = []
         for task_id, metrics in self.task_metrics.items():

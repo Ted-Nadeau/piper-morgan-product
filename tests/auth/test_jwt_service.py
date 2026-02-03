@@ -12,7 +12,7 @@ These tests define what "done" means for JWT service:
 """
 
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from uuid import UUID, uuid4
 
 import jwt as pyjwt  # Use pyjwt for verification
@@ -107,9 +107,9 @@ class TestJWTService:
 
         jwt_service = JWTService()
 
-        before_time = datetime.utcnow()
+        before_time = datetime.now(timezone.utc)
         token = jwt_service.generate_token(user_id=TEST_USER_ID, username="expuser")
-        after_time = datetime.utcnow()
+        after_time = datetime.now(timezone.utc)
 
         payload = jwt_service.decode_token_unsafe(token)
 
@@ -173,8 +173,8 @@ class TestJWTService:
         expired_payload = {
             "user_id": "expired-user",
             "username": "expireduser",
-            "exp": datetime.utcnow() - timedelta(hours=1),  # 1 hour ago
-            "iat": datetime.utcnow() - timedelta(hours=25),  # 25 hours ago
+            "exp": datetime.now(timezone.utc) - timedelta(hours=1),  # 1 hour ago
+            "iat": datetime.now(timezone.utc) - timedelta(hours=25),  # 25 hours ago
         }
 
         # Encode with same secret
@@ -231,8 +231,8 @@ class TestJWTService:
             {
                 "user_id": "wrong-secret-user",
                 "username": "wronguser",
-                "exp": datetime.utcnow() + timedelta(hours=24),
-                "iat": datetime.utcnow(),
+                "exp": datetime.now(timezone.utc) + timedelta(hours=24),
+                "iat": datetime.now(timezone.utc),
             },
             "completely_different_secret_key_12345",
             algorithm="HS256",

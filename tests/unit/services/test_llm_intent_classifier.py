@@ -240,7 +240,6 @@ class TestLLMIntentClassifier:
         )
 
     @pytest.mark.asyncio
-    @pytest.mark.skip(reason="piper-morgan-5yz: Container initialization needed in fixture")
     async def test_classification_storage_in_knowledge_graph(
         self, classifier, mock_llm_service, mock_knowledge_graph_service
     ):

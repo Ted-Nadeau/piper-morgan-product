@@ -65,7 +65,9 @@ async def test_pm039_patterns(initialized_container, message, expected_action, e
     'search_api_documentation') instead of the canonical 'search_documents'.
     This is acceptable - we validate that the action is search-related.
     """
-    classifier = IntentClassifier()
+    # Get LLM service from initialized container (#743 fix)
+    llm_service = initialized_container.get_service("llm")
+    classifier = IntentClassifier(llm_service=llm_service)
     intent = await classifier.classify(message)
 
     # Accept any search-related action (LLM may be more specific than 'search_documents')

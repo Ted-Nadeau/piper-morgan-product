@@ -4,7 +4,7 @@ This demonstrates the standard router pattern for integrations.
 Routers contain business logic and FastAPI routes.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict
 
 from fastapi import APIRouter, HTTPException, Query
@@ -54,7 +54,7 @@ class DemoIntegrationRouter:
             return {
                 "status": "ok" if is_configured else "unconfigured",
                 "service": "demo",
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
 
         @self.router.get("/echo")
@@ -77,7 +77,7 @@ class DemoIntegrationRouter:
 
             return {
                 "echo": message,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "service": "demo",
                 "configured": True,
             }
@@ -94,5 +94,5 @@ class DemoIntegrationRouter:
                 "configured": self.config.is_configured(),
                 "endpoint": self.config.get_endpoint(),
                 "routes": [route.path for route in self.router.routes],
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }

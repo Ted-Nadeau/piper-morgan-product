@@ -17,7 +17,7 @@ Adds:
 - set_due_date
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional
 from uuid import UUID, uuid4
 
@@ -109,7 +109,7 @@ class TodoService(ItemService):
                 return None
 
             todo_db.completed = True
-            todo_db.completed_at = datetime.utcnow()
+            todo_db.completed_at = datetime.now(timezone.utc)
             todo_db.status = "completed"
 
             await session.commit()

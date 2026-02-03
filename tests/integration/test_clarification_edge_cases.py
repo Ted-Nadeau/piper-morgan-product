@@ -1,6 +1,6 @@
 import asyncio
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import pytest
 
@@ -123,7 +123,7 @@ class TestClarificationEdgeCases:
         assert session.get_pending_clarification() is None  # Piper now confident
 
         # Manually expire the session
-        session.last_activity = datetime.utcnow() - timedelta(hours=1)
+        session.last_activity = datetime.now(timezone.utc) - timedelta(hours=1)
 
         # Try to respond to clarification with expired session
         response2 = await conversation_handler.handle_clarification_response(
@@ -167,7 +167,7 @@ class TestClarificationEdgeCases:
 
         # Create sessions
         old_session = session_manager.get_or_create_session("old_session")
-        old_session.last_activity = datetime.utcnow() - timedelta(minutes=2)
+        old_session.last_activity = datetime.now(timezone.utc) - timedelta(minutes=2)
 
         active_session = session_manager.get_or_create_session("active_session")
 

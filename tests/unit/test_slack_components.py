@@ -5,7 +5,7 @@ Component-level testing with monitoring intent bypass and observability validati
 TDD Philosophy: Tests REQUIRE observability to pass, not just functionality.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -466,12 +466,12 @@ class TestSlackPipelineMetrics:
     @pytest.fixture
     async def pipeline_metrics(self):
         """Create pipeline metrics instance with required arguments"""
-        from datetime import datetime
+        from datetime import datetime, timezone
 
         return SlackPipelineMetrics(
             correlation_id="test_correlation_id",
             slack_event_id="test_event_id",
-            started_at=datetime.utcnow(),
+            started_at=datetime.now(timezone.utc),
         )
 
     @pytest.mark.smoke

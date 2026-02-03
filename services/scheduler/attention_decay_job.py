@@ -9,7 +9,7 @@ Pattern: Pattern-048 (Periodic Background Job)
 """
 
 import asyncio
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 
 import structlog
@@ -78,7 +78,7 @@ class AttentionDecayJob:
             Dict with update results including counts and timing
         """
         try:
-            start_time = datetime.utcnow()
+            start_time = datetime.now(timezone.utc)
 
             # Count events and trigger decay calculations
             updated_count = 0
@@ -96,13 +96,13 @@ class AttentionDecayJob:
             # Cleanup expired events
             self.attention_model._cleanup_expired_events()
 
-            elapsed_ms = (datetime.utcnow() - start_time).total_seconds() * 1000
+            elapsed_ms = (datetime.now(timezone.utc) - start_time).total_seconds() * 1000
 
             result = {
                 "updated": updated_count,
                 "expired": expired_count,
                 "elapsed_ms": round(elapsed_ms, 2),
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "success": True,
             }
 
@@ -115,7 +115,7 @@ class AttentionDecayJob:
                 "updated": 0,
                 "expired": 0,
                 "elapsed_ms": 0,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "success": False,
                 "error": str(e),
             }

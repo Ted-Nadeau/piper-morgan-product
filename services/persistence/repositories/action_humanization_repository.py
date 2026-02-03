@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 from sqlalchemy import select, update
@@ -40,7 +40,7 @@ class ActionHumanizationRepository:
             .where(ActionHumanizationDB.action == action)
             .values(
                 usage_count=ActionHumanizationDB.usage_count + 1,
-                last_used=datetime.utcnow(),
+                last_used=datetime.now(timezone.utc),
             )
         )
         await self.session.commit()

@@ -7,7 +7,7 @@ Integrates with TokenBlacklist for secure token revocation.
 Issue #281: CORE-ALPHA-WEB-AUTH
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 
 import structlog
@@ -182,7 +182,7 @@ async def login(
                 )
 
             # Update last_login_at (in same session)
-            user.last_login_at = datetime.utcnow()
+            user.last_login_at = datetime.now(timezone.utc)
             await session.commit()
 
             # Store user details for response (before session closes)

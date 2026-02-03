@@ -8,7 +8,7 @@ import json
 import logging
 import os
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
 import aiohttp
@@ -76,7 +76,7 @@ class StagingHealthChecker:
                 results[component] = {
                     "status": HealthStatus.UNHEALTHY,
                     "error": str(e),
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
                 }
 
         # Calculate overall health
@@ -84,7 +84,7 @@ class StagingHealthChecker:
 
         final_result = {
             "overall_status": overall_status,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "environment": "staging",
             "version": "PM-038-staging",
             "components": results,
@@ -129,20 +129,20 @@ class StagingHealthChecker:
                         "total_connections": stats.total_connections,
                         "active_connections": stats.active_connections,
                         "table_count": stats.table_count,
-                        "timestamp": datetime.utcnow().isoformat(),
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
                     }
                 else:
                     return {
                         "status": HealthStatus.UNHEALTHY,
                         "error": "Database query returned unexpected result",
-                        "timestamp": datetime.utcnow().isoformat(),
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
                     }
 
         except Exception as e:
             return {
                 "status": HealthStatus.UNHEALTHY,
                 "error": f"Database connection failed: {str(e)}",
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
 
     async def _check_redis_health(self) -> Dict[str, Any]:
@@ -174,20 +174,20 @@ class StagingHealthChecker:
                     "connected_clients": info.get("connected_clients", 0),
                     "used_memory_human": info.get("used_memory_human", "unknown"),
                     "redis_version": info.get("redis_version", "unknown"),
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
                 }
             else:
                 return {
                     "status": HealthStatus.UNHEALTHY,
                     "error": "Redis operations failed",
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
                 }
 
         except Exception as e:
             return {
                 "status": HealthStatus.UNHEALTHY,
                 "error": f"Redis connection failed: {str(e)}",
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
 
     async def _check_chromadb_health(self) -> Dict[str, Any]:
@@ -223,20 +223,20 @@ class StagingHealthChecker:
                             "response_time_ms": round(response_time, 2),
                             "heartbeat": heartbeat_data,
                             "collection_count": collection_count,
-                            "timestamp": datetime.utcnow().isoformat(),
+                            "timestamp": datetime.now(timezone.utc).isoformat(),
                         }
                     else:
                         return {
                             "status": HealthStatus.UNHEALTHY,
                             "error": f"ChromaDB heartbeat failed with status {response.status}",
-                            "timestamp": datetime.utcnow().isoformat(),
+                            "timestamp": datetime.now(timezone.utc).isoformat(),
                         }
 
         except Exception as e:
             return {
                 "status": HealthStatus.UNHEALTHY,
                 "error": f"ChromaDB connection failed: {str(e)}",
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
 
     async def _check_mcp_health(self) -> Dict[str, Any]:
@@ -252,7 +252,7 @@ class StagingHealthChecker:
                 return {
                     "status": HealthStatus.UNHEALTHY,
                     "error": "MCP initialization failed",
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
                 }
 
             # Test MCP operations
@@ -299,14 +299,14 @@ class StagingHealthChecker:
                     "performance_target": "< 500ms",
                     "actual_performance": f"{search_time:.1f}ms",
                 },
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
 
         except Exception as e:
             return {
                 "status": HealthStatus.UNHEALTHY,
                 "error": f"MCP health check failed: {str(e)}",
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
 
     async def _check_system_resources(self) -> Dict[str, Any]:
@@ -338,14 +338,14 @@ class StagingHealthChecker:
                 "disk_percent": round(disk_percent, 1),
                 "memory_available_gb": round(memory.available / (1024**3), 2),
                 "disk_free_gb": round(disk.free / (1024**3), 2),
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
 
         except Exception as e:
             return {
                 "status": HealthStatus.UNKNOWN,
                 "error": f"System resource check failed: {str(e)}",
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
 
     async def _check_api_endpoints(self) -> Dict[str, Any]:
@@ -415,14 +415,14 @@ class StagingHealthChecker:
                 "total_response_time_ms": round(total_time, 2),
                 "healthy_endpoints": f"{healthy_endpoints}/{total_endpoints}",
                 "endpoints": endpoint_results,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
 
         except Exception as e:
             return {
                 "status": HealthStatus.UNHEALTHY,
                 "error": f"API endpoint check failed: {str(e)}",
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
 
     async def _check_external_services(self) -> Dict[str, Any]:
@@ -474,14 +474,14 @@ class StagingHealthChecker:
                 "status": status,
                 "reachable_services": f"{reachable_services}/{total_services}",
                 "services": service_results,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
 
         except Exception as e:
             return {
                 "status": HealthStatus.UNHEALTHY,
                 "error": f"External service check failed: {str(e)}",
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
 
     async def _check_slack_integration_health(self) -> Dict[str, Any]:
@@ -496,7 +496,7 @@ class StagingHealthChecker:
                 "status": HealthStatus.UNKNOWN,
                 "checks": {},
                 "metrics": {},
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
 
             # Import Slack-related modules (lazy import to avoid dependency issues)
@@ -509,7 +509,7 @@ class StagingHealthChecker:
                 return {
                     "status": HealthStatus.UNHEALTHY,
                     "error": f"Slack monitoring modules not available: {str(e)}",
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
                 }
 
             # Check 1: Slack token configured
@@ -556,7 +556,7 @@ class StagingHealthChecker:
 
             # Check 3: Recent pipeline success rate (last 5 minutes)
             if slack_modules_available:
-                cutoff_time = datetime.utcnow() - timedelta(minutes=5)
+                cutoff_time = datetime.now(timezone.utc) - timedelta(minutes=5)
                 recent_pipelines = [
                     p for p in ACTIVE_PIPELINES.values() if p.started_at >= cutoff_time
                 ]
@@ -606,7 +606,7 @@ class StagingHealthChecker:
 
             # Check 5: Stuck pipelines (running > 5 minutes)
             if slack_modules_available:
-                stuck_cutoff = datetime.utcnow() - timedelta(minutes=5)
+                stuck_cutoff = datetime.now(timezone.utc) - timedelta(minutes=5)
                 stuck_pipelines = [
                     p
                     for p in ACTIVE_PIPELINES.values()
@@ -621,7 +621,7 @@ class StagingHealthChecker:
                             "correlation_id": p.correlation_id[:12]
                             + "...",  # Truncate for security
                             "duration_minutes": round(
-                                (datetime.utcnow() - p.started_at).total_seconds() / 60, 1
+                                (datetime.now(timezone.utc) - p.started_at).total_seconds() / 60, 1
                             ),
                         }
                         for p in stuck_pipelines[:5]  # Limit to 5 for brevity
@@ -655,7 +655,7 @@ class StagingHealthChecker:
             return {
                 "status": HealthStatus.UNHEALTHY,
                 "error": f"Slack integration health check failed: {str(e)}",
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
 
     def _calculate_overall_status(self, component_results: Dict[str, Any]) -> str:
@@ -714,7 +714,7 @@ async def basic_health():
     """Basic health check endpoint"""
     return {
         "status": "healthy",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "environment": "staging",
     }
 
@@ -722,7 +722,7 @@ async def basic_health():
 @staging_health_router.get("/liveness")
 async def liveness_probe():
     """Kubernetes-style liveness probe"""
-    return {"status": "alive", "timestamp": datetime.utcnow().isoformat()}
+    return {"status": "alive", "timestamp": datetime.now(timezone.utc).isoformat()}
 
 
 @staging_health_router.get("/readiness")
@@ -733,7 +733,7 @@ async def readiness_probe():
         async with AsyncSessionFactory.session_scope() as session:
             await session.execute(text("SELECT 1"))
 
-        return {"status": "ready", "timestamp": datetime.utcnow().isoformat()}
+        return {"status": "ready", "timestamp": datetime.now(timezone.utc).isoformat()}
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=f"Not ready: {str(e)}"
@@ -934,7 +934,7 @@ async def ethics_metrics_endpoint():
                 "metadata_only_learning": True,
                 "security_redactions_active": True,
             },
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "environment": "staging",
         }
 
@@ -1022,7 +1022,7 @@ async def ethics_learning_endpoint():
                 "secure_pattern_signatures": True,
             },
             "system_status": "operational",
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     except ImportError as e:

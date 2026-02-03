@@ -16,7 +16,7 @@ Trust-gates the visibility of objects by hardness level.
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
@@ -122,7 +122,7 @@ class HomeStateService:
         Pattern-051: Would gather from multiple places in parallel.
         Pattern-052: Transforms raw data into experience language.
         """
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
 
         # Determine minimum hardness based on trust stage
         min_hardness = self._get_min_hardness_for_stage(context.trust_stage)
@@ -141,7 +141,7 @@ class HomeStateService:
         if context.trust_stage >= TrustStage.ESTABLISHED:
             briefing_summary = await self._generate_briefing_summary(context)
 
-        end_time = datetime.utcnow()
+        end_time = datetime.now(timezone.utc)
         generation_time_ms = int((end_time - start_time).total_seconds() * 1000)
 
         return HomeStateResult(

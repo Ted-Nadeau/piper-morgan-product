@@ -15,7 +15,7 @@ Issue #218: CORE-USERS-ONBOARD (Setup wizard)
 
 import asyncio
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 import pytest
@@ -68,8 +68,8 @@ class TestAlphaOnboardingE2E:
             username=username,
             email=email,
             is_alpha=True,  # Alpha user flag (Issue #262 schema migration)
-            created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
+            updated_at=datetime.now(timezone.utc),
         )
 
         async with AsyncSessionFactory.session_scope_fresh() as session:
@@ -109,8 +109,8 @@ class TestAlphaOnboardingE2E:
                 username=username,
                 email=f"{username}@test.com",
                 is_alpha=True,
-                created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow(),
+                created_at=datetime.now(timezone.utc),
+                updated_at=datetime.now(timezone.utc),
             )
             session.add(user)
             await session.commit()
@@ -166,8 +166,8 @@ class TestAlphaOnboardingE2E:
                 username=username,
                 email=f"{username}@test.com",
                 is_alpha=True,
-                created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow(),
+                created_at=datetime.now(timezone.utc),
+                updated_at=datetime.now(timezone.utc),
             )
             session.add(user)
             await session.commit()
@@ -179,7 +179,7 @@ class TestAlphaOnboardingE2E:
             "decision_making": "collaborative",
             "learning_style": "explanations",
             "feedback_level": "moderate",
-            "configured_at": datetime.utcnow().isoformat(),
+            "configured_at": datetime.now(timezone.utc).isoformat(),
         }
 
         async with AsyncSessionFactory.session_scope_fresh() as session:
@@ -239,8 +239,8 @@ class TestAlphaOnboardingE2E:
                 username=username,
                 email=f"{username}@test.com",
                 is_alpha=True,
-                created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow(),
+                created_at=datetime.now(timezone.utc),
+                updated_at=datetime.now(timezone.utc),
             )
             session.add(user)
             await session.commit()
@@ -304,8 +304,8 @@ class TestAlphaOnboardingE2E:
                 username=username,
                 email=f"{username}@test.com",
                 is_alpha=True,
-                created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow(),
+                created_at=datetime.now(timezone.utc),
+                updated_at=datetime.now(timezone.utc),
             )
             session.add(user)
             await session.commit()
@@ -328,7 +328,7 @@ class TestAlphaOnboardingE2E:
             "decision_making": "collaborative",
             "learning_style": "explanations",
             "feedback_level": "moderate",
-            "configured_at": datetime.utcnow().isoformat(),
+            "configured_at": datetime.now(timezone.utc).isoformat(),
         }
 
         # NOTE: Preferences storage removed in Issue #262 schema consolidation

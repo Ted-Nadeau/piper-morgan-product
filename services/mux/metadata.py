@@ -21,7 +21,7 @@ Part of MUX-399-P4: Metadata Schema & Journal Extensions.
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Dict, List, Optional, Protocol, runtime_checkable
 
@@ -50,7 +50,7 @@ class Provenance:
     """
 
     source: str
-    fetched_at: datetime = field(default_factory=datetime.utcnow)
+    fetched_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     confidence: float = 1.0  # Source confidence 0-1
 
     @property
@@ -60,7 +60,7 @@ class Provenance:
 
         Decays over 1 hour by default.
         """
-        age_seconds = (datetime.utcnow() - self.fetched_at).total_seconds()
+        age_seconds = (datetime.now(timezone.utc) - self.fetched_at).total_seconds()
         decay_period = 3600  # 1 hour
         return max(0, 1 - (age_seconds / decay_period))
 
@@ -203,7 +203,7 @@ class Relation:
 class JournalEntry:
     """Base journal entry with timestamp and content."""
 
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     content: str = ""
     actor: str = "system"
 
@@ -356,7 +356,7 @@ class ProvenanceTracker:
     def from_integration(integration_name: str, confidence: float = 0.9) -> Provenance:
         """Create provenance from integration fetch."""
         return Provenance(
-            source=integration_name, confidence=confidence, fetched_at=datetime.utcnow()
+            source=integration_name, confidence=confidence, fetched_at=datetime.now(timezone.utc)
         )
 
     @staticmethod
@@ -396,7 +396,7 @@ class ConfidenceCalculator:
         return Confidence(
             score=0.95 if direct else 0.7,
             basis="direct observation" if direct else "inference",
-            last_validated=datetime.utcnow(),
+            last_validated=datetime.now(timezone.utc),
         )
 
     @staticmethod
@@ -405,7 +405,7 @@ class ConfidenceCalculator:
         return Confidence(
             score=reliability,
             basis=f"source reliability ({reliability:.0%})",
-            last_validated=datetime.utcnow(),
+            last_validated=datetime.now(timezone.utc),
         )
 
 

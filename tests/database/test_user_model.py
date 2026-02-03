@@ -5,7 +5,7 @@ Issue #228 CORE-USERS-API Phase 1A
 Issue #262 - Updated for UUID migration
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from uuid import UUID, uuid4
 
 import pytest
@@ -128,8 +128,8 @@ async def test_user_token_blacklist_relationship():
             token_id=str(uuid4()),
             user_id=user.id,
             reason="test",
-            expires_at=datetime.utcnow() + timedelta(days=1),
-            created_at=datetime.utcnow(),
+            expires_at=datetime.now(timezone.utc) + timedelta(days=1),
+            created_at=datetime.now(timezone.utc),
         )
         session.add(token)
         await session.commit()

@@ -4,7 +4,7 @@ Handles CRUD operations for domain entities
 """
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 import structlog
@@ -138,9 +138,9 @@ class WorkflowRepository(BaseRepository):
         if error:
             updates["error"] = error
         if status.value == "completed":
-            updates["completed_at"] = datetime.utcnow()
+            updates["completed_at"] = datetime.now(timezone.utc)
         elif status.value == "running":
-            updates["started_at"] = datetime.utcnow()
+            updates["started_at"] = datetime.now(timezone.utc)
 
         return await self.update(workflow_id, **updates)
 
@@ -306,8 +306,8 @@ class ProjectRepository(BaseRepository):
             description="Default project for Piper Morgan development and testing",
             is_default=True,
             is_archived=False,
-            created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
+            updated_at=datetime.now(timezone.utc),
         )
         db_project = ProjectDB.from_domain(project)
         self.session.add(db_project)
@@ -624,7 +624,9 @@ class KnowledgeGraphRepository(BaseRepository):
         self, node_type: NodeType, session_id: Optional[str] = None, limit: int = 100
     ) -> List[domain.KnowledgeNode]:
         """Get nodes by type, optionally filtered by owner (parameter named session_id for backward compatibility)"""
-        query = select(KnowledgeNodeDB).where(KnowledgeNodeDB.node_type == node_type)
+        # Convert enum to string for comparison (ADR-041: String columns, enum at domain boundary)
+        node_type_value = node_type.value if isinstance(node_type, NodeType) else node_type
+        query = select(KnowledgeNodeDB).where(KnowledgeNodeDB.node_type == node_type_value)
         if session_id:
             query = query.where(KnowledgeNodeDB.owner_id == session_id)
         query = query.limit(limit)
@@ -689,7 +691,9 @@ class KnowledgeGraphRepository(BaseRepository):
             )
 
         if edge_type:
-            query = query.where(KnowledgeEdgeDB.edge_type == edge_type)
+            # Convert enum to string for comparison (ADR-041: String columns, enum at domain boundary)
+            edge_type_value = edge_type.value if isinstance(edge_type, EdgeType) else edge_type
+            query = query.where(KnowledgeEdgeDB.edge_type == edge_type_value)
 
         result = await self.session.execute(query)
         edges = result.scalars().all()
@@ -955,7 +959,7 @@ class ConversationRepository(BaseRepository):
         if db_conv:
             from datetime import datetime
 
-            db_conv.last_activity_at = datetime.utcnow()
+            db_conv.last_activity_at = datetime.now(timezone.utc)
             logger.debug(f"Updated last_activity_at for conversation: {turn.conversation_id}")
 
         await self.session.commit()

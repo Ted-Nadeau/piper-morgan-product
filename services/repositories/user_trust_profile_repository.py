@@ -7,7 +7,7 @@ ADR-053: Trust Computation Architecture
 Repository for managing UserTrustProfile persistence using SQLAlchemy.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional
 from uuid import UUID
 
@@ -70,7 +70,7 @@ class UserTrustProfileRepository(BaseRepository):
             ]
             db_profile.last_interaction_at = profile.last_interaction_at
             db_profile.last_stage_change_at = profile.last_stage_change_at
-            db_profile.updated_at = datetime.utcnow()
+            db_profile.updated_at = datetime.now(timezone.utc)
         else:
             # Create new profile
             db_profile = UserTrustProfileDB.from_domain(profile)
@@ -113,7 +113,7 @@ class UserTrustProfileRepository(BaseRepository):
                 consecutive_negative=0,
                 recent_events=[],
                 stage_history=[],
-                last_interaction_at=datetime.utcnow(),
+                last_interaction_at=datetime.now(timezone.utc),
                 last_stage_change_at=None,
             )
 
@@ -170,7 +170,7 @@ class UserTrustProfileRepository(BaseRepository):
         if profile is None:
             return None
 
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
 
         # Record in stage history as tuple (timestamp, new_stage, reason)
         profile.stage_history.append((now, new_stage, reason))

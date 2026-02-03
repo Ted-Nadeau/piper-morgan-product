@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import uuid4
 
 from sqlalchemy import Column, DateTime, Integer, String
@@ -14,9 +14,11 @@ class ActionHumanizationDB(Base):
     action = Column(String(255), nullable=False, unique=True, index=True)
     category = Column(String(100), nullable=True)
     human_readable = Column(String(500), nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False
+    )
     usage_count = Column(Integer, default=0)
-    last_used = Column(DateTime, nullable=True)
+    last_used = Column(DateTime(timezone=True), nullable=True)
 
     def to_domain(self) -> ActionHumanization:
         return ActionHumanization(

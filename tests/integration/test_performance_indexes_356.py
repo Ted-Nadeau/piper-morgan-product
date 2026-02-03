@@ -5,7 +5,7 @@ Composite indexes for common query patterns
 
 import time
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import pytest
 from sqlalchemy import text
@@ -162,7 +162,7 @@ class TestIndexExplainPlans:
             user_id=user_id,
             session_id="test-session",
             title="Test Conversation",
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
         )
         db_session.add(conv)
         await db_session.commit()
@@ -200,7 +200,7 @@ class TestIndexExplainPlans:
             turn_number=1,
             user_message="Hello",
             assistant_response="Hi there!",
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
         )
         db_session.add(turn)
         await db_session.commit()
@@ -261,7 +261,7 @@ class TestIndexEdgeCases:
             user_message="Talk to John",
             assistant_response="John is a team member",
             entities=["John", "team_member"],
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
         )
         db_session.add(turn)
         await db_session.commit()
@@ -357,7 +357,7 @@ class TestPerformanceBaselines:
                 user_id=user_id,
                 session_id=f"session-{i}",
                 title=f"Conversation {i}",
-                created_at=datetime.utcnow() - timedelta(hours=i),
+                created_at=datetime.now(timezone.utc) - timedelta(hours=i),
             )
             db_session.add(conv)
         await db_session.commit()
@@ -397,7 +397,7 @@ class TestPerformanceBaselines:
                 turn_number=i,
                 user_message=f"User message {i}",
                 assistant_response=f"Assistant response {i}",
-                created_at=datetime.utcnow() - timedelta(minutes=10 - i),
+                created_at=datetime.now(timezone.utc) - timedelta(minutes=10 - i),
             )
             db_session.add(turn)
         await db_session.commit()

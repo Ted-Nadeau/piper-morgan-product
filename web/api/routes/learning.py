@@ -679,7 +679,7 @@ async def clear_learned_data(
     Returns:
         Confirmation of data cleared
     """
-    from datetime import datetime
+    from datetime import datetime, timezone
 
     from services.automation.audit_trail import get_audit_trail
 
@@ -719,7 +719,7 @@ async def clear_learned_data(
             "user_id": user_id,
             "data_type": data_type,
             "results": results,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     except Exception as e:
@@ -742,7 +742,7 @@ async def export_preferences(
     Returns:
         Exported data in requested format
     """
-    from datetime import datetime
+    from datetime import datetime, timezone
 
     from services.domain.user_preference_manager import UserPreferenceManager
 
@@ -753,7 +753,7 @@ async def export_preferences(
         # Gather all user data
         export_data = {
             "user_id": user_id,
-            "export_timestamp": datetime.utcnow().isoformat(),
+            "export_timestamp": datetime.now(timezone.utc).isoformat(),
             "preferences": {},
             "patterns": [],
             "automation_settings": {},
@@ -1243,21 +1243,17 @@ async def execute_pattern(pattern_id: str) -> Dict[str, Any]:
             try:
                 context = {"user_id": pattern.user_id, "pattern_id": pattern.id}
 
-                execution_result = await ActionRegistry.execute(
-                    action_type, action_params, context
-                )
+                execution_result = await ActionRegistry.execute(action_type, action_params, context)
 
                 # Record as success
                 pattern.success_count += 1
                 pattern.confidence = min(pattern.confidence * 1.05, 1.0)
-                pattern.updated_at = datetime.utcnow()
+                pattern.updated_at = datetime.now(timezone.utc)
                 await session.commit()
 
                 return {
                     "success": True,
-                    "message": execution_result.get(
-                        "message", "Action executed successfully"
-                    ),
+                    "message": execution_result.get("message", "Action executed successfully"),
                     "result": execution_result,
                     "pattern": {
                         "id": str(pattern.id),

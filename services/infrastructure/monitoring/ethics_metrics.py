@@ -6,7 +6,7 @@ Tracks ethics decision points, boundary enforcement, and audit transparency
 import threading
 import time
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
@@ -94,7 +94,7 @@ class EthicsMetrics:
         # Store recent violation for trend analysis (no personal data)
         self.boundary_violations_recent.append(
             {
-                "timestamp": datetime.utcnow(),
+                "timestamp": datetime.now(timezone.utc),
                 "type": violation_type.value,
                 "context_hash": hash(context) if context else None,  # Hash only, no actual content
                 "session_hash": hash(session_id) if session_id else None,  # Hash only
@@ -102,7 +102,7 @@ class EthicsMetrics:
         )
 
         # Keep only last 24 hours
-        cutoff = datetime.utcnow() - timedelta(hours=24)
+        cutoff = datetime.now(timezone.utc) - timedelta(hours=24)
         self.boundary_violations_recent = [
             v for v in self.boundary_violations_recent if v["timestamp"] > cutoff
         ]
@@ -121,7 +121,7 @@ class EthicsMetrics:
         # Store recent decision for analysis (no personal data)
         self.ethics_decisions_recent.append(
             {
-                "timestamp": datetime.utcnow(),
+                "timestamp": datetime.now(timezone.utc),
                 "type": decision_type.value,
                 "decision_hash": hash(decision_made),  # Hash only
                 "response_time_ms": response_time_ms,
@@ -135,7 +135,7 @@ class EthicsMetrics:
             self.ethics_check_latencies = self.ethics_check_latencies[-1000:]
 
         # Keep only last 24 hours
-        cutoff = datetime.utcnow() - timedelta(hours=24)
+        cutoff = datetime.now(timezone.utc) - timedelta(hours=24)
         self.ethics_decisions_recent = [
             d for d in self.ethics_decisions_recent if d["timestamp"] > cutoff
         ]
@@ -179,18 +179,18 @@ class EthicsMetrics:
     def perform_ethics_health_check(self) -> Dict[str, Any]:
         """Perform ethics system health check"""
         self.ethics_health_checks += 1
-        self.last_ethics_check = datetime.utcnow()
+        self.last_ethics_check = datetime.now(timezone.utc)
 
         # Calculate recent violation rate (per hour)
         recent_violations = len(self.boundary_violations_recent)
         hours_tracked = min(
             24,
             (
-                datetime.utcnow()
+                datetime.now(timezone.utc)
                 - (
                     self.boundary_violations_recent[0]["timestamp"]
                     if self.boundary_violations_recent
-                    else datetime.utcnow()
+                    else datetime.now(timezone.utc)
                 )
             ).total_seconds()
             / 3600,

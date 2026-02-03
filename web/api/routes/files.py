@@ -9,7 +9,7 @@ Provides file upload endpoint with:
 """
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
@@ -174,11 +174,11 @@ async def upload_file(
                     file_type=file.content_type,
                     file_size=file_size,
                     storage_path=str(safe_file_path),
-                    upload_time=datetime.utcnow(),
+                    upload_time=datetime.now(timezone.utc),
                     file_metadata={
                         "original_filename": file.filename,
                         "uploaded_by": current_user.sub,
-                        "uploaded_at": datetime.utcnow().isoformat(),
+                        "uploaded_at": datetime.now(timezone.utc).isoformat(),
                     },
                 )
 
@@ -218,7 +218,7 @@ async def upload_file(
             "size": file_size,
             "content_type": file.content_type,
             "status": "uploaded",
-            "uploaded_at": datetime.utcnow().isoformat(),
+            "uploaded_at": datetime.now(timezone.utc).isoformat(),
             "storage_path": str(safe_file_path),  # For testing/admin only
         }
 

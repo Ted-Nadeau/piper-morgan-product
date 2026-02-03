@@ -12,7 +12,7 @@ for the bulletproof Slack integration infrastructure.
 import asyncio
 import json
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException, Query, status
@@ -98,7 +98,7 @@ async def get_pipeline_status(
                 recent_errors=[{"error": f"Monitoring modules not available: {str(e)}"}],
                 performance_metrics={"error": "Monitoring infrastructure not initialized"},
                 health_status="unknown",
-                timestamp=datetime.utcnow().isoformat(),
+                timestamp=datetime.now(timezone.utc).isoformat(),
             )
 
         # Get active pipelines count
@@ -150,7 +150,7 @@ async def get_pipeline_status(
 
         # Check for stuck pipelines
         stuck_pipelines = []
-        cutoff_time = datetime.utcnow() - timedelta(minutes=5)
+        cutoff_time = datetime.now(timezone.utc) - timedelta(minutes=5)
 
         for pipeline in ACTIVE_PIPELINES.values():
             if pipeline.started_at < cutoff_time and not pipeline.completed_at:
@@ -165,7 +165,7 @@ async def get_pipeline_status(
             recent_errors=recent_errors,
             performance_metrics=performance_metrics,
             health_status=health_status,
-            timestamp=datetime.utcnow().isoformat(),
+            timestamp=datetime.now(timezone.utc).isoformat(),
         )
 
     except Exception as e:
@@ -228,7 +228,9 @@ async def get_active_pipelines():
 
         pipeline_summaries = []
         for pipeline in active_pipelines:
-            current_duration = (datetime.utcnow() - pipeline.started_at).total_seconds() * 1000
+            current_duration = (
+                datetime.now(timezone.utc) - pipeline.started_at
+            ).total_seconds() * 1000
 
             # Find current stage
             current_stage = "unknown"
@@ -255,7 +257,7 @@ async def get_active_pipelines():
         return {
             "active_count": len(pipeline_summaries),
             "pipelines": pipeline_summaries,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     except ImportError:
@@ -335,7 +337,7 @@ async def get_pipeline_statistics(
 
         return {
             "time_window_minutes": minutes,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "pipeline_metrics": pipeline_stats,
             "task_metrics": task_stats,
             "failure_analysis": {
@@ -421,7 +423,7 @@ async def replay_pipeline_event(correlation_id: str, mock_calls: bool = True):
                 "original_correlation_id": correlation_id,
                 "replayed_correlation_id": replayed_pipeline.correlation_id,
                 "replay_successful": True,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
         else:
             return {
@@ -429,7 +431,7 @@ async def replay_pipeline_event(correlation_id: str, mock_calls: bool = True):
                 "replayed_correlation_id": None,
                 "replay_successful": False,
                 "error": "Replay failed - check logs for details",
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
 
     except ImportError:
@@ -473,7 +475,7 @@ async def cleanup_old_pipelines(
         return {
             "cleanup_completed": True,
             "max_age_minutes": max_age_minutes,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     except ImportError:

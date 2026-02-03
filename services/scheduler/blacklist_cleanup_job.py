@@ -9,7 +9,7 @@ Purpose: Remove expired tokens from database to prevent bloat
 """
 
 import asyncio
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 import structlog
@@ -79,7 +79,7 @@ class BlacklistCleanupJob:
 
             result = {
                 "removed": count,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "success": True,
                 "error": None,
             }
@@ -94,7 +94,7 @@ class BlacklistCleanupJob:
 
             return {
                 "removed": 0,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "success": False,
                 "error": error_msg,
             }

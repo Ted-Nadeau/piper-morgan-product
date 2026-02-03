@@ -5,7 +5,9 @@ Issue #540: ALPHA-SETUP-NOTION stuck state recovery
 Tests the Notion API key management endpoints in settings_integrations.py.
 """
 
+from dataclasses import dataclass
 from unittest.mock import AsyncMock, MagicMock, patch
+from uuid import UUID, uuid4
 
 import pytest
 
@@ -14,6 +16,14 @@ from web.api.routes.settings_integrations import (
     get_notion_settings,
     save_notion_key,
 )
+
+
+@dataclass
+class MockJWTClaims:
+    """Minimal JWT claims mock for testing - Issue #746."""
+
+    user_id: UUID
+    user_email: str = "test@example.com"
 
 
 class TestGetNotionSettings:
@@ -90,8 +100,13 @@ class TestGetNotionSettings:
 class TestSaveNotionKey:
     """Tests for POST /api/v1/settings/integrations/notion/save"""
 
+    @pytest.fixture
+    def mock_current_user(self):
+        """Create mock JWT claims for authenticated user - Issue #746."""
+        return MockJWTClaims(user_id=uuid4())
+
     @pytest.mark.asyncio
-    async def test_rejects_invalid_key(self):
+    async def test_rejects_invalid_key(self, mock_current_user):
         """Should return 400 when API key validation fails"""
         with patch(
             "web.api.routes.setup.validate_notion_key_and_get_workspace",
@@ -101,13 +116,13 @@ class TestSaveNotionKey:
             from fastapi import HTTPException
 
             with pytest.raises(HTTPException) as exc_info:
-                await save_notion_key("secret_invalid_key")
+                await save_notion_key("secret_invalid_key", mock_current_user)
 
             assert exc_info.value.status_code == 400
             assert "Invalid API key" in str(exc_info.value.detail)
 
     @pytest.mark.asyncio
-    async def test_saves_valid_key_and_returns_success(self):
+    async def test_saves_valid_key_and_returns_success(self, mock_current_user):
         """Should store key and return success when validation passes"""
         mock_service = MagicMock()
         mock_service.store_user_key = AsyncMock(return_value=MagicMock())
@@ -131,7 +146,7 @@ class TestSaveNotionKey:
             # Setup session context manager
             mock_session_factory.session_scope_fresh.return_value = mock_session
 
-            result = await save_notion_key("secret_valid_key")
+            result = await save_notion_key("secret_valid_key", mock_current_user)
 
             assert result["success"] is True
             assert result["workspace"] == "My Workspace"

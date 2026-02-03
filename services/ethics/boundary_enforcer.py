@@ -15,7 +15,7 @@ Phase 3 Enhancements:
 
 import asyncio
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 from fastapi import Request
@@ -58,7 +58,7 @@ class BoundaryDecision:
         self.explanation = explanation
         self.audit_data = audit_data
         self.session_id = session_id
-        self.timestamp = datetime.utcnow()
+        self.timestamp = datetime.now(timezone.utc)
 
 
 class BoundaryEnforcer:
@@ -118,11 +118,11 @@ class BoundaryEnforcer:
         interaction_metadata = {
             "content_length": len(content),
             "session_id": session_id,
-            "timestamp": datetime.utcnow(),
+            "timestamp": datetime.now(timezone.utc),
             "request_method": getattr(request, "method", "UNKNOWN"),
             "user_agent_hash": hash(str(request.headers.get("user-agent", ""))) % 10000,
-            "time_of_day": datetime.utcnow().hour,
-            "day_of_week": datetime.utcnow().weekday(),
+            "time_of_day": datetime.now(timezone.utc).hour,
+            "day_of_week": datetime.now(timezone.utc).weekday(),
         }
 
         # Perform enhanced boundary checks with adaptive patterns
@@ -179,7 +179,7 @@ class BoundaryEnforcer:
                     + self.inappropriate_content_patterns
                 ),
             },
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
         )
 
         await self.audit_decision(decision)

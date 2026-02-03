@@ -8,7 +8,7 @@ import logging
 import os
 import sys
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 
 import structlog
@@ -47,7 +47,7 @@ class CorrelationContext:
     def set_session_id(self, session_id: str) -> None:
         """Set session ID for correlation"""
         self.session_id = session_id
-        self.timestamp = datetime.utcnow().isoformat()
+        self.timestamp = datetime.now(timezone.utc).isoformat()
 
     def set_request_id(self, request_id: str) -> None:
         """Set request ID for correlation"""

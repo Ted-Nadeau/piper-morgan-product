@@ -6,7 +6,7 @@ Issue #229 CORE-USERS-PROD: Database Production Hardening
 """
 
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict
 
 import structlog
@@ -38,7 +38,7 @@ async def basic_health():
     """
     return {
         "status": HealthStatus.HEALTHY,
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "service": "piper-morgan",
     }
 
@@ -87,7 +87,7 @@ async def database_health():
                         "table_count": stats.table_count,
                         "database_size_mb": round(stats.database_size_bytes / (1024 * 1024), 2),
                     },
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
                 }
             else:
                 raise HTTPException(
@@ -150,7 +150,7 @@ async def detailed_health():
 
         return {
             "overall_status": overall_status,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "components": {"database": db_health, "system": system_health},
             "service": "piper-morgan",
             "environment": "production",

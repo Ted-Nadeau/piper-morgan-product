@@ -9,7 +9,7 @@ Note: List primitive already exists at services.domain.models:866.
 """
 
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 
 import pytest
 
@@ -95,9 +95,9 @@ class TestItem:
 
     def test_item_timestamps_auto_set(self):
         """Timestamps are automatically set on creation."""
-        before = datetime.utcnow()
+        before = datetime.now(timezone.utc)
         item = Item(text="Task")
-        after = datetime.utcnow()
+        after = datetime.now(timezone.utc)
 
         assert before <= item.created_at <= after
         assert before <= item.updated_at <= after

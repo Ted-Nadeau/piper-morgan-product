@@ -13,7 +13,7 @@ import hashlib
 import json
 import time
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional, Set
 
 from services.domain.models import BoundaryViolation, EthicalDecision
@@ -164,7 +164,7 @@ class AdaptiveBoundaries:
 
     async def update_confidence_scores(self) -> None:
         """Update confidence scores based on recent activity"""
-        current_time = datetime.utcnow()
+        current_time = datetime.now(timezone.utc)
 
         for pattern_hash, metadata in self.learned_patterns.items():
             # Calculate confidence based on frequency and recency
@@ -176,7 +176,7 @@ class AdaptiveBoundaries:
 
     async def cleanup_old_patterns(self) -> None:
         """Remove old patterns that are no longer relevant"""
-        cutoff_date = datetime.utcnow() - timedelta(days=self.pattern_retention_days)
+        cutoff_date = datetime.now(timezone.utc) - timedelta(days=self.pattern_retention_days)
 
         patterns_to_remove = []
         for pattern_hash, metadata in self.learned_patterns.items():
@@ -269,7 +269,7 @@ class AdaptiveBoundaries:
         self, pattern_hash: str, pattern_data: Dict[str, Any], source: Any
     ) -> None:
         """Learn a new pattern or update existing pattern"""
-        current_time = datetime.utcnow()
+        current_time = datetime.now(timezone.utc)
 
         if pattern_hash in self.learned_patterns:
             # Update existing pattern
@@ -314,7 +314,9 @@ class AdaptiveBoundaries:
         """Update pattern confidence based on frequency and recency"""
         # Simple confidence calculation
         frequency_factor = min(metadata.frequency / 10.0, 1.0)
-        recency_factor = 1.0 - min((datetime.utcnow() - metadata.last_seen).days / 30.0, 1.0)
+        recency_factor = 1.0 - min(
+            (datetime.now(timezone.utc) - metadata.last_seen).days / 30.0, 1.0
+        )
 
         metadata.confidence_score = (frequency_factor * 0.7) + (recency_factor * 0.3)
 

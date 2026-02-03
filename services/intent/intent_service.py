@@ -287,7 +287,7 @@ class IntentService:
                     session_id=session_id,
                     context={
                         "source": "intent_service",
-                        "timestamp": datetime.utcnow(),
+                        "timestamp": datetime.now(timezone.utc),
                     },
                 )
 
@@ -323,7 +323,7 @@ class IntentService:
                         session_id=session_id,
                         base_context={
                             "source": "intent_service",
-                            "timestamp": datetime.utcnow(),
+                            "timestamp": datetime.now(timezone.utc),
                         },
                     )
                     self.logger.info(
@@ -598,7 +598,7 @@ class IntentService:
 
             # GREAT-4D Phase 1: Handle EXECUTION intents with domain services
             if intent.category.value.upper() == "EXECUTION":
-                result = await self._handle_execution_intent(intent, workflow, session_id)
+                result = await self._handle_execution_intent(intent, workflow, session_id, user_id)
                 result.suggestions = all_suggestions
                 result.preferences = preferences  # Issue #248: Attach preference detection results
                 return result
@@ -3652,7 +3652,7 @@ class IntentService:
             return f"in the past {days} days"
 
     async def _handle_execution_intent(
-        self, intent: Intent, workflow, session_id: str
+        self, intent: Intent, workflow, session_id: str, user_id: str = None
     ) -> IntentProcessingResult:
         """
         Handle EXECUTION category intents.
@@ -3662,6 +3662,7 @@ class IntentService:
 
         GREAT-4D Phase 1: Replaces Phase 3C placeholder.
         Issue #284: Added ActionMapper to handle classifier/handler name mismatches.
+        Issue #744: Added user_id parameter for todo operations (multi-tenancy).
         """
         self.logger.info(f"Processing EXECUTION intent: {intent.action}")
 
@@ -3677,10 +3678,23 @@ class IntentService:
             return await self._handle_update_issue(intent, workflow.id)
 
         # Issue #285: Todo operations routing
+        # Issue #744: Convert user_id string to UUID for multi-tenancy support
         elif mapped_action == "create_todo":
+            todo_user_id = UUID(user_id) if user_id else None
+            if not todo_user_id:
+                return IntentProcessingResult(
+                    success=False,
+                    message="I need you to be logged in to manage todos. Please log in and try again.",
+                    intent_data={"category": intent.category.value, "action": intent.action},
+                    workflow_id=workflow.id,
+                    error="User not authenticated",
+                    error_type="AuthenticationRequired",
+                )
             message = await self.todo_handlers.handle_create_todo(
-                intent, session_id, user_id="default"  # TODO: Get actual user_id
+                intent, session_id, user_id=todo_user_id
             )
+            # Issue #748: Don't return workflow_id for synchronous operations
+            # The frontend polls workflow_id, but todo ops are already complete
             return IntentProcessingResult(
                 success=True,
                 message=message,
@@ -3689,13 +3703,23 @@ class IntentService:
                     "action": intent.action,
                     "confidence": intent.confidence,
                 },
-                workflow_id=workflow.id,
             )
 
         elif mapped_action == "list_todos":
+            todo_user_id = UUID(user_id) if user_id else None
+            if not todo_user_id:
+                return IntentProcessingResult(
+                    success=False,
+                    message="I need you to be logged in to show your todos. Please log in and try again.",
+                    intent_data={"category": intent.category.value, "action": intent.action},
+                    workflow_id=workflow.id,
+                    error="User not authenticated",
+                    error_type="AuthenticationRequired",
+                )
             message = await self.todo_handlers.handle_list_todos(
-                intent, session_id, user_id="default"
+                intent, session_id, user_id=todo_user_id
             )
+            # Issue #748: Don't return workflow_id for synchronous operations
             return IntentProcessingResult(
                 success=True,
                 message=message,
@@ -3704,13 +3728,22 @@ class IntentService:
                     "action": intent.action,
                     "confidence": intent.confidence,
                 },
-                workflow_id=workflow.id,
             )
 
         elif mapped_action == "next_todo":
+            todo_user_id = UUID(user_id) if user_id else None
+            if not todo_user_id:
+                return IntentProcessingResult(
+                    success=False,
+                    message="I need you to be logged in to show your next todo. Please log in and try again.",
+                    intent_data={"category": intent.category.value, "action": intent.action},
+                    error="User not authenticated",
+                    error_type="AuthenticationRequired",
+                )
             message = await self.todo_handlers.handle_next_todo(
-                intent, session_id, user_id="default"
+                intent, session_id, user_id=todo_user_id
             )
+            # Issue #748: Don't return workflow_id for synchronous operations
             return IntentProcessingResult(
                 success=True,
                 message=message,
@@ -3719,13 +3752,22 @@ class IntentService:
                     "action": intent.action,
                     "confidence": intent.confidence,
                 },
-                workflow_id=workflow.id,
             )
 
         elif mapped_action == "complete_todo":
+            todo_user_id = UUID(user_id) if user_id else None
+            if not todo_user_id:
+                return IntentProcessingResult(
+                    success=False,
+                    message="I need you to be logged in to complete todos. Please log in and try again.",
+                    intent_data={"category": intent.category.value, "action": intent.action},
+                    error="User not authenticated",
+                    error_type="AuthenticationRequired",
+                )
             message = await self.todo_handlers.handle_complete_todo(
-                intent, session_id, user_id="default"
+                intent, session_id, user_id=todo_user_id
             )
+            # Issue #748: Don't return workflow_id for synchronous operations
             return IntentProcessingResult(
                 success=True,
                 message=message,
@@ -3734,13 +3776,22 @@ class IntentService:
                     "action": intent.action,
                     "confidence": intent.confidence,
                 },
-                workflow_id=workflow.id,
             )
 
         elif mapped_action == "delete_todo":
+            todo_user_id = UUID(user_id) if user_id else None
+            if not todo_user_id:
+                return IntentProcessingResult(
+                    success=False,
+                    message="I need you to be logged in to delete todos. Please log in and try again.",
+                    intent_data={"category": intent.category.value, "action": intent.action},
+                    error="User not authenticated",
+                    error_type="AuthenticationRequired",
+                )
             message = await self.todo_handlers.handle_delete_todo(
-                intent, session_id, user_id="default"
+                intent, session_id, user_id=todo_user_id
             )
+            # Issue #748: Don't return workflow_id for synchronous operations
             return IntentProcessingResult(
                 success=True,
                 message=message,
@@ -3749,7 +3800,6 @@ class IntentService:
                     "action": intent.action,
                     "confidence": intent.confidence,
                 },
-                workflow_id=workflow.id,
             )
 
         else:

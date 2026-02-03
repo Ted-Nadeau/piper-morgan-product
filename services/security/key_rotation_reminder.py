@@ -9,7 +9,7 @@ Issue #250 CORE-KEYS-ROTATION-REMINDERS
 
 import logging
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Dict, List, Optional
 from uuid import UUID
@@ -110,14 +110,14 @@ class KeyRotationReminder:
         created_str = key["created_at"]
 
         # Parse ISO format timestamps
-        from datetime import datetime
+        from datetime import datetime, timezone
 
         if rotated_str:
             last_update = datetime.fromisoformat(rotated_str)
         else:
             last_update = datetime.fromisoformat(created_str)
 
-        return (datetime.utcnow() - last_update).days
+        return (datetime.now(timezone.utc) - last_update).days
 
     async def check_key_ages(self, session: AsyncSession, user_id: str) -> List[RotationReminder]:
         """Check all user keys and generate reminders"""

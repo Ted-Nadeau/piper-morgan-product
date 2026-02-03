@@ -7,7 +7,7 @@ for isolation. No mocking - tests verify actual system behavior.
 Issue #292 - CORE-ALPHA-AUTH-INTEGRATION-TESTS
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import UUID
 
 import pytest
@@ -50,8 +50,8 @@ def create_test_user_fn(session: AsyncSession):
                 "id": user_id,
                 "username": username,
                 "email": email,
-                "created_at": datetime.utcnow(),
-                "updated_at": datetime.utcnow(),
+                "created_at": datetime.now(timezone.utc),
+                "updated_at": datetime.now(timezone.utc),
             },
         )
         await session.flush()

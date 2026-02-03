@@ -18,7 +18,7 @@ Test Flow (matches manual testing):
 6. Expect acknowledgment (not echo, not identity response)
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import uuid4
 
 import httpx
@@ -82,7 +82,7 @@ async def e2e_test_user(e2e_db_session):
             "username": username,
             "email": email,
             "password_hash": password_hash,
-            "now": datetime.utcnow(),
+            "now": datetime.now(timezone.utc),
         },
     )
     await e2e_db_session.commit()

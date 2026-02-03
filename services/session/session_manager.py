@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
 from services.domain.models import Intent
@@ -9,8 +9,8 @@ from services.utils.serialization import serialize_dataclass
 class ConversationSession:
     def __init__(self, session_id: str):
         self.session_id = session_id
-        self.created_at = datetime.utcnow()
-        self.last_activity = datetime.utcnow()
+        self.created_at = datetime.now(timezone.utc)
+        self.last_activity = datetime.now(timezone.utc)
         self.history: List[Dict] = []
         self.pending_clarification: Optional[Dict] = None
         self.context: Dict = {}
@@ -24,12 +24,12 @@ class ConversationSession:
         """Record an interaction in session history"""
         self.history.append(
             {
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "intent": serialize_dataclass(intent),
                 "response": response,
             }
         )
-        self.last_activity = datetime.utcnow()
+        self.last_activity = datetime.now(timezone.utc)
 
     def set_pending_clarification(
         self, original_intent: Intent, missing_info: Dict, clarification_prompt: str
@@ -40,7 +40,7 @@ class ConversationSession:
             "missing_info": missing_info,
             "clarification_prompt": clarification_prompt,
         }
-        self.last_activity = datetime.utcnow()
+        self.last_activity = datetime.now(timezone.utc)
 
     def get_pending_clarification(self) -> Optional[Dict]:
         """Retrieve pending clarification if exists"""
@@ -49,14 +49,14 @@ class ConversationSession:
     def clear_pending_clarification(self):
         """Clear after clarification is resolved"""
         self.pending_clarification = None
-        self.last_activity = datetime.utcnow()
+        self.last_activity = datetime.now(timezone.utc)
 
     # NEW: File disambiguation methods
     def set_clarification(self, clarification_type: str, context: Dict):
         """Set disambiguation state"""
         self.awaiting_clarification = clarification_type
         self.clarification_context = context
-        self.last_activity = datetime.utcnow()
+        self.last_activity = datetime.now(timezone.utc)
 
     def get_clarification_context(self, key: str, default=None):
         """Get disambiguation context"""
@@ -66,7 +66,7 @@ class ConversationSession:
         """Clear disambiguation state"""
         self.awaiting_clarification = None
         self.clarification_context = {}
-        self.last_activity = datetime.utcnow()
+        self.last_activity = datetime.now(timezone.utc)
 
     def add_uploaded_file(self, file_id: str, filename: str, file_type: str, upload_time: datetime):
         """Track a file upload in session"""
@@ -92,7 +92,7 @@ class SessionManager:
 
     def get_or_create_session(self, session_id: Optional[str] = None) -> ConversationSession:
         """Get existing session or create new one"""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         if session_id and session_id in self._sessions:
             session = self._sessions[session_id]
             session.last_activity = now
@@ -105,7 +105,7 @@ class SessionManager:
 
     def cleanup_expired_sessions(self):
         """Remove sessions older than TTL"""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         expired = [
             sid for sid, sess in self._sessions.items() if now - sess.last_activity > self.ttl
         ]

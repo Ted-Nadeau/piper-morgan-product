@@ -10,7 +10,7 @@ Issue #390: ALPHA-SETUP-UI Phase 1.1 - Backend API
 import asyncio
 import os
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Optional
 
 import structlog
@@ -631,8 +631,8 @@ async def create_user(req: CreateUserRequest):
             is_active=True,
             is_verified=True,
             is_alpha=True,  # Alpha tester flag
-            created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
+            updated_at=datetime.now(timezone.utc),
         )
 
         # Use fresh session to avoid event loop mismatch (#442)
@@ -757,7 +757,7 @@ async def complete_setup(req: SetupCompleteRequest):
                     "UPDATE users SET setup_complete = true, "
                     "setup_completed_at = :now WHERE id = :user_id"
                 ),
-                {"user_id": req.user_id, "now": datetime.utcnow()},
+                {"user_id": req.user_id, "now": datetime.now(timezone.utc)},
             )
             await session.commit()
 

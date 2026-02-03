@@ -8,7 +8,7 @@ Issue: #225 (CORE-LEARN-E)
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Dict, List, Optional, Set
 from uuid import UUID
@@ -36,7 +36,7 @@ class ApprovalRequest:
     safety_level: str
     context: Dict
     status: ApprovalStatus = ApprovalStatus.PENDING
-    created_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     resolved_at: Optional[datetime] = None
     resolution_reason: Optional[str] = None
 
@@ -120,7 +120,7 @@ class UserApprovalSystem:
         Returns:
             ApprovalRequest object
         """
-        request_id = f"{user_id}_{action_type}_{datetime.utcnow().isoformat()}"
+        request_id = f"{user_id}_{action_type}_{datetime.now(timezone.utc).isoformat()}"
 
         request = ApprovalRequest(
             request_id=request_id,
@@ -152,7 +152,7 @@ class UserApprovalSystem:
 
         request = self._pending_requests[request_id]
         request.status = ApprovalStatus.APPROVED
-        request.resolved_at = datetime.utcnow()
+        request.resolved_at = datetime.now(timezone.utc)
         request.resolution_reason = reason
 
         # Move to history
@@ -179,7 +179,7 @@ class UserApprovalSystem:
 
         request = self._pending_requests[request_id]
         request.status = ApprovalStatus.REJECTED
-        request.resolved_at = datetime.utcnow()
+        request.resolved_at = datetime.now(timezone.utc)
         request.resolution_reason = reason
 
         # Move to history

@@ -3,7 +3,7 @@ Feedback Service for PM-005 feedback tracking implementation
 """
 
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Optional
 from uuid import UUID, uuid4
 
@@ -155,7 +155,7 @@ class FeedbackService:
         if update_data.tags is not None:
             feedback_db.tags = update_data.tags
 
-        feedback_db.updated_at = datetime.utcnow()
+        feedback_db.updated_at = datetime.now(timezone.utc)
 
         await self.db.commit()
         await self.db.refresh(feedback_db)

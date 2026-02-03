@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 import pytest
 
@@ -69,7 +69,7 @@ class TestFileReferenceDetection:
             file_id="test_file_123",
             filename="data.csv",
             file_type="text/csv",
-            upload_time=datetime.utcnow(),
+            upload_time=datetime.now(timezone.utc),
         )
 
         # Test classification with file reference
@@ -101,8 +101,10 @@ class TestFileReferenceDetection:
         session = session_manager.get_or_create_session(session_id)
 
         # Add multiple files
-        session.add_uploaded_file("file1", "report.pdf", "application/pdf", datetime.utcnow())
-        session.add_uploaded_file("file2", "data.csv", "text/csv", datetime.utcnow())
+        session.add_uploaded_file(
+            "file1", "report.pdf", "application/pdf", datetime.now(timezone.utc)
+        )
+        session.add_uploaded_file("file2", "data.csv", "text/csv", datetime.now(timezone.utc))
 
         # Test classification with ambiguous file reference
         intent = await classifier.classify(message="analyze the document", session=session)

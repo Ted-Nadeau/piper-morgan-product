@@ -21,7 +21,7 @@ Previously: Inline in web/app.py (lines 877-1036)
 Now: Extracted to separate router module
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 import structlog
 from fastapi import APIRouter, Request
@@ -64,7 +64,7 @@ async def health_config():
     # This is a health check endpoint, not a gate
     return {
         "status": "healthy" if summary["all_valid"] else "degraded",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "validation": summary,
     }
 

@@ -15,7 +15,7 @@ The 6 dimensions:
 """
 
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List, Optional
 
 import pytest
@@ -62,14 +62,14 @@ class TestProvenanceDimension:
 
     def test_provenance_has_fetched_at(self):
         """Provenance records fetch time"""
-        before = datetime.utcnow()
+        before = datetime.now(timezone.utc)
         p = Provenance(source="github")
-        after = datetime.utcnow()
+        after = datetime.now(timezone.utc)
         assert before <= p.fetched_at <= after
 
     def test_provenance_freshness_decreases_over_time(self):
         """Freshness decays over time"""
-        old_time = datetime.utcnow() - timedelta(hours=2)
+        old_time = datetime.now(timezone.utc) - timedelta(hours=2)
         p = Provenance(source="github", fetched_at=old_time)
         assert p.freshness < 0.5  # Should be stale after 2 hours
 
@@ -133,7 +133,7 @@ class TestAttentionStateDimension:
 
     def test_attention_tracks_when_noticed(self):
         """AttentionState can record when noticed"""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         a = AttentionState(noticed_at=now)
         assert a.noticed_at == now
 
@@ -163,7 +163,7 @@ class TestConfidenceDimension:
 
     def test_confidence_has_validation_time(self):
         """Confidence can track last validation"""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         c = Confidence(score=0.9, last_validated=now)
         assert c.last_validated == now
 

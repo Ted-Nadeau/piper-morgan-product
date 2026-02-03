@@ -4,7 +4,7 @@ Following TDD approach for find_by_id() method implementation
 """
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 import pytest
@@ -55,7 +55,7 @@ class TestWorkflowRepositoryMigration:
                 input_data={"test": "data"},
                 output_data={"result": "success"},
                 context={"project": "test"},
-                created_at=datetime.utcnow(),
+                created_at=datetime.now(timezone.utc),
             )
 
             session.add(db_workflow)
@@ -90,7 +90,7 @@ class TestWorkflowRepositoryMigration:
 
             # Create workflow with specific data to test conversion
             workflow_id = str(uuid.uuid4())
-            created_time = datetime.utcnow()
+            created_time = datetime.now(timezone.utc)
 
             db_workflow = WorkflowDB(
                 id=workflow_id,
@@ -134,7 +134,7 @@ class TestWorkflowRepositoryMigration:
                 status=WorkflowStatus.COMPLETED,
                 context={"file_type": "pdf"},
                 output_data={"pages": 10},
-                created_at=datetime.utcnow(),
+                created_at=datetime.now(timezone.utc),
             )
 
             session.add(db_workflow)

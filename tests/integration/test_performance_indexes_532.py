@@ -5,7 +5,7 @@ Intent-focused indexes for conversation analytics queries
 
 import time
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import pytest
 from sqlalchemy import text
@@ -83,7 +83,7 @@ class TestIntentFilteringQueries:
                 user_message=f"Test message with {intent} intent",
                 assistant_response=f"Response to {intent}",
                 intent=intent,
-                created_at=datetime.utcnow(),
+                created_at=datetime.now(timezone.utc),
             )
             db_session.add(turn)
         await db_session.commit()
@@ -121,7 +121,7 @@ class TestIntentFilteringQueries:
             user_message="Test question",
             assistant_response="Answer",
             intent="question",
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
         )
         db_session.add(turn)
         await db_session.commit()
@@ -168,7 +168,7 @@ class TestIntentAnalyticsQueries:
                     user_message=f"Message {i} with {intent}",
                     assistant_response=f"Response to {intent}",
                     intent=intent,
-                    created_at=datetime.utcnow() - timedelta(minutes=11 - turn_number),
+                    created_at=datetime.now(timezone.utc) - timedelta(minutes=11 - turn_number),
                 )
                 db_session.add(turn)
                 turn_number += 1
@@ -219,7 +219,7 @@ class TestIntentAnalyticsQueries:
                 user_message=f"Turn {i}",
                 assistant_response=f"Response {i}",
                 intent=intent,
-                created_at=datetime.utcnow() - timedelta(minutes=5 - i),
+                created_at=datetime.now(timezone.utc) - timedelta(minutes=5 - i),
             )
             db_session.add(turn)
 
@@ -266,7 +266,7 @@ class TestIntentAnalyticsQueries:
                 user_message=f"Question {i}",
                 assistant_response=f"Answer {i}",
                 intent="question",
-                created_at=datetime.utcnow(),
+                created_at=datetime.now(timezone.utc),
             )
             db_session.add(turn)
 
@@ -279,7 +279,7 @@ class TestIntentAnalyticsQueries:
                 user_message=f"Statement {i}",
                 assistant_response=f"Acknowledgment {i}",
                 intent="statement",
-                created_at=datetime.utcnow(),
+                created_at=datetime.now(timezone.utc),
             )
             db_session.add(turn)
 
@@ -328,7 +328,7 @@ class TestIntentIndexEdgeCases:
             user_message="Message without intent classification",
             assistant_response="Response",
             intent=None,  # No intent
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
         )
         db_session.add(turn)
 
@@ -340,7 +340,7 @@ class TestIntentIndexEdgeCases:
             user_message="Question",
             assistant_response="Answer",
             intent="question",
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
         )
         db_session.add(turn2)
         await db_session.commit()
@@ -388,7 +388,7 @@ class TestIntentIndexEdgeCases:
             user_message="Question",
             assistant_response="Answer",
             intent="question",  # lowercase
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
         )
         db_session.add(turn1)
 
@@ -399,7 +399,7 @@ class TestIntentIndexEdgeCases:
             user_message="Another question",
             assistant_response="Answer",
             intent="QUESTION",  # UPPERCASE
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
         )
         db_session.add(turn2)
         await db_session.commit()
@@ -440,7 +440,7 @@ class TestIntentIndexPerformanceBaselines:
                 user_message=f"Turn {i}",
                 assistant_response=f"Response {i}",
                 intent=intent,
-                created_at=datetime.utcnow() - timedelta(minutes=50 - i),
+                created_at=datetime.now(timezone.utc) - timedelta(minutes=50 - i),
             )
             db_session.add(turn)
         await db_session.commit()
@@ -484,7 +484,7 @@ class TestIntentIndexPerformanceBaselines:
                 user_message=f"Turn {i}",
                 assistant_response=f"Response {i}",
                 intent=intent,
-                created_at=datetime.utcnow() - timedelta(minutes=100 - i),
+                created_at=datetime.now(timezone.utc) - timedelta(minutes=100 - i),
             )
             db_session.add(turn)
         await db_session.commit()
@@ -529,7 +529,7 @@ class TestIntentIndexPerformanceBaselines:
                     user_message=f"Conv {conv_num} Turn {turn_num}",
                     assistant_response=f"Response {turn_num}",
                     intent=intent,
-                    created_at=datetime.utcnow(),
+                    created_at=datetime.now(timezone.utc),
                 )
                 db_session.add(turn)
         await db_session.commit()
@@ -543,7 +543,7 @@ class TestIntentIndexPerformanceBaselines:
             user_message="Test question",
             assistant_response="Test answer",
             intent="question",
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
         )
         db_session.add(turn)
         await db_session.commit()

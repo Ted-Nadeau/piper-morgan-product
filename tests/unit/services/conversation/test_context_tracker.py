@@ -55,7 +55,6 @@ class TestEnhancedContextTracker:
         assert result.conversation_state.conversation_id == "conv-123"
 
     @pytest.mark.asyncio
-    @pytest.mark.skip(reason="Pre-existing failure - tracked in piper-morgan-dw0")
     async def test_entity_extraction_and_tracking(self, mock_services):
         """Test entity extraction and tracking across messages"""
         mock_services.memory_service.resolve_user_message.return_value = (
@@ -171,7 +170,6 @@ class TestEnhancedContextTracker:
         assert "error" in result.enrichment_metadata
 
     @pytest.mark.asyncio
-    @pytest.mark.skip(reason="Pre-existing failure - tracked in piper-morgan-dw0")
     async def test_conversation_state_persistence(self, mock_services):
         """Test conversation state persistence"""
         mock_services.memory_service.resolve_user_message.return_value = (
@@ -194,9 +192,8 @@ class TestEnhancedContextTracker:
         assert (
             result1.conversation_state.conversation_id == result2.conversation_state.conversation_id
         )
-        assert len(result2.conversation_state.conversation_flow) > len(
-            result1.conversation_state.conversation_flow
-        )
+        # After two enrichments, conversation_flow should have 2 entries
+        assert len(result2.conversation_state.conversation_flow) == 2
 
     @pytest.mark.asyncio
     @pytest.mark.smoke
@@ -332,12 +329,10 @@ class TestEnhancedContextTracker:
             assert len(entity.context_snippets) <= 3
 
 
-@pytest.mark.skip(reason="Pre-existing failures - tracked in piper-morgan-dw0")
 class TestConvenienceFunctions:
     """Test convenience functions"""
 
     @pytest.mark.asyncio
-    @pytest.mark.skip(reason="Pre-existing failure - tracked in piper-morgan-dw0")
     @patch("services.conversation.context_tracker.enhanced_context_tracker")
     async def test_enrich_message_context(self, mock_tracker):
         """Test enrich_message_context convenience function"""
@@ -351,7 +346,7 @@ class TestConvenienceFunctions:
             enrichment_metadata={},
         )
 
-        mock_tracker.enrich_conversation_context.return_value = mock_enrichment
+        mock_tracker.enrich_conversation_context = AsyncMock(return_value=mock_enrichment)
 
         result = await enrich_message_context("test", "conv-123")
 
@@ -365,7 +360,7 @@ class TestConvenienceFunctions:
     async def test_get_conversation_context_summary(self, mock_tracker):
         """Test get_conversation_context_summary convenience function"""
         mock_summary = {"conversation_id": "conv-123", "stats": {}}
-        mock_tracker.get_conversation_summary.return_value = mock_summary
+        mock_tracker.get_conversation_summary = AsyncMock(return_value=mock_summary)
 
         result = await get_conversation_context_summary("conv-123")
 

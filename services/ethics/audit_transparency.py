@@ -11,7 +11,7 @@ Leverages existing infrastructure:
 import hashlib
 import json
 import re
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
@@ -117,7 +117,7 @@ class AuditTransparency:
         try:
             # Create audit log entry
             entry = AuditLogEntry(
-                entry_id=f"audit_{int(datetime.utcnow().timestamp())}",
+                entry_id=f"audit_{int(datetime.now(timezone.utc).timestamp())}",
                 event_type="ethics_decision",
                 timestamp=decision.timestamp,
                 session_id=decision.session_id,
@@ -159,7 +159,7 @@ class AuditTransparency:
         try:
             # Create audit log entry
             entry = AuditLogEntry(
-                entry_id=f"audit_{int(datetime.utcnow().timestamp())}",
+                entry_id=f"audit_{int(datetime.now(timezone.utc).timestamp())}",
                 event_type="boundary_violation",
                 timestamp=violation.timestamp,
                 session_id=violation.session_id,
@@ -236,7 +236,7 @@ class AuditTransparency:
     async def get_system_audit_summary(self, days: int = 30) -> Dict[str, Any]:
         """Get system-wide audit summary (admin only)"""
         try:
-            cutoff_date = datetime.utcnow() - timedelta(days=days)
+            cutoff_date = datetime.now(timezone.utc) - timedelta(days=days)
 
             # Filter recent entries
             recent_entries = [entry for entry in self.audit_logs if entry.timestamp >= cutoff_date]
@@ -256,7 +256,7 @@ class AuditTransparency:
                 "event_type_breakdown": event_types,
                 "date_range": {
                     "start": cutoff_date.isoformat(),
-                    "end": datetime.utcnow().isoformat(),
+                    "end": datetime.now(timezone.utc).isoformat(),
                 },
             }
 
@@ -270,7 +270,7 @@ class AuditTransparency:
 
     async def cleanup_old_entries(self) -> None:
         """Clean up old audit log entries"""
-        cutoff_date = datetime.utcnow() - timedelta(days=self.log_retention_days)
+        cutoff_date = datetime.now(timezone.utc) - timedelta(days=self.log_retention_days)
 
         original_count = len(self.audit_logs)
         self.audit_logs = [entry for entry in self.audit_logs if entry.timestamp >= cutoff_date]
@@ -332,7 +332,7 @@ class AuditTransparency:
                 [
                     entry
                     for entry in self.audit_logs
-                    if entry.timestamp >= datetime.utcnow() - timedelta(days=1)
+                    if entry.timestamp >= datetime.now(timezone.utc) - timedelta(days=1)
                 ]
             ),
         }

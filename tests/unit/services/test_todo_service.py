@@ -1,6 +1,6 @@
 """Tests for TodoService."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import UUID, uuid4
 
 import pytest
@@ -43,8 +43,8 @@ class TestTodoService:
                     "id": user_id,
                     "username": f"test_user_{user_id[:8]}",
                     "email": f"test_{user_id[:8]}@example.com",
-                    "created_at": datetime.utcnow(),
-                    "updated_at": datetime.utcnow(),
+                    "created_at": datetime.now(timezone.utc),
+                    "updated_at": datetime.now(timezone.utc),
                 },
             )
             await session.commit()

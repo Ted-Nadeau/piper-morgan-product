@@ -6,7 +6,7 @@ Provides immediate halt capability for all automation operations.
 Issue: #225 (CORE-LEARN-E)
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Optional, Set
 
 
@@ -31,7 +31,7 @@ class EmergencyStop:
             reason: Reason for emergency stop
         """
         self._stop_flag = True
-        self._stopped_at = datetime.utcnow()
+        self._stopped_at = datetime.now(timezone.utc)
 
         # Log emergency stop
         print(f"🚨 EMERGENCY STOP TRIGGERED: {reason} at {self._stopped_at}")

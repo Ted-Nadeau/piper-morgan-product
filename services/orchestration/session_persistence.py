@@ -8,7 +8,7 @@ Integrates UserPreferenceManager with session persistence and context inheritanc
 
 import asyncio
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
@@ -397,7 +397,7 @@ class SessionContextManager:
             [
                 s
                 for s in self.session_manager._sessions.values()
-                if (datetime.utcnow() - s.last_activity).total_seconds()
+                if (datetime.now(timezone.utc) - s.last_activity).total_seconds()
                 > self.session_manager.ttl.total_seconds()
             ]
         )

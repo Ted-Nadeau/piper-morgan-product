@@ -10,7 +10,7 @@ Issue: #227 CORE-USERS-JWT
 import asyncio
 import time
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from statistics import mean, median
 
 import pytest
@@ -64,7 +64,7 @@ async def blacklist():
 async def sample_tokens(blacklist):
     """Create sample blacklisted tokens for testing"""
     token_ids = []
-    expires_at = datetime.utcnow() + timedelta(hours=1)
+    expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
 
     # Add 10 sample tokens to blacklist
     for i in range(10):
@@ -161,7 +161,7 @@ async def test_blacklist_add_latency():
 
     latencies = []
     token_ids = []
-    expires_at = datetime.utcnow() + timedelta(hours=1)
+    expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
 
     # Test adding tokens
     for i in range(20):
@@ -232,7 +232,7 @@ async def test_concurrent_blacklist_lookups():
 
     # Create sample tokens
     token_ids = []
-    expires_at = datetime.utcnow() + timedelta(hours=1)
+    expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
     for i in range(10):
         token_id = f"test_token_{uuid.uuid4()}"
         await blacklist.add(

@@ -12,7 +12,7 @@ Note: List primitive already exists in services.domain.models (line 866).
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 from uuid import uuid4
 
@@ -47,8 +47,8 @@ class Item:
     text: str = ""  # The universal property - all items have text
     position: int = 0  # Order within the list
     list_id: Optional[str] = None  # Which list contains this item
-    created_at: datetime = field(default_factory=datetime.utcnow)
-    updated_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     def move_to_position(self, new_position: int):
         """Items can be reordered.
@@ -57,7 +57,7 @@ class Item:
             new_position: New position in the list (0-indexed)
         """
         self.position = new_position
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(timezone.utc)
 
     def update_text(self, new_text: str):
         """Update item text.
@@ -66,7 +66,7 @@ class Item:
             new_text: New text content for the item
         """
         self.text = new_text
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(timezone.utc)
 
 
 # Note: List primitive already exists at services.domain.models:866

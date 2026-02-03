@@ -13,7 +13,7 @@ This framework provides systematic testing for:
 import asyncio
 import json
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 from unittest.mock import AsyncMock, Mock, patch
 
@@ -81,7 +81,7 @@ class BoundaryEnforcementTest(EthicsTestScenario):
         return {
             "violation_detected": violation_detected,
             "session_id": context["session_id"],
-            "timestamp": datetime.utcnow(),
+            "timestamp": datetime.now(timezone.utc),
         }
 
     async def validate_results(self, results: Dict[str, Any]) -> bool:
@@ -137,7 +137,7 @@ class EthicsDecisionTest(EthicsTestScenario):
             "decision_result": decision_result,
             "response_time_ms": response_time_ms,
             "session_id": context["session_id"],
-            "timestamp": datetime.utcnow(),
+            "timestamp": datetime.now(timezone.utc),
         }
 
     async def validate_results(self, results: Dict[str, Any]) -> bool:
@@ -185,7 +185,7 @@ class AuditTransparencyTest(EthicsTestScenario):
         return {
             "audit_success": audit_success,
             "session_id": context["session_id"],
-            "timestamp": datetime.utcnow(),
+            "timestamp": datetime.now(timezone.utc),
         }
 
     async def validate_results(self, results: Dict[str, Any]) -> bool:
@@ -231,7 +231,7 @@ class ProfessionalBoundaryTest(EthicsTestScenario):
         return {
             "enforcement_applied": enforcement_needed,
             "session_id": context["session_id"],
-            "timestamp": datetime.utcnow(),
+            "timestamp": datetime.now(timezone.utc),
         }
 
     async def validate_results(self, results: Dict[str, Any]) -> bool:
@@ -274,7 +274,7 @@ class PatternLearningTest(EthicsTestScenario):
         return {
             "pattern_success": pattern_success,
             "session_id": context["session_id"],
-            "timestamp": datetime.utcnow(),
+            "timestamp": datetime.now(timezone.utc),
         }
 
     async def validate_results(self, results: Dict[str, Any]) -> bool:
@@ -331,7 +331,7 @@ class EthicsTestFramework:
                     "context": context,
                     "results": results,
                     "validation_passed": validation_passed,
-                    "timestamp": datetime.utcnow(),
+                    "timestamp": datetime.now(timezone.utc),
                 }
 
                 self.results.append(scenario_result)
@@ -356,7 +356,7 @@ class EthicsTestFramework:
                     "description": scenario.description,
                     "error": str(e),
                     "validation_passed": False,
-                    "timestamp": datetime.utcnow(),
+                    "timestamp": datetime.now(timezone.utc),
                 }
                 self.results.append(scenario_result)
 
@@ -374,7 +374,7 @@ class EthicsTestFramework:
             "failed_scenarios": failed_scenarios,
             "success_rate": passed_scenarios / total_scenarios if total_scenarios > 0 else 0,
             "results": self.results,
-            "timestamp": datetime.utcnow(),
+            "timestamp": datetime.now(timezone.utc),
         }
 
 
@@ -505,6 +505,6 @@ async def test_comprehensive_ethics_framework(ethics_test_framework, ethics_metr
         {
             "total_scenarios": results["total_scenarios"],
             "success_rate": results["success_rate"],
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         },
     )

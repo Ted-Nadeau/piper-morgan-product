@@ -695,11 +695,11 @@ Respond only with valid JSON:"""
                         "action": intent.action,
                         "confidence": intent.confidence,
                     },
-                    "message": intent.message,
+                    "message": intent.original_message,
                     "reasoning": classification_result.get("reasoning", ""),
                     "timestamp": datetime.now().isoformat(),
                 },
-                session_id=intent.session_id,
+                session_id=None,  # Intent doesn't have session_id field
             )
 
             logger.debug(f"Stored classification in Knowledge Graph: {node.id}")

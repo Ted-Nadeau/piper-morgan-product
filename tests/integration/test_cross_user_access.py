@@ -9,7 +9,7 @@ ADR: ADR-044 (Lightweight RBAC)
 Phase: 3 - System-wide admin role testing
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import uuid4
 
 import pytest
@@ -43,8 +43,8 @@ async def create_test_user_in_session(
             "id": user_id,
             "username": username,
             "email": email,
-            "created_at": datetime.utcnow(),
-            "updated_at": datetime.utcnow(),
+            "created_at": datetime.now(timezone.utc),
+            "updated_at": datetime.now(timezone.utc),
         },
     )
     await session.flush()

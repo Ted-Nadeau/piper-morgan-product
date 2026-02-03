@@ -9,7 +9,7 @@ Issue #253 CORE-KEYS-COST-ANALYTICS
 
 import logging
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from enum import Enum
 from typing import Any, Dict, List, Optional
@@ -53,7 +53,7 @@ class Budget:
         if self.alert_thresholds is None:
             self.alert_thresholds = [0.5, 0.75, 0.9, 1.0]
         if self.created_at is None:
-            self.created_at = datetime.utcnow()
+            self.created_at = datetime.now(timezone.utc)
 
 
 @dataclass
@@ -245,7 +245,7 @@ class BudgetManager:
                             current_percentage=new_percentage,
                             severity=self._get_alert_severity(threshold),
                             message=self._generate_alert_message(budget, threshold, new_spending),
-                            triggered_at=datetime.utcnow(),
+                            triggered_at=datetime.now(timezone.utc),
                         )
                         alerts.append(alert)
 
@@ -333,7 +333,7 @@ class BudgetManager:
 
     def _get_days_remaining_in_period(self, budget_type: BudgetType) -> int:
         """Get days remaining in current budget period"""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
 
         if budget_type == BudgetType.DAILY:
             tomorrow = now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
@@ -368,7 +368,7 @@ class BudgetManager:
 
     def _get_days_elapsed_in_period(self, budget_type: BudgetType) -> int:
         """Get days elapsed in current budget period"""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
 
         if budget_type == BudgetType.DAILY:
             start_of_day = now.replace(hour=0, minute=0, second=0, microsecond=0)

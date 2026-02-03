@@ -11,7 +11,7 @@ Test Coverage:
 - Security fail-closed behavior
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import UUID, uuid4
 
@@ -127,7 +127,7 @@ class TestTokenBlacklistOperations:
     async def test_add_to_blacklist_redis(self, blacklist):
         """Should add token to Redis blacklist"""
         token_id = "test-token-123"
-        expires_at = datetime.utcnow() + timedelta(hours=1)
+        expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
 
         success = await blacklist.add(token_id=token_id, reason="logout", expires_at=expires_at)
 
@@ -141,7 +141,7 @@ class TestTokenBlacklistOperations:
     async def test_add_expired_token_skipped(self, blacklist):
         """Should skip adding already-expired tokens"""
         token_id = "expired-token"
-        expires_at = datetime.utcnow() - timedelta(hours=1)
+        expires_at = datetime.now(timezone.utc) - timedelta(hours=1)
 
         success = await blacklist.add(token_id=token_id, reason="logout", expires_at=expires_at)
 
@@ -152,7 +152,7 @@ class TestTokenBlacklistOperations:
     async def test_is_blacklisted_true(self, blacklist):
         """Should detect blacklisted tokens"""
         token_id = "blacklisted-token"
-        expires_at = datetime.utcnow() + timedelta(hours=1)
+        expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
 
         # Add token to blacklist first
         await blacklist.add(token_id=token_id, reason="test", expires_at=expires_at)
@@ -336,7 +336,7 @@ class TestEdgeCases:
         import asyncio
 
         token_ids = [f"token-{i}" for i in range(10)]
-        expires_at = datetime.utcnow() + timedelta(hours=1)
+        expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
 
         # Add multiple tokens concurrently
         tasks = [

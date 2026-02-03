@@ -2,7 +2,7 @@
 Feedback domain models for PM-005 feedback tracking implementation
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Optional
 from uuid import UUID, uuid4
 
@@ -38,8 +38,8 @@ class Feedback(BaseModel):
     tags: List[str] = Field(default_factory=list, description="User or system tags")
 
     # Timestamps
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     class Config:
         json_encoders = {datetime: lambda v: v.isoformat()}

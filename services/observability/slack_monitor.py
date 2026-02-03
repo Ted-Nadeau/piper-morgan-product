@@ -14,7 +14,7 @@ import logging
 import time
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
@@ -63,7 +63,7 @@ class StageMetrics:
 
     def complete_success(self, metadata: Optional[Dict[str, Any]] = None):
         """Mark stage as successfully completed"""
-        self.completed_at = datetime.utcnow()
+        self.completed_at = datetime.now(timezone.utc)
         self.duration_ms = (self.completed_at - self.started_at).total_seconds() * 1000
         self.success = True
         if metadata:
@@ -71,7 +71,7 @@ class StageMetrics:
 
     def complete_failure(self, error: str, metadata: Optional[Dict[str, Any]] = None):
         """Mark stage as failed with error details"""
-        self.completed_at = datetime.utcnow()
+        self.completed_at = datetime.now(timezone.utc)
         self.duration_ms = (self.completed_at - self.started_at).total_seconds() * 1000
         self.success = False
         self.error = error
@@ -100,12 +100,12 @@ class SlackPipelineMetrics:
 
     def start_pipeline(self):
         """Start pipeline timing"""
-        self.start_time = datetime.utcnow()
+        self.start_time = datetime.now(timezone.utc)
         logger.info(f"Pipeline {self.correlation_id} started")
 
     def end_pipeline(self):
         """End pipeline timing"""
-        self.end_time = datetime.utcnow()
+        self.end_time = datetime.now(timezone.utc)
         if self.start_time:
             duration = (self.end_time - self.start_time).total_seconds()
             logger.info(f"Pipeline {self.correlation_id} ended after {duration:.2f}s")
@@ -116,7 +116,7 @@ class SlackPipelineMetrics:
             "name": stage_name,
             "data": stage_data,
             "correlation_id": self.correlation_id,
-            "timestamp": datetime.utcnow(),
+            "timestamp": datetime.now(timezone.utc),
         }
         self.processing_stages.append(stage_record)
         logger.debug(f"Recorded stage {stage_name} for pipeline {self.correlation_id}")
@@ -126,7 +126,7 @@ class SlackPipelineMetrics:
     ) -> StageMetrics:
         """Start tracking a new pipeline stage"""
         stage_metrics = StageMetrics(
-            stage=stage, started_at=datetime.utcnow(), metadata=metadata or {}
+            stage=stage, started_at=datetime.now(timezone.utc), metadata=metadata or {}
         )
         self.stages[stage] = stage_metrics
 
@@ -188,7 +188,7 @@ class SlackPipelineMetrics:
 
     def complete_pipeline(self, success: bool = True, error_details: Optional[str] = None):
         """Complete the entire pipeline with final status"""
-        self.completed_at = datetime.utcnow()
+        self.completed_at = datetime.now(timezone.utc)
         self.total_duration_ms = (self.completed_at - self.started_at).total_seconds() * 1000
         self.final_status = "success" if success else "failed"
         self.error_details = error_details
@@ -276,7 +276,7 @@ class SlackPipelineMonitor:
         pipeline_metrics = SlackPipelineMetrics(
             correlation_id=corr_id,
             slack_event_id=event_id,
-            started_at=datetime.utcnow(),
+            started_at=datetime.now(timezone.utc),
             webhook_data=webhook_data,
         )
 
@@ -306,7 +306,7 @@ class SlackPipelineMonitor:
 
     def cleanup_stale_pipelines(self, max_age_minutes: int = 30):
         """Clean up pipelines that have been running too long (likely stuck)"""
-        cutoff_time = datetime.utcnow().timestamp() - (max_age_minutes * 60)
+        cutoff_time = datetime.now(timezone.utc).timestamp() - (max_age_minutes * 60)
         stale_pipelines = []
 
         for correlation_id, pipeline in ACTIVE_PIPELINES.items():

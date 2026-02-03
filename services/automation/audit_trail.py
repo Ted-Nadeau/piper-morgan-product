@@ -8,7 +8,7 @@ Issue: #225 (CORE-LEARN-E)
 
 import json
 from dataclasses import asdict, dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Optional
 from uuid import UUID
 
@@ -73,7 +73,7 @@ class AuditTrail:
             The logged AutomationEvent
         """
         event = AutomationEvent(
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             event_type=event_type,
             action_type=action_type,
             confidence=confidence,

@@ -8,7 +8,7 @@ Leverages existing infrastructure:
 - services/api/errors.py patterns
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -75,7 +75,7 @@ async def get_user_audit_log(
             total_entries=len(entries),
             session_id=session_id,
             request_limit=limit,
-            timestamp=datetime.utcnow().isoformat(),
+            timestamp=datetime.now(timezone.utc).isoformat(),
         )
 
     except Exception as e:
@@ -115,7 +115,7 @@ async def get_user_audit_summary(session_id: str) -> AuditSummaryResponse:
             boundary_types[boundary_type] = boundary_types.get(boundary_type, 0) + 1
 
         # Recent activity (last 24 hours)
-        recent_cutoff = datetime.utcnow().timestamp() - 86400  # 24 hours
+        recent_cutoff = datetime.now(timezone.utc).timestamp() - 86400  # 24 hours
         recent_entries = [
             e
             for e in entries
@@ -147,7 +147,9 @@ async def get_user_audit_summary(session_id: str) -> AuditSummaryResponse:
             },
         )
 
-        return AuditSummaryResponse(summary=summary, timestamp=datetime.utcnow().isoformat())
+        return AuditSummaryResponse(
+            summary=summary, timestamp=datetime.now(timezone.utc).isoformat()
+        )
 
     except Exception as e:
         logger.log_boundary_violation(
@@ -193,7 +195,9 @@ async def get_transparency_stats() -> TransparencyStatsResponse:
             },
         )
 
-        return TransparencyStatsResponse(stats=stats, timestamp=datetime.utcnow().isoformat())
+        return TransparencyStatsResponse(
+            stats=stats, timestamp=datetime.now(timezone.utc).isoformat()
+        )
 
     except Exception as e:
         logger.log_boundary_violation(
@@ -221,7 +225,7 @@ async def transparency_health_check() -> Dict:
             "audit_log_entries": stats.get("total_audit_entries", 0),
             "transparency_requests": stats.get("transparency_requests", 0),
             "redaction_operations": stats.get("redaction_operations", 0),
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
         # Log health check
@@ -237,7 +241,11 @@ async def transparency_health_check() -> Dict:
             "transparency_health_error", {"error": str(e), "endpoint": "transparency_health_check"}
         )
 
-        return {"status": "unhealthy", "error": str(e), "timestamp": datetime.utcnow().isoformat()}
+        return {
+            "status": "unhealthy",
+            "error": str(e),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
 
 
 @transparency_router.post("/cleanup")
@@ -254,7 +262,7 @@ async def trigger_audit_cleanup() -> Dict:
             "status": "cleanup_completed",
             "total_entries_remaining": stats.get("total_audit_entries", 0),
             "log_retention_days": stats.get("log_retention_days", 90),
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
         # Log cleanup

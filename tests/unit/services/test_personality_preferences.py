@@ -12,7 +12,7 @@ Tests verify that:
 Issue #269 CORE-PREF-PERSONALITY-INTEGRATION
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
 
@@ -47,7 +47,7 @@ def base_preferences():
         "decision_making": "collaborative",
         "learning_style": "examples",
         "feedback_level": "moderate",
-        "configured_at": datetime.utcnow().isoformat(),
+        "configured_at": datetime.now(timezone.utc).isoformat(),
     }
 
 
@@ -554,7 +554,7 @@ def test_internal_create_from_preferences_integration():
         "decision_making": "data-driven",
         "learning_style": "explanations",
         "feedback_level": "minimal",
-        "configured_at": datetime.utcnow().isoformat(),
+        "configured_at": datetime.now(timezone.utc).isoformat(),
     }
 
     # Use internal method directly (this is what load_with_preferences calls)

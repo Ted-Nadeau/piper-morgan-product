@@ -4,7 +4,7 @@ SQLAlchemy models for PersonalityProfile persistence
 """
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import Boolean, Column, DateTime, Float, String
 from sqlalchemy.dialects.postgresql import UUID
@@ -24,8 +24,15 @@ class PersonalityProfileModel(Base):
     confidence_style = Column(String(50), nullable=False, default="contextual")
     action_orientation = Column(String(50), nullable=False, default="medium")
     technical_depth = Column(String(50), nullable=False, default="balanced")
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(
+        DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc)
+    )
+    updated_at = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
     is_active = Column(Boolean, nullable=False, default=True, index=True)
 
     def __repr__(self):

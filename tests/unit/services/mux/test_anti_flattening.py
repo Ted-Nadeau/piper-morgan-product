@@ -13,7 +13,7 @@ Part of MUX-399-PZ: Verification & Anti-Flattening Tests
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 import pytest
@@ -340,7 +340,7 @@ class TestMetadataPreservesKnowing:
         """Provenance freshness decays - knowledge ages."""
         from datetime import timedelta
 
-        old_fetch = datetime.utcnow() - timedelta(hours=2)
+        old_fetch = datetime.now(timezone.utc) - timedelta(hours=2)
         p = Provenance(source="github", fetched_at=old_fetch)
         # Freshness should be low for old data
         assert p.freshness < 0.5  # Has decayed

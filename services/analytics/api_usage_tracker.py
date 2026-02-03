@@ -9,7 +9,7 @@ Issue #253 CORE-KEYS-COST-ANALYTICS
 
 import logging
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from typing import Any, Dict, List, Optional
 from uuid import UUID
@@ -134,7 +134,7 @@ class APIUsageTracker:
                 feature=request_data.get("feature", "chat"),
                 request_id=request_data.get("request_id"),
                 response_time_ms=response_data.get("response_time_ms"),
-                created_at=datetime.utcnow(),
+                created_at=datetime.now(timezone.utc),
             )
 
             # Store in database (would need actual table implementation)
@@ -199,7 +199,7 @@ class APIUsageTracker:
                     "feature": usage_log.feature or "chat",
                     "request_id": usage_log.request_id,
                     "response_time_ms": usage_log.response_time_ms,
-                    "created_at": usage_log.created_at or datetime.utcnow(),
+                    "created_at": usage_log.created_at or datetime.now(timezone.utc),
                 },
             )
 
@@ -288,7 +288,7 @@ class APIUsageTracker:
 
     def _calculate_period_dates(self, period: str) -> tuple[datetime, datetime]:
         """Calculate start and end dates for period"""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
 
         if period == "day":
             start = now.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -346,7 +346,7 @@ class APIUsageTracker:
             trends = []
 
             for i in range(days):
-                date = datetime.utcnow() - timedelta(days=i)
+                date = datetime.now(timezone.utc) - timedelta(days=i)
                 trends.append(
                     {
                         "date": date.strftime("%Y-%m-%d"),

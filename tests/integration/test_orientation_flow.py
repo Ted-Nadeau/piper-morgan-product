@@ -3,7 +3,7 @@
 Tests verify the dismiss endpoint persists orientation_seen to database.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import uuid4
 
 import pytest
@@ -32,8 +32,8 @@ class TestOrientationFlow:
                 "id": user_id,
                 "username": f"test_user_{user_id[:8]}",
                 "email": f"test_{user_id[:8]}@example.com",
-                "created_at": datetime.utcnow(),
-                "updated_at": datetime.utcnow(),
+                "created_at": datetime.now(timezone.utc),
+                "updated_at": datetime.now(timezone.utc),
             },
         )
         await integration_db.commit()
@@ -78,8 +78,8 @@ class TestOrientationFlow:
                 "id": user_id,
                 "username": f"test_user_{user_id[:8]}",
                 "email": f"test_{user_id[:8]}@example.com",
-                "created_at": datetime.utcnow(),
-                "updated_at": datetime.utcnow(),
+                "created_at": datetime.now(timezone.utc),
+                "updated_at": datetime.now(timezone.utc),
             },
         )
         await integration_db.commit()

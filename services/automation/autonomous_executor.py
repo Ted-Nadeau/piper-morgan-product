@@ -7,7 +7,7 @@ Issue: #225 (CORE-LEARN-E)
 """
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Awaitable, Callable, Dict, List, Optional
 from uuid import UUID
 
@@ -88,7 +88,7 @@ class AutonomousExecutor:
         - Logs ALL execution attempts
         - Validates confidence thresholds
         """
-        timestamp = datetime.utcnow()
+        timestamp = datetime.now(timezone.utc)
 
         # SAFETY CHECK 1: Emergency stop
         if self.emergency_stop.is_stopped():

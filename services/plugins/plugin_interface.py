@@ -167,20 +167,26 @@ class PiperPlugin(ABC):
         pass
 
     @abstractmethod
-    def is_configured(self) -> bool:
+    def is_configured(self, user_id: Optional[str] = None) -> bool:
         """
-        Check if plugin is properly configured.
+        Check if plugin is properly configured for a user.
 
         Validates that all required configuration (environment variables,
         credentials, etc.) is present for the plugin to operate.
 
+        Args:
+            user_id: User identifier for user-scoped configuration.
+                     If None, returns False (can't check user config without user).
+                     Issue #759: Added for multi-tenancy support.
+
         Returns:
-            bool: True if configured, False otherwise
+            bool: True if configured for the given user, False otherwise
 
         Example:
-            def is_configured(self) -> bool:
-                config = self.config_service.get_config()
-                return config.validate()
+            def is_configured(self, user_id: Optional[str] = None) -> bool:
+                if user_id is None:
+                    return False
+                return self.config_service.is_configured(user_id)
         """
         pass
 

@@ -5,7 +5,7 @@ Issue #419: MUX-NAV-HOME - Home State Design
 Pattern-050: Context Dataclass Pair
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import uuid4
 
 import pytest
@@ -23,7 +23,7 @@ class TestHomeStateContext:
         ctx = HomeStateContext(
             user_id=user_id,
             trust_stage=TrustStage.BUILDING,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
         )
         assert ctx.user_id == user_id
         assert ctx.trust_stage == TrustStage.BUILDING
@@ -34,7 +34,7 @@ class TestHomeStateContext:
         ctx = HomeStateContext(
             user_id=uuid4(),
             trust_stage=TrustStage.NEW,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             time_of_day="morning",
         )
         assert ctx.time_of_day == "morning"
@@ -83,7 +83,7 @@ class TestHomeStateService:
         return HomeStateContext(
             user_id=uuid4(),
             trust_stage=TrustStage.NEW,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
         )
 
     @pytest.fixture
@@ -92,7 +92,7 @@ class TestHomeStateService:
         return HomeStateContext(
             user_id=uuid4(),
             trust_stage=TrustStage.TRUSTED,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
         )
 
     @pytest.mark.asyncio
@@ -143,7 +143,7 @@ class TestHomeStateService:
             ctx = HomeStateContext(
                 user_id=uuid4(),
                 trust_stage=stage,
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(timezone.utc),
             )
             result = await service.generate_home_state(ctx)
             greetings[stage] = result.greeting
@@ -168,7 +168,7 @@ class TestHomeStateService:
         morning_ctx = HomeStateContext(
             user_id=uuid4(),
             trust_stage=TrustStage.BUILDING,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             time_of_day="morning",
         )
         result = await service.generate_home_state(morning_ctx)
@@ -182,7 +182,7 @@ class TestHomeStateService:
         stage_2_ctx = HomeStateContext(
             user_id=uuid4(),
             trust_stage=TrustStage.BUILDING,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
         )
         result = await service.generate_home_state(stage_2_ctx)
         # Currently returns None anyway, but this documents the intent
@@ -192,7 +192,7 @@ class TestHomeStateService:
         stage_3_ctx = HomeStateContext(
             user_id=uuid4(),
             trust_stage=TrustStage.ESTABLISHED,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
         )
         # This will be tested more thoroughly when briefing is implemented
 

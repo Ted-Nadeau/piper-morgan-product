@@ -4,7 +4,7 @@ Purpose: Connect coordination to conversation sessions
 """
 
 import asyncio
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 
 from services.domain.models import Intent
@@ -39,7 +39,7 @@ class SessionIntegration:
             # Track coordination in session
             session_context["ongoing_coordination"] = {
                 "workflow_id": workflow.id,
-                "started_at": datetime.utcnow().isoformat(),
+                "started_at": datetime.now(timezone.utc).isoformat(),
                 "intent": intent.__dict__,
                 "status": "active",
             }

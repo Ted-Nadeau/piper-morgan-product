@@ -49,12 +49,16 @@ class TodoIntentHandlers:
         Handle: "add todo: Review PR #285"
         Extract text, create todo with database persistence, format response.
         """
-        text = self._extract_todo_text(intent.original_message)
+        # Note: original_message may be in intent.original_message OR intent.context["original_message"]
+        # depending on how the Intent was created (Issue #744)
+        original_message = intent.original_message or intent.context.get("original_message", "")
+
+        text = self._extract_todo_text(original_message)
         if not text:
             return "I didn't catch what you'd like me to add. Could you try: 'add todo: [description]'?"
 
         # Parse optional priority
-        priority = self._extract_priority(intent.original_message)
+        priority = self._extract_priority(original_message)
 
         try:
             # Create todo via service (database persistence)
@@ -122,7 +126,10 @@ class TodoIntentHandlers:
 
     async def handle_complete_todo(self, intent: Intent, session_id: str, user_id: UUID) -> str:
         """Handle: "mark todo 1 as complete" or "complete todo about PR"""
-        todo_number = self._extract_todo_id(intent.original_message)
+        # Note: original_message may be in intent.original_message OR intent.context["original_message"]
+        # depending on how the Intent was created (Issue #744)
+        original_message = intent.original_message or intent.context.get("original_message", "")
+        todo_number = self._extract_todo_id(original_message)
         if not todo_number:
             return "Which todo? Try: 'mark todo [number] as complete'"
 
@@ -158,7 +165,10 @@ class TodoIntentHandlers:
 
     async def handle_delete_todo(self, intent: Intent, session_id: str, user_id: UUID) -> str:
         """Handle: "delete todo 3" or "remove todo about meeting"""
-        todo_number = self._extract_todo_id(intent.original_message)
+        # Note: original_message may be in intent.original_message OR intent.context["original_message"]
+        # depending on how the Intent was created (Issue #744)
+        original_message = intent.original_message or intent.context.get("original_message", "")
+        todo_number = self._extract_todo_id(original_message)
         if not todo_number:
             return "Which todo should I remove? Try: 'delete todo [number]'"
 

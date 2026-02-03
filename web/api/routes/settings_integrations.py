@@ -1280,7 +1280,10 @@ async def get_notion_settings():
 
 
 @router.post("/notion/save")
-async def save_notion_key(api_key: str):
+async def save_notion_key(
+    api_key: str,
+    current_user: JWTClaims = Depends(get_current_user),
+):
     """
     Save or update Notion API key.
 
@@ -1305,11 +1308,10 @@ async def save_notion_key(api_key: str):
         async with AsyncSessionFactory.session_scope_fresh() as session:
             service = UserAPIKeyService()
 
-            # Get current user from session context (simplified - use system user for now)
-            # In production, this should get the authenticated user
+            # Use authenticated user from JWT context
             await service.store_user_key(
                 session=session,
-                user_id="system",  # TODO: Get from auth context
+                user_id=str(current_user.user_id),
                 provider="notion",
                 api_key=api_key,
                 validate=False,  # Already validated above

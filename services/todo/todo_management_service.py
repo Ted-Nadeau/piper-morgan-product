@@ -21,7 +21,7 @@ Examples:
     >>> print(f"Created todo {todo.id}: {todo.text}")
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING, List, Optional
 from uuid import UUID, uuid4
 
@@ -130,8 +130,8 @@ class TodoManagementService:
                 due_date=due_date,
                 status="pending",
                 completed=False,
-                created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow(),
+                created_at=datetime.now(timezone.utc),
+                updated_at=datetime.now(timezone.utc),
                 **kwargs,
             )
 

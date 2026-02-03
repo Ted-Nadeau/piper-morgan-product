@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 import pytest
 
@@ -22,7 +22,7 @@ class TestSessionFileTracking:
         file_id = "test_file_123"
         filename = "test.csv"
         file_type = "text/csv"
-        upload_time = datetime.utcnow()
+        upload_time = datetime.now(timezone.utc)
 
         session.add_uploaded_file(file_id, filename, file_type, upload_time)
 
@@ -73,11 +73,13 @@ class TestSessionFileTracking:
         session = session_manager.get_or_create_session(session_id)
 
         # Add first file
-        session.add_uploaded_file("file1", "first.pdf", "application/pdf", datetime.utcnow())
+        session.add_uploaded_file(
+            "file1", "first.pdf", "application/pdf", datetime.now(timezone.utc)
+        )
         assert session.active_file_id == "file1"
 
         # Add second file
-        session.add_uploaded_file("file2", "second.csv", "text/csv", datetime.utcnow())
+        session.add_uploaded_file("file2", "second.csv", "text/csv", datetime.now(timezone.utc))
         assert session.active_file_id == "file2"  # Should be updated to most recent
 
     def test_file_reference_tracking(self, session_manager):
@@ -86,7 +88,9 @@ class TestSessionFileTracking:
         session = session_manager.get_or_create_session(session_id)
 
         # Add a file
-        session.add_uploaded_file("test_file", "test.pdf", "application/pdf", datetime.utcnow())
+        session.add_uploaded_file(
+            "test_file", "test.pdf", "application/pdf", datetime.now(timezone.utc)
+        )
 
         # Initially not referenced
         assert session.uploaded_files[0]["referenced"] == False
@@ -101,7 +105,9 @@ class TestSessionFileTracking:
 
         # Create session and add file
         session1 = session_manager.get_or_create_session(session_id)
-        session1.add_uploaded_file("test_file", "test.pdf", "application/pdf", datetime.utcnow())
+        session1.add_uploaded_file(
+            "test_file", "test.pdf", "application/pdf", datetime.now(timezone.utc)
+        )
 
         # Retrieve same session
         session2 = session_manager.get_or_create_session(session_id)

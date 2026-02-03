@@ -15,8 +15,9 @@ import hashlib
 import hmac
 import json
 import logging
+import os
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, HTTPException, Request, status
@@ -98,6 +99,19 @@ class SlackWebhookRouter:
         self._register_routes()
 
         logger.info("SlackWebhookRouter initialized with complete integration pipeline")
+
+    def _get_connector_user_id(self) -> Optional[str]:
+        """Get the user_id that owns the Slack integration.
+
+        For alpha: Uses SLACK_CONNECTOR_USER_ID env var.
+        Future (#760): Will query slack_workspaces table by team_id.
+
+        Returns:
+            User ID string or None if not configured.
+
+        Issue #759: Added for multi-tenancy support.
+        """
+        return os.getenv("SLACK_CONNECTOR_USER_ID")
 
     async def handle_slack_events(self, event_data: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -227,8 +241,9 @@ class SlackWebhookRouter:
             True if signature is valid
         """
         try:
-            config = self.config_service.get_config()
-            signing_secret = config.signing_secret
+            user_id = self._get_connector_user_id()
+            config = self.config_service.get_config(user_id) if user_id else None
+            signing_secret = config.signing_secret if config else None
 
             if not signing_secret:
                 logger.warning(
@@ -512,7 +527,8 @@ class SlackWebhookRouter:
         """Webhook health check endpoint"""
 
         try:
-            config = self.config_service.get_config()
+            user_id = self._get_connector_user_id()
+            config = self.config_service.get_config(user_id) if user_id else None
             oauth_status = self.oauth_handler.get_oauth_status()
             spatial_analytics = self.spatial_mapper.get_spatial_analytics()
 
@@ -526,9 +542,10 @@ class SlackWebhookRouter:
                     "oauth_callback": "/slack/oauth/callback",
                 },
                 "configuration": {
-                    "webhooks_enabled": config.enable_webhooks,
-                    "spatial_mapping_enabled": config.enable_spatial_mapping,
-                    "environment": config.environment.value,
+                    "webhooks_enabled": config.enable_webhooks if config else False,
+                    "spatial_mapping_enabled": config.enable_spatial_mapping if config else False,
+                    "environment": config.environment.value if config else "unknown",
+                    "connector_user_configured": user_id is not None,
                 },
                 "oauth_handler": oauth_status,
                 "spatial_mapper": spatial_analytics,
@@ -684,8 +701,9 @@ class SlackWebhookRouter:
         """Verify Slack request signature for security (async wrapper for Request objects)"""
 
         try:
-            config = self.config_service.get_config()
-            signing_secret = config.signing_secret
+            user_id = self._get_connector_user_id()
+            config = self.config_service.get_config(user_id) if user_id else None
+            signing_secret = config.signing_secret if config else None
 
             if not signing_secret:
                 logger.warning(
@@ -725,7 +743,7 @@ class SlackWebhookRouter:
         pipeline = SlackPipelineMetrics(
             correlation_id=current_correlation_id,
             slack_event_id=event_id,
-            started_at=datetime.utcnow(),
+            started_at=datetime.now(timezone.utc),
             webhook_data=event_data,
         )
 
