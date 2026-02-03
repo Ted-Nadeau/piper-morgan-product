@@ -92,3 +92,4 @@ advisors/*/outbox/*.tmp
 .trees/
 external/ted-multichat/
 dev/
+.beads/
