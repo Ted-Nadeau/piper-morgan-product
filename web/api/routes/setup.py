@@ -598,6 +598,76 @@ async def use_keychain(req: KeychainUseRequest):
         )
 
 
+# ============================================================================
+# Integration Credentials (Setup Flow - No Auth Required)
+# Issue #772: These endpoints mirror settings_integrations.py but work during
+# setup when user isn't authenticated yet.
+# ============================================================================
+
+
+class SlackCredentialsRequest(BaseModel):
+    """Request body for Slack app credentials during setup."""
+
+    client_id: str
+    client_secret: str
+
+
+class SlackCredentialsResponse(BaseModel):
+    """Response for Slack credentials save."""
+
+    success: bool
+    message: str
+
+
+@router.post("/slack-credentials", response_model=SlackCredentialsResponse)
+async def save_slack_credentials_setup(credentials: SlackCredentialsRequest):
+    """
+    Save Slack app credentials during setup wizard.
+
+    This endpoint does NOT require authentication, allowing users to configure
+    Slack integration before their account is fully created.
+
+    Issue #772: Mirrors /api/v1/settings/integrations/slack/app-credentials
+    but works during setup flow.
+
+    Security Note: Credentials are stored in OS keychain, never logged.
+    """
+    from services.integrations.integration_config_service import IntegrationConfigService
+
+    try:
+        # Validate both fields are non-empty
+        if not credentials.client_id.strip():
+            return SlackCredentialsResponse(
+                success=False,
+                message="Client ID is required and cannot be empty",
+            )
+        if not credentials.client_secret.strip():
+            return SlackCredentialsResponse(
+                success=False,
+                message="Client Secret is required and cannot be empty",
+            )
+
+        # Store via IntegrationConfigService
+        config_service = IntegrationConfigService()
+        config_service.store_slack_credentials(
+            credentials.client_id.strip(), credentials.client_secret.strip()
+        )
+
+        logger.info("slack_credentials_saved_during_setup")
+
+        return SlackCredentialsResponse(
+            success=True,
+            message="Slack app credentials saved securely",
+        )
+
+    except Exception as e:
+        logger.error("slack_credentials_setup_error", error=str(e), exc_info=True)
+        return SlackCredentialsResponse(
+            success=False,
+            message=f"Failed to save credentials: {str(e)}",
+        )
+
+
 @router.post("/create-user", response_model=CreateUserResponse)
 async def create_user(req: CreateUserRequest):
     """
@@ -752,12 +822,15 @@ async def complete_setup(req: SetupCompleteRequest):
                     logger.warning("global_anthropic_key_storage_failed", error=str(e))
 
             # Mark setup as complete (Issue #389)
+            # Issue #771: Use utc_now() - DB columns now use timestamptz
+            from services.utils.datetime_utils import utc_now
+
             await session.execute(
                 text(
                     "UPDATE users SET setup_complete = true, "
                     "setup_completed_at = :now WHERE id = :user_id"
                 ),
-                {"user_id": req.user_id, "now": datetime.now(timezone.utc)},
+                {"user_id": req.user_id, "now": utc_now()},
             )
             await session.commit()
 

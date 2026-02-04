@@ -422,7 +422,8 @@
         }
 
         try {
-            const response = await fetch('/api/v1/settings/integrations/slack/app-credentials', {
+            // Issue #772: Use setup-specific endpoint that doesn't require auth
+            const response = await fetch('/setup/slack-credentials', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -431,7 +432,9 @@
                 })
             });
 
-            if (response.ok) {
+            const data = await response.json();
+
+            if (response.ok && data.success) {
                 // Clear inputs
                 document.getElementById('slack-client-id').value = '';
                 document.getElementById('slack-client-secret').value = '';
@@ -442,8 +445,7 @@
                 }
                 showSlackCredentialsConfigured();
             } else {
-                const error = await response.json();
-                showSlackError(error.detail || 'Failed to save credentials');
+                showSlackError(data.message || 'Failed to save credentials');
             }
         } catch (err) {
             showSlackError('Failed to save credentials. Please try again.');

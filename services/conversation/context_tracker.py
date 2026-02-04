@@ -406,13 +406,13 @@ class EnhancedContextTracker:
     def _calculate_conversation_age(self, created_at: datetime) -> float:
         """Calculate conversation age in seconds, handling timezone correctly.
 
-        Issue #768: created_at may come from database (UTC) while datetime.now()
-        is local time. Use UTC comparison to avoid negative age calculations.
+        Issue #771: Database now uses timestamptz, so we can use timezone-aware
+        datetime comparison directly.
         """
-        from services.utils.datetime_utils import ensure_utc_naive, utc_now_naive
+        from services.utils.datetime_utils import ensure_utc, utc_now
 
-        now = utc_now_naive()
-        created_utc = ensure_utc_naive(created_at)
+        now = utc_now()
+        created_utc = ensure_utc(created_at)
         return (now - created_utc).total_seconds()
 
     async def get_conversation_summary(self, conversation_id: str) -> Dict[str, Any]:

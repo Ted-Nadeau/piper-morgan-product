@@ -17,7 +17,7 @@ Usage:
 
 import json
 from contextlib import asynccontextmanager
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import AsyncGenerator, Optional
 from uuid import UUID
 
@@ -25,6 +25,7 @@ import structlog
 
 from services.cache.redis_factory import RedisFactory
 from services.database.session_factory import AsyncSessionFactory
+from services.utils.datetime_utils import ensure_utc, utc_now
 
 logger = structlog.get_logger(__name__)
 
@@ -95,9 +96,10 @@ class TokenBlacklist:
         """
         try:
             # Calculate TTL (seconds until expiration)
-            # Use UTC for consistent timezone handling
-            now = datetime.now(timezone.utc)
-            ttl = max(int((expires_at - now).total_seconds()), 0)
+            # Use naive UTC for consistent timezone handling (Issue #769)
+            now = utc_now()
+            expires_at_naive = ensure_utc(expires_at)
+            ttl = max(int((expires_at_naive - now).total_seconds()), 0)
 
             if ttl == 0:
                 logger.info(
@@ -233,8 +235,8 @@ class TokenBlacklist:
                     token_id=token_id,
                     reason=reason,
                     user_id=user_id,
-                    expires_at=expires_at,
-                    created_at=datetime.now(timezone.utc),
+                    expires_at=ensure_utc(expires_at),
+                    created_at=utc_now(),
                 )
                 session.add(entry)
                 await session.commit()
@@ -272,7 +274,7 @@ class TokenBlacklist:
 
                 query = select(DBTokenBlacklist).where(
                     DBTokenBlacklist.token_id == token_id,
-                    DBTokenBlacklist.expires_at > datetime.now(timezone.utc),
+                    DBTokenBlacklist.expires_at > utc_now(),
                 )
                 result = await session.execute(query)
                 entry = result.scalar_one_or_none()
@@ -301,9 +303,7 @@ class TokenBlacklist:
 
                 from services.database.models import TokenBlacklist as DBTokenBlacklist
 
-                query = delete(DBTokenBlacklist).where(
-                    DBTokenBlacklist.expires_at <= datetime.now(timezone.utc)
-                )
+                query = delete(DBTokenBlacklist).where(DBTokenBlacklist.expires_at <= utc_now())
                 result = await session.execute(query)
                 await session.commit()
 
