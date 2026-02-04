@@ -1306,7 +1306,14 @@
 
     <script>
       // Post-Setup Orientation Logic (Issue #549)
+      // DISABLED per Issue #778: Overlay dismissed but didn't trigger any action.
+      // Design needs reconsideration before re-enabling - the overlay suggested
+      // making a todo but clicking "Get started" just dismissed without doing anything.
+      // To re-enable: remove the early return and reconsider what the CTA should do.
       async function initOrientation() {
+        // DISABLED - see comment above
+        return;
+
         // Check if user has completed setup but hasn't seen orientation
         const setupComplete = {{ setup_complete | default(false) | tojson }};
         const orientationSeen = {{ orientation_seen | default(true) | tojson }};
