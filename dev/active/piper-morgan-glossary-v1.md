@@ -80,6 +80,13 @@ Four-pillar methodology: systematic verification, test-driven development, multi
 
 ---
 
+## Artifacts
+### Product Requirements Document ( PRD )
+### Product Decision Records ( PDR )
+Decision, Context, User Need, Decision Rationale
+### Use Case
+
+
 ## Metaphors & Idioms
 
 ### Filing Dreams
@@ -167,6 +174,8 @@ Informal task tracking for small items not warranting GitHub issues.
 - **PPP**: Policy, Process, People (analysis model)
 - **RBAC**: Role-Based Access Control
 - **SEC**: Security epic prefix
+- **PDR**: Product Decision Records
+- **PRD**: Product Requirements Document
 
 ---
 
@@ -223,3 +232,7 @@ Capability Maturity Model ( CMM )
 Machine-Augmented Reasoning ( MAR )
 **Conceptual Model** - An easily understood shared understanding of how things work & why, differentiated from implementation layers of 'logical model' and 'physical model'
 **Architecture**
+
+**GitHub**
+Branch
+Fork
