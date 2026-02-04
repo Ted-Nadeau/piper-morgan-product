@@ -176,10 +176,14 @@
                         openaiValid = true;
                         document.getElementById('next-2').disabled = false;
                     }
+                    // Issue #776: Keep button disabled after successful validation
+                    // (matches keychain behavior - shows lighter gray "validated" state)
                 } else {
                     statusDiv.textContent = '✗ ' + data.message;
                     statusDiv.className = 'validation-status invalid';
                     if (provider === 'openai') openaiValid = false;
+                    // Re-enable button only on failure so user can retry
+                    this.disabled = false;
                 }
             } catch (err) {
                 statusDiv.textContent = '✗ Validation failed';
@@ -189,8 +193,9 @@
                 } else {
                     showError('Unable to validate API key. Please try again.', 'Validation Failed');
                 }
+                // Re-enable button on error so user can retry
+                this.disabled = false;
             }
-            this.disabled = false;
         });
     });
 
