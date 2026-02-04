@@ -2,8 +2,8 @@
 
 **Purpose**: Cross-reference index of anti-patterns documented throughout the codebase. Links to source documents without duplicating content.
 
-**Last Scan**: 2026-01-21
-**Documents Scanned**: 10 patterns, 8 ADRs, 4 MUX design docs
+**Last Scan**: 2026-02-03
+**Documents Scanned**: 18 patterns, 8 ADRs, 4 MUX design docs, 7 omnibus logs
 
 ---
 
@@ -14,10 +14,10 @@
 | Grammar/Consciousness | 12 | grammar-transformation-guide, consciousness-philosophy, ownership-metaphors |
 | Testing | 4 | pattern-045, pattern-049 |
 | Architecture | 11 | ADR-006, ADR-010, ADR-039, ADR-040, ADR-043, ADR-051 |
-| Process/Methodology | 10 | pattern-046, pattern-047, systematic-excellence, omnibus-logs |
+| Process/Methodology | 11 | pattern-046, pattern-047, systematic-excellence, omnibus-logs |
 | Integration | 5 | pattern-035, pattern-054 |
 
-**Total Indexed**: 42 anti-patterns
+**Total Indexed**: 43 anti-patterns
 
 ---
 
@@ -91,6 +91,7 @@ Anti-patterns related to development workflow and agent behavior.
 | P-08 | **80% Completion Trap** - Declaring done without evidence | [the-completion-discipline-draft.md](../../../../public/comms/drafts/the-completion-discipline-draft.md) | Completion matrix with evidence |
 | P-09 | **"Should Have Known" Syndrome** - Reactive discovery of obvious requirements | [2025-10-29-omnibus-log.md](../../../omnibus-logs/2025-10-29-omnibus-log.md) | Comprehensive upfront audit |
 | P-10 | **Escalation Timing Failure** - Debugging too long before seeking help | [2025-11-16-omnibus-log.md](../../../omnibus-logs/2025-11-16-omnibus-log.md) | Escalate after first untested commit |
+| P-11 | **Comment-Only Close** - Closing issues with comments but no evidence or unchecked acceptance criteria | [2026-01-25-omnibus-log.md](../../../omnibus-logs/2026-01-25-omnibus-log.md) | Update description checkboxes, provide evidence |
 
 ---
 
@@ -136,6 +137,7 @@ Anti-patterns related to external service integration.
 | [the-completion-discipline-draft.md](../../../../public/comms/drafts/the-completion-discipline-draft.md) | P-08 |
 | [2025-10-29-omnibus-log.md](../../../omnibus-logs/2025-10-29-omnibus-log.md) | P-09 |
 | [2025-11-16-omnibus-log.md](../../../omnibus-logs/2025-11-16-omnibus-log.md) | P-10 |
+| [2026-01-25-omnibus-log.md](../../../omnibus-logs/2026-01-25-omnibus-log.md) | P-11 |
 
 ---
 
@@ -227,11 +229,11 @@ See `dev/active/anti-pattern-phase2-experiment-results.md` for full analysis.
 
 ## Coverage Gap Analysis
 
-**Current Coverage**: 9 of 58 patterns (15.5%)
+**Current Coverage**: 17 of 60 patterns (28.3%)
 
 ### Patterns WITH Coverage
 
-035, 045, 046, 047, 049, 051, 052, 053, 054
+035, 045, 046, 047, 049, 050, 051, 052, 053, 054, 055, 056, 057, 058, 059 (+ 035, 049)
 
 ### Priority Gaps (Next Sweep Focus)
 
@@ -259,5 +261,5 @@ See `dev/active/anti-pattern-coverage-gap-analysis.md` for full breakdown.
 ---
 
 *Index created: 2026-01-21*
-*Last updated: 2026-01-21 (added coverage gap analysis)*
+*Last updated: 2026-02-03 (Pattern Sweep - added P-11, updated coverage to 28.3%)*
 *Maintainer: Documentation Management Agent*
