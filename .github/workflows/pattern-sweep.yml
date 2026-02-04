@@ -2,9 +2,10 @@ name: Pattern Sweep Reminder
 
 on:
   schedule:
-    # Runs every Monday at 9:00 AM Pacific (4:00 PM UTC)
+    # Runs every Tuesday at 9:00 AM Pacific (5:00 PM UTC)
     # Logic inside determines if it's a pattern sweep week (every 6 weeks)
-    - cron: "0 16 * * 1"
+    # Tuesdays chosen to spread audit load (doc audits run Mondays)
+    - cron: "0 17 * * 2"
   workflow_dispatch: # Allows manual trigger for testing or ad-hoc sweeps
 
 permissions:
