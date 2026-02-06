@@ -435,8 +435,8 @@ class Workflow(Base):
     intent_id = Column(String(255), nullable=True)  # Matches domain Optional[str]
 
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
-    started_at = Column(DateTime)
-    completed_at = Column(DateTime)
+    started_at = Column(DateTime(timezone=True))
+    completed_at = Column(DateTime(timezone=True))
     updated_at = Column(
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),
@@ -493,8 +493,8 @@ class Task(Base, TimestampMixin):
     result = Column(JSON)  # Task execution result
     error = Column(Text)
 
-    started_at = Column(DateTime)
-    completed_at = Column(DateTime)
+    started_at = Column(DateTime(timezone=True))
+    completed_at = Column(DateTime(timezone=True))
 
     # Relationships
     workflow = relationship("Workflow", back_populates="tasks")
@@ -1078,7 +1078,7 @@ class ListMembershipDB(Base):
 
     # List-specific overrides
     list_priority = Column(Enum(TodoPriority))
-    list_due_date = Column(DateTime)
+    list_due_date = Column(DateTime(timezone=True))
     list_notes = Column(Text, default="")
 
     # SEC-RBAC ownership - owner_id is UUID in database (Issue #479)
@@ -1284,7 +1284,7 @@ class ListItemDB(Base):
 
     # List-specific overrides
     list_priority = Column(String)  # Override item's default priority
-    list_due_date = Column(DateTime)  # Override item's default due date
+    list_due_date = Column(DateTime(timezone=True))  # Override item's default due date
     list_notes = Column(Text, default="")
 
     # SEC-RBAC ownership - owner_id is UUID in database (Issue #479)
@@ -1650,9 +1650,9 @@ class TodoDB(ItemDB):
     parent_id = Column(String, ForeignKey("todo_items.id"))
 
     # Scheduling
-    due_date = Column(DateTime)
-    reminder_date = Column(DateTime)
-    scheduled_date = Column(DateTime)
+    due_date = Column(DateTime(timezone=True))
+    reminder_date = Column(DateTime(timezone=True))
+    scheduled_date = Column(DateTime(timezone=True))
 
     # Context and categorization
     tags = Column(postgresql.JSONB, default=list)
@@ -1677,7 +1677,7 @@ class TodoDB(ItemDB):
     external_refs = Column(postgresql.JSONB, default=dict)  # {"github_issue": "123"}
 
     # Timestamps (inherited: created_at, updated_at from ItemDB)
-    completed_at = Column(DateTime)
+    completed_at = Column(DateTime(timezone=True))
 
     # Ownership - owner_id is UUID in database (Issue #484)
     owner_id = Column(postgresql.UUID(as_uuid=False), ForeignKey("users.id"), nullable=False)
