@@ -817,7 +817,9 @@ class KnowledgeNodeDB(Base):
     session_id = Column(String)  # Legacy - kept for backward compatibility
     # owner_id is UUID in database - must match schema (Issue #479)
     owner_id = Column(postgresql.UUID(as_uuid=False), ForeignKey("users.id"), nullable=True)
-    embedding_vector = Column(JSON)  # Will be upgraded to pgvector VECTOR type later
+    embedding_vector = Column(
+        postgresql.ARRAY(Float)
+    )  # Will be upgraded to pgvector VECTOR type later
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     updated_at = Column(
         DateTime(timezone=True),
