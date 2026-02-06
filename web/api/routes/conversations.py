@@ -247,17 +247,20 @@ class CreateConversationResponse(BaseModel):
 async def list_conversations(
     limit: int = 50,
     offset: int = 0,
+    search: str | None = None,
     current_user: JWTClaims = Depends(get_current_user),
     conv_repo: ConversationRepository = Depends(get_conversation_repository),
 ) -> ConversationListResponse:
     """
-    List all conversations for the current user.
+    List all conversations for the current user, optionally filtered by search.
 
     Issue #565: Populates conversation history sidebar.
+    Issue #786: GLUE-HISTORY-DIFF - Added search parameter for History sidebar.
 
     Args:
         limit: Maximum number of conversations (default 50)
         offset: Number to skip for pagination
+        search: Optional search string to filter by title (case-insensitive)
         current_user: Current authenticated user
         conv_repo: Conversation repository (injected)
 
@@ -265,10 +268,15 @@ async def list_conversations(
         ConversationListResponse with list of conversations and has_more flag
     """
     try:
-        # Get conversations for user
-        conversations = await conv_repo.list_for_user(
-            current_user.sub, limit=limit + 1, offset=offset
-        )
+        # Get conversations for user (with optional search filter)
+        if search and search.strip():
+            conversations = await conv_repo.search_for_user(
+                current_user.sub, search.strip(), limit=limit + 1, offset=offset
+            )
+        else:
+            conversations = await conv_repo.list_for_user(
+                current_user.sub, limit=limit + 1, offset=offset
+            )
 
         # Check if there are more
         has_more = len(conversations) > limit

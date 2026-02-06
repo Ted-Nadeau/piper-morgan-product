@@ -1884,6 +1884,7 @@
 
         /**
          * Fetch conversations from API and transform for HistorySidebar.
+         * Issue #786: GLUE-HISTORY-DIFF - Search now wired to API
          * @param {string} query - Search query (optional)
          * @param {number} page - Page number (for pagination)
          */
@@ -1891,8 +1892,8 @@
           const params = new URLSearchParams();
           params.set('limit', '20');
           params.set('offset', String((page - 1) * 20));
-          // Note: API doesn't have search yet, but we include the param for future use
-          if (query) params.set('q', query);
+          // Issue #786: Search by title
+          if (query) params.set('search', query);
 
           const response = await fetch(`/api/v1/conversations?${params}`);
           if (!response.ok) {
