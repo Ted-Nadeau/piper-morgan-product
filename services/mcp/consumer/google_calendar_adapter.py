@@ -69,11 +69,16 @@ class TemporalSummaryResult:
     when calendar data is unavailable. Handlers should check `success` before
     interpreting `stats` - a failed query should NOT be treated as "no meetings".
 
+    Issue #789: Added `calendar_connected` to distinguish "not connected" from
+    "connected but empty calendar". When False, handlers should NOT mention
+    calendar at all (Option A: silent) rather than claiming "no meetings".
+
     This follows the Result pattern used elsewhere in the codebase
     (IntentProcessingResult, ValidationResult, etc.)
     """
 
     success: bool
+    calendar_connected: bool = True  # Issue #789: Distinguish not-connected from empty
     current_meeting: Optional[Dict[str, Any]] = None
     next_meeting: Optional[Dict[str, Any]] = None
     free_blocks: Optional[List[Dict[str, Any]]] = None
@@ -88,12 +93,14 @@ class TemporalSummaryResult:
         if not self.success:
             return {
                 "success": False,
+                "calendar_connected": self.calendar_connected,  # Issue #789
                 "error": self.error,
                 "error_type": self.error_type,
                 "timestamp": self.timestamp,
             }
         return {
             "success": True,
+            "calendar_connected": self.calendar_connected,  # Issue #789
             "current_meeting": self.current_meeting,
             "next_meeting": self.next_meeting,
             "free_blocks": self.free_blocks,
@@ -605,10 +612,25 @@ class GoogleCalendarMCPAdapter(BaseSpatialAdapter):
 
         Issue #596: Added user_id parameter for timezone-aware queries.
         Issue #597: Returns TemporalSummaryResult with explicit success/error state.
+        Issue #789: Check authentication first and return calendar_connected=False
+        if not authenticated, so handlers know not to mention calendar at all.
         """
 
         async def _get():
             from datetime import datetime
+
+            # Issue #789: Check authentication first
+            # If not authenticated, return success=True but calendar_connected=False
+            # This allows handlers to distinguish "not connected" from "connected but empty"
+            if not self._service:
+                if not await self.authenticate():
+                    logger.info("Calendar not connected - returning calendar_connected=False")
+                    not_connected_result = TemporalSummaryResult(
+                        success=True,  # Not an error, just not connected
+                        calendar_connected=False,
+                        timestamp=datetime.now().isoformat(),
+                    )
+                    return not_connected_result.to_dict()
 
             try:
                 current_meeting = await self.get_current_meeting(user_id=user_id)
@@ -632,6 +654,7 @@ class GoogleCalendarMCPAdapter(BaseSpatialAdapter):
 
                 result = TemporalSummaryResult(
                     success=True,
+                    calendar_connected=True,  # Issue #789: Explicitly connected
                     current_meeting=current_meeting,
                     next_meeting=next_meeting,
                     free_blocks=free_blocks,
@@ -651,6 +674,7 @@ class GoogleCalendarMCPAdapter(BaseSpatialAdapter):
                 # before interpreting stats. Do NOT return 0 meetings on error.
                 error_result = TemporalSummaryResult(
                     success=False,
+                    calendar_connected=True,  # Was connected, just errored
                     error="Calendar unavailable",
                     error_type=type(e).__name__,
                     timestamp=datetime.now().isoformat(),
