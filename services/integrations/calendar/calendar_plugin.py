@@ -61,8 +61,15 @@ class CalendarPlugin(PiperPlugin):
         return self._api_router
 
     def is_configured(self) -> bool:
-        """Check if Calendar is properly configured"""
-        return self.config_service.is_configured()
+        """Check if Calendar is properly configured.
+
+        Note: At plugin startup, there's no user context available.
+        This returns False until a user context is established.
+        Issue #784: Fixed crash from calling is_configured() without user_id.
+        """
+        # Without user context, we can't determine configuration
+        # The config_service.is_configured() requires user_id (Issue #734)
+        return False
 
     async def initialize(self) -> None:
         """Initialize Calendar plugin"""
