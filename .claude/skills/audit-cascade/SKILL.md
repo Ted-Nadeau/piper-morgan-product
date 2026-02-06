@@ -149,6 +149,21 @@ The word "audit" triggers systematic verification behavior. Use it.
 
 ---
 
+## Pattern Families
+
+This skill is part of the **Completion Theater Family** (045/046/047/049):
+
+- **Pattern-045**: Diagnoses the gap (tests pass, users fail)
+- **Pattern-046**: Enforces 100% completion (no expedience rationalization)
+- **Pattern-047**: Enables pause when uncertain (Time Lord Alert)
+- **Pattern-049**: Audits at every phase boundary — **this skill operationalizes 049**
+
+These patterns form a reinforcing system. Audit cascade (049) is the operational mechanism that catches drift before it compounds. Apply the full family for multi-phase work.
+
+See [PATTERN-FAMILIES.md](../../../docs/internal/architecture/current/patterns/PATTERN-FAMILIES.md) for full family index.
+
+---
+
 ## Related
 
 - [Pattern-049: Audit Cascade](../../../docs/internal/architecture/current/patterns/pattern-049-audit-cascade.md) - Full pattern documentation

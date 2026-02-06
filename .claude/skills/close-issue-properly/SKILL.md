@@ -99,6 +99,20 @@ bd sync
 git status  # Verify clean state
 ```
 
+## Pattern Families
+
+This skill applies patterns from the **Completion Theater Family** (045/046/047/049):
+
+- **Pattern-045**: Diagnoses gap between "tests pass" and "users succeed" — verify real completion
+- **Pattern-046**: Enforces 100% completion criteria — no rationalizing gaps as "minor"
+- **Pattern-049**: Audit at phase boundaries — closing an issue is a phase boundary
+
+If issue closure involved bug investigation, also consider the **Investigation Family** (006/041-043/060).
+
+See [PATTERN-FAMILIES.md](../../../docs/internal/architecture/current/patterns/PATTERN-FAMILIES.md) for full family index.
+
+---
+
 ## Anti-Patterns to Avoid
 
 | Don't Do This | Why | Do This Instead |

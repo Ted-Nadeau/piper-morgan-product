@@ -1,7 +1,7 @@
-# Alpha Known Issues (v0.8.5.1)
+# Alpha Known Issues (v0.8.5.2)
 
-**Version**: 0.8.5.1
-**Last Updated**: January 31, 2026
+**Version**: 0.8.5.2
+**Last Updated**: February 6, 2026
 
 This document helps alpha testers avoid wasting time on things we already know about.
 
@@ -11,16 +11,17 @@ This document helps alpha testers avoid wasting time on things we already know a
 
 ### Blocking
 
-_None currently. All P0 issues resolved as of January 30, 2026._
+_None currently. All P0 issues resolved._
 
 ### Annoying
 
 | Issue | Description | Workaround |
 |-------|-------------|------------|
+| [#766](https://github.com/mediajunkie/piper-morgan-product/issues/766) | "Is that your main project?" repeats | Piper may ask this question multiple times during onboarding |
 | [#696](https://github.com/mediajunkie/piper-morgan-product/issues/696) | Settings uses hardcoded user ID | Settings changes work but may not attribute to correct user in audit logs |
 | [#697](https://github.com/mediajunkie/piper-morgan-product/issues/697) | Intent service uses hardcoded user ID | Chat works but user context not fully preserved |
 
-**Impact**: Both issues affect audit trail accuracy and multi-user attribution. Single-user alpha testing is unaffected functionally.
+**Impact**: #766 is cosmetic annoyance. Other issues affect audit trail accuracy and multi-user attribution. Single-user alpha testing is unaffected functionally.
 
 ### Cosmetic
 

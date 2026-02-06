@@ -1,6 +1,6 @@
 # Piper Morgan Alpha - Quick Start
 
-**Version**: 0.8.5.1
+**Version**: 0.8.5.2
 **Branch**: `production` (stable alpha releases)
 **For**: Experienced developers who want to dive in fast
 **Time**: 2-5 minutes setup, plus initial configuration
@@ -11,17 +11,19 @@
 
 ---
 
-## What's New in 0.8.5.1
+## What's New in 0.8.5.2
 
-**14 Alpha Testing Bug Fixes** - Fast-follow patch addressing issues discovered during post-MUX testing.
+**Critical Bug Fixes** - Fixing issues discovered during continued alpha testing.
 
-**Authentication & Session Fixes** - Logout now works correctly, username displays properly, conversations persist when typing directly.
+**Chat Persistence (#787)** - Conversations now appear in sidebar immediately after first chat. Fixed cross-user session bleed.
 
-**Portfolio Onboarding Fixed** - Projects now save to database correctly. Multiple root causes addressed.
+**Date Formatting (#788)** - Fixed "Invalid Date" display for new conversations.
 
-**Navigation & UI Improvements** - History sidebar works, first-time user routing fixed, autofill disabled on chat input.
+**Calendar Fix (#789)** - Piper no longer claims "no meetings" when calendar isn't connected.
 
-See [Release Notes v0.8.5.1](releases/RELEASE-NOTES-v0.8.5.1.md) for full details.
+**Database Migration Required**: Run `alembic upgrade head` after updating.
+
+See [Release Notes v0.8.5.2](releases/RELEASE-NOTES-v0.8.5.2.md) for full details.
 
 ---
 
@@ -206,7 +208,7 @@ After logging in to http://localhost:8001:
 
 ---
 
-## Testing Focus for 0.8.5.1
+## Testing Focus for 0.8.5.2
 
 **What's Stable** (light testing recommended):
 - ✅ Setup wizard (GUI and CLI)
@@ -340,7 +342,7 @@ After `python main.py` starts the server at http://localhost:8001:
 
 ---
 
-## What's Working in 0.8.5.1
+## What's Working in 0.8.5.2
 
 ✅ **MUX-IMPLEMENT Complete** (0.8.5):
    - WCAG 2.1 AA accessibility compliance
@@ -398,13 +400,13 @@ See [ALPHA_KNOWN_ISSUES.md](ALPHA_KNOWN_ISSUES.md) for complete status and known
 - **Full Guide**: [ALPHA_TESTING_GUIDE.md](ALPHA_TESTING_GUIDE.md) (comprehensive setup)
 - **Known Issues**: [ALPHA_KNOWN_ISSUES.md](ALPHA_KNOWN_ISSUES.md) (bugs and status)
 - **Legal**: [ALPHA_AGREEMENT_v2.md](ALPHA_AGREEMENT_v2.md) (terms and conditions)
-- **Version Info**: [VERSION_NUMBERING.md](VERSION_NUMBERING.md) (what 0.8.5.1 means)
+- **Version Info**: [VERSION_NUMBERING.md](VERSION_NUMBERING.md) (what 0.8.5.2 means)
 
 ---
 
 ## Remember
 
-This is **alpha software** (0.8.5.1). Expect bugs. Don't use for production. You're responsible for API costs. See `ALPHA_AGREEMENT_v2.md` for details.
+This is **alpha software** (0.8.5.2). Expect bugs. Don't use for production. You're responsible for API costs. See `ALPHA_AGREEMENT_v2.md` for details.
 
 **Testing Focus**: Core features are stable. Focus your testing on the new lifecycle indicators, Work Items view, and accessibility improvements.
 

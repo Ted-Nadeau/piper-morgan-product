@@ -157,6 +157,21 @@ class CrossValidation:
 - [Pattern-017: Cross-Validation Protocol](pattern-017-cross-validation-protocol.md)
 - [Pattern-030: Plugin Interface](pattern-030-plugin-interface.md)
 
+### Differentiation: Pattern-029 vs Pattern-059
+
+Pattern-029 and [Pattern-059: Leadership Caucus](pattern-059-leadership-caucus.md) both involve multiple agents but operate at different levels:
+
+| Dimension | Pattern-029 (Multi-Agent Coordination) | Pattern-059 (Leadership Caucus) |
+|-----------|----------------------------------------|---------------------------------|
+| **Domain** | Technical execution | Leadership alignment |
+| **Purpose** | Coordinate parallel implementation work | Align on cross-cutting decisions before work begins |
+| **Participants** | Coding agents (Backend, Frontend, Analyst) | Advisory agents (CXO, Architect, PPM) + PM |
+| **Timing** | During execution | Before execution |
+| **Output** | Code, tests, validated changes | Decisions, assignments, implementation direction |
+| **Coordination** | Cross-validation, handoffs, parallel phases | Facilitated discussion, real-time decision capture |
+
+**In practice**: A Leadership Caucus (059) might produce the decision and assignment that triggers a Multi-Agent Coordination (029) deployment. They are sequential, not competing — one decides *what* and *how*; the other *executes*.
+
 ## References
 - Original vision: May 27, 2025 (Multi-agent orchestration)
 - Related issue: #118 (INFR-AGENT Multi-Agent Coordinator)

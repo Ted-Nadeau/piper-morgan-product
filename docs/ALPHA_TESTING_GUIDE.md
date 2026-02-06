@@ -1,7 +1,7 @@
 # Piper Morgan Alpha Testing Guide
 
-**Version**: 0.8.5.1
-**Last Updated**: January 31, 2026
+**Version**: 0.8.5.2
+**Last Updated**: February 6, 2026
 **For**: Alpha Testers
 
 ---
@@ -9,8 +9,8 @@
 ## Returning Tester? Start Here
 
 If you already have Piper set up and running, skip straight to what matters:
-- **[What's New in 0.8.5.1](#whats-new-in-0851)** - MUX complete, accessibility, lifecycle indicators
-- **[What to Test in 0.8.5.1](#what-to-test-in-0851)** - Priority testing areas for this release
+- **[What's New in 0.8.5.2](#whats-new-in-0852)** - Chat persistence, date formatting, calendar fixes
+- **[What to Test in 0.8.5.2](#what-to-test-in-0852)** - Priority testing areas for this release
 - **[Troubleshooting](#chapter-3-troubleshooting)** - If something isn't working
 
 ---
@@ -76,7 +76,7 @@ This guide has three main sections:
 
 **⚠️ ALPHA SOFTWARE WARNING ⚠️**
 
-This is pre-release alpha software (version 0.8.5.1). By proceeding, you acknowledge:
+This is pre-release alpha software (version 0.8.5.2). By proceeding, you acknowledge:
 
 1. **Expected Issues**: Bugs, crashes, and incomplete features are normal
 2. **Data Loss Risk**: Your data may be lost at any time without warning
@@ -91,26 +91,30 @@ See `ALPHA_AGREEMENT_v2.md` for complete legal terms.
 
 ---
 
-## What's New in 0.8.5.1
+## What's New in 0.8.5.2
 
-**MUX-IMPLEMENT Complete** - The Modeled User Experience super epic is done. This is the biggest release since alpha started:
+**Critical Bug Fixes** - This release fixes several issues found during alpha testing:
 
-- **WCAG 2.1 AA Accessibility**: All color contrast ratios meet accessibility standards (11 colors fixed, all ratios ≥4.5:1). ARIA landmarks throughout navigation and command palette. Keyboard navigation, high contrast mode, and reduced motion support.
-- **Lifecycle State Persistence**: Projects, work items, features, and todos now persist lifecycle state to the database with visual indicators in the UI.
-- **New Views**: Work Items view and Project Detail view with lifecycle indicators.
-- **Design Token System v1.1.0**: Centralized CSS tokens with documented contrast ratios.
-- **ProcessRegistry**: Guided processes (onboarding, standup) now use a unified architecture (ADR-049).
+- **Chat Persistence (#787)**: Fixed conversations not appearing in sidebar after first chat. The issue was localStorage session data persisting across logout/login causing cross-user bleed.
+- **Date Formatting (#788)**: Fixed "Invalid Date" display for new conversations. JavaScript Date parsing now works correctly with PostgreSQL timestamp format.
+- **Calendar False Positive (#789)**: Fixed Piper claiming "No meetings - great day for deep work!" when no calendar is connected. Now stays silent when calendar isn't configured.
+- **History Sidebar (#786)**: The History sidebar now uses monthly grouping and supports search by title.
 
-**Since 0.8.4** (included in this release):
-- Fresh install fixes for new testers (#605-#609)
-- Calendar bug fixes (human-readable times, correct day handling)
-- Chat auto-loads conversation on refresh
-- Portfolio onboarding on first greeting
-- Integration Settings management from the UI
-- Interactive Standup Assistant with conversational flow
-- 5253 automated tests passing (up from ~2100)
+**Database Migration Required**: Run `alembic upgrade head` after updating.
 
-See [Release Notes v0.8.5](releases/RELEASE-NOTES-v0.8.5.md) for full details.
+See [Release Notes v0.8.5.2](releases/RELEASE-NOTES-v0.8.5.2.md) for full details.
+
+<details>
+<summary><strong>Previous release (0.8.5.2)</strong></summary>
+
+**MUX-IMPLEMENT Complete** - The Modeled User Experience super epic:
+- WCAG 2.1 AA Accessibility (11 colors fixed, all ratios ≥4.5:1)
+- Lifecycle State Persistence with visual indicators
+- New Views: Work Items and Project Detail
+- ProcessRegistry for guided processes (ADR-049)
+- 5253 automated tests passing
+
+</details>
 
 <details>
 <summary><strong>Previous release history (0.8.3 - 0.8.4.3)</strong></summary>
@@ -386,7 +390,7 @@ Click the button to go to the login page and start using Piper Morgan.
 
 This chapter covers what to test and how. If you're already set up, **start here**.
 
-## What to Test in 0.8.5.1
+## What to Test in 0.8.5.2
 
 Setup, login, chat, and core workflows are stable. The MUX-IMPLEMENT epic brought significant UI improvements. **Focus your testing on new features and the improved experience.**
 
@@ -746,7 +750,7 @@ See original testing guide for detailed manual steps.
 
 ## Questions?
 
-Remember: This is alpha software (version 0.8.5.1). The GUI setup wizard handles most complexity, but you're still testing early-stage software. Expect bugs and incomplete features.
+Remember: This is alpha software (version 0.8.5.2). The GUI setup wizard handles most complexity, but you're still testing early-stage software. Expect bugs and incomplete features.
 
 If guided setup seems overwhelming, a hosted version is planned for later in 2026.
 
@@ -764,4 +768,4 @@ Thank you for being an early adopter and helping us improve! 🚀
 ---
 
 _Last updated: January 28, 2026_
-_Software version: 0.8.5.1_
+_Software version: 0.8.5.2_

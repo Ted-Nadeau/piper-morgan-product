@@ -3,7 +3,7 @@
 _Consolidated from pattern-catalog.md and PATTERN-INDEX.md_
 _Format: ADR-style numbered patterns_
 
-**Total Patterns**: 60 patterns (001-059) + template (000)
+**Total Patterns**: 61 patterns (001-060) + template (000)
 
 ## Pattern Categories
 
@@ -88,6 +88,7 @@ _Development methodology, quality assurance, and workflow management patterns_
 - [Pattern-047: Time Lord Alert](pattern-047-time-lord-alert.md) - Uncertainty signaling for AI agents (COMPLETION DISCIPLINE TRIAD)
 - [Pattern-049: Audit Cascade](pattern-049-audit-cascade.md) - Institutionalized skepticism at every handoff point (VELOCITY PATTERN)
 - [Pattern-059: Leadership Caucus](pattern-059-leadership-caucus.md) - Facilitated multi-advisor alignment for cross-cutting decisions (COORDINATION PATTERN)
+- [Pattern-060: Cascade Investigation](pattern-060-cascade-investigation.md) - Treat every bug fix as a trigger for category-wide audit (INVESTIGATION PATTERN)
 
 ### Grammar Application Patterns
 
@@ -118,11 +119,19 @@ See [pattern-000-template.md](pattern-000-template.md) for the standard template
 
 ## Related Resources
 
+### Pattern Family Index
+
+The **[Pattern Family Index](PATTERN-FAMILIES.md)** organizes patterns by how they work together. While this index (README.md) groups patterns by *category* (what they're about), the family index groups them by *family* (patterns that reinforce each other). Apply patterns in family units for best results.
+
+### Proto-Pattern Registry
+
+The **[Proto-Pattern Registry](PROTO-PATTERNS.md)** tracks emerging pattern candidates that need additional evidence before formalization. Proto-patterns are evaluated during 6-week pattern sweeps and promoted when they meet the evidence threshold.
+
 ### Anti-Pattern Index
 
 The **[Anti-Pattern Index](../anti-pattern-index.md)** provides bidirectional navigation between patterns and their associated anti-patterns:
 
-- **42 anti-patterns** across 5 categories (Grammar, Testing, Architecture, Process, Integration)
+- **43 anti-patterns** across 5 categories (Grammar, Testing, Architecture, Process, Integration)
 - Links from anti-patterns → patterns that address them
 - Reverse index: patterns → anti-patterns they prevent
 - Updated during 6-week pattern sweeps
@@ -146,5 +155,5 @@ Use the anti-pattern index to:
 
 ---
 
-_Last updated: January 26, 2026_
-_Added Grammar Application Patterns (050-058) and Leadership Caucus (059)_
+_Last updated: February 5, 2026_
+_Added Cascade Investigation (060); updated anti-pattern count to 43_
