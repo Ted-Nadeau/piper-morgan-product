@@ -86,7 +86,12 @@ class SchemaValidator:
         "SmallInteger": ["smallint", "int2"],
         "Float": ["double precision", "float8", "real", "float4"],
         "Boolean": ["boolean", "bool"],
-        "DateTime": ["timestamp without time zone", "timestamp with time zone", "timestamp"],
+        "DateTime": [
+            "timestamp without time zone",
+            "timestamp with time zone",
+            "timestamp",
+            "timestamptz",
+        ],
         "Date": ["date"],
         "Time": ["time without time zone", "time with time zone"],
         "JSON": ["json", "jsonb"],  # Both json and jsonb are compatible with JSON
