@@ -93,3 +93,6 @@ advisors/*/outbox/*.tmp
 external/ted-multichat/
 dev/
 .beads/
+
+# Agent mailboxes (local workflow tooling)
+mailboxes/
