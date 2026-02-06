@@ -47,7 +47,7 @@
 
                 try {
                     const startTime = Date.now();
-                    const response = await fetch('/api/standup');
+                    const response = await fetch('/api/v1/standup');
                     const data = await response.json();
                     const endTime = Date.now();
 

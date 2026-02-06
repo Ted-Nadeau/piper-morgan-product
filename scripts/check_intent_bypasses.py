@@ -25,7 +25,7 @@ def check_bypasses():
             # Skip exempt paths
             if any(
                 exempt in path
-                for exempt in ["/health", "/metrics", "/docs", "/static", "/api/personality"]
+                for exempt in ["/health", "/metrics", "/docs", "/static", "/api/v1/personality"]
             ):
                 continue
 

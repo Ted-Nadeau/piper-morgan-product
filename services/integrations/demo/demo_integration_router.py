@@ -30,7 +30,7 @@ class DemoIntegrationRouter:
             config_service: Configuration service instance
         """
         self.config = config_service
-        self.router = APIRouter(prefix="/api/integrations/demo", tags=["demo", "example"])
+        self.router = APIRouter(prefix="/api/v1/integrations/demo", tags=["demo", "example"])
         self._setup_routes()
 
     def _setup_routes(self):

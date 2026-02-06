@@ -445,7 +445,7 @@
       // Load current preferences on page load
       async function loadPreferences() {
         try {
-          const response = await fetch("/api/personality/profile/default", {
+          const response = await fetch("/api/v1/personality/profile/default", {
             credentials: "include"
           });
           const result = await response.json();
@@ -577,7 +577,7 @@
         const saveBtn = document.querySelector('button[onclick="savePreferences()"]');
         try {
           Loading.button(saveBtn, true);
-          const response = await fetch("/api/personality/profile/default", {
+          const response = await fetch("/api/v1/personality/profile/default", {
             method: "PUT",
             headers: {
               "Content-Type": "application/json",
@@ -616,7 +616,7 @@
       async function testPersonality() {
         try {
           const testContent = "Task completed successfully";
-          const response = await fetch("/api/personality/enhance", {
+          const response = await fetch("/api/v1/personality/enhance", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",

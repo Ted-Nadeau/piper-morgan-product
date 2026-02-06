@@ -260,7 +260,7 @@ Three-section structure:
 | admin.py | (no prefix) | 10 | Admin monitoring |
 | api_keys.py | /api/v1/keys | 5 | API key management |
 | preferences.py | /api/v1/preferences | 5 | User preferences |
-| personality.py | /api/personality | 3 | Personality profiles |
+| personality.py | /api/v1/personality | 3 | Personality profiles |
 | feedback.py | /api/v1/feedback | 3 | Feedback collection |
 | knowledge_graph.py | /api/v1/knowledge | 4 | Knowledge graph |
 | ui.py | (no prefix) | 20 | HTML pages |

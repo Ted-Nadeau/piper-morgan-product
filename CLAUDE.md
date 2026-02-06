@@ -71,6 +71,17 @@ alembic upgrade head
 
 **Ports**: Server 8001, PostgreSQL 5433, Redis 6379, ChromaDB 8000
 
+### API Conventions
+
+**All API endpoints MUST use the `/api/v1/` prefix.**
+
+When creating or modifying API routes:
+- Router prefix: `APIRouter(prefix="/api/v1/your-domain")`
+- Frontend fetch calls: `fetch("/api/v1/your-endpoint")`
+- Exempt list updates: Include in `web/middleware/intent_enforcement.py` if needed
+
+**Never use `/api/` without the version prefix.** This ensures consistent versioning and prevents silent 404 errors.
+
 ---
 
 ## STOP Conditions

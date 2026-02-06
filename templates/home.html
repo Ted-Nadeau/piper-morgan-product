@@ -1894,7 +1894,7 @@
           // Note: API doesn't have search yet, but we include the param for future use
           if (query) params.set('q', query);
 
-          const response = await fetch(`/api/conversations?${params}`);
+          const response = await fetch(`/api/v1/conversations?${params}`);
           if (!response.ok) {
             throw new Error(`Failed to fetch conversations: ${response.status}`);
           }
