@@ -104,13 +104,16 @@ async def get_latest_conversation(
             has_turns=has_turns,
         )
 
+        # Issue #788: Add Z suffix to indicate UTC timezone for proper JS parsing
         return LatestConversationResponse(
             conversation=ConversationSummary(
                 id=conversation.id,
                 title=conversation.title or "Conversation",
-                created_at=conversation.created_at.isoformat() if conversation.created_at else "",
+                created_at=(
+                    f"{conversation.created_at.isoformat()}Z" if conversation.created_at else ""
+                ),
                 last_activity_at=(
-                    conversation.last_activity_at.isoformat()
+                    f"{conversation.last_activity_at.isoformat()}Z"
                     if conversation.last_activity_at
                     else None
                 ),
@@ -176,13 +179,14 @@ async def get_conversation_turns(
         turns = await conv_repo.get_conversation_turns(conversation_id, limit=limit)
         logger.info("DEBUG #574: turns fetched", turn_count=len(turns))
 
+        # Issue #788: Add Z suffix to indicate UTC timezone for proper JS parsing
         return [
             ConversationTurnResponse(
                 id=turn.id,
                 turn_number=turn.turn_number,
                 user_message=turn.user_message,
                 assistant_response=turn.assistant_response,
-                created_at=turn.created_at.isoformat() if turn.created_at else "",
+                created_at=f"{turn.created_at.isoformat()}Z" if turn.created_at else "",
             )
             for turn in turns
         ]
@@ -345,10 +349,11 @@ async def create_conversation(
             conversation_id=conversation.id,
         )
 
+        # Issue #788: Add Z suffix to indicate UTC timezone for proper JS parsing
         return CreateConversationResponse(
             id=conversation.id,
             title=conversation.title or "New conversation",
-            created_at=conversation.created_at.isoformat() if conversation.created_at else "",
+            created_at=f"{conversation.created_at.isoformat()}Z" if conversation.created_at else "",
         )
 
     except Exception as e:
@@ -402,12 +407,15 @@ async def get_conversation(
 
         turn_count = await conv_repo.get_turn_count(conversation_id)
 
+        # Issue #788: Add Z suffix to indicate UTC timezone for proper JS parsing
         return ConversationListItem(
             id=conversation.id,
             title=conversation.title or "New conversation",
-            created_at=conversation.created_at.isoformat() if conversation.created_at else "",
+            created_at=f"{conversation.created_at.isoformat()}Z" if conversation.created_at else "",
             updated_at=(
-                conversation.last_activity_at.isoformat() if conversation.last_activity_at else None
+                f"{conversation.last_activity_at.isoformat()}Z"
+                if conversation.last_activity_at
+                else None
             ),
             turn_count=turn_count,
         )
@@ -496,12 +504,15 @@ async def update_conversation_title(
         # Return updated conversation
         turn_count = await conv_repo.get_turn_count(conversation_id)
 
+        # Issue #788: Add Z suffix to indicate UTC timezone for proper JS parsing
         return ConversationListItem(
             id=conversation.id,
             title=title,
-            created_at=conversation.created_at.isoformat() if conversation.created_at else "",
+            created_at=f"{conversation.created_at.isoformat()}Z" if conversation.created_at else "",
             updated_at=(
-                conversation.last_activity_at.isoformat() if conversation.last_activity_at else None
+                f"{conversation.last_activity_at.isoformat()}Z"
+                if conversation.last_activity_at
+                else None
             ),
             turn_count=turn_count,
         )

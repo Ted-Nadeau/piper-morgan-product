@@ -464,6 +464,11 @@
         if (result.session_id) {
           sessionId = result.session_id;
         }
+
+        // Issue #787: Refresh sidebar when a new conversation is auto-created
+        if (result.conversation_created && typeof loadConversations === 'function') {
+          loadConversations();
+        }
       } catch (error) {
         // Replace the 'thinking' message with a new error message (with 'error' class)
         const errorDiv = appendMessage("", false);

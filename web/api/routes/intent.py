@@ -271,6 +271,8 @@ async def process_intent(
         # Issue #731: Auto-create conversation if none exists for this session
         # This ensures conversations are persisted even when user types directly
         # in the chat input without clicking "+ New Chat" button
+        # Issue #787: Track if conversation was created to signal frontend sidebar refresh
+        conversation_created = False
         if user_id and session_id and session_id != "default_session":
             try:
                 from services.database.models import ConversationDB
@@ -292,6 +294,7 @@ async def process_intent(
                         )
                         db_session.add(conversation)
                         await db_session.commit()
+                        conversation_created = True
                         logger.info(
                             "Auto-created conversation for session",
                             session_id=session_id,
@@ -317,6 +320,8 @@ async def process_intent(
             "clarification_type": result.clarification_type,
             "suggestions": result.suggestions,  # Phase 3: Pattern suggestions
             "preferences": result.preferences,  # Issue #248: Preference detection results
+            "session_id": session_id,  # Issue #787: Return session_id for frontend sync
+            "conversation_created": conversation_created,  # Issue #787: Signal sidebar refresh
         }
 
         # Add error fields if present (semantic/validation errors from service)
