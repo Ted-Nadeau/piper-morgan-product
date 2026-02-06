@@ -199,8 +199,12 @@ const SessionTimeout = {
     SessionTimeout.dismiss();
 
     // Clear session data
+    // Issue #787: Clear all user-specific localStorage to prevent session bleed
     if (typeof localStorage !== 'undefined') {
       localStorage.removeItem('sessionId');
+      localStorage.removeItem('piper_chat_session_id');
+      localStorage.removeItem('piper_chat_history');
+      localStorage.removeItem('piper_active_conversation_id');
     }
 
     // Redirect to login/logout page

@@ -879,6 +879,15 @@ async function handleLogout(event) {
     });
 
     if (response.ok) {
+      // Issue #787: Clear user-specific localStorage to prevent session bleed to next user
+      // Must clear BEFORE redirect so new user gets fresh state
+      try {
+        localStorage.removeItem('piper_chat_session_id');
+        localStorage.removeItem('piper_chat_history');
+        localStorage.removeItem('piper_active_conversation_id');
+      } catch (e) {
+        // Ignore storage errors in private browsing
+      }
       // Redirect to login or home page
       window.location.href = '/';
     } else {
