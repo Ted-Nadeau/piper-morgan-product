@@ -2,6 +2,8 @@
 
 Complete step-by-step guide to set up the Piper Morgan development environment.
 
+> **Not a developer?** If you're an alpha tester who just wants to try Piper Morgan, see [ALPHA_QUICKSTART.md](docs/ALPHA_QUICKSTART.md) instead. This guide is for contributors who want to modify the codebase.
+
 ## Prerequisites
 
 Before you begin, ensure you have the following installed:

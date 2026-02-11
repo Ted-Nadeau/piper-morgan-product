@@ -3,11 +3,29 @@
 **Version**: 0.8.5.2
 **Branch**: `production` (stable alpha releases)
 **For**: Experienced developers who want to dive in fast
-**Time**: 2-5 minutes setup, plus initial configuration
 
 > 📍 **Branch Info**: This quickstart uses the `production` branch, which receives stable alpha releases. The `main` branch is for active development and may have bugs.
 
 ⚠️ **If you hit issues, see `ALPHA_TESTING_GUIDE.md` for comprehensive troubleshooting.**
+
+---
+
+## Time & Storage Requirements
+
+| Step | First Run | Subsequent Runs |
+|------|-----------|-----------------|
+| Clone repository | 1-2 min (~91MB with --depth 1) | N/A |
+| Install Python packages | 5-10 min (~216 packages, ~1GB) | 1-2 min |
+| Docker image download | 10-30 min (~4GB, depends on connection) | Skipped if cached |
+| Database migrations | 1-2 min | 30 sec |
+| Setup wizard | 2-5 min | N/A |
+| **Total (first time)** | **20-50 minutes** | **5-10 min** |
+
+**Storage Requirements**:
+- Docker images: ~4GB
+- Python packages: ~1GB
+- Database: ~100MB (grows with usage)
+- **Total**: ~6GB free disk space recommended
 
 ---
 
@@ -27,6 +45,17 @@ See [Release Notes v0.8.5.2](releases/RELEASE-NOTES-v0.8.5.2.md) for full detail
 
 ---
 
+## Choose Your Path
+
+| I want to... | Use this guide | Time |
+|--------------|----------------|------|
+| **Try Piper Morgan** (alpha testing) | This guide (ALPHA_QUICKSTART.md) | 20-50 min |
+| **Develop/contribute code** | [SETUP.md](../SETUP.md) | 30-60 min |
+
+> 🔮 **Future**: A hosted version and Docker Hub images are planned for 2026, which will enable a true "5-minute setup" for users who just want to run Piper. For now, all paths require the developer setup.
+
+---
+
 ## Prerequisites
 
 - Python 3.11 or 3.12, Docker, Git installed and working
@@ -35,7 +64,7 @@ See [Release Notes v0.8.5.2](releases/RELEASE-NOTES-v0.8.5.2.md) for full detail
 
 ---
 
-## Automated Setup (Recommended - 2 minutes)
+## Automated Setup (Recommended for Alpha Testers)
 
 **For macOS/Linux/WSL2:**
 ```bash
@@ -72,39 +101,45 @@ REM → Launch the setup wizard at http://localhost:8001/setup
 ## Manual Setup (If You Prefer Full Control)
 
 ```bash
-# 1. Clone and setup (using production branch for alpha testing)
+# 1. Clone and setup (~2-3 min)
 # --depth 1 gives you a fast ~91MB download (vs ~800MB full history)
 git clone --depth 1 -b production https://github.com/mediajunkie/piper-morgan-product.git
 cd piper-morgan-product
 python3.12 -m venv venv && source venv/bin/activate
 # Requires Python 3.11 or 3.12 - verify with: python --version
-python -m pip install --upgrade pip  # Upgrade pip first
-pip install -r requirements.txt
 
-# 2. Configure environment variables (CRITICAL - 1 min)
+# 2. Install dependencies (~5-10 min first time, 216 packages)
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+# ☕ This downloads ~1GB of packages - good time for a coffee break
+
+# 3. Configure environment variables (~1 min)
 cp .env.example .env
 # Edit .env and set JWT_SECRET_KEY:
 # Generate a secure key: openssl rand -hex 32
 # Add to .env: JWT_SECRET_KEY=your-generated-key-here
 # Note: .env is gitignored and survives git pull operations
 
-# 3. Start Docker containers
+# 4. Start Docker containers (~10-30 min first time)
 docker compose up -d
+# First run downloads ~4GB of images (PostgreSQL, Redis, etc.)
+# ☕ Another good coffee break opportunity
+# Subsequent runs: instant (images are cached)
 
-# 4. Run database migrations (REQUIRED)
+# 5. Run database migrations (~1-2 min)
 python -m alembic upgrade head
 # This creates/updates all database tables
 
-# 5. Start server for first-time setup
+# 6. Start server for first-time setup
 python main.py
 # → Opens http://localhost:8001/setup (GUI setup wizard)
 
-# 6. Complete setup wizard (web browser)
+# 7. Complete setup wizard (~2-5 min)
 # → Navigate through visual setup screens
 # → Configure API keys, create user account
 # → See "Setup Wizard Walkthrough" below for details
 
-# 7. Configure preferences (optional, 2 mins)
+# 8. Configure preferences (optional, ~2 min)
 python main.py preferences
 # → Answer 5 questions about your work style
 # → Or skip and configure later via Settings page
