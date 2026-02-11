@@ -137,6 +137,17 @@
 
     document.getElementById('next-1').addEventListener('click', () => showStep(2));
 
+    // Back button handlers for navigation between steps
+    const back2Btn = document.getElementById('back-2');
+    if (back2Btn) {
+        back2Btn.addEventListener('click', () => showStep(1));
+    }
+
+    const back3Btn = document.getElementById('back-3');
+    if (back3Btn) {
+        back3Btn.addEventListener('click', () => showStep(2));
+    }
+
     // Step 2: API Key Validation
     document.querySelectorAll('.validate-key-btn').forEach(btn => {
         btn.addEventListener('click', async function() {
@@ -306,7 +317,10 @@
                 // Complete setup
                 await completeSetup();
             } else {
-                showError(data.message || 'Failed to create account.', 'Account Creation Failed');
+                // Handle both success=false responses and HTTPException responses
+                // HTTPException returns {detail: "..."}, success responses return {message: "..."}
+                const errorMessage = data.message || data.detail || 'Failed to create account.';
+                showError(errorMessage, 'Account Creation Failed');
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Create Account';
             }

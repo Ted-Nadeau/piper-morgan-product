@@ -98,6 +98,16 @@
     cursor: not-allowed;
 }
 
+.auth-button.secondary {
+    background: transparent;
+    border: 1px solid var(--color-border);
+    color: var(--color-text);
+}
+
+.auth-button.secondary:hover {
+    background: var(--color-bg-secondary);
+}
+
 .auth-button.loading::after {
     content: '...';
     animation: loading 1s infinite;
