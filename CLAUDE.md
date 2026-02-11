@@ -56,7 +56,7 @@ python main.py                    # Start server (port 8001)
 python -m pytest tests/unit/ -v   # Run tests
 
 # Database (port 5433)
-docker-compose up -d
+docker compose up -d
 alembic upgrade head
 
 # Before committing

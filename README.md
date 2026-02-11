@@ -26,10 +26,11 @@ cd piper-morgan-product
 python -m venv venv && source venv/bin/activate
 
 # Install dependencies
+python -m pip install --upgrade pip
 pip install -r requirements.txt
 
 # Start infrastructure
-docker-compose up -d
+docker compose up -d
 
 # Run the application
 python main.py

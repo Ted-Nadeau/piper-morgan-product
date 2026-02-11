@@ -605,7 +605,7 @@ The setup wizard (GUI or CLI) will guide you through Docker installation with pl
 
 **"Database not accessible"**
 
-- Ensure database is running: `docker-compose up -d db`
+- Ensure database is running: `docker compose up -d db`
 - Wait 10 seconds for database to start
 - Check Docker containers: `docker ps`
 
@@ -740,11 +740,55 @@ SEVERITY: [blocker/major/minor]
 If the setup wizard fails, you can fall back to manual configuration:
 
 1. **Environment Variables**: Copy `.env.example` to `.env` and edit
-2. **Database**: Run `docker-compose up -d db`
+2. **Database**: Run `docker compose up -d db`
 3. **API Keys**: Manually add to `.env` file
 4. **Database Migration**: Run database setup scripts
 
 See original testing guide for detailed manual steps.
+
+---
+
+## Advanced: Browsing the Database Directly
+
+For debugging and development, you can browse the PostgreSQL database directly:
+
+### Connection Details
+
+| Setting | Value |
+|---------|-------|
+| Host | `localhost` (or `127.0.0.1` on Windows) |
+| Port | `5433` (note: not default 5432) |
+| Database | `piper_morgan` |
+| Username | `piper` (from docker-compose.yml) |
+| Password | `dev_changeme_in_production` (from docker-compose.yml) |
+
+### GUI Tools (Optional)
+
+**pgAdmin** (recommended for beginners):
+1. Download from https://www.pgadmin.org/
+2. Add Server → Enter connection details above
+3. Browse tables under Databases → piper_morgan → Schemas → public → Tables
+
+**DBeaver** (full-featured alternative):
+1. Download from https://dbeaver.io/
+2. New Connection → PostgreSQL → Enter connection details
+3. Browse schema visually
+
+### Command Line Access
+
+```bash
+# Connect via Docker container
+docker exec -it piper-postgres psql -U piper -d piper_morgan
+
+# List tables
+\dt
+
+# Query example
+SELECT * FROM users;
+
+# Exit
+\q
+```
 
 ---
 

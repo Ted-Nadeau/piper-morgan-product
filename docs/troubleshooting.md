@@ -23,7 +23,7 @@ Verify with: `docker --version`
 lsof -i :8001
 
 # Stop existing Piper Morgan instance
-docker-compose down
+docker compose down
 ```
 
 ### "Database is not accessible"
@@ -33,7 +33,7 @@ docker-compose down
 **Solution**:
 ```bash
 # Start database
-docker-compose up -d db
+docker compose up -d db
 
 # Wait 10 seconds
 sleep 10
@@ -102,8 +102,8 @@ python -c "import asyncio; asyncio.timeout(1.0); print('✅ Fixed')"
 
 ```bash
 # Rebuild with Python 3.11 base
-docker-compose build --no-cache
-docker-compose run app python --version  # Verify 3.11+
+docker compose build --no-cache
+docker compose run app python --version  # Verify 3.11+
 ```
 
 ### CI/CD Python Version Failures

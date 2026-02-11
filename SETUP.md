@@ -67,7 +67,8 @@ venv\Scripts\activate.bat
 # Upgrade pip
 pip install --upgrade pip
 
-# Install requirements
+# Upgrade pip and install requirements
+python -m pip install --upgrade pip
 pip install -r requirements.txt
 
 # Verify
@@ -108,7 +109,7 @@ alembic upgrade head
 
 ```bash
 # Start database container
-docker-compose up -d
+docker compose up -d
 
 # Run migrations
 source venv/bin/activate
@@ -206,8 +207,8 @@ python3.11 -m venv venv
 psql piper_morgan
 
 # If using Docker:
-docker-compose ps  # Check if container is running
-docker-compose logs db  # Check logs
+docker compose ps  # Check if container is running
+docker compose logs db  # Check logs
 ```
 
 ### VSCode Not Recognizing Python
@@ -231,9 +232,12 @@ alembic upgrade head
 
 ## Quick Reference
 
+> ⚠️ **Reminder**: Activate your virtual environment each time you open a new terminal!
+
 | Task | Command | VSCode Alternative |
 |------|---------|-------------------|
-| Activate venv | `source venv/bin/activate` | Auto on open |
+| Activate venv (Mac/Linux) | `source venv/bin/activate` | Auto on open |
+| Activate venv (Windows) | `.\venv\Scripts\Activate.ps1` | Auto on open |
 | Install deps | `pip install -r requirements.txt` | Task: "Install Dependencies" |
 | Run tests | `pytest tests/unit/ -v` | Debug: "Pytest (Current File)" |
 | Start server | `python -m uvicorn web.app:app --reload` | Debug: "FastAPI" |

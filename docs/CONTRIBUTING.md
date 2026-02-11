@@ -39,7 +39,7 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 
 # Start services (Docker)
-docker-compose up -d
+docker compose up -d
 
 # Initialize database
 python scripts/init-db.py

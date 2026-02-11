@@ -78,6 +78,7 @@ git clone --depth 1 -b production https://github.com/mediajunkie/piper-morgan-pr
 cd piper-morgan-product
 python3.12 -m venv venv && source venv/bin/activate
 # Requires Python 3.11 or 3.12 - verify with: python --version
+python -m pip install --upgrade pip  # Upgrade pip first
 pip install -r requirements.txt
 
 # 2. Configure environment variables (CRITICAL - 1 min)
@@ -88,7 +89,7 @@ cp .env.example .env
 # Note: .env is gitignored and survives git pull operations
 
 # 3. Start Docker containers
-docker-compose up -d
+docker compose up -d
 
 # 4. Run database migrations (REQUIRED)
 python -m alembic upgrade head
@@ -259,8 +260,8 @@ docker ps | grep postgres
 # Should show: piper-postgres running on port 5433
 
 # Reset database completely (WARNING: deletes all data):
-docker-compose down -v
-docker-compose up -d
+docker compose down -v
+docker compose up -d
 python -m alembic upgrade head
 ```
 
@@ -286,6 +287,14 @@ python main.py setup
 # Check server is running: python main.py
 # Try: http://127.0.0.1:8001
 ```
+
+### Windows: localhost doesn't work?
+
+**Problem**: `http://localhost:8001` gives connection error, but `http://127.0.0.1:8001` works.
+
+**Why**: Windows may resolve `localhost` to IPv6 (`::1`) while Piper binds to IPv4 (`127.0.0.1`).
+
+**Solution**: Use `http://127.0.0.1:8001` instead of `localhost:8001` on Windows.
 
 ### Environment variables not loading after git pull?
 
@@ -313,9 +322,48 @@ python main.py
 # The setup wizard stores API keys separately (in secure keyring)
 ```
 
+### Commands not found after restarting terminal?
+
+If `python main.py` gives errors like "No module named..." or commands aren't found:
+
+```bash
+# You need to reactivate your virtual environment!
+# The venv deactivates when you close your terminal.
+
+# Mac/Linux:
+cd piper-morgan-product
+source venv/bin/activate
+
+# Windows PowerShell:
+cd piper-morgan-product
+.\venv\Scripts\Activate.ps1
+
+# Windows Command Prompt:
+cd piper-morgan-product
+venv\Scripts\activate.bat
+
+# Your prompt should now show (venv) - try your command again
+python main.py
+```
+
 ---
 
 ## Key Commands Reference
+
+> ⚠️ **Important**: All commands must be run inside an activated virtual environment!
+>
+> **Activate venv each time you open a new terminal:**
+> ```bash
+> # Mac/Linux:
+> source venv/bin/activate
+>
+> # Windows PowerShell:
+> .\venv\Scripts\Activate.ps1
+>
+> # Windows Command Prompt:
+> venv\Scripts\activate.bat
+> ```
+> Your prompt should show `(venv)` when activated.
 
 ```bash
 python main.py              # Start server (opens browser automatically)
