@@ -143,6 +143,11 @@ python main.py
 python main.py preferences
 # → Answer 5 questions about your work style
 # → Or skip and configure later via Settings page
+
+# 9. Validate installation (optional)
+python scripts/validate_install.py
+# → Checks all components are working
+# → Shows clear pass/fail status
 ```
 
 ---

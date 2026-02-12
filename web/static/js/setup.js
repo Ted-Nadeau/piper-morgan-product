@@ -120,7 +120,7 @@
                 document.getElementById('next-1').style.display = 'block';
                 this.style.display = 'none';
             } else {
-                showError('Required services are offline. Run: docker-compose up -d', 'Services Not Running');
+                showError('Required services are offline. Run: docker compose up -d', 'Services Not Running');
                 this.disabled = false;
                 this.textContent = 'Retry Check';
             }
