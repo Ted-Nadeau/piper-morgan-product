@@ -44,42 +44,9 @@ for /f "tokens=*" %%A in ('reg query "HKCU\Console" /v VirtualTerminalLevel 2^>n
     set "SUPPORTS_COLOR=1"
 )
 
-REM Helper functions for output
-setlocal enabledelayedexpansion
-
-:print_step
-    if %SUPPORTS_COLOR% equ 1 (
-        echo %BLUE%→%NC% %~1
-    ) else (
-        echo [STEP] %~1
-    )
-    exit /b
-
-:print_success
-    if %SUPPORTS_COLOR% equ 1 (
-        echo %GREEN%✓%NC% %~1
-    ) else (
-        echo [OK] %~1
-    )
-    exit /b
-
-:print_error
-    if %SUPPORTS_COLOR% equ 1 (
-        echo %RED%✗%NC% %~1
-    ) else (
-        echo [ERROR] %~1
-    )
-    exit /b
-
-:print_warning
-    if %SUPPORTS_COLOR% equ 1 (
-        echo %YELLOW%⚠%NC% %~1
-    ) else (
-        echo [WARN] %~1
-    )
-    exit /b
-
+REM ============================================================================
 REM Main script starts here
+REM ============================================================================
 cls
 echo.
 echo ╔════════════════════════════════════════════════════════╗
@@ -90,23 +57,73 @@ echo.
 
 REM Check for required tools
 call :check_requirements
+if errorlevel 1 goto :error_exit
 
 REM Create Python virtual environment
 call :setup_venv
+if errorlevel 1 goto :error_exit
 
 REM Install dependencies
 call :install_deps
+if errorlevel 1 goto :error_exit
 
 REM Setup environment configuration
 call :setup_env
+if errorlevel 1 goto :error_exit
 
 REM Start Docker containers
 call :start_docker
+if errorlevel 1 goto :error_exit
 
 REM Start the application
 call :start_app
 
-exit /b
+goto :eof
+
+:error_exit
+echo.
+echo [ERROR] Setup failed. Please fix the issues above and try again.
+exit /b 1
+
+REM ============================================================================
+REM Helper functions for output
+REM ============================================================================
+
+:print_step
+    if "%SUPPORTS_COLOR%"=="1" (
+        echo %BLUE%→%NC% %~1
+    ) else (
+        echo [STEP] %~1
+    )
+    goto :eof
+
+:print_success
+    if "%SUPPORTS_COLOR%"=="1" (
+        echo %GREEN%✓%NC% %~1
+    ) else (
+        echo [OK] %~1
+    )
+    goto :eof
+
+:print_error
+    if "%SUPPORTS_COLOR%"=="1" (
+        echo %RED%✗%NC% %~1
+    ) else (
+        echo [ERROR] %~1
+    )
+    goto :eof
+
+:print_warning
+    if "%SUPPORTS_COLOR%"=="1" (
+        echo %YELLOW%⚠%NC% %~1
+    ) else (
+        echo [WARN] %~1
+    )
+    goto :eof
+
+REM ============================================================================
+REM Main subroutines
+REM ============================================================================
 
 :check_requirements
     echo.
@@ -161,7 +178,7 @@ exit /b
     )
     call :print_success "Docker found"
 
-    exit /b
+    goto :eof
 
 :setup_venv
     echo.
@@ -188,7 +205,7 @@ exit /b
     )
     call :print_success "Virtual environment activated"
 
-    exit /b
+    goto :eof
 
 :install_deps
     echo.
@@ -199,7 +216,7 @@ exit /b
         exit /b 1
     )
 
-    call :print_step "Installing Python dependencies..."
+    call :print_step "Installing Python dependencies (this may take several minutes)..."
     REM Upgrade pip first (silent)
     python -m pip install --quiet --upgrade pip setuptools >nul 2>&1
 
@@ -211,7 +228,7 @@ exit /b
     )
     call :print_success "Dependencies installed"
 
-    exit /b
+    goto :eof
 
 :setup_env
     echo.
@@ -238,7 +255,7 @@ exit /b
             call :print_step "Generating secure JWT secret key..."
 
             REM Generate 32 random hex bytes using powershell (more reliable on Windows)
-            for /f "delims=" %%A in ('powershell -Command "[BitConverter]::ToString((1..32 | ForEach-Object { Get-Random -Maximum 256 })) -replace '-','' | ToLower"') do (
+            for /f "delims=" %%A in ('powershell -Command "[BitConverter]::ToString((1..32 | ForEach-Object { Get-Random -Maximum 256 })) -replace '-','' -replace ' ','' | ForEach-Object { $_.ToLower() }"') do (
                 set JWT_SECRET=%%A
             )
 
@@ -255,7 +272,7 @@ exit /b
         )
     )
 
-    exit /b
+    goto :eof
 
 :start_docker
     echo.
@@ -270,7 +287,7 @@ exit /b
     )
 
     if exist docker-compose.yml (
-        call docker-compose up -d
+        docker compose up -d
         if errorlevel 1 (
             call :print_error "Failed to start Docker containers"
             exit /b 1
@@ -283,7 +300,7 @@ exit /b
         call :print_warning "docker-compose.yml not found, skipping Docker startup"
     )
 
-    exit /b
+    goto :eof
 
 :start_app
     echo.
@@ -294,11 +311,11 @@ exit /b
     echo ═══════════════════════════════════════════════════════
     echo.
     echo The setup wizard will open in your browser automatically.
-    echo If it doesn't, visit: http://localhost:8001/setup
+    echo If it doesn't, visit: http://127.0.0.1:8001/setup
     echo.
     call :print_step "Starting server (press Ctrl+C to stop)..."
     echo.
 
     python main.py
 
-    exit /b
+    goto :eof
