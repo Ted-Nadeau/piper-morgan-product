@@ -67,8 +67,8 @@ jobs:
         run: |
           echo "Testing core module imports..."
           python -c "from services.shared_types import IntentCategory; print('OK: shared_types')"
-          python -c "from services.domain.models import User; print('OK: domain.models')"
-          python -c "from config.settings import Settings; print('OK: config.settings')"
+          python -c "from services.database.models import User; print('OK: database.models')"
+          python -c "from services.orchestration.engine import OrchestrationEngine; print('OK: orchestration.engine')"
           echo "Core imports successful"
         shell: cmd
 
