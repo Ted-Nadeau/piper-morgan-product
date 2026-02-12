@@ -1,7 +1,7 @@
 # Alpha Onboarding Email Templates
 
 **Version**: 2.6
-**For**: Piper Morgan 0.8.5.2 Alpha Release
+**For**: Piper Morgan 0.8.5.3 Alpha Release
 **Last Updated**: February 6, 2026
 
 ---

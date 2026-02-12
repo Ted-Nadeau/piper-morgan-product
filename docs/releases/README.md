@@ -6,9 +6,9 @@ This directory contains release notes for all Piper Morgan versions.
 
 ## Current Version
 
-**v0.8.5.2** (February 6, 2026) - [Release Notes](RELEASE-NOTES-v0.8.5.2.md)
+**v0.8.5.3** (February 11, 2026) - [Release Notes](RELEASE-NOTES-v0.8.5.3.md)
 
-Critical alpha testing bug fixes: Chat persistence (#787), date formatting (#788), calendar false positive (#789), and timezone model alignment.
+Windows compatibility and setup experience improvements. 14 issues resolved from Ted Nadeau's Windows testing feedback: uvloop fix, missing migrations, CRLF handling, installation validator, and comprehensive documentation updates.
 
 ---
 
@@ -16,6 +16,7 @@ Critical alpha testing bug fixes: Chat persistence (#787), date formatting (#788
 
 | Version | Date | Type | Highlights |
 |---------|------|------|------------|
+| [v0.8.5.3](RELEASE-NOTES-v0.8.5.3.md) | Feb 11, 2026 | Patch | Windows compatibility, setup UX, 14 issues resolved |
 | [v0.8.5.2](RELEASE-NOTES-v0.8.5.2.md) | Feb 6, 2026 | Patch | Chat persistence, date formatting, calendar fixes |
 | [v0.8.5.1](RELEASE-NOTES-v0.8.5.1.md) | Jan 31, 2026 | Patch | 14 alpha testing bug fixes |
 | [v0.8.5](RELEASE-NOTES-v0.8.5.md) | Jan 27, 2026 | Feature | MUX-IMPLEMENT complete, WCAG 2.1 AA accessibility |
@@ -57,4 +58,4 @@ For current known issues and limitations, see [ALPHA_KNOWN_ISSUES.md](../ALPHA_K
 
 ---
 
-*Last updated: January 27, 2026*
+*Last updated: February 11, 2026*

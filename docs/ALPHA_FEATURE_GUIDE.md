@@ -1,7 +1,7 @@
-# Alpha Feature Guide (v0.8.5.2)
+# Alpha Feature Guide (v0.8.5.3)
 
-**Version**: 0.8.5.2
-**Last Updated**: January 31, 2026
+**Version**: 0.8.5.3
+**Last Updated**: February 11, 2026
 
 A guide to what Piper Morgan can do in the current alpha release.
 

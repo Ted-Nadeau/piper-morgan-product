@@ -1,6 +1,6 @@
 # Piper Morgan Alpha - Quick Start
 
-**Version**: 0.8.5.2
+**Version**: 0.8.5.3
 **Branch**: `production` (stable alpha releases)
 **For**: Experienced developers who want to dive in fast
 
@@ -29,19 +29,21 @@
 
 ---
 
-## What's New in 0.8.5.2
+## What's New in 0.8.5.3
 
-**Critical Bug Fixes** - Fixing issues discovered during continued alpha testing.
+**Windows Compatibility & Setup UX** - 14 issues resolved from Ted Nadeau's Windows testing.
 
-**Chat Persistence (#787)** - Conversations now appear in sidebar immediately after first chat. Fixed cross-user session bleed.
+**Windows Installation (#795, #797)** - uvloop now skipped on Windows. CRLF line endings no longer break Docker.
 
-**Date Formatting (#788)** - Fixed "Invalid Date" display for new conversations.
+**Database Migrations (#796)** - Missing migrations for products, features, work_items tables created.
 
-**Calendar Fix (#789)** - Piper no longer claims "no meetings" when calendar isn't connected.
+**Installation Validator (#806)** - New `scripts/validate_install.py` verifies all components working.
+
+**Better Errors (#808)** - Error messages now include specific fix suggestions.
 
 **Database Migration Required**: Run `alembic upgrade head` after updating.
 
-See [Release Notes v0.8.5.2](releases/RELEASE-NOTES-v0.8.5.2.md) for full details.
+See [Release Notes v0.8.5.3](releases/RELEASE-NOTES-v0.8.5.3.md) for full details.
 
 ---
 
@@ -249,7 +251,7 @@ After logging in to http://localhost:8001:
 
 ---
 
-## Testing Focus for 0.8.5.2
+## Testing Focus for 0.8.5.3
 
 **What's Stable** (light testing recommended):
 - ✅ Setup wizard (GUI and CLI)
@@ -257,14 +259,14 @@ After logging in to http://localhost:8001:
 - ✅ Chat interface
 - ✅ Lists, todos, projects, files
 - ✅ Integration Dashboard and OAuth connections
+- ✅ Windows installation and setup
 
 **Where to Focus Testing** (these need your attention):
+- 🔍 **Installation validator**: Run `python scripts/validate_install.py`
+- 🔍 **Windows setup**: Fresh install on Windows systems
+- 🔍 **Error messages**: Trigger errors and check for helpful fix suggestions
 - 🔍 **Lifecycle indicators**: Check that projects and todos show lifecycle state
-- 🔍 **Work Items view**: New view at /work-items
-- 🔍 **Project Detail view**: Click into a project to see its detail page
 - 🔍 **Accessibility**: Keyboard navigation, screen reader compatibility
-- 🔍 **File handling**: Upload, download, analysis
-- 🔍 **Permission system**: Sharing resources, role-based access
 
 ---
 
@@ -430,7 +432,7 @@ After `python main.py` starts the server at http://localhost:8001:
 
 ---
 
-## What's Working in 0.8.5.2
+## What's Working in 0.8.5.3
 
 ✅ **MUX-IMPLEMENT Complete** (0.8.5):
    - WCAG 2.1 AA accessibility compliance
@@ -475,7 +477,7 @@ After `python main.py` starts the server at http://localhost:8001:
    - ARIA landmarks throughout
 
 ✅ **Quality Validation**:
-   - 5253 automated tests passing
+   - 5307 automated tests passing
    - CI/CD quality gates
    - UI stability improvements (638 template tests)
 
@@ -488,18 +490,18 @@ See [ALPHA_KNOWN_ISSUES.md](ALPHA_KNOWN_ISSUES.md) for complete status and known
 - **Full Guide**: [ALPHA_TESTING_GUIDE.md](ALPHA_TESTING_GUIDE.md) (comprehensive setup)
 - **Known Issues**: [ALPHA_KNOWN_ISSUES.md](ALPHA_KNOWN_ISSUES.md) (bugs and status)
 - **Legal**: [ALPHA_AGREEMENT_v2.md](ALPHA_AGREEMENT_v2.md) (terms and conditions)
-- **Version Info**: [VERSION_NUMBERING.md](VERSION_NUMBERING.md) (what 0.8.5.2 means)
+- **Version Info**: [VERSION_NUMBERING.md](VERSION_NUMBERING.md) (what 0.8.5.3 means)
 
 ---
 
 ## Remember
 
-This is **alpha software** (0.8.5.2). Expect bugs. Don't use for production. You're responsible for API costs. See `ALPHA_AGREEMENT_v2.md` for details.
+This is **alpha software** (0.8.5.3). Expect bugs. Don't use for production. You're responsible for API costs. See `ALPHA_AGREEMENT_v2.md` for details.
 
-**Testing Focus**: Core features are stable. Focus your testing on the new lifecycle indicators, Work Items view, and accessibility improvements.
+**Testing Focus**: Windows compatibility is now stable. Focus your testing on the installation validator, error messages, and lifecycle indicators.
 
 ---
 
 **Happy testing!** 🚀
 
-_Last Updated: January 28, 2026_
+_Last Updated: February 11, 2026_
