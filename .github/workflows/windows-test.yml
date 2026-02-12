@@ -60,8 +60,7 @@ jobs:
       - name: Verify uvloop skipped on Windows
         run: |
           python -c "import sys; pkgs = [p for p in sys.modules if 'uvloop' in p]; print(f'uvloop modules: {pkgs}')"
-          python -c "try: import uvloop; print('ERROR: uvloop should not be installed on Windows'); exit(1)
-          except ImportError: print('OK: uvloop correctly not installed on Windows')"
+          python -c "import importlib.util; spec = importlib.util.find_spec('uvloop'); exit(1) if spec else print('OK: uvloop correctly not installed on Windows')"
         shell: cmd
 
       - name: Test basic imports
