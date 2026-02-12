@@ -1,0 +1,157 @@
+name: Windows Compatibility Tests
+
+on:
+  push:
+    branches: [main, production]
+    paths:
+      - 'requirements.txt'
+      - 'scripts/*.bat'
+      - 'scripts/*.ps1'
+      - 'scripts/validate_install.py'
+      - '.github/workflows/windows-test.yml'
+  pull_request:
+    branches: [main, production]
+    paths:
+      - 'requirements.txt'
+      - 'scripts/*.bat'
+      - 'scripts/*.ps1'
+      - 'scripts/validate_install.py'
+      - '.github/workflows/windows-test.yml'
+  # Allow manual trigger for full Windows testing
+  workflow_dispatch:
+
+jobs:
+  windows-smoke-test:
+    name: Windows Smoke Tests
+    runs-on: windows-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Verify Python version
+        run: |
+          python --version
+          python -c "import sys; print(f'Python {sys.version_info.major}.{sys.version_info.minor}')"
+          python -c "import sys; assert sys.version_info >= (3, 11), 'Python 3.11+ required'"
+        shell: cmd
+
+      - name: Cache Python dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~\AppData\Local\pip\Cache
+          key: ${{ runner.os }}-pip-3.11-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-3.11-
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+        shell: cmd
+
+      - name: Verify uvloop skipped on Windows
+        run: |
+          python -c "import sys; pkgs = [p for p in sys.modules if 'uvloop' in p]; print(f'uvloop modules: {pkgs}')"
+          python -c "try: import uvloop; print('ERROR: uvloop should not be installed on Windows'); exit(1)
+          except ImportError: print('OK: uvloop correctly not installed on Windows')"
+        shell: cmd
+
+      - name: Test basic imports
+        run: |
+          echo "Testing core module imports..."
+          python -c "from services.shared_types import IntentCategory; print('OK: shared_types')"
+          python -c "from services.domain.models import User; print('OK: domain.models')"
+          python -c "from config.settings import Settings; print('OK: config.settings')"
+          echo "Core imports successful"
+        shell: cmd
+
+      - name: Test main.py --help
+        run: |
+          python main.py --help
+        shell: cmd
+
+      - name: Validate batch file syntax
+        run: |
+          echo "Validating alpha-setup.bat syntax..."
+          REM Check that the file exists and is readable
+          if not exist scripts\alpha-setup.bat (
+            echo ERROR: alpha-setup.bat not found
+            exit /b 1
+          )
+          REM Check for common batch file issues
+          findstr /C:"goto :eof" scripts\alpha-setup.bat >nul
+          if errorlevel 1 (
+            echo WARNING: No 'goto :eof' found - may have subroutine issues
+          ) else (
+            echo OK: Found 'goto :eof' for proper subroutine returns
+          )
+          echo Batch file validation complete
+        shell: cmd
+
+      - name: Run unit tests (smoke subset)
+        run: |
+          echo "Running smoke tests on Windows..."
+          python -m pytest tests/unit/services/shared/ -v --tb=short -q
+        shell: cmd
+        continue-on-error: true
+
+      - name: Test summary
+        run: |
+          echo "## Windows Test Results" >> %GITHUB_STEP_SUMMARY%
+          echo "✅ Python 3.11 setup successful" >> %GITHUB_STEP_SUMMARY%
+          echo "✅ Dependencies installed (uvloop skipped)" >> %GITHUB_STEP_SUMMARY%
+          echo "✅ Core imports working" >> %GITHUB_STEP_SUMMARY%
+          echo "✅ main.py executable" >> %GITHUB_STEP_SUMMARY%
+        shell: cmd
+
+  windows-unit-tests:
+    name: Windows Unit Tests
+    runs-on: windows-latest
+    needs: windows-smoke-test
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Cache Python dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~\AppData\Local\pip\Cache
+          key: ${{ runner.os }}-pip-3.11-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-3.11-
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+        shell: cmd
+
+      - name: Run unit tests (excluding LLM and integration)
+        run: |
+          echo "Running unit tests on Windows..."
+          python -m pytest tests/unit/ -v --tb=short -m "not llm" --ignore=tests/unit/services/integrations/
+        shell: cmd
+        continue-on-error: true
+
+      - name: Report test results
+        if: always()
+        run: |
+          echo "## Windows Unit Test Results" >> %GITHUB_STEP_SUMMARY%
+          echo "See test output above for details" >> %GITHUB_STEP_SUMMARY%
+        shell: cmd
