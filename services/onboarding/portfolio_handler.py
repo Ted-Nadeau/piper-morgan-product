@@ -16,8 +16,17 @@ Responsible for:
 import logging
 import re
 from dataclasses import dataclass
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
+from services.onboarding.narrative_helpers import (
+    acknowledge_project,
+    celebrate_completion,
+    get_add_more_prompt,
+    get_confirmation_prompt,
+    get_more_projects_prompt,
+    get_need_project_message,
+    handle_decline_warmly,
+)
 from services.onboarding.portfolio_manager import PortfolioOnboardingManager
 from services.shared_types import PortfolioOnboardingState
 
@@ -177,7 +186,7 @@ class PortfolioOnboardingHandler:
 
         # User accepted - transition to gathering
         self.manager.transition_state(session.id, PortfolioOnboardingState.GATHERING_PROJECTS)
-        response_message = "Great! What's the main project you're focused on right now?"
+        response_message = "Great! What are you working on right now?"
         self.manager.add_turn(session.id, user_message, response_message)
 
         return OnboardingResponse(
@@ -198,10 +207,7 @@ class PortfolioOnboardingHandler:
         if self._matches_patterns(message_lower, self.DONE_PATTERNS):
             if not session.captured_projects:
                 # No projects captured yet - prompt for at least one
-                response_message = (
-                    "I'd love to know about at least one project you're working on. "
-                    "What are you building or working on right now?"
-                )
+                response_message = get_need_project_message()
                 self.manager.add_turn(session.id, user_message, response_message)
                 return OnboardingResponse(
                     message=response_message,
@@ -220,10 +226,7 @@ class PortfolioOnboardingHandler:
             else:
                 # No projects - decline
                 self.manager.transition_state(session.id, PortfolioOnboardingState.DECLINED)
-                response_message = (
-                    "No problem! Whenever you're ready, just let me know. "
-                    "What can I help you with today?"
-                )
+                response_message = handle_decline_warmly(had_projects=False)
                 self.manager.add_turn(session.id, user_message, response_message)
                 return OnboardingResponse(
                     message=response_message,
@@ -234,7 +237,7 @@ class PortfolioOnboardingHandler:
         # Check if user is affirming they want to add more projects
         # (e.g., "Yes, I have another project to tell you about")
         if self._matches_patterns(message_lower, self.CONFIRM_PATTERNS):
-            response_message = "Great! What's the name of the project?"
+            response_message = get_add_more_prompt()
             self.manager.add_turn(session.id, user_message, response_message)
             return OnboardingResponse(
                 message=response_message,
@@ -246,13 +249,12 @@ class PortfolioOnboardingHandler:
         project_info = self._extract_project_info(user_message)
         self.manager.add_project(session.id, project_info)
 
-        # Ask if there are more projects
+        # Acknowledge project with context-aware response (first vs. additional)
         project_name = project_info.get("name", "your project")
-        response_message = (
-            f"Got it - {project_name}. "
-            f"Are there any other projects you'd like me to know about, "
-            f"or is that your main focus?"
-        )
+        is_first = len(session.captured_projects) <= 1
+        ack = acknowledge_project(project_name, is_first_project=is_first)
+        more_prompt = get_more_projects_prompt()
+        response_message = f"{ack} {more_prompt}"
         self.manager.add_turn(session.id, user_message, response_message)
 
         return OnboardingResponse(
@@ -266,47 +268,26 @@ class PortfolioOnboardingHandler:
         session,
         user_message: str,
     ) -> OnboardingResponse:
-        """Handle confirmation of captured projects."""
+        """Handle confirmation of captured projects and main-project designation."""
         message_lower = user_message.lower()
+        project_names = self._get_project_names(session)
 
-        # Issue #731 DEBUG: Trace confirming flow
-        print(f"[OnboardingHandler] _handle_confirming called, message='{user_message}'")
-        print(
-            f"[OnboardingHandler] Session state={session.state.value}, captured_projects={len(session.captured_projects)}"
-        )
-        print(
-            f"[OnboardingHandler] CONFIRM_PATTERNS match={self._matches_patterns(message_lower, self.CONFIRM_PATTERNS)}"
-        )
+        # Check if user is designating a main project (response to "which is your main focus?")
+        # Only relevant when we asked about main project (multiple projects captured)
+        if len(session.captured_projects) > 1:
+            designated = self._try_designate_main_project(message_lower, session)
+            if designated is not None:
+                # User named a project or declined — complete the onboarding
+                return self._complete_onboarding(session, user_message)
 
-        # Check for confirmation
+        # Check for confirmation (save portfolio)
         if self._matches_patterns(message_lower, self.CONFIRM_PATTERNS):
-            print(f"[OnboardingHandler] CONFIRM MATCHED! Transitioning to COMPLETE...")
-            self.manager.transition_state(session.id, PortfolioOnboardingState.COMPLETE)
-            print(
-                f"[OnboardingHandler] State transitioned. captured_projects={session.captured_projects}"
-            )
-
-            project_names = [p.get("name", "unnamed") for p in session.captured_projects]
-            project_list = ", ".join(project_names)
-
-            response_message = (
-                f"All set! I've added {project_list} to your portfolio. "
-                f"I'll help you stay on track with development coordination, "
-                f"issue tracking, and planning. What would you like to focus on today?"
-            )
-            self.manager.add_turn(session.id, user_message, response_message)
-
-            return OnboardingResponse(
-                message=response_message,
-                state=PortfolioOnboardingState.COMPLETE,
-                is_complete=True,
-                captured_projects=session.captured_projects,
-            )
+            return self._complete_onboarding(session, user_message)
 
         # User wants to add more
         if "more" in message_lower or "another" in message_lower or "add" in message_lower:
             self.manager.transition_state(session.id, PortfolioOnboardingState.GATHERING_PROJECTS)
-            response_message = "Sure! What other project would you like to add?"
+            response_message = get_add_more_prompt()
             self.manager.add_turn(session.id, user_message, response_message)
 
             return OnboardingResponse(
@@ -318,11 +299,7 @@ class PortfolioOnboardingHandler:
         # Check for decline/cancel
         if self._matches_patterns(message_lower, self.DECLINE_PATTERNS):
             self.manager.transition_state(session.id, PortfolioOnboardingState.DECLINED)
-            response_message = (
-                "No problem, I won't save those projects. "
-                "Let me know if you'd like to set up your portfolio later. "
-                "What can I help you with today?"
-            )
+            response_message = handle_decline_warmly(had_projects=bool(session.captured_projects))
             self.manager.add_turn(session.id, user_message, response_message)
 
             return OnboardingResponse(
@@ -331,14 +308,16 @@ class PortfolioOnboardingHandler:
                 is_complete=True,
             )
 
-        # Unclear response - re-prompt
-        project_names = [p.get("name", "unnamed") for p in session.captured_projects]
-        project_list = ", ".join(project_names)
-        response_message = (
-            f"I have {project_list} noted. "
-            f"Should I save these to your portfolio? "
-            f"Just say 'yes' to confirm or 'add more' if you have other projects."
-        )
+        # Unclear response — for multi-project, the user might be naming their main project
+        # For single project, re-prompt for confirmation
+        if len(session.captured_projects) > 1:
+            # Treat unclear response as possible project designation attempt
+            designated = self._try_designate_main_project(message_lower, session, fuzzy=True)
+            if designated is not None:
+                return self._complete_onboarding(session, user_message)
+
+        # Re-prompt
+        response_message = get_confirmation_prompt(project_names)
         self.manager.add_turn(session.id, user_message, response_message)
 
         return OnboardingResponse(
@@ -348,20 +327,28 @@ class PortfolioOnboardingHandler:
         )
 
     def _transition_to_confirming(self, session, user_message: str) -> OnboardingResponse:
-        """Transition to confirming state and generate confirmation prompt."""
+        """Transition to confirming state and generate confirmation prompt.
+
+        For single project: asks to confirm saving.
+        For multiple projects: asks which is their main focus (with opt-out),
+        which also serves as the confirmation step.
+        """
         self.manager.transition_state(session.id, PortfolioOnboardingState.CONFIRMING)
 
-        project_names = [p.get("name", "unnamed") for p in session.captured_projects]
-        if len(project_names) == 1:
-            project_summary = project_names[0]
-        else:
-            project_summary = ", ".join(project_names[:-1]) + f" and {project_names[-1]}"
+        project_names = self._get_project_names(session)
 
-        response_message = (
-            f"Perfect. I have {project_summary} noted. "
-            f"Should I save {'this' if len(project_names) == 1 else 'these'} "
-            f"to your portfolio?"
-        )
+        if len(project_names) == 1:
+            # Single project — just confirm (will auto-set as default)
+            response_message = get_confirmation_prompt(project_names)
+        else:
+            # Multiple projects — ask which is main focus (once, here)
+            project_summary = self._format_project_list(project_names)
+            response_message = (
+                f"I have {project_summary}. "
+                f"Which would you call your main focus right now? "
+                f"(Or just say 'save' to add them all without a primary.)"
+            )
+
         self.manager.add_turn(session.id, user_message, response_message)
 
         return OnboardingResponse(
@@ -369,6 +356,89 @@ class PortfolioOnboardingHandler:
             state=PortfolioOnboardingState.CONFIRMING,
             is_complete=False,
         )
+
+    def _complete_onboarding(self, session, user_message: str) -> OnboardingResponse:
+        """Complete the onboarding, marking the single project as default if applicable."""
+        self.manager.transition_state(session.id, PortfolioOnboardingState.COMPLETE)
+
+        # Auto-set single project as default
+        if len(session.captured_projects) == 1:
+            session.captured_projects[0]["is_default"] = True
+
+        project_names = self._get_project_names(session)
+        response_message = celebrate_completion(project_names)
+
+        # Append primary designation info if one was set
+        default_project = next(
+            (p.get("name") for p in session.captured_projects if p.get("is_default")),
+            None,
+        )
+        if default_project and len(session.captured_projects) > 1:
+            response_message += f" {default_project} is set as your primary."
+
+        self.manager.add_turn(session.id, user_message, response_message)
+
+        return OnboardingResponse(
+            message=response_message,
+            state=PortfolioOnboardingState.COMPLETE,
+            is_complete=True,
+            captured_projects=session.captured_projects,
+        )
+
+    def _try_designate_main_project(
+        self, message_lower: str, session, fuzzy: bool = False
+    ) -> Optional[str]:
+        """Try to match user's message to a captured project name for default designation.
+
+        Args:
+            message_lower: Lowercase user message
+            session: Onboarding session
+            fuzzy: If True, try substring matching against project names
+
+        Returns:
+            Project name if designated, empty string if user declined, None if no match.
+        """
+        # Check if user is declining to designate a primary
+        no_primary_patterns = [
+            r"\b(save|just save|save them|no primary|no preference|none|all equal)\b",
+            r"\bdon'?t (need|want) a (primary|main|default)\b",
+        ]
+        for pattern in no_primary_patterns:
+            if re.search(pattern, message_lower, re.IGNORECASE):
+                return ""  # Empty string = declined designation, but still proceed
+
+        # Try to match a project name
+        for project in session.captured_projects:
+            name = project.get("name", "").lower()
+            if not name:
+                continue
+            # Exact name mention
+            if name in message_lower:
+                project["is_default"] = True
+                return project.get("name", "")
+            # Fuzzy: check if any word in the project name appears
+            if fuzzy:
+                words = name.split()
+                if any(w in message_lower for w in words if len(w) > 2):
+                    project["is_default"] = True
+                    return project.get("name", "")
+
+        return None  # No match found
+
+    def _get_project_names(self, session) -> List[str]:
+        """Get list of project names from session."""
+        return [p.get("name", "unnamed") for p in session.captured_projects]
+
+    @staticmethod
+    def _format_project_list(names: List[str]) -> str:
+        """Format project names as natural language list."""
+        if not names:
+            return ""
+        if len(names) == 1:
+            return names[0]
+        if len(names) == 2:
+            return f"{names[0]} and {names[1]}"
+        return ", ".join(names[:-1]) + f", and {names[-1]}"
 
     def _extract_project_info(self, message: str) -> Dict[str, Any]:
         """

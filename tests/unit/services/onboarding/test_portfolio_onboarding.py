@@ -229,7 +229,7 @@ class TestPortfolioOnboardingHandler:
 
         # Should re-prompt rather than crash
         assert response.state == PortfolioOnboardingState.CONFIRMING
-        assert "save" in response.message.lower() or "confirm" in response.message.lower()
+        assert "portfolio" in response.message.lower()
 
     def test_yes_in_gathering_prompts_for_project_name(self, handler):
         """Should recognize 'yes, I have another project' as wanting to add more, not as project name."""
@@ -342,3 +342,162 @@ class TestStateTransitionEdgeCases:
 
         updated = manager.transition_state(session.id, PortfolioOnboardingState.GATHERING_PROJECTS)
         assert updated.state == PortfolioOnboardingState.GATHERING_PROJECTS
+
+
+class TestGlueMainProj:
+    """Issue #766: GLUE-MAINPROJ — Fix repeated 'main project' question.
+
+    Acceptance criteria:
+    - "Main project" question asked maximum once per session
+    - Question timing is contextually appropriate
+    - User can designate/change main project at any time
+    - No repeated templated questions in any workflow
+    - Passes Colleague Test
+    """
+
+    @pytest.fixture
+    def handler(self):
+        manager = PortfolioOnboardingManager()
+        return PortfolioOnboardingHandler(manager)
+
+    def _start_and_accept(self, handler):
+        """Helper: start onboarding and accept the offer."""
+        start = handler.start_onboarding("session-766", "user-766")
+        oid = start.metadata["onboarding_id"]
+        handler.handle_turn(oid, "Sure, let's do it")
+        return oid
+
+    # --- Core fix: no repeated "main" question ---
+
+    def test_initiated_response_does_not_say_main(self, handler):
+        """_handle_initiated should not frame the first project as 'main'."""
+        start = handler.start_onboarding("session-766", "user-766")
+        oid = start.metadata["onboarding_id"]
+        response = handler.handle_turn(oid, "Sure")
+        assert "main" not in response.message.lower()
+
+    def test_gathering_response_does_not_say_main_focus(self, handler):
+        """After adding a project, response should not ask 'is that your main focus?'"""
+        oid = self._start_and_accept(handler)
+        response = handler.handle_turn(oid, "Project Alpha")
+        assert "main focus" not in response.message.lower()
+
+    def test_gathering_no_repeated_question_text(self, handler):
+        """Adding multiple projects should produce varied responses, not identical ones."""
+        oid = self._start_and_accept(handler)
+        r1 = handler.handle_turn(oid, "Project Alpha")
+        r2 = handler.handle_turn(oid, "Project Beta")
+        # Responses should not be identical (varied acknowledgments)
+        assert r1.message != r2.message
+
+    def test_main_focus_asked_once_for_multi_project(self, handler):
+        """'Main focus' should be asked exactly once, at the transition to confirming."""
+        oid = self._start_and_accept(handler)
+        r1 = handler.handle_turn(oid, "Project Alpha")
+        r2 = handler.handle_turn(oid, "Project Beta")
+        # Neither gathering response should mention "main"
+        assert "main" not in r1.message.lower()
+        assert "main" not in r2.message.lower()
+
+        # Transition to confirming
+        r3 = handler.handle_turn(oid, "that's all")
+        # NOW it should ask about main focus (once)
+        assert "main focus" in r3.message.lower()
+        assert r3.state == PortfolioOnboardingState.CONFIRMING
+
+    def test_single_project_does_not_ask_main(self, handler):
+        """Single project flow should not ask about main focus at all."""
+        oid = self._start_and_accept(handler)
+        handler.handle_turn(oid, "Project Alpha")
+        response = handler.handle_turn(oid, "that's all")
+        # Single project — just confirm, don't ask about main
+        assert "main focus" not in response.message.lower()
+        assert response.state == PortfolioOnboardingState.CONFIRMING
+
+    # --- is_default designation ---
+
+    def test_single_project_auto_default(self, handler):
+        """Single project should automatically become is_default=True."""
+        oid = self._start_and_accept(handler)
+        handler.handle_turn(oid, "Project Alpha")
+        handler.handle_turn(oid, "that's all")
+        response = handler.handle_turn(oid, "yes")
+        assert response.is_complete
+        assert response.captured_projects[0].get("is_default") is True
+
+    def test_multi_project_designate_main(self, handler):
+        """User can designate a main project from multiple captured projects."""
+        oid = self._start_and_accept(handler)
+        handler.handle_turn(oid, "Project Alpha")
+        handler.handle_turn(oid, "Project Beta")
+        handler.handle_turn(oid, "done")
+        # User designates Alpha as main
+        response = handler.handle_turn(oid, "Alpha")
+        assert response.is_complete
+        # Find which project is marked as default
+        defaults = [p for p in response.captured_projects if p.get("is_default")]
+        assert len(defaults) == 1
+        assert "Alpha" in defaults[0]["name"]
+
+    def test_multi_project_decline_designation(self, handler):
+        """User can decline to designate a main project."""
+        oid = self._start_and_accept(handler)
+        handler.handle_turn(oid, "Project Alpha")
+        handler.handle_turn(oid, "Project Beta")
+        handler.handle_turn(oid, "done")
+        # User declines to pick a primary
+        response = handler.handle_turn(oid, "just save them")
+        assert response.is_complete
+        defaults = [p for p in response.captured_projects if p.get("is_default")]
+        assert len(defaults) == 0
+
+    # --- Narrative system integration ---
+
+    def test_uses_varied_acknowledgments(self, handler):
+        """Handler should use narrative system for varied responses."""
+        oid = self._start_and_accept(handler)
+        r1 = handler.handle_turn(oid, "Project Alpha")
+        # First project should get a warm/enthusiastic acknowledgment
+        assert "Alpha" in r1.message or "alpha" in r1.message.lower()
+
+    # --- Full flow integration ---
+
+    def test_full_three_project_flow(self, handler):
+        """Complete flow: 3 projects, designate one as main, no repeated questions."""
+        oid = self._start_and_accept(handler)
+
+        # Add three projects — none should mention "main"
+        r1 = handler.handle_turn(oid, "Project Alpha")
+        assert "main" not in r1.message.lower()
+        r2 = handler.handle_turn(oid, "Project Beta")
+        assert "main" not in r2.message.lower()
+        r3 = handler.handle_turn(oid, "Project Gamma")
+        assert "main" not in r3.message.lower()
+
+        # Signal done — should ask about main focus ONCE
+        r4 = handler.handle_turn(oid, "that's all")
+        assert "main focus" in r4.message.lower()
+        assert r4.state == PortfolioOnboardingState.CONFIRMING
+
+        # Designate Beta as main
+        r5 = handler.handle_turn(oid, "Beta")
+        assert r5.is_complete
+        assert r5.state == PortfolioOnboardingState.COMPLETE
+        defaults = [p for p in r5.captured_projects if p.get("is_default")]
+        assert len(defaults) == 1
+        assert "Beta" in defaults[0]["name"]
+
+    def test_full_single_project_flow(self, handler):
+        """Complete flow: 1 project, auto-default, no main question asked."""
+        oid = self._start_and_accept(handler)
+
+        r1 = handler.handle_turn(oid, "My solo project")
+        assert "main" not in r1.message.lower()
+
+        r2 = handler.handle_turn(oid, "that's it")
+        assert "main focus" not in r2.message.lower()
+        assert r2.state == PortfolioOnboardingState.CONFIRMING
+
+        r3 = handler.handle_turn(oid, "yes")
+        assert r3.is_complete
+        assert r3.captured_projects[0].get("is_default") is True

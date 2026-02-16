@@ -61,7 +61,7 @@ class OnboardingNarrativeBridge:
     }
 
     ADDITIONAL_PROJECT_ACKNOWLEDGMENTS = {
-        "warm": ("Oh, that's interesting too! I'm excited to help with both."),
+        "warm": ("Oh, that's interesting too! I'm excited to help with all of these."),
         "conversational": ("Got it - I'll keep track of that one too."),
         "professional": ("Added. I'll track both projects."),
     }
@@ -72,7 +72,7 @@ class OnboardingNarrativeBridge:
             "Are there any other projects you'd like me to know about? "
             "I'm happy to help with as many as you'd like."
         ),
-        "conversational": ("Any other projects you're working on, or is that your main focus?"),
+        "conversational": ("Any other projects you're working on?"),
         "professional": ("Are there additional projects to add?"),
     }
 
@@ -213,7 +213,7 @@ class OnboardingNarrativeBridge:
 
         # Include project name in warm responses
         if formality == "warm":
-            return f"{project_name} - {ack.lower()}"
+            return f"{project_name} - {ack[0].lower()}{ack[1:]}"
         else:
             return f"{project_name}. {ack}"
 
