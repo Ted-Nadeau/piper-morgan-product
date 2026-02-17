@@ -30,6 +30,7 @@ class ProcessType(str, Enum):
     Current (MVP):
     - ONBOARDING: Portfolio setup for new users
     - STANDUP: Interactive standup creation
+    - SLOT_FILLING: Natural multi-turn slot collection (#765)
 
     Future (Advanced Layer):
     - PLANNING: Structured planning sessions
@@ -39,6 +40,7 @@ class ProcessType(str, Enum):
 
     ONBOARDING = "onboarding"
     STANDUP = "standup"
+    SLOT_FILLING = "slot_filling"  # Issue #765 GLUE-SLOTFILL
     # Future types (Advanced Layer - see #698, #699, #700)
     PLANNING = "planning"
     FEEDBACK = "feedback"
@@ -143,6 +145,7 @@ class ProcessRegistry:
         self._priority_order: Dict[ProcessType, int] = {
             ProcessType.ONBOARDING: 10,  # Highest priority
             ProcessType.STANDUP: 20,
+            ProcessType.SLOT_FILLING: 25,  # Issue #765 — after standup, before clarification
             ProcessType.CLARIFICATION: 30,
             ProcessType.PLANNING: 40,
             ProcessType.FEEDBACK: 50,

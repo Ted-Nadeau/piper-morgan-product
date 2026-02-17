@@ -428,3 +428,21 @@ class ConversationalLens(str, Enum):
     PROJECTS = "projects"  # Project status, progress
     PEOPLE = "people"  # Team, contacts, availability
     GENERAL = "general"  # No specific lens / general conversation
+
+
+class SlotFillingState(str, Enum):
+    """
+    State machine for slot-filling conversations.
+
+    Issue #765: GLUE-SLOTFILL — Natural Slot Filling Without Interrogation
+    ADR-049: Conversational State and Hierarchical Intent Architecture
+
+    Manages multi-turn slot collection with skip-filled logic
+    and grouped prompting to avoid interrogation patterns.
+    """
+
+    EXTRACTING = "extracting"  # Initial extraction from user message
+    PROMPTING = "prompting"  # Asking for missing required slots
+    CONFIRMING = "confirming"  # All required slots filled, confirming
+    COMPLETE = "complete"  # User confirmed, process done
+    CANCELLED = "cancelled"  # User cancelled mid-flow
