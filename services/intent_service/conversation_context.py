@@ -50,6 +50,9 @@ class ConversationTurn:
     entity_references: list[str] = field(default_factory=list)  # "meeting", "project"
     topic: Optional[str] = None  # Inferred topic
 
+    # Conversational lens (#763 GLUE-FOLLOWUP)
+    lens: Optional[str] = None  # ConversationalLens value or None
+
     @property
     def age_seconds(self) -> float:
         """How old this turn is in seconds."""
@@ -65,6 +68,7 @@ class ConversationContext:
     - Follow-up detection
     - Reference resolution
     - Intent inheritance
+    - Lens tracking (#763 GLUE-FOLLOWUP)
     """
 
     session_id: UUID = field(default_factory=uuid4)
@@ -73,6 +77,9 @@ class ConversationContext:
     max_turns: int = 10  # PM-034: 10-turn context window
     max_age_minutes: int = 30  # Conversations older than 30 min are stale
 
+    # Lens stack for topic digression/restoration (#763 GLUE-FOLLOWUP)
+    lens_stack: list[str] = field(default_factory=list)
+
     def add_turn(
         self,
         message: str,
@@ -80,6 +87,7 @@ class ConversationContext:
         temporal_reference: Optional[str] = None,
         entity_references: Optional[list[str]] = None,
         topic: Optional[str] = None,
+        lens: Optional[str] = None,
     ) -> ConversationTurn:
         """
         Add a new turn to the conversation.
@@ -92,6 +100,7 @@ class ConversationContext:
             temporal_reference=temporal_reference,
             entity_references=entity_references or [],
             topic=topic,
+            lens=lens,
         )
         self.turns.append(turn)
         self._prune_old_turns()
@@ -106,6 +115,26 @@ class ConversationContext:
         # Remove by count (keep most recent)
         if len(self.turns) > self.max_turns:
             self.turns = self.turns[-self.max_turns :]
+
+        # #763: Clear lens stack when all turns are pruned
+        if not self.turns:
+            self.lens_stack.clear()
+
+    # ---- Lens stack operations (#763 Phase 4) ----
+
+    def push_lens(self, lens: str) -> None:
+        """Push the current lens onto the stack before a sub-topic digression."""
+        current = self.current_lens
+        if current and current != lens:
+            self.lens_stack.append(current)
+
+    def pop_lens(self) -> Optional[str]:
+        """Pop the most recent lens from the stack (returning from a digression)."""
+        return self.lens_stack.pop() if self.lens_stack else None
+
+    def reset_lens(self) -> None:
+        """Clear the lens stack entirely (explicit topic change)."""
+        self.lens_stack.clear()
 
     @property
     def last_turn(self) -> Optional[ConversationTurn]:
@@ -131,6 +160,14 @@ class ConversationContext:
         for turn in reversed(self.turns):
             if turn.topic:
                 return turn.topic
+        return None
+
+    @property
+    def current_lens(self) -> Optional[str]:
+        """Get the current conversational lens from the most recent turn with one."""
+        for turn in reversed(self.turns):
+            if turn.lens:
+                return turn.lens
         return None
 
     @property
@@ -235,6 +272,9 @@ def resolve_follow_up(
     if not last_intent:
         return None
 
+    # #763: Inherit lens from context for all follow-up types
+    current_lens = context.current_lens
+
     if follow_up_type == FollowUpType.TEMPORAL_SHIFT:
         # Inherit the intent category and action, but update temporal context
         new_temporal = extracted_data.get("new_temporal")
@@ -249,6 +289,7 @@ def resolve_follow_up(
                     "temporal_reference": new_temporal,
                     "inherited_from": str(context.last_turn.id) if context.last_turn else None,
                     "follow_up_type": follow_up_type.value,
+                    "inherited_lens": current_lens,
                 },
             )
 
@@ -261,6 +302,7 @@ def resolve_follow_up(
             context={
                 "confirmed_intent": last_intent.action if last_intent else None,
                 "original_message": context.last_turn.message if context.last_turn else None,
+                "inherited_lens": current_lens,
             },
         )
 
@@ -273,6 +315,7 @@ def resolve_follow_up(
             context={
                 "previous_intent": last_intent.action if last_intent else None,
                 "previous_topic": context.last_topic,
+                "inherited_lens": current_lens,
             },
         )
 
@@ -284,6 +327,7 @@ def resolve_follow_up(
             confidence=0.9,
             context={
                 "rejected_intent": last_intent.action if last_intent else None,
+                "inherited_lens": current_lens,
             },
         )
 

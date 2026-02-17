@@ -50,6 +50,14 @@ from services.intent_service.intent_hooks import IntentProcessingHooks
 
 # Grammar-conscious classification components (Issue #619)
 from services.intent_service.intent_types import IntentClassificationContext, IntentUnderstanding
+
+# Lens inference (#763 GLUE-FOLLOWUP)
+from services.intent_service.lens_inference import (
+    decode_follow_up_with_llm,
+    extract_lens_from_intent,
+    is_lens_reset,
+    should_try_llm_decoder,
+)
 from services.intent_service.personality_bridge import PersonalityBridge
 from services.intent_service.place_detector import PlaceDetector
 from services.intent_service.pre_classifier import MultiIntentResult, PreClassifier
@@ -471,6 +479,25 @@ class IntentClassifier:
                         )
                         intent = resolved_intent
 
+            # #763 Phase 3: If rules didn't match but lens is active,
+            # try the LLM decoder for complex follow-ups
+            if intent is None and conv_context:
+                current_lens = conv_context.current_lens
+                if should_try_llm_decoder(message, current_lens):
+                    decoded = await decode_follow_up_with_llm(
+                        message=message,
+                        turns=conv_context.turns,
+                        current_lens=current_lens,
+                        llm_service=self.llm,
+                    )
+                    if decoded:
+                        logger.info(
+                            "follow_up_llm_decoded",
+                            action=decoded.action,
+                            lens=decoded.context.get("inherited_lens"),
+                        )
+                        intent = decoded
+
             # If not a follow-up, use existing classify() for the raw Intent
             if intent is None:
                 intent = await self.classify(
@@ -485,11 +512,21 @@ class IntentClassifier:
             if conv_context:
                 temporal_ref = extract_temporal_reference(message)
                 topic = extract_topic(message, intent)
+
+                # #763: Extract lens — for follow-ups, inherit from context;
+                # for new queries, infer from the classified intent
+                lens = intent.context.get("inherited_lens") or extract_lens_from_intent(intent)
+
+                # #763 Phase 4: Detect lens reset (explicit topic change)
+                if is_lens_reset(lens, conv_context.current_lens, intent):
+                    conv_context.reset_lens()
+
                 conv_context.add_turn(
                     message=message,
                     intent=intent,
                     temporal_reference=temporal_ref,
                     topic=topic,
+                    lens=lens,
                 )
 
             # Issue #411: Check for recognition opportunity before failure handling

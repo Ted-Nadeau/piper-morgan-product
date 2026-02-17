@@ -409,3 +409,22 @@ class HardnessLevel(IntEnum):
     MEDIUM = 3  # Objects gaining persistence through interaction
     SOFT = 2  # Piper's contextual offerings: "I noticed 3 PRs waiting"
     SOFTEST = 1  # Ephemeral affordances: this-moment-only offers
+
+
+class ConversationalLens(str, Enum):
+    """
+    Tracks what aspect of the user's world the conversation is focused on.
+
+    Issue #763: GLUE-FOLLOWUP — Follow-up recognition with lens inheritance
+    ADR-049: Conversational State and Hierarchical Intent Architecture
+
+    Lens persists across follow-up turns until explicitly changed,
+    enabling natural follow-ups like "What about Thursday?" to inherit
+    the calendar context from a previous turn.
+    """
+
+    CALENDAR = "calendar"  # Schedule, meetings, availability
+    ISSUES = "issues"  # Tasks, bugs, work items
+    PROJECTS = "projects"  # Project status, progress
+    PEOPLE = "people"  # Team, contacts, availability
+    GENERAL = "general"  # No specific lens / general conversation
