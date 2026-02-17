@@ -1065,6 +1065,7 @@ class IntentService:
                         name=project_info.get("name", "Unnamed Project"),
                         description=project_info.get("description", ""),
                         owner_id=user_id,
+                        is_default=project_info.get("is_default", False),
                     )
                 await db_session.commit()
 

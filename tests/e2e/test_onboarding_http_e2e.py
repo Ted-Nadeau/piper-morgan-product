@@ -317,6 +317,243 @@ class TestOnboardingHTTPE2E:
             "got it"
         ), f"Turn 3: Expected project acknowledgment, got: {msg3}"
 
+    @pytest.mark.asyncio
+    @pytest.mark.e2e
+    async def test_full_onboarding_through_completion(
+        self, e2e_client, e2e_test_user, e2e_db_session
+    ):
+        """
+        Issue #766: Full onboarding flow through "done" to completion.
+
+        Reproduces the "Failed to fetch" bug found during live testing:
+        1. Login
+        2. "Hello" -> onboarding starts
+        3. "Yes" -> accepts, enters GATHERING
+        4. "My project is Alpha" -> captures project
+        5. "That's it for now" -> transitions to CONFIRMING (CRASH POINT)
+        6. "Yes" -> completes onboarding
+        """
+        user_id, username, password = e2e_test_user
+
+        # Login
+        login_response = await e2e_client.post(
+            "/auth/login",
+            data={"username": username, "password": password},
+        )
+        assert login_response.status_code == 200, f"Login failed: {login_response.text}"
+        cookies = login_response.cookies
+        session_id = f"e2e-completion-{uuid4()}"
+
+        # Turn 1: Greeting -> Onboarding prompt
+        r1 = await e2e_client.post(
+            "/api/v1/intent",
+            json={"message": "Hello!", "session_id": session_id},
+            cookies=cookies,
+        )
+        assert r1.status_code == 200, f"Turn 1 failed: {r1.status_code} - {r1.text}"
+        msg1 = r1.json().get("message", "")
+        print(f"Turn 1 response: {msg1}")
+
+        # Turn 2: Accept onboarding
+        r2 = await e2e_client.post(
+            "/api/v1/intent",
+            json={"message": "Yes, let's do it", "session_id": session_id},
+            cookies=cookies,
+        )
+        assert r2.status_code == 200, f"Turn 2 failed: {r2.status_code} - {r2.text}"
+        msg2 = r2.json().get("message", "")
+        print(f"Turn 2 response: {msg2}")
+
+        # Turn 3: Provide project info
+        r3 = await e2e_client.post(
+            "/api/v1/intent",
+            json={"message": "My project is called Alpha", "session_id": session_id},
+            cookies=cookies,
+        )
+        assert r3.status_code == 200, f"Turn 3 failed: {r3.status_code} - {r3.text}"
+        msg3 = r3.json().get("message", "")
+        print(f"Turn 3 response: {msg3}")
+
+        # Turn 4: "That's it for now" — THIS IS THE CRASH POINT
+        r4 = await e2e_client.post(
+            "/api/v1/intent",
+            json={"message": "That's it for now", "session_id": session_id},
+            cookies=cookies,
+        )
+        assert r4.status_code == 200, f"Turn 4 CRASHED: {r4.status_code} - {r4.text}"
+        msg4 = r4.json().get("message", "")
+        print(f"Turn 4 response: {msg4}")
+
+        # Turn 5: Confirm (yes / save)
+        r5 = await e2e_client.post(
+            "/api/v1/intent",
+            json={"message": "Yes", "session_id": session_id},
+            cookies=cookies,
+        )
+        assert r5.status_code == 200, f"Turn 5 failed: {r5.status_code} - {r5.text}"
+        msg5 = r5.json().get("message", "")
+        print(f"Turn 5 response: {msg5}")
+
+        # Verify: projects should be persisted
+        result = await e2e_db_session.execute(
+            text("SELECT name, is_default FROM projects WHERE owner_id = :uid"),
+            {"uid": user_id},
+        )
+        projects = result.fetchall()
+        print(f"Persisted projects: {projects}")
+
+        # Should have at least one project
+        assert len(projects) >= 1, f"Expected persisted projects, got {len(projects)}"
+
+        # Issue #815: Single project should have is_default=True
+        if len(projects) == 1:
+            assert (
+                projects[0][1] is True
+            ), f"Single project should have is_default=True, got {projects[0][1]}"
+
+        # Cleanup projects
+        await e2e_db_session.execute(
+            text("DELETE FROM projects WHERE owner_id = :uid"),
+            {"uid": user_id},
+        )
+        await e2e_db_session.commit()
+
+    @pytest.mark.asyncio
+    @pytest.mark.e2e
+    async def test_orphaned_message_after_session_loss(
+        self, e2e_client, e2e_test_user, e2e_db_session
+    ):
+        """
+        Issue #766: What happens when onboarding session is lost (server restart)
+        and user sends "That's it for now" to normal intent classifier?
+
+        Hypothesis: "Failed to fetch" may occur when a mid-flow message
+        hits the normal classifier instead of the onboarding handler.
+        """
+        user_id, username, password = e2e_test_user
+
+        # Login
+        login_response = await e2e_client.post(
+            "/auth/login",
+            data={"username": username, "password": password},
+        )
+        assert login_response.status_code == 200
+        cookies = login_response.cookies
+        session_id = f"e2e-orphan-{uuid4()}"
+
+        # Send "That's it for now" with NO active onboarding session
+        # This simulates what happens after a server restart mid-flow
+        r = await e2e_client.post(
+            "/api/v1/intent",
+            json={"message": "That's it for now", "session_id": session_id},
+            cookies=cookies,
+        )
+        assert r.status_code == 200, f"Orphaned message CRASHED: {r.status_code} - {r.text}"
+        msg = r.json().get("message", "")
+        print(f"Orphaned 'That's it for now' response: {msg}")
+        assert len(msg) > 0, "Empty response for orphaned message"
+
+    @pytest.mark.asyncio
+    @pytest.mark.e2e
+    async def test_onboarding_with_existing_projects(
+        self, e2e_client, e2e_test_user, e2e_db_session
+    ):
+        """
+        Issue #766: Reproduce "Failed to fetch" with user who has EXISTING projects.
+
+        The PM's test user "glue" already had 4 projects in the database.
+        This tests whether existing projects cause issues during onboarding completion.
+        """
+        user_id, username, password = e2e_test_user
+
+        # Pre-create existing projects (simulating the PM's "glue" user with 4 projects)
+        for proj_name in ["Decision Reviews", "OneJob", "Piper Morgan", "Wooshville"]:
+            await e2e_db_session.execute(
+                text(
+                    """
+                    INSERT INTO projects (id, owner_id, name, description, is_default, is_archived, created_at, updated_at)
+                    VALUES (:id, CAST(:owner_id AS uuid), :name, '', false, false, now(), now())
+                """
+                ),
+                {"id": str(uuid4()), "owner_id": user_id, "name": proj_name},
+            )
+        await e2e_db_session.commit()
+
+        # Verify user has 4 projects
+        result = await e2e_db_session.execute(
+            text("SELECT COUNT(*) FROM projects WHERE owner_id = :uid"),
+            {"uid": user_id},
+        )
+        assert result.scalar() == 4
+
+        # Login
+        login_response = await e2e_client.post(
+            "/auth/login",
+            data={"username": username, "password": password},
+        )
+        assert login_response.status_code == 200
+        cookies = login_response.cookies
+        session_id = f"e2e-existing-{uuid4()}"
+
+        # Turn 1: Greeting (user has projects - will this still trigger onboarding?)
+        r1 = await e2e_client.post(
+            "/api/v1/intent",
+            json={"message": "Hello!", "session_id": session_id},
+            cookies=cookies,
+        )
+        assert r1.status_code == 200, f"Turn 1 failed: {r1.status_code} - {r1.text}"
+        msg1 = r1.json().get("message", "")
+        print(f"Turn 1 (has projects): {msg1}")
+
+        # Check if onboarding triggered or not
+        msg1_lower = msg1.lower()
+        if "portfolio" not in msg1_lower and "project" not in msg1_lower:
+            print("INFO: Onboarding NOT triggered for user with existing projects (expected)")
+            # Still test the full flow by manually starting onboarding
+            # Skip rest of test - this path doesn't trigger onboarding
+        else:
+            print("INFO: Onboarding DID trigger for user with existing projects")
+
+            # Continue flow: Accept -> Project -> Done -> Confirm
+            r2 = await e2e_client.post(
+                "/api/v1/intent",
+                json={"message": "Sure, let's go", "session_id": session_id},
+                cookies=cookies,
+            )
+            assert r2.status_code == 200, f"Turn 2 failed: {r2.status_code}"
+            print(f"Turn 2: {r2.json().get('message', '')}")
+
+            r3 = await e2e_client.post(
+                "/api/v1/intent",
+                json={"message": "My new project is Beta", "session_id": session_id},
+                cookies=cookies,
+            )
+            assert r3.status_code == 200, f"Turn 3 failed: {r3.status_code}"
+            print(f"Turn 3: {r3.json().get('message', '')}")
+
+            r4 = await e2e_client.post(
+                "/api/v1/intent",
+                json={"message": "That's it for now", "session_id": session_id},
+                cookies=cookies,
+            )
+            assert r4.status_code == 200, f"Turn 4 (CRASH POINT): {r4.status_code} - {r4.text}"
+            print(f"Turn 4: {r4.json().get('message', '')}")
+
+            r5 = await e2e_client.post(
+                "/api/v1/intent",
+                json={"message": "Yes", "session_id": session_id},
+                cookies=cookies,
+            )
+            assert r5.status_code == 200, f"Turn 5 failed: {r5.status_code}"
+            print(f"Turn 5: {r5.json().get('message', '')}")
+
+        # Cleanup all projects for this user
+        await e2e_db_session.execute(
+            text("DELETE FROM projects WHERE owner_id = :uid"),
+            {"uid": user_id},
+        )
+        await e2e_db_session.commit()
+
 
 @pytest.mark.asyncio
 @pytest.mark.e2e
