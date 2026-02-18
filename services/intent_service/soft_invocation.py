@@ -20,7 +20,7 @@ Architecture:
 import re
 import time
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import structlog
 
@@ -298,6 +298,9 @@ class WorkflowOfferService:
     def __init__(self, proactivity_gate: Optional[ProactivityGate] = None):
         self.proactivity_gate = proactivity_gate or ProactivityGate()
         self._offer_windows: Dict[str, OfferWindow] = {}  # session_id → window
+        self._pending_offers: Dict[str, Dict[str, Any]] = (
+            {}
+        )  # session_id → offer  # session_id → window
 
     def should_offer(
         self,
@@ -356,6 +359,14 @@ class WorkflowOfferService:
             window = OfferWindow()
             self._offer_windows[session_id] = window
         window.record_offer(turn)
+
+    def set_pending_offer(self, session_id: str, offer: Dict[str, Any]) -> None:
+        """Store a pending offer awaiting user response."""
+        self._pending_offers[session_id] = offer
+
+    def get_and_clear_pending_offer(self, session_id: str) -> Optional[Dict[str, Any]]:
+        """Retrieve and clear a pending offer. Returns None if no offer pending."""
+        return self._pending_offers.pop(session_id, None)
 
     def format_offer(self, offer: WorkflowOffer, base_response: str) -> str:
         """

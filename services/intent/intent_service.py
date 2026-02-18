@@ -217,8 +217,10 @@ class IntentService:
                 "active_lens": current_lens,  # Issue #820: Include lens context
             }
 
-            # Record offer for throttling
+            # Record offer for throttling and store as pending
             self.workflow_offer_service.record_offer(session_id, current_turn)
+            # Issue #824: Store pending offer for accept/decline on next turn
+            self.workflow_offer_service.set_pending_offer(session_id, result.pending_offer)
 
             self.logger.info(
                 "soft_offer_added",
@@ -359,6 +361,49 @@ class IntentService:
             IntentProcessingError: If processing fails
         """
         try:
+            # Issue #824: Check for pending soft offer accept/decline
+            # Must run before classification — "yes please" is a response to an offer,
+            # not a new intent to classify.
+            pending_offer = self.workflow_offer_service.get_and_clear_pending_offer(session_id)
+            if pending_offer:
+                response_type = detect_offer_response(message)
+                if response_type == "accept":
+                    acceptance_msg = self.workflow_offer_service.format_acceptance(
+                        pending_offer["workflow_type"]
+                    )
+                    self.logger.info(
+                        "soft_offer_accepted",
+                        workflow_type=pending_offer["workflow_type"],
+                        session_id=session_id,
+                    )
+                    return IntentProcessingResult(
+                        success=True,
+                        message=acceptance_msg,
+                        intent_data={
+                            "category": "soft_offer_accepted",
+                            "action": pending_offer["workflow_type"],
+                        },
+                    )
+                elif response_type == "decline":
+                    decline_msg = pending_offer.get(
+                        "decline_message",
+                        "No worries, just let me know if you change your mind.",
+                    )
+                    self.logger.info(
+                        "soft_offer_declined",
+                        workflow_type=pending_offer["workflow_type"],
+                        session_id=session_id,
+                    )
+                    return IntentProcessingResult(
+                        success=True,
+                        message=decline_msg,
+                        intent_data={
+                            "category": "soft_offer_declined",
+                            "action": pending_offer["workflow_type"],
+                        },
+                    )
+                # Neither accept nor decline — user moved on. Continue normal processing.
+
             # ADR-049: Active guided processes take priority over classification
             # Domain invariant: Once a user enters a guided process (onboarding, standup, etc.),
             # ALL their messages belong to that process until completion/exit.
