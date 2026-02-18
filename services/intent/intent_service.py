@@ -54,6 +54,8 @@ from services.learning.learning_handler import LearningHandler
 from services.orchestration.engine import OrchestrationEngine
 from services.process import ProcessCheckResult, get_process_registry
 from services.shared_types import IntentCategory
+from services.slot_filling.slot_filling_adapter import SlotFillingProcessAdapter
+from services.slot_filling.slot_template import MEETING_TEMPLATE
 
 
 @dataclass
@@ -140,6 +142,13 @@ class IntentService:
         )  # Issue #764: Multi-substantive orchestration
         self.soft_invocation_detector = SoftInvocationDetector()  # Issue #767
         self.workflow_offer_service = WorkflowOfferService()  # Issue #767
+        # Issue #825: Register slot filling with process registry
+        self.slot_filling_adapter = SlotFillingProcessAdapter()
+        try:
+            registry = get_process_registry()
+            registry.register(self.slot_filling_adapter)
+        except Exception:
+            pass  # Graceful — slot filling optional
         self.kg_integration = ConversationKnowledgeGraphIntegration()  # Issue #99 CORE-KNOW
         self.todo_handlers = TodoIntentHandlers()  # Issue #285: Todo chat integration
         self.learning_handler = LearningHandler()  # Issue #300: Basic Auto-Learning
@@ -215,6 +224,7 @@ class IntentService:
                 "offer_message": detection.offer.offer_message,
                 "decline_message": detection.offer.decline_message,
                 "active_lens": current_lens,  # Issue #820: Include lens context
+                "trigger_message": message,  # Issue #825: For slot extraction
             }
 
             # Record offer for throttling and store as pending
@@ -368,12 +378,49 @@ class IntentService:
             if pending_offer:
                 response_type = detect_offer_response(message)
                 if response_type == "accept":
-                    acceptance_msg = self.workflow_offer_service.format_acceptance(
-                        pending_offer["workflow_type"]
-                    )
+                    workflow_type = pending_offer["workflow_type"]
+                    trigger_message = pending_offer.get("trigger_message", "")
+
+                    # Issue #825: Start slot filling for meeting offers
+                    if workflow_type == "meeting":
+                        try:
+                            slot_response = await self.slot_filling_adapter.manager.start_filling(
+                                user_id=user_id,
+                                session_id=session_id,
+                                template=MEETING_TEMPLATE,
+                                initial_message=trigger_message,
+                            )
+                            acceptance_msg = self.workflow_offer_service.format_acceptance(
+                                workflow_type
+                            )
+                            combined_msg = f"{acceptance_msg}\n\n{slot_response.message}"
+                            self.logger.info(
+                                "soft_offer_accepted_with_slot_filling",
+                                workflow_type=workflow_type,
+                                session_id=session_id,
+                                slots_filled=len(slot_response.filled_slots),
+                            )
+                            return IntentProcessingResult(
+                                success=True,
+                                message=combined_msg,
+                                intent_data={
+                                    "category": "soft_offer_accepted",
+                                    "action": workflow_type,
+                                    "context": {
+                                        "slot_filling_active": True,
+                                        "filled_slots": slot_response.filled_slots,
+                                        "template_name": slot_response.template_name,
+                                    },
+                                },
+                            )
+                        except Exception as e:
+                            self.logger.warning(f"Slot filling start failed: {e}")
+                            # Fall through to basic acceptance
+
+                    acceptance_msg = self.workflow_offer_service.format_acceptance(workflow_type)
                     self.logger.info(
                         "soft_offer_accepted",
-                        workflow_type=pending_offer["workflow_type"],
+                        workflow_type=workflow_type,
                         session_id=session_id,
                     )
                     return IntentProcessingResult(
@@ -381,7 +428,7 @@ class IntentService:
                         message=acceptance_msg,
                         intent_data={
                             "category": "soft_offer_accepted",
-                            "action": pending_offer["workflow_type"],
+                            "action": workflow_type,
                         },
                     )
                 elif response_type == "decline":

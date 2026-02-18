@@ -355,3 +355,172 @@ class TestPendingOfferClearing:
         assert (
             intent_service.workflow_offer_service.get_and_clear_pending_offer("sess_clear2") is None
         )
+
+
+class TestSlotFillingOnAccept:
+    """Issue #825: Accepting a meeting offer starts slot filling."""
+
+    @pytest.mark.asyncio
+    async def test_meeting_accept_starts_slot_filling(self, intent_service, mock_classifier):
+        """'Yes' to meeting offer → slot filling session starts, prompts for slots."""
+        intent_service.workflow_offer_service.set_pending_offer(
+            "sess_slot",
+            {
+                "workflow_type": "meeting",
+                "offer_message": "Want me to help set up a meeting?",
+                "decline_message": "No worries.",
+                "trigger_message": "I need to get the team together Tuesday",
+            },
+        )
+
+        result = await intent_service.process_intent(
+            message="Yes please",
+            session_id="sess_slot",
+            user_id=None,
+        )
+
+        assert result.success
+        assert result.intent_data["category"] == "soft_offer_accepted"
+        assert result.intent_data["action"] == "meeting"
+        # Should have slot filling context
+        assert result.intent_data.get("context", {}).get("slot_filling_active") is True
+        assert result.intent_data["context"]["template_name"] == "schedule_meeting"
+
+    @pytest.mark.asyncio
+    async def test_meeting_accept_has_acceptance_message(self, intent_service, mock_classifier):
+        """Acceptance response includes both acceptance message and slot prompt."""
+        intent_service.workflow_offer_service.set_pending_offer(
+            "sess_slot2",
+            {
+                "workflow_type": "meeting",
+                "offer_message": "Want me to help set up a meeting?",
+                "decline_message": "No worries.",
+                "trigger_message": "We should sync up about the project",
+            },
+        )
+
+        result = await intent_service.process_intent(
+            message="Sure!",
+            session_id="sess_slot2",
+            user_id=None,
+        )
+
+        assert result.success
+        # Acceptance message ("Great! Let me help set that up.") should be in response
+        assert "set that up" in result.message.lower() or "help" in result.message.lower()
+        # Slot filling prompt should also be present (asking for missing slots)
+        # The exact wording depends on slot prompts, but message should be multi-part
+        assert len(result.message) > 40  # More than just the acceptance
+
+    @pytest.mark.asyncio
+    async def test_meeting_accept_creates_active_session(self, intent_service, mock_classifier):
+        """After accepting meeting offer, slot filling session is active."""
+        intent_service.workflow_offer_service.set_pending_offer(
+            "sess_slot3",
+            {
+                "workflow_type": "meeting",
+                "offer_message": "Want me to help set up a meeting?",
+                "decline_message": "No worries.",
+                "trigger_message": "I need to get the team together",
+            },
+        )
+
+        await intent_service.process_intent(
+            message="Yes",
+            session_id="sess_slot3",
+            user_id=None,
+        )
+
+        # Slot filling adapter should have an active session
+        has_session = intent_service.slot_filling_adapter.manager.has_active_session(
+            None, "sess_slot3"
+        )
+        assert has_session
+
+    @pytest.mark.asyncio
+    async def test_non_meeting_accept_no_slot_filling(self, intent_service, mock_classifier):
+        """Accepting a non-meeting offer → no slot filling, just acceptance."""
+        intent_service.workflow_offer_service.set_pending_offer(
+            "sess_status",
+            {
+                "workflow_type": "status_check",
+                "offer_message": "Want me to pull up the status?",
+                "decline_message": "No problem.",
+                "trigger_message": "I'm worried about the deadline",
+            },
+        )
+
+        result = await intent_service.process_intent(
+            message="Yes please",
+            session_id="sess_status",
+            user_id=None,
+        )
+
+        assert result.success
+        assert result.intent_data["category"] == "soft_offer_accepted"
+        assert result.intent_data["action"] == "status_check"
+        # No slot filling context for status_check
+        assert "context" not in result.intent_data or not result.intent_data.get("context", {}).get(
+            "slot_filling_active"
+        )
+
+    @pytest.mark.asyncio
+    async def test_meeting_accept_without_trigger_still_works(
+        self, intent_service, mock_classifier
+    ):
+        """Meeting offer without trigger_message still starts slot filling."""
+        intent_service.workflow_offer_service.set_pending_offer(
+            "sess_no_trigger",
+            {
+                "workflow_type": "meeting",
+                "offer_message": "Want me to help set up a meeting?",
+                "decline_message": "No worries.",
+                # No trigger_message — should default to empty string
+            },
+        )
+
+        result = await intent_service.process_intent(
+            message="Go ahead",
+            session_id="sess_no_trigger",
+            user_id=None,
+        )
+
+        assert result.success
+        assert result.intent_data["category"] == "soft_offer_accepted"
+        assert result.intent_data.get("context", {}).get("slot_filling_active") is True
+
+    @pytest.mark.asyncio
+    async def test_subsequent_turn_handled_by_slot_filling(
+        self, intent_service, mock_classifier, mock_canonical_handlers
+    ):
+        """After accepting meeting offer, next message goes to slot filling."""
+        # Turn 1: Set up and accept offer
+        intent_service.workflow_offer_service.set_pending_offer(
+            "sess_turn2",
+            {
+                "workflow_type": "meeting",
+                "offer_message": "Want me to help set up a meeting?",
+                "decline_message": "No worries.",
+                "trigger_message": "I need to get the team together",
+            },
+        )
+
+        await intent_service.process_intent(
+            message="Yes",
+            session_id="sess_turn2",
+            user_id=None,
+        )
+
+        # Turn 2: Respond with slot data — should be handled by slot filling,
+        # NOT by the classifier
+        mock_classifier.classify_multiple.reset_mock()
+
+        result = await intent_service.process_intent(
+            message="Tuesday at 2pm with the design team",
+            session_id="sess_turn2",
+            user_id=None,
+        )
+
+        assert result.success
+        # Classifier should NOT have been called — slot filling handled it
+        mock_classifier.classify_multiple.assert_not_awaited()
