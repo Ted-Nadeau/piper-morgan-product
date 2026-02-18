@@ -2,15 +2,18 @@
 Integration tests for soft workflow invocation in IntentService.
 
 Issue #767: GLUE-SOFTINVOKE — Soft workflow invocation from natural language.
+Issue #819: Soft invocation applied to orchestrated responses.
+Issue #820: Lens context wired into soft invocation pipeline.
 Phase 3: IntentService Integration
 
 Tests verify:
 - Soft offers appear in canonical handler responses
-- Offers don't appear for multi-intent orchestrated responses
+- Soft offers appear in multi-intent orchestrated responses (#819)
 - Offers don't appear for single-intent explicit commands
 - ProactivityGate throttling respected
 - Graceful fallback when detection fails
 - pending_offer field populated correctly
+- pending_offer includes active_lens context (#820)
 """
 
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -182,8 +185,8 @@ class TestNoOfferWhenNotTriggered:
         assert result.pending_offer is None
 
     @pytest.mark.asyncio
-    async def test_no_offer_on_multi_intent_orchestrated(self, intent_service, mock_classifier):
-        """Multi-intent orchestrated → no soft offer (already compound)."""
+    async def test_no_offer_on_multi_intent_without_trigger(self, intent_service, mock_classifier):
+        """Multi-intent orchestrated without trigger phrase → no soft offer."""
         intents = [
             _make_intent(IntentCategory.QUERY, "meeting_time"),
             _make_intent(IntentCategory.STATUS, "get_project_status"),
@@ -229,9 +232,124 @@ class TestNoOfferWhenNotTriggered:
                 user_id=None,
             )
 
-            # Multi-intent orchestrated responses don't get soft offers
+            # No trigger phrase → no soft offer, even on orchestrated
             assert result.multi_intent_orchestrated
             assert result.pending_offer is None
+
+
+class TestSoftOfferOnOrchestratedResponses:
+    """Issue #819: Soft offers now apply to multi-intent orchestrated responses."""
+
+    @pytest.mark.asyncio
+    async def test_orchestrated_with_trigger_gets_offer(self, intent_service, mock_classifier):
+        """Orchestrated response with meeting trigger → offer appended."""
+        # Both intents must be substantive (non-CONVERSATION) for orchestration path
+        intents = [
+            _make_intent(IntentCategory.STATUS, "get_project_status"),
+            _make_intent(IntentCategory.PRIORITY, "get_priorities"),
+        ]
+
+        # Message contains a soft trigger: "get the team together"
+        mock_classifier.classify_multiple.return_value = MultiIntentResult(
+            intents=intents,
+            original_message="Check status and priorities, I need to get the team together",
+            is_multi_intent=True,
+        )
+
+        with patch.object(
+            intent_service.intent_orchestrator,
+            "execute_plan",
+            new_callable=AsyncMock,
+        ) as mock_execute:
+            from services.intent_service.orchestrator import (
+                IntentExecutionResult,
+                OrchestratedResponse,
+            )
+
+            mock_execute.return_value = OrchestratedResponse(
+                results=[
+                    IntentExecutionResult(
+                        intent=intents[0],
+                        response="Sprint is on track.",
+                        intent_data={"category": "status", "action": "get_project_status"},
+                        success=True,
+                    ),
+                    IntentExecutionResult(
+                        intent=intents[1],
+                        response="Top priority: deploy v2.",
+                        intent_data={"category": "priority", "action": "get_priorities"},
+                        success=True,
+                    ),
+                ],
+                aggregated_message="Sprint is on track. Top priority: deploy v2.",
+            )
+
+            result = await intent_service.process_intent(
+                message="Check status and priorities, I need to get the team together",
+                session_id="sess_orch_trigger",
+                user_id=None,
+            )
+
+            assert result.success
+            assert result.multi_intent_orchestrated
+            assert result.pending_offer is not None
+            assert result.pending_offer["workflow_type"] == "meeting"
+            # Original orchestrated message should still be present
+            assert "Sprint is on track" in result.message
+
+
+class TestLensContextInSoftOffer:
+    """Issue #820: pending_offer includes active lens from conversation context."""
+
+    @pytest.mark.asyncio
+    async def test_pending_offer_includes_active_lens(self, intent_service, mock_classifier):
+        """Soft offer includes active_lens field from conversation context."""
+        intent = _make_intent(IntentCategory.CONVERSATION, "greeting")
+
+        mock_classifier.classify_multiple.return_value = MultiIntentResult(
+            intents=[intent],
+            original_message="I need to get the team together Tuesday",
+            is_multi_intent=False,
+        )
+
+        intent_service.canonical_handlers.handle.return_value = {
+            "message": "That sounds like a plan!",
+            "intent": {"category": "conversation", "action": "greeting"},
+        }
+
+        result = await intent_service.process_intent(
+            message="I need to get the team together Tuesday",
+            session_id="sess_lens",
+            user_id=None,
+        )
+
+        assert result.pending_offer is not None
+        assert "active_lens" in result.pending_offer
+        # Lens may be None (no prior turns) or a value — just verify field exists
+
+    @pytest.mark.asyncio
+    async def test_no_offer_still_no_lens_field(self, intent_service, mock_classifier):
+        """When no soft offer triggers, pending_offer remains None."""
+        intent = _make_intent(IntentCategory.STATUS, "get_project_status")
+
+        mock_classifier.classify_multiple.return_value = MultiIntentResult(
+            intents=[intent],
+            original_message="Check my project status",
+            is_multi_intent=False,
+        )
+
+        intent_service.canonical_handlers.handle.return_value = {
+            "message": "Here's your project status...",
+            "intent": {"category": "status", "action": "get_project_status"},
+        }
+
+        result = await intent_service.process_intent(
+            message="Check my project status",
+            session_id="sess_no_lens",
+            user_id=None,
+        )
+
+        assert result.pending_offer is None
 
 
 class TestSoftOfferGracefulFallback:

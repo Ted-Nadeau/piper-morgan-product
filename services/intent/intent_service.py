@@ -40,6 +40,7 @@ from services.ethics.boundary_enforcer_refactored import boundary_enforcer_refac
 from services.intent_service import classifier
 from services.intent_service.action_mapper import ActionMapper
 from services.intent_service.canonical_handlers import CanonicalHandlers
+from services.intent_service.conversation_context import get_or_create_context
 from services.intent_service.orchestrator import IntentOrchestrator
 from services.intent_service.pre_classifier import MultiIntentResult
 from services.intent_service.soft_invocation import (
@@ -170,6 +171,15 @@ class IntentService:
             return result
 
         try:
+            # Issue #820: Read current lens from conversation context
+            # Classifier already extracts and stores lens during classify_multiple()
+            current_lens = None
+            try:
+                conv_context = get_or_create_context(session_id)
+                current_lens = conv_context.current_lens
+            except (ValueError, KeyError):
+                pass  # Non-UUID session_id or missing context — proceed without lens
+
             detection = self.soft_invocation_detector.detect(message)
             if not detection.has_offer:
                 return result
@@ -204,6 +214,7 @@ class IntentService:
                 "workflow_type": detection.offer.workflow_type,
                 "offer_message": detection.offer.offer_message,
                 "decline_message": detection.offer.decline_message,
+                "active_lens": current_lens,  # Issue #820: Include lens context
             }
 
             # Record offer for throttling
@@ -213,6 +224,7 @@ class IntentService:
                 "soft_offer_added",
                 workflow_type=detection.offer.workflow_type,
                 session_id=session_id,
+                active_lens=current_lens,  # Issue #820: Log lens context
             )
 
         except Exception as e:
@@ -467,7 +479,7 @@ class IntentService:
                     orchestrated = await self.intent_orchestrator.execute_plan(
                         plan, session_id, user_id
                     )
-                    return IntentProcessingResult(
+                    orchestrated_result = IntentProcessingResult(
                         success=orchestrated.success,
                         message=orchestrated.aggregated_message,
                         intent_data=orchestrated.primary_intent_data,
@@ -478,6 +490,8 @@ class IntentService:
                             for r in orchestrated.results[1:]
                         ],
                     )
+                    # Issue #819: Apply soft invocation to orchestrated responses
+                    return self._apply_soft_offer(orchestrated_result, message, session_id)
                 except Exception as e:
                     # Graceful fallback: process primary intent only
                     self.logger.warning(
