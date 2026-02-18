@@ -42,6 +42,11 @@ from services.intent_service.action_mapper import ActionMapper
 from services.intent_service.canonical_handlers import CanonicalHandlers
 from services.intent_service.orchestrator import IntentOrchestrator
 from services.intent_service.pre_classifier import MultiIntentResult
+from services.intent_service.soft_invocation import (
+    SoftInvocationDetector,
+    WorkflowOfferService,
+    detect_offer_response,
+)
 from services.intent_service.todo_handlers import TodoIntentHandlers
 from services.knowledge.conversation_integration import ConversationKnowledgeGraphIntegration
 from services.learning.learning_handler import LearningHandler
@@ -81,6 +86,8 @@ class IntentProcessingResult:
     multi_intent_orchestrated: bool = (
         False  # True if multiple substantive intents were orchestrated
     )
+    # Issue #767: Soft workflow invocation
+    pending_offer: Optional[Dict[str, Any]] = None  # Active soft offer awaiting response
 
 
 class IntentProcessingError(Exception):
@@ -130,10 +137,89 @@ class IntentService:
         self.intent_orchestrator = IntentOrchestrator(
             canonical_handlers=self.canonical_handlers
         )  # Issue #764: Multi-substantive orchestration
+        self.soft_invocation_detector = SoftInvocationDetector()  # Issue #767
+        self.workflow_offer_service = WorkflowOfferService()  # Issue #767
         self.kg_integration = ConversationKnowledgeGraphIntegration()  # Issue #99 CORE-KNOW
         self.todo_handlers = TodoIntentHandlers()  # Issue #285: Todo chat integration
         self.learning_handler = LearningHandler()  # Issue #300: Basic Auto-Learning
         self.logger = structlog.get_logger()
+
+    def _apply_soft_offer(
+        self,
+        result: "IntentProcessingResult",
+        message: str,
+        session_id: str,
+        current_turn: int = 0,
+    ) -> "IntentProcessingResult":
+        """
+        Issue #767: Check for soft invocation opportunity and append offer.
+
+        Called after intent processing to potentially add a soft workflow offer
+        to the response. Respects ProactivityGate throttling.
+
+        Args:
+            result: The intent processing result to potentially modify
+            message: Original user message
+            session_id: Current session ID
+            current_turn: Current conversation turn number
+
+        Returns:
+            Modified result with offer appended, or original result unchanged
+        """
+        if not result.success:
+            return result
+
+        try:
+            detection = self.soft_invocation_detector.detect(message)
+            if not detection.has_offer:
+                return result
+
+            # Check throttling — default to BUILDING trust for M0
+            # (real trust stage integration is a separate concern)
+            from services.trust.proactivity_gate import TrustStage
+
+            trust_stage = TrustStage.BUILDING
+            suggestions_count = 0  # TODO: Track across session
+
+            allowed, reason = self.workflow_offer_service.should_offer(
+                trust_stage=trust_stage,
+                session_id=session_id,
+                current_turn=current_turn,
+                suggestions_this_session=suggestions_count,
+            )
+
+            if not allowed:
+                self.logger.debug(
+                    "soft_offer_throttled",
+                    reason=reason,
+                    workflow_type=detection.offer.workflow_type,
+                )
+                return result
+
+            # Append offer to response
+            result.message = self.workflow_offer_service.format_offer(
+                detection.offer, result.message
+            )
+            result.pending_offer = {
+                "workflow_type": detection.offer.workflow_type,
+                "offer_message": detection.offer.offer_message,
+                "decline_message": detection.offer.decline_message,
+            }
+
+            # Record offer for throttling
+            self.workflow_offer_service.record_offer(session_id, current_turn)
+
+            self.logger.info(
+                "soft_offer_added",
+                workflow_type=detection.offer.workflow_type,
+                session_id=session_id,
+            )
+
+        except Exception as e:
+            self.logger.warning(f"Soft invocation check failed: {e}")
+            # Graceful degradation — return original result
+
+        return result
 
     async def _save_conversation_turn(
         self,
@@ -603,7 +689,7 @@ class IntentService:
                         original_length=len(canonical_result["message"]),
                     )
 
-                return IntentProcessingResult(
+                canonical_response = IntentProcessingResult(
                     success=True,
                     message=response_message,
                     intent_data=canonical_result["intent"],
@@ -616,6 +702,8 @@ class IntentService:
                         intent.context.get("secondary_intents") if intent.context else None
                     ),
                 )
+                # Issue #767: Check for soft invocation opportunity
+                return self._apply_soft_offer(canonical_response, message, session_id)
 
             # Create workflow with timeout protection (Bug #166)
             workflow = await self._create_workflow_with_timeout(intent)
