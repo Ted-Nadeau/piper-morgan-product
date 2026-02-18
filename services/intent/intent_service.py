@@ -387,11 +387,14 @@ class IntentService:
                     # Issue #825: Start slot filling for meeting offers
                     if workflow_type == "meeting":
                         try:
+                            # Issue #821: Pass active lens for contextual prompts
+                            active_lens = pending_offer.get("active_lens")
                             slot_response = await self.slot_filling_adapter.manager.start_filling(
                                 user_id=user_id,
                                 session_id=session_id,
                                 template=MEETING_TEMPLATE,
                                 initial_message=trigger_message,
+                                active_lens=active_lens,
                             )
                             acceptance_msg = self.workflow_offer_service.format_acceptance(
                                 workflow_type
@@ -413,6 +416,7 @@ class IntentService:
                                         "slot_filling_active": True,
                                         "filled_slots": slot_response.filled_slots,
                                         "template_name": slot_response.template_name,
+                                        "active_lens": active_lens,
                                     },
                                 },
                             )

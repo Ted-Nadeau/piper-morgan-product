@@ -2,12 +2,16 @@
 Prompt formatting for slot-filling conversations.
 
 Issue #765: GLUE-SLOTFILL — Natural Slot Filling Without Interrogation
+Issue #821: Lens-aware prompt phrasing
 
 Generates natural-sounding prompts and confirmations:
 - Implicit confirmations: "Got it — meeting with Sarah, Tuesday at 2pm. What's the topic?"
 - Grouped prompts: "Who should attend, and when works?"
 - Single slot prompts: "What's the topic?"
+- Lens-aware variants: "What time works best?" (calendar) vs "Who needs to be there?" (people)
 """
+
+from typing import Optional
 
 from services.slot_filling.slot_template import ConfirmationStyle, SlotDefinition, SlotState
 
@@ -36,12 +40,13 @@ def format_confirmation(state: SlotState) -> str:
     return f"Got it — {summary}."
 
 
-def format_prompt(missing: list[SlotDefinition]) -> str:
+def format_prompt(missing: list[SlotDefinition], lens: Optional[str] = None) -> str:
     """
     Format a prompt for a single missing slot.
 
     Args:
         missing: List with one slot definition
+        lens: Active conversational lens for contextual phrasing (Issue #821)
 
     Returns:
         Natural question for the missing slot
@@ -50,13 +55,14 @@ def format_prompt(missing: list[SlotDefinition]) -> str:
         return ""
 
     if len(missing) == 1:
-        return f"What's the {missing[0].display_name.lower()}?"
+        name = missing[0].prompt_for_lens(lens).lower()
+        return f"What's the {name}?"
 
     # Fallback for multiple — use grouped format
-    return format_grouped_prompt(missing)
+    return format_grouped_prompt(missing, lens=lens)
 
 
-def format_grouped_prompt(missing: list[SlotDefinition]) -> str:
+def format_grouped_prompt(missing: list[SlotDefinition], lens: Optional[str] = None) -> str:
     """
     Format a prompt for multiple missing slots (grouped prompting).
 
@@ -64,6 +70,7 @@ def format_grouped_prompt(missing: list[SlotDefinition]) -> str:
 
     Args:
         missing: List of 2-3 slot definitions to ask about
+        lens: Active conversational lens for contextual phrasing (Issue #821)
 
     Returns:
         Natural grouped question
@@ -72,9 +79,9 @@ def format_grouped_prompt(missing: list[SlotDefinition]) -> str:
         return ""
 
     if len(missing) == 1:
-        return format_prompt(missing)
+        return format_prompt(missing, lens=lens)
 
-    names = [s.display_name.lower() for s in missing]
+    names = [s.prompt_for_lens(lens).lower() for s in missing]
 
     if len(names) == 2:
         return f"What's the {names[0]}, and {names[1]}?"
@@ -83,7 +90,11 @@ def format_grouped_prompt(missing: list[SlotDefinition]) -> str:
     return f"What's the {', '.join(names[:-1])}, and {names[-1]}?"
 
 
-def format_confirmation_with_prompt(state: SlotState, missing: list[SlotDefinition]) -> str:
+def format_confirmation_with_prompt(
+    state: SlotState,
+    missing: list[SlotDefinition],
+    lens: Optional[str] = None,
+) -> str:
     """
     Format a combined confirmation + prompt for missing slots.
 
@@ -92,6 +103,7 @@ def format_confirmation_with_prompt(state: SlotState, missing: list[SlotDefiniti
     Args:
         state: Current slot state with filled values
         missing: Remaining missing slot definitions
+        lens: Active conversational lens for contextual phrasing (Issue #821)
 
     Returns:
         Combined confirmation and prompt string
@@ -109,9 +121,10 @@ def format_confirmation_with_prompt(state: SlotState, missing: list[SlotDefiniti
     # Add prompt for what's missing
     if missing:
         if len(missing) == 1:
-            parts.append(f"What's the {missing[0].display_name.lower()}?")
+            name = missing[0].prompt_for_lens(lens).lower()
+            parts.append(f"What's the {name}?")
         else:
-            parts.append(format_grouped_prompt(missing))
+            parts.append(format_grouped_prompt(missing, lens=lens))
 
     return " ".join(parts)
 

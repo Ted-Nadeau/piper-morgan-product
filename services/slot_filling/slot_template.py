@@ -43,6 +43,10 @@ class SlotDefinition:
         extraction_hint: Optional hint for the LLM extractor
         group: Optional grouping index for grouped prompting (slots in
                the same group are asked together, max 2-3 per group)
+        lens_prompts: Optional mapping of ConversationalLens value → contextual
+                      prompt phrasing. When a lens is active, the prompt uses
+                      this phrasing instead of the generic display_name.
+                      Keys are lens string values (e.g., "calendar", "people").
     """
 
     name: str
@@ -51,6 +55,13 @@ class SlotDefinition:
     slot_type: SlotType = SlotType.TEXT
     extraction_hint: Optional[str] = None
     group: Optional[int] = None
+    lens_prompts: Optional[dict[str, str]] = None
+
+    def prompt_for_lens(self, lens: Optional[str] = None) -> str:
+        """Return the prompt phrasing appropriate for the given lens."""
+        if lens and self.lens_prompts:
+            return self.lens_prompts.get(lens, self.display_name)
+        return self.display_name
 
 
 @dataclass
@@ -67,12 +78,17 @@ class SlotTemplate:
         display_name: Human-readable workflow name
         slots: Ordered list of slot definitions
         confirmation_style: How to confirm with the user (default: implicit)
+        lens_group_priority: Optional mapping of ConversationalLens value →
+                             preferred group ordering. When a lens is active,
+                             groups are prompted in this order instead of the
+                             default numeric order.
     """
 
     name: str
     display_name: str
     slots: list[SlotDefinition] = field(default_factory=list)
     confirmation_style: ConfirmationStyle = ConfirmationStyle.IMPLICIT
+    lens_group_priority: Optional[dict[str, list[int]]] = None
 
     def __post_init__(self):
         if not self.slots:
@@ -180,6 +196,11 @@ MEETING_TEMPLATE = SlotTemplate(
             slot_type=SlotType.ENTITY,
             extraction_hint="Person name(s) for the meeting",
             group=0,
+            lens_prompts={
+                "calendar": "Who should be there",
+                "people": "Who needs to be in this meeting",
+                "projects": "Who should attend from the team",
+            },
         ),
         SlotDefinition(
             name="day",
@@ -188,6 +209,11 @@ MEETING_TEMPLATE = SlotTemplate(
             slot_type=SlotType.DATETIME,
             extraction_hint="Day or date for the meeting",
             group=0,
+            lens_prompts={
+                "calendar": "Which day works",
+                "people": "Which day works for everyone",
+                "projects": "When works for this",
+            },
         ),
         SlotDefinition(
             name="time",
@@ -196,6 +222,11 @@ MEETING_TEMPLATE = SlotTemplate(
             slot_type=SlotType.DATETIME,
             extraction_hint="Time of day for the meeting",
             group=0,
+            lens_prompts={
+                "calendar": "What time works best",
+                "people": "What time",
+                "projects": "What time",
+            },
         ),
         SlotDefinition(
             name="topic",
@@ -204,7 +235,20 @@ MEETING_TEMPLATE = SlotTemplate(
             slot_type=SlotType.TEXT,
             extraction_hint="Meeting subject or agenda",
             group=1,
+            lens_prompts={
+                "calendar": "What's the agenda",
+                "people": "What should you cover",
+                "projects": "Which project is this about",
+            },
         ),
     ],
     confirmation_style=ConfirmationStyle.IMPLICIT,
+    lens_group_priority={
+        # CALENDAR: time/people first (group 0), then topic (group 1) — default order
+        "calendar": [0, 1],
+        # PEOPLE: same default order (attendees in group 0)
+        "people": [0, 1],
+        # PROJECTS: topic first (group 1), then logistics (group 0)
+        "projects": [1, 0],
+    },
 )

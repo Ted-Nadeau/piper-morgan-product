@@ -152,12 +152,16 @@ def get_missing_required(state: SlotState) -> list[SlotDefinition]:
     return state.unfilled_required
 
 
-def get_next_prompt_group(state: SlotState) -> list[SlotDefinition]:
+def get_next_prompt_group(state: SlotState, lens: Optional[str] = None) -> list[SlotDefinition]:
     """
     Get the next group of missing slots to prompt for.
 
     Respects slot grouping (slots with the same group number are asked together).
     Caps at MAX_PROMPT_GROUP_SIZE to avoid overwhelming the user.
+
+    When a conversational lens is active and the template defines
+    lens_group_priority, groups are ordered by the lens preference
+    instead of the default numeric order (Issue #821).
 
     Returns:
         List of SlotDefinitions to prompt for (max MAX_PROMPT_GROUP_SIZE)
@@ -171,8 +175,20 @@ def get_next_prompt_group(state: SlotState) -> list[SlotDefinition]:
     for slot in missing:
         grouped.setdefault(slot.group, []).append(slot)
 
-    # Find the first group (by group number, None last)
-    sorted_groups = sorted(grouped.keys(), key=lambda g: (g is None, g or 0))
+    # Determine group ordering — lens-aware or default
+    if lens and state.template.lens_group_priority and lens in state.template.lens_group_priority:
+        # Use lens-specific ordering, then fall back for any groups not listed
+        priority_order = state.template.lens_group_priority[lens]
+        sorted_groups = [g for g in priority_order if g in grouped]
+        # Append any remaining groups not in the priority list
+        remaining = sorted(
+            [g for g in grouped if g not in sorted_groups],
+            key=lambda g: (g is None, g or 0),
+        )
+        sorted_groups.extend(remaining)
+    else:
+        # Default: sort by group number (None last)
+        sorted_groups = sorted(grouped.keys(), key=lambda g: (g is None, g or 0))
 
     if not sorted_groups:
         return []

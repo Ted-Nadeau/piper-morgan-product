@@ -67,6 +67,7 @@ class SlotFillingSession:
     template: SlotTemplate
     slot_state: SlotState
     filling_state: SlotFillingState = SlotFillingState.EXTRACTING
+    active_lens: Optional[str] = None
 
 
 class SlotFillingManager:
@@ -116,11 +117,16 @@ class SlotFillingManager:
         session_id: str,
         template: SlotTemplate,
         initial_message: str,
+        active_lens: Optional[str] = None,
     ) -> SlotFillingResponse:
         """
         Start a new slot-filling session.
 
         Extracts slots from the initial message and determines next step.
+
+        Args:
+            active_lens: Current conversational lens (Issue #821).
+                Customizes prompt phrasing and group ordering.
         """
         slot_state = SlotState(template=template)
         session = SlotFillingSession(
@@ -129,6 +135,7 @@ class SlotFillingManager:
             template=template,
             slot_state=slot_state,
             filling_state=SlotFillingState.EXTRACTING,
+            active_lens=active_lens,
         )
         self._sessions[session_id] = session
 
@@ -136,6 +143,7 @@ class SlotFillingManager:
             "slot_filling_started",
             session_id=session_id,
             template=template.name,
+            active_lens=active_lens,
         )
 
         # Extract slots from initial message
@@ -240,6 +248,7 @@ class SlotFillingManager:
     def _determine_next_step(self, session: SlotFillingSession) -> SlotFillingResponse:
         """Determine the next state and response based on current slot state."""
         missing = get_missing_required(session.slot_state)
+        lens = session.active_lens
 
         if not missing:
             # All required slots filled → confirm
@@ -254,8 +263,8 @@ class SlotFillingManager:
 
         # Still have missing required slots → prompt
         session.filling_state = SlotFillingState.PROMPTING
-        next_group = get_next_prompt_group(session.slot_state)
-        msg = format_confirmation_with_prompt(session.slot_state, next_group)
+        next_group = get_next_prompt_group(session.slot_state, lens=lens)
+        msg = format_confirmation_with_prompt(session.slot_state, next_group, lens=lens)
 
         return SlotFillingResponse(
             message=msg,
