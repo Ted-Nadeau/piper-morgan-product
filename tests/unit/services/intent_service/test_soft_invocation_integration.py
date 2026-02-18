@@ -406,3 +406,157 @@ class TestPendingOfferField:
             },
         )
         assert result.pending_offer["workflow_type"] == "meeting"
+
+
+class TestTrustStageGating:
+    """Issue #826: Soft offers gated by real trust stage, not hardcoded BUILDING."""
+
+    @pytest.mark.asyncio
+    async def test_new_user_gets_no_offers(self, intent_service, mock_classifier):
+        """NEW trust stage → soft offer blocked (can_offer_hints=False)."""
+        intent = _make_intent(IntentCategory.CONVERSATION, "greeting")
+
+        mock_classifier.classify_multiple.return_value = MultiIntentResult(
+            intents=[intent],
+            original_message="I need to get the team together Tuesday",
+            is_multi_intent=False,
+        )
+
+        intent_service.canonical_handlers.handle.return_value = {
+            "message": "That sounds like a plan!",
+            "intent": {"category": "conversation", "action": "greeting"},
+        }
+
+        # Mock the trust stage resolution to return NEW
+        with patch("services.intent.intent_service.AsyncSessionFactory") as mock_factory:
+            from services.shared_types import TrustStage
+
+            mock_session = AsyncMock()
+            mock_context = AsyncMock()
+            mock_context.__aenter__ = AsyncMock(return_value=mock_session)
+            mock_context.__aexit__ = AsyncMock(return_value=False)
+            mock_factory.session_scope.return_value = mock_context
+
+            # Mock trust repo and service to return NEW
+            with (
+                patch("services.intent.intent_service.UserTrustProfileRepository") as mock_repo_cls,
+                patch("services.intent.intent_service.TrustComputationService") as mock_trust_cls,
+            ):
+                mock_trust_svc = AsyncMock()
+                mock_trust_svc.get_trust_stage.return_value = TrustStage.NEW
+                mock_trust_cls.return_value = mock_trust_svc
+
+                result = await intent_service.process_intent(
+                    message="I need to get the team together Tuesday",
+                    session_id="sess_new_user",
+                    user_id="00000000-0000-0000-0000-000000000001",
+                )
+
+        assert result.success
+        # NEW user should NOT get a soft offer
+        assert result.pending_offer is None
+        # But should still get the canonical response
+        assert "plan" in result.message.lower()
+
+    @pytest.mark.asyncio
+    async def test_building_user_gets_offers(self, intent_service, mock_classifier):
+        """BUILDING trust stage → soft offers allowed (same as current behavior)."""
+        intent = _make_intent(IntentCategory.CONVERSATION, "greeting")
+
+        mock_classifier.classify_multiple.return_value = MultiIntentResult(
+            intents=[intent],
+            original_message="I need to get the team together Tuesday",
+            is_multi_intent=False,
+        )
+
+        intent_service.canonical_handlers.handle.return_value = {
+            "message": "That sounds like a plan!",
+            "intent": {"category": "conversation", "action": "greeting"},
+        }
+
+        with patch("services.intent.intent_service.AsyncSessionFactory") as mock_factory:
+            from services.shared_types import TrustStage
+
+            mock_session = AsyncMock()
+            mock_context = AsyncMock()
+            mock_context.__aenter__ = AsyncMock(return_value=mock_session)
+            mock_context.__aexit__ = AsyncMock(return_value=False)
+            mock_factory.session_scope.return_value = mock_context
+
+            with (
+                patch("services.intent.intent_service.UserTrustProfileRepository") as mock_repo_cls,
+                patch("services.intent.intent_service.TrustComputationService") as mock_trust_cls,
+            ):
+                mock_trust_svc = AsyncMock()
+                mock_trust_svc.get_trust_stage.return_value = TrustStage.BUILDING
+                mock_trust_cls.return_value = mock_trust_svc
+
+                result = await intent_service.process_intent(
+                    message="I need to get the team together Tuesday",
+                    session_id="sess_building_user",
+                    user_id="00000000-0000-0000-0000-000000000002",
+                )
+
+        assert result.success
+        # BUILDING user SHOULD get a soft offer
+        assert result.pending_offer is not None
+        assert result.pending_offer["workflow_type"] == "meeting"
+
+    @pytest.mark.asyncio
+    async def test_no_user_id_defaults_to_building(self, intent_service, mock_classifier):
+        """No user_id → defaults to BUILDING (backward-compatible)."""
+        intent = _make_intent(IntentCategory.CONVERSATION, "greeting")
+
+        mock_classifier.classify_multiple.return_value = MultiIntentResult(
+            intents=[intent],
+            original_message="I need to get the team together Tuesday",
+            is_multi_intent=False,
+        )
+
+        intent_service.canonical_handlers.handle.return_value = {
+            "message": "That sounds like a plan!",
+            "intent": {"category": "conversation", "action": "greeting"},
+        }
+
+        # No user_id — trust stage lookup should be skipped
+        result = await intent_service.process_intent(
+            message="I need to get the team together Tuesday",
+            session_id="sess_no_user",
+            user_id=None,
+        )
+
+        assert result.success
+        # Should still get offer (BUILDING default allows hints)
+        assert result.pending_offer is not None
+
+    @pytest.mark.asyncio
+    async def test_trust_lookup_failure_falls_back_to_building(
+        self, intent_service, mock_classifier
+    ):
+        """Trust stage lookup error → graceful fallback to BUILDING."""
+        intent = _make_intent(IntentCategory.CONVERSATION, "greeting")
+
+        mock_classifier.classify_multiple.return_value = MultiIntentResult(
+            intents=[intent],
+            original_message="I need to get the team together Tuesday",
+            is_multi_intent=False,
+        )
+
+        intent_service.canonical_handlers.handle.return_value = {
+            "message": "That sounds like a plan!",
+            "intent": {"category": "conversation", "action": "greeting"},
+        }
+
+        # Mock DB to throw an error
+        with patch("services.intent.intent_service.AsyncSessionFactory") as mock_factory:
+            mock_factory.session_scope.side_effect = RuntimeError("DB down")
+
+            result = await intent_service.process_intent(
+                message="I need to get the team together Tuesday",
+                session_id="sess_fallback",
+                user_id="00000000-0000-0000-0000-000000000003",
+            )
+
+        assert result.success
+        # Should still work — falls back to BUILDING default
+        assert result.pending_offer is not None

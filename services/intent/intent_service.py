@@ -53,9 +53,11 @@ from services.knowledge.conversation_integration import ConversationKnowledgeGra
 from services.learning.learning_handler import LearningHandler
 from services.orchestration.engine import OrchestrationEngine
 from services.process import ProcessCheckResult, get_process_registry
-from services.shared_types import IntentCategory
+from services.repositories.user_trust_profile_repository import UserTrustProfileRepository
+from services.shared_types import IntentCategory, TrustStage
 from services.slot_filling.slot_filling_adapter import SlotFillingProcessAdapter
 from services.slot_filling.slot_template import MEETING_TEMPLATE
+from services.trust.trust_computation_service import TrustComputationService
 
 
 @dataclass
@@ -160,6 +162,7 @@ class IntentService:
         message: str,
         session_id: str,
         current_turn: int = 0,
+        trust_stage: Optional[TrustStage] = None,
     ) -> "IntentProcessingResult":
         """
         Issue #767: Check for soft invocation opportunity and append offer.
@@ -172,6 +175,8 @@ class IntentService:
             message: Original user message
             session_id: Current session ID
             current_turn: Current conversation turn number
+            trust_stage: User's resolved trust stage (Issue #826).
+                None falls back to BUILDING for backward compatibility.
 
         Returns:
             Modified result with offer appended, or original result unchanged
@@ -193,11 +198,9 @@ class IntentService:
             if not detection.has_offer:
                 return result
 
-            # Check throttling — default to BUILDING trust for M0
-            # (real trust stage integration is a separate concern)
-            from services.trust.proactivity_gate import TrustStage
-
-            trust_stage = TrustStage.BUILDING
+            # Issue #826: Use resolved trust stage from caller, default to BUILDING
+            if trust_stage is None:
+                trust_stage = TrustStage.BUILDING
             suggestions_count = 0  # TODO: Track across session
 
             allowed, reason = self.workflow_offer_service.should_offer(
@@ -451,6 +454,24 @@ class IntentService:
                     )
                 # Neither accept nor decline — user moved on. Continue normal processing.
 
+            # Issue #826: Resolve trust stage from real computation service
+            # Pre-fetch here so _apply_soft_offer() receives resolved domain data
+            resolved_trust_stage = None
+            if user_id:
+                try:
+                    async with AsyncSessionFactory.session_scope() as db_session:
+                        trust_repo = UserTrustProfileRepository(db_session)
+                        trust_service = TrustComputationService(trust_repo)
+                        resolved_trust_stage = await trust_service.get_trust_stage(UUID(user_id))
+                    self.logger.debug(
+                        "trust_stage_resolved",
+                        user_id=user_id,
+                        trust_stage=resolved_trust_stage.name if resolved_trust_stage else None,
+                    )
+                except Exception as e:
+                    self.logger.warning(f"Trust stage resolution failed: {e}")
+                    # Fallback: _apply_soft_offer will use BUILDING default
+
             # ADR-049: Active guided processes take priority over classification
             # Domain invariant: Once a user enters a guided process (onboarding, standup, etc.),
             # ALL their messages belong to that process until completion/exit.
@@ -583,7 +604,12 @@ class IntentService:
                         ],
                     )
                     # Issue #819: Apply soft invocation to orchestrated responses
-                    return self._apply_soft_offer(orchestrated_result, message, session_id)
+                    return self._apply_soft_offer(
+                        orchestrated_result,
+                        message,
+                        session_id,
+                        trust_stage=resolved_trust_stage,
+                    )
                 except Exception as e:
                     # Graceful fallback: process primary intent only
                     self.logger.warning(
@@ -809,7 +835,12 @@ class IntentService:
                     ),
                 )
                 # Issue #767: Check for soft invocation opportunity
-                return self._apply_soft_offer(canonical_response, message, session_id)
+                return self._apply_soft_offer(
+                    canonical_response,
+                    message,
+                    session_id,
+                    trust_stage=resolved_trust_stage,
+                )
 
             # Create workflow with timeout protection (Bug #166)
             workflow = await self._create_workflow_with_timeout(intent)
