@@ -40,6 +40,7 @@ from services.ethics.boundary_enforcer_refactored import boundary_enforcer_refac
 from services.intent_service import classifier
 from services.intent_service.action_mapper import ActionMapper
 from services.intent_service.canonical_handlers import CanonicalHandlers
+from services.intent_service.orchestrator import IntentOrchestrator
 from services.intent_service.pre_classifier import MultiIntentResult
 from services.intent_service.todo_handlers import TodoIntentHandlers
 from services.knowledge.conversation_integration import ConversationKnowledgeGraphIntegration
@@ -76,6 +77,10 @@ class IntentProcessingResult:
         False  # True if greeting was detected alongside substantive intent
     )
     secondary_intents: Optional[List[Dict[str, Any]]] = None  # Other intents detected
+    # Issue #764: Multi-substantive intent orchestration
+    multi_intent_orchestrated: bool = (
+        False  # True if multiple substantive intents were orchestrated
+    )
 
 
 class IntentProcessingError(Exception):
@@ -122,6 +127,9 @@ class IntentService:
         self.conversation_handler = conversation_handler
         self.conversation_manager = conversation_manager  # Issue #563: Conversation persistence
         self.canonical_handlers = CanonicalHandlers()
+        self.intent_orchestrator = IntentOrchestrator(
+            canonical_handlers=self.canonical_handlers
+        )  # Issue #764: Multi-substantive orchestration
         self.kg_integration = ConversationKnowledgeGraphIntegration()  # Issue #99 CORE-KNOW
         self.todo_handlers = TodoIntentHandlers()  # Issue #285: Todo chat integration
         self.learning_handler = LearningHandler()  # Issue #300: Basic Auto-Learning
@@ -354,13 +362,53 @@ class IntentService:
             self.logger.info(f"Processing intent with OrchestrationEngine: {message}")
             multi_result = await self.intent_classifier.classify_multiple(message)
 
-            # Issue #595: Handle multi-intent messages with "handle all" strategy
-            # If greeting + substantive intent detected, handle both
-            if (
+            # Issue #764: Multi-substantive intent orchestration
+            # Count substantive (non-conversational) intents
+            substantive_count = sum(
+                1 for i in multi_result.intents if i.category != IntentCategory.CONVERSATION
+            )
+
+            if multi_result.is_multi_intent and substantive_count >= 2:
+                # Issue #764: Route to orchestrator for multi-substantive intents
+                self.logger.info(
+                    "multi_intent_orchestrating",
+                    intent_count=len(multi_result.intents),
+                    substantive_count=substantive_count,
+                    has_greeting=multi_result.has_greeting,
+                )
+                try:
+                    plan = self.intent_orchestrator.create_plan(multi_result)
+                    orchestrated = await self.intent_orchestrator.execute_plan(
+                        plan, session_id, user_id
+                    )
+                    return IntentProcessingResult(
+                        success=orchestrated.success,
+                        message=orchestrated.aggregated_message,
+                        intent_data=orchestrated.primary_intent_data,
+                        multi_intent_greeting=orchestrated.greeting_prefix,
+                        multi_intent_orchestrated=True,
+                        secondary_intents=[
+                            {"category": r.intent.category.value, "action": r.intent.action}
+                            for r in orchestrated.results[1:]
+                        ],
+                    )
+                except Exception as e:
+                    # Graceful fallback: process primary intent only
+                    self.logger.warning(
+                        "multi_intent_orchestration_failed",
+                        error=str(e),
+                        fallback="primary_only",
+                    )
+                    intent = multi_result.primary_intent
+                    if intent is None:
+                        intent = await self.intent_classifier.classify(message)
+
+            elif (
                 multi_result.is_multi_intent
                 and multi_result.has_greeting
                 and multi_result.has_substantive_intent
             ):
+                # Issue #595: Handle greeting + single substantive intent
                 self.logger.info(
                     "multi_intent_handling",
                     intent_count=len(multi_result.intents),
