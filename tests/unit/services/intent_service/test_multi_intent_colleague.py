@@ -95,7 +95,7 @@ class TestColleagueScenarios:
         assert call_count == 2
         assert "2pm" in response.aggregated_message
         assert "merged" in response.aggregated_message
-        assert response.success
+        assert len(response.successful_results) > 0
         assert not response.has_partial_failure
 
     @pytest.mark.asyncio
@@ -286,6 +286,6 @@ class TestColleagueScenarios:
         assert "2pm" in response.aggregated_message
         # Failure should be acknowledged gracefully
         assert "wasn't able" in response.aggregated_message
-        # Overall should still be success (partial)
-        assert response.success
+        # Overall should still have successes (partial)
+        assert len(response.successful_results) > 0
         assert response.has_partial_failure

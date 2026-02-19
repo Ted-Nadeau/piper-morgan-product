@@ -47,7 +47,9 @@ class ConversationTurn:
 
     # Extracted entities for reference resolution
     temporal_reference: Optional[str] = None  # "tomorrow", "today", "this week"
-    entity_references: list[str] = field(default_factory=list)  # "meeting", "project"
+    entity_references: list[str] = field(
+        default_factory=list
+    )  # stored, not yet consumed (audit #827)
     topic: Optional[str] = None  # Inferred topic
 
     # Conversational lens (#763 GLUE-FOLLOWUP)
@@ -148,7 +150,11 @@ class ConversationContext:
 
     @property
     def last_temporal_reference(self) -> Optional[str]:
-        """Get the most recent temporal reference."""
+        """Get the most recent temporal reference.
+
+        NOTE: Not yet called in production. Reserved for future temporal
+        reference resolution in follow-up handling. (Audit: #827, 2026-02-18)
+        """
         for turn in reversed(self.turns):
             if turn.temporal_reference:
                 return turn.temporal_reference
@@ -425,6 +431,10 @@ def get_or_create_context(
 
 
 def clear_context(session_id: str) -> None:
-    """Clear the conversation context for a session."""
+    """Clear the conversation context for a session.
+
+    NOTE: Not yet called in production. Reserved for explicit session cleanup
+    (e.g., logout, session timeout). (Audit: #827, 2026-02-18)
+    """
     if session_id in _conversation_contexts:
         del _conversation_contexts[session_id]

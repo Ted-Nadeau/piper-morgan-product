@@ -520,6 +520,20 @@ class IntentClassifier:
                 # #763 Phase 4: Detect lens reset (explicit topic change)
                 if is_lens_reset(lens, conv_context.current_lens, intent):
                     conv_context.reset_lens()
+                elif lens and conv_context.current_lens and lens != conv_context.current_lens:
+                    # #827: Lens changed but NOT a reset — this is a sub-topic
+                    # digression (e.g., calendar → "who's attending?" → people lens).
+                    # Check if the new lens matches a previous stack entry (returning
+                    # from digression) or is a new digression (push current lens).
+                    if lens in conv_context.lens_stack:
+                        # Returning to a previous topic — pop back to it
+                        while conv_context.lens_stack and conv_context.lens_stack[-1] != lens:
+                            conv_context.pop_lens()
+                        # Pop the matching entry itself (it becomes current via add_turn)
+                        conv_context.pop_lens()
+                    else:
+                        # New sub-topic digression — save current lens for later
+                        conv_context.push_lens(lens)
 
                 conv_context.add_turn(
                     message=message,

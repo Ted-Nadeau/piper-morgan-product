@@ -21,7 +21,7 @@ class MultiIntentResult:
     """
 
     intents: List[Intent] = field(default_factory=list)
-    original_message: str = ""
+    original_message: str = ""  # stored for logging/debug, not consumed downstream (audit #827)
     is_multi_intent: bool = False
 
     @property

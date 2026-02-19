@@ -77,21 +77,9 @@ class TestExecutionPlan:
         assert plan.strategy == ExecutionStrategy.PARALLEL
         assert not plan.capped
 
-    def test_substantive_intents_filters_conversation(self):
-        intents = [
-            _make_intent(IntentCategory.CONVERSATION, "greeting"),
-            _make_intent(IntentCategory.QUERY, "meeting_time"),
-            _make_intent(IntentCategory.STATUS, "get_project_status"),
-        ]
-        plan = ExecutionPlan(intents=intents)
-        substantive = plan.substantive_intents
-        assert len(substantive) == 2
-        assert all(i.category != IntentCategory.CONVERSATION for i in substantive)
-
     def test_empty_plan(self):
         plan = ExecutionPlan(intents=[])
         assert plan.intent_count == 0
-        assert plan.substantive_intents == []
 
 
 # --- IntentExecutionResult Tests ---
@@ -104,7 +92,6 @@ class TestIntentExecutionResult:
             intent=intent, response="Your next meeting is at 2pm.", success=True
         )
         assert result.success
-        assert result.category_name == "query"
 
     def test_failed_result(self):
         intent = _make_intent(IntentCategory.STATUS, "get_project_status")
@@ -131,7 +118,7 @@ class TestOrchestratedResponse:
             ),
         ]
         response = OrchestratedResponse(results=results)
-        assert response.success
+        assert len(response.successful_results) > 0
         assert len(response.successful_results) == 2
         assert len(response.failed_results) == 0
         assert not response.has_partial_failure
@@ -150,7 +137,7 @@ class TestOrchestratedResponse:
             ),
         ]
         response = OrchestratedResponse(results=results, has_partial_failure=True)
-        assert response.success  # At least one succeeded
+        assert len(response.successful_results) > 0  # At least one succeeded
         assert len(response.successful_results) == 1
         assert len(response.failed_results) == 1
 
@@ -163,7 +150,7 @@ class TestOrchestratedResponse:
             ),
         ]
         response = OrchestratedResponse(results=results)
-        assert not response.success
+        assert len(response.successful_results) == 0
 
     def test_primary_intent_data(self):
         results = [
@@ -241,7 +228,7 @@ class TestExecutePlan:
         }
         plan = ExecutionPlan(intents=[_make_intent(IntentCategory.QUERY, "meeting_time")])
         response = await orchestrator.execute_plan(plan, "sess1", "user1")
-        assert response.success
+        assert len(response.successful_results) > 0
         assert len(response.results) == 1
         assert "2pm" in response.aggregated_message
 
@@ -271,7 +258,7 @@ class TestExecutePlan:
             ]
         )
         response = await orchestrator.execute_plan(plan, "sess1", "user1")
-        assert response.success
+        assert len(response.successful_results) > 0
         assert len(response.results) == 2
         assert call_count == 2
         assert "2pm" in response.aggregated_message
@@ -300,7 +287,7 @@ class TestExecutePlan:
             ]
         )
         response = await orchestrator.execute_plan(plan, "sess1", "user1")
-        assert response.success  # Partial success
+        assert len(response.successful_results) > 0  # Partial success
         assert response.has_partial_failure
         assert len(response.successful_results) == 1
         assert len(response.failed_results) == 1
@@ -312,7 +299,7 @@ class TestExecutePlan:
         mock_handlers.handle = AsyncMock(side_effect=RuntimeError("Everything broken"))
         plan = ExecutionPlan(intents=[_make_intent(IntentCategory.QUERY, "meeting_time")])
         response = await orchestrator.execute_plan(plan, "sess1", "user1")
-        assert not response.success
+        assert len(response.successful_results) == 0
         assert "trouble processing" in response.aggregated_message
 
     @pytest.mark.asyncio
@@ -320,7 +307,7 @@ class TestExecutePlan:
         mock_handlers.can_handle.return_value = False
         plan = ExecutionPlan(intents=[_make_intent(IntentCategory.QUERY, "meeting_time")])
         response = await orchestrator.execute_plan(plan, "sess1", "user1")
-        assert not response.success
+        assert len(response.successful_results) == 0
         assert response.results[0].error
 
     @pytest.mark.asyncio

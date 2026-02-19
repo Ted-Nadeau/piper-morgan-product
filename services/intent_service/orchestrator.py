@@ -43,13 +43,6 @@ class ExecutionPlan:
     capped: bool = False  # True if intents were capped at MAX_INTENTS
 
     @property
-    def substantive_intents(self) -> List[Intent]:
-        """Get non-conversational intents."""
-        from services.shared_types import IntentCategory
-
-        return [i for i in self.intents if i.category != IntentCategory.CONVERSATION]
-
-    @property
     def intent_count(self) -> int:
         return len(self.intents)
 
@@ -65,10 +58,6 @@ class IntentExecutionResult:
     error: Optional[str] = None
     duration_ms: float = 0.0
 
-    @property
-    def category_name(self) -> str:
-        return self.intent.category.value if self.intent.category else "unknown"
-
 
 @dataclass
 class OrchestratedResponse:
@@ -79,10 +68,6 @@ class OrchestratedResponse:
     has_partial_failure: bool = False
     total_duration_ms: float = 0.0
     greeting_prefix: bool = False
-
-    @property
-    def success(self) -> bool:
-        return any(r.success for r in self.results)
 
     @property
     def successful_results(self) -> List[IntentExecutionResult]:

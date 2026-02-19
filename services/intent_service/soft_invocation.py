@@ -397,5 +397,11 @@ class WorkflowOfferService:
         return starts.get(workflow_type, "Let me help with that.")
 
     def format_decline(self, offer: WorkflowOffer) -> str:
-        """Generate a graceful decline acknowledgment."""
+        """Generate a graceful decline acknowledgment.
+
+        NOTE: Not yet called in production — decline path in intent_service.py
+        reads decline_message from the pending_offer dict directly. Reserved
+        for future use when decline formatting needs customization beyond the
+        stored message. (Audit: #827, 2026-02-18)
+        """
         return offer.decline_message

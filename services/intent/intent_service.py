@@ -597,7 +597,7 @@ class IntentService:
                         plan, session_id, user_id
                     )
                     orchestrated_result = IntentProcessingResult(
-                        success=orchestrated.success,
+                        success=len(orchestrated.successful_results) > 0,
                         message=orchestrated.aggregated_message,
                         intent_data=orchestrated.primary_intent_data,
                         multi_intent_greeting=orchestrated.greeting_prefix,
