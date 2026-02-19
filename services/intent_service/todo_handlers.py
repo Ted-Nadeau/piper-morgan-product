@@ -83,7 +83,7 @@ class TodoIntentHandlers:
 
         except Exception as e:
             logger.error("Todo creation failed", error=str(e), user_id=user_id, exc_info=True)
-            return "I had trouble adding that todo. Could you try again?"
+            return "I had trouble saving that todo — it may be a temporary issue. You can try again, or rephrase with 'add todo: [your task]'."
 
     async def handle_list_todos(self, intent: Intent, session_id: str, user_id: UUID) -> str:
         """Handle: "show my todos" or "list todos" - shows active todos from database."""
@@ -98,7 +98,7 @@ class TodoIntentHandlers:
 
         except Exception as e:
             logger.error("Todo list retrieval failed", error=str(e), user_id=user_id, exc_info=True)
-            return "I had trouble getting your todos. Could you try again?"
+            return "I had trouble loading your todos right now. You can try 'show my todos' again in a moment, or add a new one with 'add todo: [task]'."
 
     async def handle_next_todo(self, intent: Intent, session_id: str, user_id: UUID) -> str:
         """Handle: "what's my next todo?" or "next task" - shows highest priority todo."""
@@ -122,7 +122,7 @@ class TodoIntentHandlers:
 
         except Exception as e:
             logger.error("Next todo retrieval failed", error=str(e), user_id=user_id, exc_info=True)
-            return "I had trouble getting your next todo. Could you try again?"
+            return "I had trouble finding your next todo right now. You can try 'show my todos' to see your full list, or ask again in a moment."
 
     async def handle_complete_todo(self, intent: Intent, session_id: str, user_id: UUID) -> str:
         """Handle: "mark todo 1 as complete" or "complete todo about PR"""
@@ -161,7 +161,7 @@ class TodoIntentHandlers:
 
         except Exception as e:
             logger.error("Todo completion failed", error=str(e), user_id=user_id, exc_info=True)
-            return "I had trouble completing that todo. Could you try again?"
+            return "I had trouble marking that as complete. You can try again with 'complete todo [number]', or say 'show my todos' to check the list first."
 
     async def handle_delete_todo(self, intent: Intent, session_id: str, user_id: UUID) -> str:
         """Handle: "delete todo 3" or "remove todo about meeting"""
@@ -201,7 +201,7 @@ class TodoIntentHandlers:
 
         except Exception as e:
             logger.error("Todo deletion failed", error=str(e), user_id=user_id, exc_info=True)
-            return "I had trouble deleting that todo. Could you try again?"
+            return "I had trouble removing that todo. You can try again with 'delete todo [number]', or say 'show my todos' to verify the list."
 
     def _extract_todo_text(self, message: str) -> str:
         """Extract todo text from 'add todo: TEXT' pattern."""

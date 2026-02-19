@@ -239,7 +239,7 @@ class IntentOrchestrator:
         failed = response.failed_results
 
         if not successful:
-            return "I'm having trouble processing that right now. Could you try again?"
+            return "I'm having trouble processing that right now. You could try rephrasing your request, or ask about something specific like your calendar or tasks."
 
         # Build the aggregated message
         parts: List[str] = []

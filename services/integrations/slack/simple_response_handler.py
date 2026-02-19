@@ -436,7 +436,7 @@ class SimpleSlackResponseHandler:
             # Grammar-conscious error: warm, not technical
             content = result.get("content", "")
             if "encountered an issue" in content.lower():
-                return "I ran into a small hiccup with that. Could you try again?"
+                return "I ran into a small hiccup with that. You could try rephrasing, or ask me something else."
             return content
         elif result_type == "workflow_result":
             workflow_result = result.get("result", {})

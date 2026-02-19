@@ -408,6 +408,11 @@ def extract_topic(message: str, intent: Optional[Intent] = None) -> Optional[str
 _conversation_contexts: dict[str, ConversationContext] = {}
 
 
+def _context_key(session_id: str, user_id: Optional[str] = None) -> str:
+    """Build composite key for user-scoped context storage (#817)."""
+    return f"{user_id or 'anonymous'}:{session_id}"
+
+
 def get_or_create_context(
     session_id: str,
     user_id: Optional[str] = None,
@@ -417,24 +422,26 @@ def get_or_create_context(
 
     Args:
         session_id: The session identifier
-        user_id: Optional user identifier
+        user_id: Optional user identifier (#817: used for scoped storage key)
 
     Returns:
         The conversation context
     """
-    if session_id not in _conversation_contexts:
-        _conversation_contexts[session_id] = ConversationContext(
+    key = _context_key(session_id, user_id)
+    if key not in _conversation_contexts:
+        _conversation_contexts[key] = ConversationContext(
             session_id=UUID(session_id) if session_id else uuid4(),
             user_id=UUID(user_id) if user_id else None,
         )
-    return _conversation_contexts[session_id]
+    return _conversation_contexts[key]
 
 
-def clear_context(session_id: str) -> None:
+def clear_context(session_id: str, user_id: Optional[str] = None) -> None:
     """Clear the conversation context for a session.
 
     NOTE: Not yet called in production. Reserved for explicit session cleanup
     (e.g., logout, session timeout). (Audit: #827, 2026-02-18)
     """
-    if session_id in _conversation_contexts:
-        del _conversation_contexts[session_id]
+    key = _context_key(session_id, user_id)
+    if key in _conversation_contexts:
+        del _conversation_contexts[key]

@@ -472,3 +472,84 @@ class TestSoftInvocationResult:
         assert result.offer.offer_message
         assert result.offer.decline_message
         assert result.offer.confidence > 0
+
+
+# --- Lens-Boosted Confidence Tests (#822) ---
+
+
+class TestLensBoostedConfidence:
+    """Test that active conversational lens boosts soft invocation confidence."""
+
+    def test_calendar_lens_boosts_meeting(self, detector):
+        """Calendar lens + meeting pattern → boosted confidence."""
+        result = detector.detect("We need to schedule a meeting about this", active_lens="calendar")
+        assert result.has_offer
+        assert result.offer.confidence > 0.7  # Boosted above baseline
+
+    def test_no_lens_gives_baseline(self, detector):
+        """No lens → baseline 0.7 confidence."""
+        result = detector.detect("We need to schedule a meeting about this")
+        assert result.has_offer
+        assert result.offer.confidence == 0.7
+
+    def test_unrelated_lens_no_boost(self, detector):
+        """Issues lens + meeting pattern → no boost."""
+        result = detector.detect("We need to schedule a meeting about this", active_lens="issues")
+        assert result.has_offer
+        assert result.offer.confidence == 0.7  # No affinity
+
+    def test_issues_lens_boosts_priority_check(self, detector):
+        """Issues lens + priority pattern → boosted confidence."""
+        result = detector.detect("I don't know what to focus on first", active_lens="issues")
+        assert result.has_offer
+        assert result.offer.confidence > 0.7
+
+    def test_people_lens_boosts_standup(self, detector):
+        """People lens + standup pattern → boosted confidence."""
+        result = detector.detect("We should do a quick standup", active_lens="people")
+        assert result.has_offer
+        assert result.offer.confidence > 0.7
+
+    def test_confidence_capped_at_095(self, detector):
+        """Boosted confidence should not exceed 0.95."""
+        result = detector.detect("We need to schedule a meeting", active_lens="calendar")
+        assert result.has_offer
+        assert result.offer.confidence <= 0.95
+
+
+# --- User-Scoped Composite Key Tests (#817) ---
+
+
+class TestCompositeKeys:
+    """Test that WorkflowOfferService uses user-scoped composite keys."""
+
+    def test_different_users_same_session_isolated(self, offer_service):
+        """Two users on the same session_id get separate offer windows."""
+        offer_service.record_offer("sess1", turn=1, user_id="alice")
+        offer_service.record_offer("sess1", turn=2, user_id="alice")
+
+        # Alice has 2 offers recorded; Bob has 0
+        key_alice = offer_service._key("sess1", "alice")
+        key_bob = offer_service._key("sess1", "bob")
+        assert key_alice in offer_service._offer_windows
+        assert key_bob not in offer_service._offer_windows
+
+    def test_pending_offers_user_scoped(self, offer_service):
+        """Pending offers are scoped per user."""
+        offer_alice = {"workflow_type": "meeting"}
+        offer_bob = {"workflow_type": "standup"}
+        offer_service.set_pending_offer("sess1", offer_alice, user_id="alice")
+        offer_service.set_pending_offer("sess1", offer_bob, user_id="bob")
+
+        retrieved_alice = offer_service.get_and_clear_pending_offer("sess1", user_id="alice")
+        assert retrieved_alice["workflow_type"] == "meeting"
+
+        retrieved_bob = offer_service.get_and_clear_pending_offer("sess1", user_id="bob")
+        assert retrieved_bob["workflow_type"] == "standup"
+
+    def test_anonymous_fallback(self, offer_service):
+        """No user_id falls back to 'anonymous' key."""
+        offer_service.set_pending_offer("sess1", {"type": "test"})
+        key = offer_service._key("sess1")
+        assert key == "anonymous:sess1"
+        assert offer_service.get_and_clear_pending_offer("sess1") == {"type": "test"}

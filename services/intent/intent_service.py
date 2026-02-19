@@ -163,6 +163,7 @@ class IntentService:
         session_id: str,
         current_turn: int = 0,
         trust_stage: Optional[TrustStage] = None,
+        user_id: Optional[str] = None,
     ) -> "IntentProcessingResult":
         """
         Issue #767: Check for soft invocation opportunity and append offer.
@@ -189,12 +190,12 @@ class IntentService:
             # Classifier already extracts and stores lens during classify_multiple()
             current_lens = None
             try:
-                conv_context = get_or_create_context(session_id)
+                conv_context = get_or_create_context(session_id, user_id=user_id)
                 current_lens = conv_context.current_lens
             except (ValueError, KeyError):
                 pass  # Non-UUID session_id or missing context — proceed without lens
 
-            detection = self.soft_invocation_detector.detect(message)
+            detection = self.soft_invocation_detector.detect(message, active_lens=current_lens)
             if not detection.has_offer:
                 return result
 
@@ -208,6 +209,7 @@ class IntentService:
                 session_id=session_id,
                 current_turn=current_turn,
                 suggestions_this_session=suggestions_count,
+                user_id=user_id,
             )
 
             if not allowed:
@@ -230,10 +232,12 @@ class IntentService:
                 "trigger_message": message,  # Issue #825: For slot extraction
             }
 
-            # Record offer for throttling and store as pending
-            self.workflow_offer_service.record_offer(session_id, current_turn)
+            # Record offer for throttling and store as pending (#817: user-scoped)
+            self.workflow_offer_service.record_offer(session_id, current_turn, user_id=user_id)
             # Issue #824: Store pending offer for accept/decline on next turn
-            self.workflow_offer_service.set_pending_offer(session_id, result.pending_offer)
+            self.workflow_offer_service.set_pending_offer(
+                session_id, result.pending_offer, user_id=user_id
+            )
 
             self.logger.info(
                 "soft_offer_added",
@@ -377,7 +381,9 @@ class IntentService:
             # Issue #824: Check for pending soft offer accept/decline
             # Must run before classification — "yes please" is a response to an offer,
             # not a new intent to classify.
-            pending_offer = self.workflow_offer_service.get_and_clear_pending_offer(session_id)
+            pending_offer = self.workflow_offer_service.get_and_clear_pending_offer(
+                session_id, user_id=user_id
+            )
             if pending_offer:
                 response_type = detect_offer_response(message)
                 if response_type == "accept":
@@ -613,6 +619,7 @@ class IntentService:
                         message,
                         session_id,
                         trust_stage=resolved_trust_stage,
+                        user_id=user_id,
                     )
                 except Exception as e:
                     # Graceful fallback: process primary intent only
@@ -844,6 +851,7 @@ class IntentService:
                     message,
                     session_id,
                     trust_stage=resolved_trust_stage,
+                    user_id=user_id,
                 )
 
             # Create workflow with timeout protection (Bug #166)

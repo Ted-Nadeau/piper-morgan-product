@@ -176,7 +176,7 @@ class CanonicalHandlers:
         except Exception as e:
             logger.error(f"Canonical handler failed: {e}")
             return {
-                "message": "I'm having trouble processing that right now, but I'm here to help!",
+                "message": "I'm having trouble processing that right now. You could try rephrasing, or ask me something else — I'm still here to help.",
                 "intent": {
                     "category": IntentCategoryEnum.CONVERSATION.value,
                     "action": "error_fallback",

@@ -199,6 +199,22 @@ DECLINE_PATTERNS = [
 ]
 
 
+# --- Lens ↔ Workflow Affinity (#822) ---
+
+# When the user's active conversational lens aligns with the detected
+# workflow type, we boost confidence — the user is already thinking
+# about this topic, so a soft offer is more likely welcome.
+_LENS_WORKFLOW_AFFINITY: Dict[str, List[str]] = {
+    "calendar": ["meeting", "standup"],
+    "issues": ["priority_check", "status_check", "review"],
+    "projects": ["project_setup", "status_check"],
+    "people": ["meeting", "standup", "review"],
+}
+
+# Confidence boost when lens matches workflow type (+0.15, capped at 0.95)
+_LENS_AFFINITY_BOOST = 0.15
+
+
 # --- SoftInvocationDetector ---
 
 
@@ -210,12 +226,15 @@ class SoftInvocationDetector:
     Each group maps to a workflow type with a pre-written offer message.
     """
 
-    def detect(self, message: str) -> SoftInvocationResult:
+    def detect(self, message: str, active_lens: Optional[str] = None) -> SoftInvocationResult:
         """
         Check if a message implies a workflow need.
 
         Args:
             message: User's message text
+            active_lens: Current conversational lens value (#822).
+                When the lens aligns with the detected workflow type,
+                confidence is boosted.
 
         Returns:
             SoftInvocationResult with offer if pattern matched
@@ -231,17 +250,26 @@ class SoftInvocationDetector:
         for compiled_patterns, workflow_type, offer_msg, decline_msg in _SOFT_TRIGGER_PATTERNS:
             for pattern in compiled_patterns:
                 if pattern.search(clean):
+                    # #822: Boost confidence when lens matches workflow type
+                    confidence = 0.7
+                    if active_lens and workflow_type in _LENS_WORKFLOW_AFFINITY.get(
+                        active_lens, []
+                    ):
+                        confidence = min(confidence + _LENS_AFFINITY_BOOST, 0.95)
+
                     offer = WorkflowOffer(
                         workflow_type=workflow_type,
                         offer_message=offer_msg,
                         decline_message=decline_msg,
-                        confidence=0.7,
+                        confidence=confidence,
                         trigger_pattern=pattern.pattern,
                     )
                     logger.debug(
                         "soft_invocation_detected",
                         workflow_type=workflow_type,
                         pattern=pattern.pattern,
+                        confidence=confidence,
+                        lens_boosted=confidence > 0.7,
                         message_preview=message[:50],
                     )
                     return SoftInvocationResult(
@@ -297,10 +325,13 @@ class WorkflowOfferService:
 
     def __init__(self, proactivity_gate: Optional[ProactivityGate] = None):
         self.proactivity_gate = proactivity_gate or ProactivityGate()
-        self._offer_windows: Dict[str, OfferWindow] = {}  # session_id → window
-        self._pending_offers: Dict[str, Dict[str, Any]] = (
-            {}
-        )  # session_id → offer  # session_id → window
+        self._offer_windows: Dict[str, OfferWindow] = {}  # composite key → window
+        self._pending_offers: Dict[str, Dict[str, Any]] = {}  # composite key → offer
+
+    @staticmethod
+    def _key(session_id: str, user_id: Optional[str] = None) -> str:
+        """Build composite key for user-scoped stores (#817)."""
+        return f"{user_id or 'anonymous'}:{session_id}"
 
     def should_offer(
         self,
@@ -308,6 +339,7 @@ class WorkflowOfferService:
         session_id: str,
         current_turn: int,
         suggestions_this_session: int,
+        user_id: Optional[str] = None,
     ) -> Tuple[bool, str]:
         """
         Check if an offer should be presented right now.
@@ -322,6 +354,7 @@ class WorkflowOfferService:
             session_id: Current session ID
             current_turn: Current conversation turn number
             suggestions_this_session: Total suggestions already offered this session
+            user_id: Optional user ID for scoped throttling (#817)
 
         Returns:
             Tuple of (should_offer, reason)
@@ -337,11 +370,12 @@ class WorkflowOfferService:
         if suggestions_this_session >= max_allowed:
             return False, "Session suggestion limit reached"
 
-        # Check exchange window throttling
-        window = self._offer_windows.get(session_id)
+        # Check exchange window throttling (#817: user-scoped key)
+        key = self._key(session_id, user_id)
+        window = self._offer_windows.get(key)
         if window is None:
             window = OfferWindow()
-            self._offer_windows[session_id] = window
+            self._offer_windows[key] = window
 
         offers_in_window = window.count_in_window(current_turn)
         if offers_in_window >= MAX_OFFERS_PER_WINDOW:
@@ -352,21 +386,26 @@ class WorkflowOfferService:
 
         return True, "Offer allowed"
 
-    def record_offer(self, session_id: str, turn: int) -> None:
+    def record_offer(self, session_id: str, turn: int, user_id: Optional[str] = None) -> None:
         """Record that an offer was made."""
-        window = self._offer_windows.get(session_id)
+        key = self._key(session_id, user_id)
+        window = self._offer_windows.get(key)
         if window is None:
             window = OfferWindow()
-            self._offer_windows[session_id] = window
+            self._offer_windows[key] = window
         window.record_offer(turn)
 
-    def set_pending_offer(self, session_id: str, offer: Dict[str, Any]) -> None:
+    def set_pending_offer(
+        self, session_id: str, offer: Dict[str, Any], user_id: Optional[str] = None
+    ) -> None:
         """Store a pending offer awaiting user response."""
-        self._pending_offers[session_id] = offer
+        self._pending_offers[self._key(session_id, user_id)] = offer
 
-    def get_and_clear_pending_offer(self, session_id: str) -> Optional[Dict[str, Any]]:
+    def get_and_clear_pending_offer(
+        self, session_id: str, user_id: Optional[str] = None
+    ) -> Optional[Dict[str, Any]]:
         """Retrieve and clear a pending offer. Returns None if no offer pending."""
-        return self._pending_offers.pop(session_id, None)
+        return self._pending_offers.pop(self._key(session_id, user_id), None)
 
     def format_offer(self, offer: WorkflowOffer, base_response: str) -> str:
         """

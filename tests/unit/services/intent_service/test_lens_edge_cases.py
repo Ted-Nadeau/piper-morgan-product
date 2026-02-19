@@ -269,3 +269,35 @@ class TestLensEdgeCases:
         popped = ctx.pop_lens()
         assert popped == ConversationalLens.CALENDAR
         assert ctx.lens_stack == []
+
+
+class TestContextCompositeKeys:
+    """Test user-scoped composite keys for context storage (#817)."""
+
+    def test_different_users_get_separate_contexts(self):
+        """Two users on the same session_id get separate contexts."""
+        from services.intent_service.conversation_context import (
+            _conversation_contexts,
+            get_or_create_context,
+        )
+
+        # Clear store for test isolation
+        _conversation_contexts.clear()
+
+        sess = "00000000-0000-0000-0000-000000000001"
+        alice = "00000000-0000-0000-0000-00000000000a"
+        bob = "00000000-0000-0000-0000-00000000000b"
+
+        ctx_alice = get_or_create_context(sess, user_id=alice)
+        ctx_bob = get_or_create_context(sess, user_id=bob)
+
+        assert ctx_alice is not ctx_bob
+        assert len(_conversation_contexts) == 2
+        _conversation_contexts.clear()  # Cleanup
+
+    def test_anonymous_fallback_key(self):
+        """No user_id uses 'anonymous' prefix."""
+        from services.intent_service.conversation_context import _context_key
+
+        assert _context_key("sess1") == "anonymous:sess1"
+        assert _context_key("sess1", "alice") == "alice:sess1"
