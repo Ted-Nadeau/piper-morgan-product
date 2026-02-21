@@ -29,6 +29,9 @@ class TestEnhancedContextTracker:
     def mock_services(self, tracker):
         """Mock the underlying services"""
         tracker.conversation_manager = AsyncMock()
+        # Return None so _get_or_create_conversation_state uses fresh
+        # ConversationState with real datetime defaults (#813)
+        tracker.conversation_manager.get_conversation_context.return_value = None
         tracker.memory_service = AsyncMock()
         tracker.user_context_service = AsyncMock()
         return tracker
