@@ -101,6 +101,10 @@ class RequestContext:
     # Future-proofing
     workspace_id: Optional[UUID] = None  # For future multi-tenant support
 
+    # Unified formality (#838): user's warmth baseline (0.0=professional, 1.0=warm)
+    # Loaded from PersonalityProfile at request boundary. None = not yet loaded.
+    formality_baseline: Optional[float] = None
+
     @classmethod
     def from_jwt_and_request(
         cls,

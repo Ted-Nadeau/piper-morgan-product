@@ -16,6 +16,7 @@ from typing import Any, Optional
 
 import structlog
 
+from services.personality.formality import formality_label
 from services.shared_types import SlotFillingState
 from services.slot_filling.slot_extractor import (
     extract_slots,
@@ -30,6 +31,39 @@ from services.slot_filling.slot_prompts import (
 from services.slot_filling.slot_template import SlotState, SlotTemplate
 
 logger = structlog.get_logger()
+
+# ---------------------------------------------------------------------------
+# Formality-aware message variants (Issue #838)
+# ---------------------------------------------------------------------------
+_SLOT_MESSAGES = {
+    "session_expired": {
+        "warm": "I lost track of what we were setting up \u2014 could you start again? I'm still here to help!",
+        "balanced": "I lost track of what we were setting up. Could you start again?",
+        "professional": "Session expired. Please restart the setup.",
+    },
+    "session_ended": {
+        "warm": "This setup session has already wrapped up! Want to start a new one?",
+        "balanced": "This slot-filling session has already ended.",
+        "professional": "Session completed. Start a new one if needed.",
+    },
+    "cancelled": {
+        "warm": "No problem at all, cancelled! Let me know if you need anything else.",
+        "balanced": "No problem, cancelled.",
+        "professional": "Cancelled.",
+    },
+    "done": {
+        "warm": "All done! That's everything set up.",
+        "balanced": "Done!",
+        "professional": "Complete.",
+    },
+}
+
+
+def _slot_message(key: str, formality_baseline: Optional[float] = None) -> str:
+    """Return the formality-appropriate variant of a slot-filling message."""
+    label = formality_label(formality_baseline if formality_baseline is not None else 0.5)
+    return _SLOT_MESSAGES[key].get(label, _SLOT_MESSAGES[key]["balanced"])
+
 
 # Patterns for cancel/decline detection (reusable from onboarding)
 CANCEL_PATTERNS = [
@@ -68,6 +102,7 @@ class SlotFillingSession:
     slot_state: SlotState
     filling_state: SlotFillingState = SlotFillingState.EXTRACTING
     active_lens: Optional[str] = None
+    formality_baseline: Optional[float] = None
 
 
 class SlotFillingManager:
@@ -118,6 +153,7 @@ class SlotFillingManager:
         template: SlotTemplate,
         initial_message: str,
         active_lens: Optional[str] = None,
+        formality_baseline: Optional[float] = None,
     ) -> SlotFillingResponse:
         """
         Start a new slot-filling session.
@@ -127,6 +163,8 @@ class SlotFillingManager:
         Args:
             active_lens: Current conversational lens (Issue #821).
                 Customizes prompt phrasing and group ordering.
+            formality_baseline: Warmth level 0.0-1.0 (Issue #838).
+                Controls message tone (0.0=professional, 1.0=warm).
         """
         slot_state = SlotState(template=template)
         session = SlotFillingSession(
@@ -136,6 +174,7 @@ class SlotFillingManager:
             slot_state=slot_state,
             filling_state=SlotFillingState.EXTRACTING,
             active_lens=active_lens,
+            formality_baseline=formality_baseline,
         )
         self._sessions[session_id] = session
 
@@ -168,7 +207,7 @@ class SlotFillingManager:
         session = self._find_session(user_id, session_id)
         if not session:
             return SlotFillingResponse(
-                message="I lost track of what we were setting up. Could you start again?",
+                message=_slot_message("session_expired"),
                 state=SlotFillingState.CANCELLED,
                 is_cancelled=True,
             )
@@ -189,7 +228,7 @@ class SlotFillingManager:
         else:
             # Terminal state
             return SlotFillingResponse(
-                message="This slot-filling session has already ended.",
+                message=_slot_message("session_ended", session.formality_baseline),
                 state=session.filling_state,
                 is_complete=session.filling_state == SlotFillingState.COMPLETE,
                 is_cancelled=session.filling_state == SlotFillingState.CANCELLED,
@@ -283,7 +322,7 @@ class SlotFillingManager:
         logger.info("slot_filling_cancelled", session_id=session.session_id)
 
         return SlotFillingResponse(
-            message="No problem, cancelled.",
+            message=_slot_message("cancelled", session.formality_baseline),
             state=SlotFillingState.CANCELLED,
             is_cancelled=True,
             template_name=session.template.name,
@@ -306,7 +345,7 @@ class SlotFillingManager:
         )
 
         return SlotFillingResponse(
-            message="Done!",
+            message=_slot_message("done", session.formality_baseline),
             state=SlotFillingState.COMPLETE,
             is_complete=True,
             filled_slots=filled,

@@ -14,8 +14,9 @@ Pattern: Pattern-053 (Warmth Calibration)
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
+from services.personality.formality import formality_label as _formality_label
 from services.shared_types import InteractionSpace
 
 
@@ -37,6 +38,25 @@ class WarmthCalibration:
     can_use_encouragement: bool
     can_acknowledge_effort: bool
     error_gentleness: float  # 0.0 = direct, 1.0 = very gentle
+    formality_baseline: Optional[float] = None  # warmth 0.0-1.0 from PersonalityProfile
+
+    @property
+    def formality_label(self) -> str:
+        """Presentation label derived from formality_baseline or formality string.
+
+        Returns:
+            "warm", "balanced", or "professional"
+        """
+        if self.formality_baseline is not None:
+            return _formality_label(self.formality_baseline)
+        # Fallback: map legacy formality strings to labels
+        _legacy_map = {
+            "warm": "warm",
+            "casual": "warm",
+            "professional": "balanced",
+            "terse": "professional",
+        }
+        return _legacy_map.get(self.formality, "balanced")
 
 
 class WarmthCalibrator:
@@ -56,6 +76,7 @@ class WarmthCalibrator:
         place_settings: Dict[str, Any],
         is_error: bool = False,
         seems_frustrated: bool = False,
+        formality_baseline: Optional[float] = None,
     ) -> WarmthCalibration:
         """
         Calibrate warmth for a response.
@@ -66,6 +87,9 @@ class WarmthCalibrator:
             place_settings: Settings from PlaceDetector
             is_error: Whether this is an error response
             seems_frustrated: Whether user seems frustrated
+            formality_baseline: Optional warmth level from PersonalityProfile
+                (0.0 = professional, 1.0 = warm). When provided, context
+                modulates around this baseline (±1 WarmthLevel shift max).
 
         Returns:
             WarmthCalibration with appropriate settings
@@ -74,7 +98,12 @@ class WarmthCalibrator:
 
         # Determine base warmth level
         level = self._determine_warmth_level(
-            confidence, place, formality, is_error, seems_frustrated
+            confidence,
+            place,
+            formality,
+            is_error,
+            seems_frustrated,
+            formality_baseline=formality_baseline,
         )
 
         # Determine what warmth behaviors are appropriate
@@ -88,7 +117,43 @@ class WarmthCalibrator:
             can_use_encouragement=can_encourage,
             can_acknowledge_effort=can_acknowledge,
             error_gentleness=error_gentleness,
+            formality_baseline=formality_baseline,
         )
+
+    # Ordered warmth levels for shift arithmetic
+    _WARMTH_ORDER: List[WarmthLevel] = [
+        WarmthLevel.COOL,
+        WarmthLevel.NEUTRAL,
+        WarmthLevel.WARM,
+        WarmthLevel.SUPPORTIVE,
+    ]
+
+    @classmethod
+    def _warmth_level_from_baseline(cls, baseline: float) -> WarmthLevel:
+        """Convert a warmth float (0.0-1.0) to a WarmthLevel.
+
+        Mapping (per #838 specification):
+            warmth >= 0.75 → WARM (SUPPORTIVE reserved for context triggers)
+            warmth >= 0.5  → WARM
+            warmth >= 0.25 → NEUTRAL
+            warmth <  0.25 → COOL
+        """
+        if baseline >= 0.5:
+            return WarmthLevel.WARM
+        elif baseline >= 0.25:
+            return WarmthLevel.NEUTRAL
+        else:
+            return WarmthLevel.COOL
+
+    @classmethod
+    def _shift_warmth(cls, level: WarmthLevel, shift: int) -> WarmthLevel:
+        """Shift a WarmthLevel by *shift* positions (clamped to valid range).
+
+        Positive shift = warmer, negative = cooler.
+        """
+        idx = cls._WARMTH_ORDER.index(level)
+        new_idx = max(0, min(len(cls._WARMTH_ORDER) - 1, idx + shift))
+        return cls._WARMTH_ORDER[new_idx]
 
     def _determine_warmth_level(
         self,
@@ -97,8 +162,28 @@ class WarmthCalibrator:
         formality: str,
         is_error: bool,
         seems_frustrated: bool,
+        formality_baseline: Optional[float] = None,
     ) -> WarmthLevel:
-        """Determine the appropriate warmth level."""
+        """Determine the appropriate warmth level.
+
+        When *formality_baseline* is provided the baseline sets the starting
+        WarmthLevel and context signals (frustration, errors, low confidence)
+        can shift it up by at most **one** level.  This prevents a professional
+        user from suddenly getting SUPPORTIVE language on every error.
+
+        When *formality_baseline* is ``None`` the legacy behaviour is preserved.
+        """
+        if formality_baseline is not None:
+            return self._determine_warmth_level_from_baseline(
+                formality_baseline,
+                confidence,
+                place,
+                is_error,
+                seems_frustrated,
+            )
+
+        # --- Legacy path (no baseline) ---
+
         # Frustrated users need support
         if seems_frustrated:
             return WarmthLevel.SUPPORTIVE
@@ -127,6 +212,31 @@ class WarmthCalibrator:
             "warm": WarmthLevel.WARM,
         }
         return formality_warmth.get(formality, WarmthLevel.NEUTRAL)
+
+    def _determine_warmth_level_from_baseline(
+        self,
+        baseline: float,
+        confidence: float,
+        place: InteractionSpace,
+        is_error: bool,
+        seems_frustrated: bool,
+    ) -> WarmthLevel:
+        """Baseline-aware warmth: modulate around user preference.
+
+        Context signals (frustrated, error, low confidence) shift the
+        baseline up by at most one WarmthLevel position.
+        """
+        base_level = self._warmth_level_from_baseline(baseline)
+
+        # Determine if context warrants a +1 shift
+        needs_extra_warmth = (
+            seems_frustrated or (is_error and place != InteractionSpace.CLI) or confidence < 0.5
+        )
+
+        if needs_extra_warmth:
+            return self._shift_warmth(base_level, +1)
+
+        return base_level
 
     def _can_use_encouragement(self, level: WarmthLevel, formality: str) -> bool:
         """Can we add encouraging language?"""
@@ -175,13 +285,19 @@ class WarmthCalibrator:
 
         return gentleness
 
-    def get_error_phrase(self, calibration: WarmthCalibration, error_type: str = "general") -> str:
+    def get_error_phrase(
+        self,
+        calibration: WarmthCalibration,
+        error_type: str = "general",
+        formality_baseline: Optional[float] = None,
+    ) -> str:
         """
         Get appropriately calibrated error phrase.
 
         Args:
             calibration: WarmthCalibration result
             error_type: Type of error (general, not_found, invalid, confused)
+            formality_baseline: Optional warmth baseline (for future use)
 
         Returns:
             Appropriately warm error phrase
@@ -228,7 +344,10 @@ class WarmthCalibrator:
         return phrases[selected_level]
 
     def get_encouragement(
-        self, calibration: WarmthCalibration, context: str = "success"
+        self,
+        calibration: WarmthCalibration,
+        context: str = "success",
+        formality_baseline: Optional[float] = None,
     ) -> Optional[str]:
         """
         Get encouragement phrase if appropriate.
@@ -236,6 +355,7 @@ class WarmthCalibrator:
         Args:
             calibration: WarmthCalibration result
             context: Context for encouragement (success, progress, trying)
+            formality_baseline: Optional warmth baseline (for future use)
 
         Returns:
             Encouragement phrase or None if not appropriate

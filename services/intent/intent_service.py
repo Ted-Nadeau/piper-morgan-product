@@ -52,6 +52,7 @@ from services.intent_service.todo_handlers import TodoIntentHandlers
 from services.knowledge.conversation_integration import ConversationKnowledgeGraphIntegration
 from services.learning.learning_handler import LearningHandler
 from services.orchestration.engine import OrchestrationEngine
+from services.personality.personality_profile import PersonalityProfile
 from services.process import ProcessCheckResult, get_process_registry
 from services.repositories.user_trust_profile_repository import UserTrustProfileRepository
 from services.shared_types import IntentCategory, TrustStage
@@ -164,6 +165,7 @@ class IntentService:
         current_turn: int = 0,
         trust_stage: Optional[TrustStage] = None,
         user_id: Optional[str] = None,
+        formality_baseline: Optional[float] = None,
     ) -> "IntentProcessingResult":
         """
         Issue #767: Check for soft invocation opportunity and append offer.
@@ -195,7 +197,9 @@ class IntentService:
             except (ValueError, KeyError):
                 pass  # Non-UUID session_id or missing context — proceed without lens
 
-            detection = self.soft_invocation_detector.detect(message, active_lens=current_lens)
+            detection = self.soft_invocation_detector.detect(
+                message, active_lens=current_lens, formality_baseline=formality_baseline
+            )
             if not detection.has_offer:
                 return result
 
@@ -378,6 +382,24 @@ class IntentService:
             IntentProcessingError: If processing fails
         """
         try:
+            # Issue #838: Load formality baseline from PersonalityProfile
+            # Must load early — needed by pending offer handling and soft offer detection.
+            formality_baseline = None
+            if user_id:
+                try:
+                    from services.personality.formality import DEFAULT_WARMTH
+
+                    profile = await PersonalityProfile.load_with_preferences(user_id)
+                    formality_baseline = profile.warmth_level
+                    self.logger.debug(
+                        "formality_baseline_loaded",
+                        user_id=user_id,
+                        formality_baseline=formality_baseline,
+                    )
+                except Exception as e:
+                    self.logger.warning(f"Formality baseline load failed: {e}")
+                    formality_baseline = DEFAULT_WARMTH
+
             # Issue #824: Check for pending soft offer accept/decline
             # Must run before classification — "yes please" is a response to an offer,
             # not a new intent to classify.
@@ -401,9 +423,10 @@ class IntentService:
                                 template=MEETING_TEMPLATE,
                                 initial_message=trigger_message,
                                 active_lens=active_lens,
+                                formality_baseline=formality_baseline,
                             )
                             acceptance_msg = self.workflow_offer_service.format_acceptance(
-                                workflow_type
+                                workflow_type, formality_baseline=formality_baseline
                             )
                             combined_msg = f"{acceptance_msg}\n\n{slot_response.message}"
                             self.logger.info(
@@ -430,7 +453,9 @@ class IntentService:
                             self.logger.warning(f"Slot filling start failed: {e}")
                             # Fall through to basic acceptance
 
-                    acceptance_msg = self.workflow_offer_service.format_acceptance(workflow_type)
+                    acceptance_msg = self.workflow_offer_service.format_acceptance(
+                        workflow_type, formality_baseline=formality_baseline
+                    )
                     self.logger.info(
                         "soft_offer_accepted",
                         workflow_type=workflow_type,
@@ -620,6 +645,7 @@ class IntentService:
                         session_id,
                         trust_stage=resolved_trust_stage,
                         user_id=user_id,
+                        formality_baseline=formality_baseline,
                     )
                 except Exception as e:
                     # Graceful fallback: process primary intent only
@@ -852,6 +878,7 @@ class IntentService:
                     session_id,
                     trust_stage=resolved_trust_stage,
                     user_id=user_id,
+                    formality_baseline=formality_baseline,
                 )
 
             # Create workflow with timeout protection (Bug #166)
@@ -1359,6 +1386,30 @@ class IntentService:
                 user_id=user_id,
                 project_count=len(captured_projects),
             )
+
+            # Issue #838: Persist onboarding formality baseline to user preferences
+            # Currently warmth_level defaults to 0.8 (warm) during onboarding.
+            # When a formality selection step is added, this wiring will carry
+            # the user's chosen tier through to PersonalityProfile.
+            try:
+                from services.personality.formality import ONBOARDING_TIER_TO_WARMTH
+
+                async with AsyncSessionFactory.session_scope() as pref_session:
+                    user_result = await pref_session.execute(select(User).where(User.id == user_id))
+                    user = user_result.scalar_one_or_none()
+                    if user:
+                        prefs = user.preferences or {}
+                        # Default onboarding warmth = 0.8 → "warm" tier → "detailed" communication
+                        prefs["communication_style"] = prefs.get("communication_style", "detailed")
+                        user.preferences = prefs
+                        await pref_session.commit()
+                        self.logger.info(
+                            "onboarding_formality_persisted",
+                            user_id=user_id,
+                            communication_style=prefs["communication_style"],
+                        )
+            except Exception as pref_err:
+                self.logger.warning(f"Formality persistence failed: {pref_err}")
 
         except Exception as e:
             self.logger.error(f"Failed to persist onboarding projects: {e}")

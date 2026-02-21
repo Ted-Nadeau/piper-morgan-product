@@ -25,6 +25,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import structlog
 
 from services.domain.models import Intent
+from services.personality.formality import formality_label
 from services.trust.proactivity_gate import ProactivityGate, TrustStage
 
 logger = structlog.get_logger(__name__)
@@ -78,13 +79,14 @@ class OfferWindow:
 
 # --- Pattern Definitions ---
 
-# Each entry: (compiled patterns, workflow_type, offer_message, decline_message)
+# Each entry: (compiled patterns, workflow_type, offer_messages_by_tier, decline_messages_by_tier)
 # Patterns are intentionally conservative to avoid false positives.
+# Message dicts map formality tier ("warm", "balanced", "professional") to text.
 
-_SOFT_TRIGGER_PATTERNS: List[Tuple[List[re.Pattern], str, str, str]] = []
+_SOFT_TRIGGER_PATTERNS: List[Tuple[List[re.Pattern], str, Dict[str, str], Dict[str, str]]] = []
 
 
-def _compile_patterns() -> List[Tuple[List[re.Pattern], str, str, str]]:
+def _compile_patterns() -> List[Tuple[List[re.Pattern], str, Dict[str, str], Dict[str, str]]]:
     """Compile pattern definitions. Called once at module load."""
     raw = [
         # Meeting / scheduling needs
@@ -96,8 +98,16 @@ def _compile_patterns() -> List[Tuple[List[re.Pattern], str, str, str]]:
                 r"\b(?:can someone|can we|could we)\b.*\b(?:meet|get\b.*\btogether|sync)\b",
             ],
             "meeting",
-            "I could help set up a meeting. Want me to find a time?",
-            "No worries, just let me know if you change your mind.",
+            {
+                "warm": "I could help set up a meeting! Want me to find a time?",
+                "balanced": "I could help set up a meeting. Want me to find a time?",
+                "professional": "I can schedule a meeting. Shall I check availability?",
+            },
+            {
+                "warm": "No worries, just let me know if you change your mind!",
+                "balanced": "No worries, just let me know if you change your mind.",
+                "professional": "Understood. Let me know if you'd like to revisit.",
+            },
         ),
         # Project organization / structure needs
         (
@@ -108,8 +118,16 @@ def _compile_patterns() -> List[Tuple[List[re.Pattern], str, str, str]]:
                 r"\b(?:i don'?t know|not sure)\b.*\b(?:where to start|how to organize|how to structure)\b",
             ],
             "project_setup",
-            "I could help organize things. Want to set up some structure?",
-            "Got it, no worries. I'm here if you need help later.",
+            {
+                "warm": "I could help organize things! Want to set up some structure?",
+                "balanced": "I could help organize things. Want to set up some structure?",
+                "professional": "I can help establish project structure. Shall I draft an outline?",
+            },
+            {
+                "warm": "Got it, no worries! I'm here if you need help later.",
+                "balanced": "Got it, no worries. I'm here if you need help later.",
+                "professional": "Understood. I'm available when you're ready.",
+            },
         ),
         # Status / deadline concerns
         (
@@ -120,8 +138,16 @@ def _compile_patterns() -> List[Tuple[List[re.Pattern], str, str, str]]:
                 r"\bhow (?:are things|is the project|are we)\b.*\b(?:going|progressing|looking)\b",
             ],
             "status_check",
-            "Want me to pull up the project status so we can see where things stand?",
-            "No problem. Just ask whenever you want an update.",
+            {
+                "warm": "I can pull up the project status so we can see where things stand! Want me to?",
+                "balanced": "Want me to pull up the project status so we can see where things stand?",
+                "professional": "Shall I compile a status summary?",
+            },
+            {
+                "warm": "No problem! Just ask whenever you want an update.",
+                "balanced": "No problem. Just ask whenever you want an update.",
+                "professional": "Understood. Status reports are available on request.",
+            },
         ),
         # Team alignment / standup needs
         (
@@ -131,8 +157,16 @@ def _compile_patterns() -> List[Tuple[List[re.Pattern], str, str, str]]:
                 r"\bwe should (?:do|have|start)\b.*\b(?:standup|check-in|daily sync)\b",
             ],
             "standup",
-            "A standup could help with that. Want me to start one?",
-            "Sure thing. Let me know if you change your mind.",
+            {
+                "warm": "A standup could help with that! Want me to start one?",
+                "balanced": "A standup could help with that. Want me to start one?",
+                "professional": "A standup may address this. Shall I initiate one?",
+            },
+            {
+                "warm": "Sure thing! Let me know if you change your mind.",
+                "balanced": "Sure thing. Let me know if you change your mind.",
+                "professional": "Understood. Let me know if you'd like to reconsider.",
+            },
         ),
         # Review / feedback needs
         (
@@ -141,8 +175,16 @@ def _compile_patterns() -> List[Tuple[List[re.Pattern], str, str, str]]:
                 r"\b(?:i need|we need)\b.*\b(?:feedback|review|second opinion|another set of eyes)\b",
             ],
             "review",
-            "I could help coordinate a review. Want me to set that up?",
-            "No worries, just let me know when you're ready.",
+            {
+                "warm": "I could help coordinate a review! Want me to set that up?",
+                "balanced": "I could help coordinate a review. Want me to set that up?",
+                "professional": "I can coordinate a review. Shall I arrange it?",
+            },
+            {
+                "warm": "No worries, just let me know when you're ready!",
+                "balanced": "No worries, just let me know when you're ready.",
+                "professional": "Understood. Let me know when you'd like to proceed.",
+            },
         ),
         # Priority / focus needs
         (
@@ -152,8 +194,16 @@ def _compile_patterns() -> List[Tuple[List[re.Pattern], str, str, str]]:
                 r"\bwhat should i\b.*\b(?:focus on|work on|do (?:first|next))\b",
             ],
             "priority_check",
-            "I can help sort out priorities. Want me to take a look at what's on your plate?",
-            "Okay, just let me know when you want to dig in.",
+            {
+                "warm": "I can help sort out priorities! Want me to take a look at what's on your plate?",
+                "balanced": "I can help sort out priorities. Want me to take a look at what's on your plate?",
+                "professional": "I can help prioritize. Shall I review your current workload?",
+            },
+            {
+                "warm": "Okay, just let me know when you want to dig in!",
+                "balanced": "Okay, just let me know when you want to dig in.",
+                "professional": "Understood. I'm available when you're ready to review.",
+            },
         ),
         # Reminder / tracking needs
         (
@@ -163,15 +213,23 @@ def _compile_patterns() -> List[Tuple[List[re.Pattern], str, str, str]]:
                 r"\b(?:i need to|don'?t let me forget to)\b.*\b(?:remember|follow up|check back)\b",
             ],
             "reminder",
-            "I can help you keep track of that. Want me to set a reminder?",
-            "No problem. Just mention it again if you need a nudge.",
+            {
+                "warm": "I can help you keep track of that! Want me to set a reminder?",
+                "balanced": "I can help you keep track of that. Want me to set a reminder?",
+                "professional": "I can set a reminder for that. Shall I?",
+            },
+            {
+                "warm": "No problem! Just mention it again if you need a nudge.",
+                "balanced": "No problem. Just mention it again if you need a nudge.",
+                "professional": "Understood. Feel free to mention it again if needed.",
+            },
         ),
     ]
 
     compiled = []
-    for patterns, workflow_type, offer_msg, decline_msg in raw:
+    for patterns, workflow_type, offer_msgs, decline_msgs in raw:
         compiled_patterns = [re.compile(p, re.IGNORECASE) for p in patterns]
-        compiled.append((compiled_patterns, workflow_type, offer_msg, decline_msg))
+        compiled.append((compiled_patterns, workflow_type, offer_msgs, decline_msgs))
     return compiled
 
 
@@ -226,7 +284,12 @@ class SoftInvocationDetector:
     Each group maps to a workflow type with a pre-written offer message.
     """
 
-    def detect(self, message: str, active_lens: Optional[str] = None) -> SoftInvocationResult:
+    def detect(
+        self,
+        message: str,
+        active_lens: Optional[str] = None,
+        formality_baseline: Optional[float] = None,
+    ) -> SoftInvocationResult:
         """
         Check if a message implies a workflow need.
 
@@ -235,6 +298,9 @@ class SoftInvocationDetector:
             active_lens: Current conversational lens value (#822).
                 When the lens aligns with the detected workflow type,
                 confidence is boosted.
+            formality_baseline: Warmth level 0.0-1.0 from unified formality
+                framework (#838). Controls offer/decline message tone.
+                None defaults to "balanced" tier.
 
         Returns:
             SoftInvocationResult with offer if pattern matched
@@ -247,7 +313,10 @@ class SoftInvocationDetector:
 
         clean = message.strip().lower()
 
-        for compiled_patterns, workflow_type, offer_msg, decline_msg in _SOFT_TRIGGER_PATTERNS:
+        # Resolve formality tier once for this detection pass
+        tier = formality_label(formality_baseline) if formality_baseline is not None else "balanced"
+
+        for compiled_patterns, workflow_type, offer_msgs, decline_msgs in _SOFT_TRIGGER_PATTERNS:
             for pattern in compiled_patterns:
                 if pattern.search(clean):
                     # #822: Boost confidence when lens matches workflow type
@@ -259,8 +328,8 @@ class SoftInvocationDetector:
 
                     offer = WorkflowOffer(
                         workflow_type=workflow_type,
-                        offer_message=offer_msg,
-                        decline_message=decline_msg,
+                        offer_message=offer_msgs.get(tier, offer_msgs["balanced"]),
+                        decline_message=decline_msgs.get(tier, decline_msgs["balanced"]),
                         confidence=confidence,
                         trigger_pattern=pattern.pattern,
                     )
@@ -270,6 +339,7 @@ class SoftInvocationDetector:
                         pattern=pattern.pattern,
                         confidence=confidence,
                         lens_boosted=confidence > 0.7,
+                        formality_tier=tier,
                         message_preview=message[:50],
                     )
                     return SoftInvocationResult(
@@ -422,21 +492,79 @@ class WorkflowOfferService:
         transition = "\n\n"
         return f"{base_response.rstrip()}{transition}{offer.offer_message}"
 
-    def format_acceptance(self, workflow_type: str) -> str:
-        """Generate a natural workflow start message."""
-        starts = {
-            "meeting": "Great! Let me help set that up.",
-            "project_setup": "Let's get things organized.",
-            "status_check": "Let me pull that up for you.",
-            "standup": "Let's do a quick standup.",
-            "review": "I'll help coordinate that.",
-            "priority_check": "Let me take a look at what you've got going on.",
-            "reminder": "I'll keep track of that for you.",
-        }
-        return starts.get(workflow_type, "Let me help with that.")
+    def format_acceptance(
+        self, workflow_type: str, formality_baseline: Optional[float] = None
+    ) -> str:
+        """Generate a natural workflow start message.
 
-    def format_decline(self, offer: WorkflowOffer) -> str:
+        Args:
+            workflow_type: The workflow being accepted.
+            formality_baseline: Warmth level 0.0-1.0 (#838).
+                None defaults to "balanced" tier.
+        """
+        tier = formality_label(formality_baseline) if formality_baseline is not None else "balanced"
+
+        _starts: Dict[str, Dict[str, str]] = {
+            "meeting": {
+                "warm": "Great! Let me help set that up.",
+                "balanced": "Great! Let me help set that up.",
+                "professional": "Confirmed. I'll arrange the meeting.",
+            },
+            "project_setup": {
+                "warm": "Let's get things organized!",
+                "balanced": "Let's get things organized.",
+                "professional": "I'll draft the project structure.",
+            },
+            "status_check": {
+                "warm": "Let me pull that up for you!",
+                "balanced": "Let me pull that up for you.",
+                "professional": "Compiling status now.",
+            },
+            "standup": {
+                "warm": "Let's do a quick standup!",
+                "balanced": "Let's do a quick standup.",
+                "professional": "Initiating standup.",
+            },
+            "review": {
+                "warm": "I'll help coordinate that!",
+                "balanced": "I'll help coordinate that.",
+                "professional": "I'll arrange the review.",
+            },
+            "priority_check": {
+                "warm": "Let me take a look at what you've got going on!",
+                "balanced": "Let me take a look at what you've got going on.",
+                "professional": "Reviewing your current priorities.",
+            },
+            "reminder": {
+                "warm": "I'll keep track of that for you!",
+                "balanced": "I'll keep track of that for you.",
+                "professional": "Reminder set.",
+            },
+        }
+
+        tier_map = _starts.get(workflow_type)
+        if tier_map is None:
+            # Unknown workflow type — return a sensible default per tier
+            _defaults = {
+                "warm": "Let me help with that!",
+                "balanced": "Let me help with that.",
+                "professional": "I'll proceed.",
+            }
+            return _defaults.get(tier, _defaults["balanced"])
+
+        return tier_map.get(tier, tier_map["balanced"])
+
+    def format_decline(
+        self, offer: WorkflowOffer, formality_baseline: Optional[float] = None
+    ) -> str:
         """Generate a graceful decline acknowledgment.
+
+        The offer already carries a formality-appropriate decline_message
+        selected during detection. This method returns it directly.
+
+        The *formality_baseline* parameter is accepted for forward
+        compatibility but currently unused — the tier was already resolved
+        when the offer was created.
 
         NOTE: Not yet called in production — decline path in intent_service.py
         reads decline_message from the pending_offer dict directly. Reserved
