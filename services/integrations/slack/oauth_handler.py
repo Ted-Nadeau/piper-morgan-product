@@ -525,14 +525,11 @@ class SlackOAuthHandler:
             bot_token = token_data.get("access_token")
             user_token = token_data.get("authed_user", {}).get("access_token")
 
-            # Issue #734: Use user-scoped key names when user_id is provided
-            bot_key = f"slack_bot_{user_id}" if user_id else "slack_bot"
-            user_key = f"slack_user_{user_id}" if user_id else "slack_user"
-
+            # Issue #849: Use username param (not f-string) for consistent key naming with config service retrieval
             # Store bot token securely in keychain (Issue #575)
             if bot_token:
                 keychain = KeychainService()
-                keychain.store_api_key(bot_key, bot_token)
+                keychain.store_api_key("slack_bot", bot_token, username=user_id)
                 logger.info(
                     f"Bot token stored in keychain for workspace {workspace_id}, user_id={user_id}"
                 )
@@ -547,7 +544,9 @@ class SlackOAuthHandler:
             # Store user token if available (also in keychain)
             if user_token:
                 keychain = KeychainService()
-                keychain.store_api_key(user_key, user_token)
+                keychain.store_api_key(
+                    "slack_user", user_token, username=user_id
+                )  # Issue #849: username param for consistent key naming
                 logger.info(
                     f"User token stored in keychain for workspace {workspace_id}, user_id={user_id}"
                 )

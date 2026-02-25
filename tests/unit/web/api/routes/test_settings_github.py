@@ -110,6 +110,9 @@ class TestSaveGitHubToken:
             "error": "Bad credentials",
         }
 
+        mock_user = MagicMock()
+        mock_user.sub = "test-user-123"
+
         with (
             patch.dict("os.environ", {}, clear=True),
             patch(
@@ -124,7 +127,7 @@ class TestSaveGitHubToken:
             from fastapi import HTTPException
 
             with pytest.raises(HTTPException) as exc_info:
-                await save_github_token("ghp_invalid_token")
+                await save_github_token("ghp_invalid_token", current_user=mock_user)
 
             assert exc_info.value.status_code == 400
             assert "Bad credentials" in str(exc_info.value.detail)
@@ -142,6 +145,8 @@ class TestSaveGitHubToken:
         }
 
         mock_keychain = MagicMock()
+        mock_user = MagicMock()
+        mock_user.sub = "test-user-123"
 
         with (
             patch.dict("os.environ", {}, clear=True),
@@ -158,12 +163,15 @@ class TestSaveGitHubToken:
                 return_value=mock_keychain,
             ),
         ):
-            result = await save_github_token("ghp_valid_token")
+            result = await save_github_token("ghp_valid_token", current_user=mock_user)
 
             assert result["success"] is True
             assert result["username"] == "testuser"
             assert "testuser" in result["message"]
-            mock_keychain.store_api_key.assert_called_once_with("github_token", "ghp_valid_token")
+            # Issue #849: Verify user-scoped key storage
+            mock_keychain.store_api_key.assert_called_once_with(
+                "github_token", "ghp_valid_token", username="test-user-123"
+            )
 
 
 class TestDisconnectGitHub:
@@ -178,6 +186,9 @@ class TestDisconnectGitHub:
         mock_config_service = MagicMock()
         mock_config_service.clear_cache = MagicMock()
 
+        mock_user = MagicMock()
+        mock_user.sub = "test-user-123"
+
         with (
             patch.dict("os.environ", {"GITHUB_TOKEN": "ghp_test"}, clear=True),
             patch(
@@ -189,11 +200,14 @@ class TestDisconnectGitHub:
                 return_value=mock_config_service,
             ),
         ):
-            result = await disconnect_github()
+            result = await disconnect_github(current_user=mock_user)
 
             assert result["success"] is True
             assert result["message"] == "GitHub disconnected"
-            mock_keychain.delete_api_key.assert_called_once_with("github_token")
+            # Issue #849: Verify user-scoped key deletion
+            mock_keychain.delete_api_key.assert_called_once_with(
+                "github_token", username="test-user-123"
+            )
 
     @pytest.mark.asyncio
     async def test_handles_missing_token_gracefully(self):
@@ -203,6 +217,9 @@ class TestDisconnectGitHub:
 
         mock_config_service = MagicMock()
         mock_config_service.clear_cache = MagicMock()
+
+        mock_user = MagicMock()
+        mock_user.sub = "test-user-123"
 
         with (
             patch.dict("os.environ", {}, clear=True),
@@ -215,7 +232,7 @@ class TestDisconnectGitHub:
                 return_value=mock_config_service,
             ),
         ):
-            result = await disconnect_github()
+            result = await disconnect_github(current_user=mock_user)
 
             # Should still succeed - key not existing is fine
             assert result["success"] is True

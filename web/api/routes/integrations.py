@@ -10,9 +10,11 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 import structlog
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 
+from services.auth.auth_middleware import get_current_user
+from services.auth.jwt_service import JWTClaims
 from services.health.integration_health_monitor import ComponentStatus, IntegrationHealthMonitor
 
 logger = structlog.get_logger()
@@ -204,7 +206,9 @@ async def get_integrations_health():
 
 
 @router.post("/test/{integration_name}", response_model=ConnectionTestResponse)
-async def check_integration_connection(integration_name: str):
+async def check_integration_connection(
+    integration_name: str, current_user: JWTClaims = Depends(get_current_user)
+):
     """
     Test connection to a specific integration.
 
@@ -222,7 +226,7 @@ async def check_integration_connection(integration_name: str):
     health_monitor = _get_health_monitor()
 
     try:
-        result = await _test_integration(integration_name)
+        result = await _test_integration(integration_name, user_id=current_user.sub)
         latency_ms = (time.time() - start_time) * 1000
 
         if result["success"]:
@@ -266,7 +270,7 @@ async def check_integration_connection(integration_name: str):
 
 
 @router.post("/test-all", response_model=List[ConnectionTestResponse])
-async def check_all_connections():
+async def check_all_connections(current_user: JWTClaims = Depends(get_current_user)):
     """
     Test all configured integrations.
 
@@ -275,7 +279,7 @@ async def check_all_connections():
     results = []
     for integration_name in INTEGRATION_REGISTRY.keys():
         try:
-            result = await check_integration_connection(integration_name)
+            result = await check_integration_connection(integration_name, current_user=current_user)
             results.append(result)
         except Exception as e:
             results.append(
@@ -367,7 +371,7 @@ async def _check_integration_health(
         )
 
 
-async def _get_integration_config_status(integration_id: str) -> str:
+async def _get_integration_config_status(integration_id: str, user_id: Optional[str] = None) -> str:
     """Check if an integration is configured by checking environment variables"""
     import os
 
@@ -384,11 +388,13 @@ async def _get_integration_config_status(integration_id: str) -> str:
                 return "configured"
         elif integration_id == "calendar":
             # Calendar uses keychain token (Issue #529) or legacy MCP/credentials
+            # Issue #839: Use user-scoped key when user_id available
             try:
                 from services.infrastructure.keychain_service import KeychainService
 
                 keychain = KeychainService()
-                if keychain.get_api_key("google_calendar"):
+                key_name = f"google_calendar_{user_id}" if user_id else "google_calendar"
+                if keychain.get_api_key(key_name):
                     return "configured"
             except Exception:
                 pass
@@ -403,17 +409,17 @@ async def _get_integration_config_status(integration_id: str) -> str:
         return "unknown"
 
 
-async def _test_integration(integration_id: str) -> Dict[str, Any]:
+async def _test_integration(integration_id: str, user_id: Optional[str] = None) -> Dict[str, Any]:
     """Perform active connection test for an integration"""
     try:
         if integration_id == "notion":
             return await _test_notion()
         elif integration_id == "slack":
-            return await _test_slack()
+            return await _test_slack(user_id=user_id)
         elif integration_id == "github":
-            return await _test_github()
+            return await _test_github(user_id=user_id)
         elif integration_id == "calendar":
-            return await _test_calendar()
+            return await _test_calendar(user_id=user_id)
         else:
             return {"success": False, "error": f"Unknown integration: {integration_id}"}
 
@@ -461,7 +467,7 @@ async def _test_notion() -> Dict[str, Any]:
         return {"success": False, "error": str(e), "error_type": "connection_failed"}
 
 
-async def _test_slack() -> Dict[str, Any]:
+async def _test_slack(user_id: Optional[str] = None) -> Dict[str, Any]:
     """Test Slack API connection using stored OAuth token (Issue #562)"""
     try:
         import aiohttp
@@ -469,7 +475,11 @@ async def _test_slack() -> Dict[str, Any]:
         from services.infrastructure.keychain_service import KeychainService
 
         keychain = KeychainService()
-        token = keychain.get_api_key("slack")
+        token = (
+            keychain.get_api_key("slack_bot", username=user_id)
+            if user_id
+            else keychain.get_api_key("slack_bot")
+        )  # Issue #849: Correct key name + user-scoped
 
         if not token:
             return {
@@ -499,7 +509,7 @@ async def _test_slack() -> Dict[str, Any]:
         return {"success": False, "error": str(e), "error_type": "connection_failed"}
 
 
-async def _test_github() -> Dict[str, Any]:
+async def _test_github(user_id: Optional[str] = None) -> Dict[str, Any]:
     """Test GitHub API connection using stored PAT (Issue #562)"""
     try:
         import aiohttp
@@ -507,7 +517,11 @@ async def _test_github() -> Dict[str, Any]:
         from services.infrastructure.keychain_service import KeychainService
 
         keychain = KeychainService()
-        token = keychain.get_api_key("github")
+        token = (
+            keychain.get_api_key("github_token", username=user_id)
+            if user_id
+            else keychain.get_api_key("github_token")
+        )  # Issue #849: Correct key name + user-scoped
 
         if not token:
             return {
@@ -539,14 +553,16 @@ async def _test_github() -> Dict[str, Any]:
         return {"success": False, "error": str(e), "error_type": "connection_failed"}
 
 
-async def _test_calendar() -> Dict[str, Any]:
+async def _test_calendar(user_id: Optional[str] = None) -> Dict[str, Any]:
     """Test Google Calendar OAuth connection (Issue #539)"""
     try:
         from services.infrastructure.keychain_service import KeychainService
         from services.integrations.calendar.oauth_handler import GoogleCalendarOAuthHandler
 
         keychain = KeychainService()
-        refresh_token = keychain.get_api_key("google_calendar")
+        # Issue #839: Use user-scoped key when user_id available
+        key_name = f"google_calendar_{user_id}" if user_id else "google_calendar"
+        refresh_token = keychain.get_api_key(key_name)
 
         if not refresh_token:
             return {

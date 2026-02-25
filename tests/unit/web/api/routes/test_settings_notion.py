@@ -24,6 +24,7 @@ class MockJWTClaims:
 
     user_id: UUID
     user_email: str = "test@example.com"
+    sub: str = "test-user-123"
 
 
 class TestGetNotionSettings:
@@ -35,23 +36,30 @@ class TestGetNotionSettings:
         mock_keychain = MagicMock()
         mock_keychain.get_api_key.return_value = None
 
+        mock_user = MagicMock()
+        mock_user.sub = "test-user-123"
+
         with patch(
             "services.infrastructure.keychain_service.KeychainService",
             return_value=mock_keychain,
         ):
-            result = await get_notion_settings()
+            result = await get_notion_settings(current_user=mock_user)
 
             assert result["configured"] is False
             assert result["valid"] is False
             assert result["workspace"] is None
             assert result["error"] is None
-            mock_keychain.get_api_key.assert_called_once_with("notion")
+            # Issue #849: Verify user-scoped key retrieval
+            mock_keychain.get_api_key.assert_called_once_with("notion", username="test-user-123")
 
     @pytest.mark.asyncio
     async def test_returns_configured_and_valid_when_key_valid(self):
         """Should return configured=True, valid=True when API key validates"""
         mock_keychain = MagicMock()
         mock_keychain.get_api_key.return_value = "secret_test_key"
+
+        mock_user = MagicMock()
+        mock_user.sub = "test-user-123"
 
         with (
             patch(
@@ -64,7 +72,7 @@ class TestGetNotionSettings:
                 return_value=(True, "Test Workspace", None),
             ) as mock_validate,
         ):
-            result = await get_notion_settings()
+            result = await get_notion_settings(current_user=mock_user)
 
             assert result["configured"] is True
             assert result["valid"] is True
@@ -78,6 +86,9 @@ class TestGetNotionSettings:
         mock_keychain = MagicMock()
         mock_keychain.get_api_key.return_value = "secret_expired_key"
 
+        mock_user = MagicMock()
+        mock_user.sub = "test-user-123"
+
         with (
             patch(
                 "services.infrastructure.keychain_service.KeychainService",
@@ -89,7 +100,7 @@ class TestGetNotionSettings:
                 return_value=(False, None, "API key is invalid"),
             ),
         ):
-            result = await get_notion_settings()
+            result = await get_notion_settings(current_user=mock_user)
 
             assert result["configured"] is True
             assert result["valid"] is False
@@ -162,15 +173,19 @@ class TestDisconnectNotion:
         mock_keychain = MagicMock()
         mock_keychain.delete_api_key.return_value = None
 
+        mock_user = MagicMock()
+        mock_user.sub = "test-user-123"
+
         with patch(
             "services.infrastructure.keychain_service.KeychainService",
             return_value=mock_keychain,
         ):
-            result = await disconnect_notion()
+            result = await disconnect_notion(current_user=mock_user)
 
             assert result["success"] is True
             assert result["message"] == "Notion disconnected"
-            mock_keychain.delete_api_key.assert_called_once_with("notion")
+            # Issue #849: Verify user-scoped key deletion
+            mock_keychain.delete_api_key.assert_called_once_with("notion", username="test-user-123")
 
     @pytest.mark.asyncio
     async def test_handles_missing_key_gracefully(self):
@@ -178,11 +193,14 @@ class TestDisconnectNotion:
         mock_keychain = MagicMock()
         mock_keychain.delete_api_key.side_effect = KeyError("notion")
 
+        mock_user = MagicMock()
+        mock_user.sub = "test-user-123"
+
         with patch(
             "services.infrastructure.keychain_service.KeychainService",
             return_value=mock_keychain,
         ):
-            result = await disconnect_notion()
+            result = await disconnect_notion(current_user=mock_user)
 
             # Should still succeed - key not existing is fine
             assert result["success"] is True

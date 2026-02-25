@@ -858,6 +858,28 @@ class IntentService:
                         original_length=len(canonical_result["message"]),
                     )
 
+                # Issue #846: Register embedded offers as pending offers
+                # When canonical handlers return responses with "Would you like..." questions,
+                # register them so user's "yes"/"no" response gets matched correctly.
+                if canonical_result.get("action_required"):
+                    _action_to_workflow = {
+                        "configure_priorities": "priority_check",
+                        "configure_projects": "project_setup",
+                        "setup_piper_config": "setup",
+                    }
+                    _wf_type = _action_to_workflow.get(
+                        canonical_result["action_required"],
+                        canonical_result["action_required"],
+                    )
+                    self.workflow_offer_service.set_pending_offer(
+                        session_id,
+                        {
+                            "workflow_type": _wf_type,
+                            "action_required": canonical_result["action_required"],
+                        },
+                        user_id=user_id,
+                    )
+
                 canonical_response = IntentProcessingResult(
                     success=True,
                     message=response_message,
@@ -1489,6 +1511,10 @@ class IntentService:
         elif intent.action in ["comment_issue", "add_comment", "comment_issue_query"]:
             return await self._handle_comment_issue_query(intent, workflow.id)
 
+        # Issue #845: Issue listing / count queries
+        elif intent.action in ["list_issues", "list_issues_query"]:
+            return await self._handle_list_issues_query(intent, workflow.id)
+
         # Issue #518: Calendar queries (Canonical Queries #34, #35, #61)
         # Issue #586: Pass user_id for timezone-aware queries
         elif intent.action in ["meeting_time", "how_much_time_in_meetings", "calendar_analysis"]:
@@ -1519,7 +1545,10 @@ class IntentService:
             "what_needs_attention",
             "attention_items",
         ]:
-            return await self._handle_attention_query(intent, workflow.id, session_id)
+            # Issue #849: Thread user_id for user-scoped calendar auth
+            return await self._handle_attention_query(
+                intent, workflow.id, session_id, user_id=user_id
+            )
 
         # Handle specific query actions that were broken in August 22 refactor
         elif intent.action in ["show_standup", "get_standup"]:
@@ -2881,6 +2910,71 @@ class IntentService:
                 error_type="GitHubCommentIssueQueryError",
             )
 
+    async def _handle_list_issues_query(
+        self, intent: Intent, workflow_id: str
+    ) -> IntentProcessingResult:
+        """
+        Handle "How many open issues?" and similar issue listing queries.
+
+        Issue #845: Routes issue queries to GitHub issue data instead of
+        falling through to project status.
+        """
+        self.logger.info("Processing list issues query")
+
+        try:
+            from services.integrations.github.github_service import GitHubService
+
+            github_service = GitHubService()
+            issues = await github_service.list_issues(
+                repository="piper-morgan", state="open", limit=50
+            )
+
+            if issues:
+                issue_count = len(issues)
+                # Build a summary message
+                message = f"You have **{issue_count} open issue{'s' if issue_count != 1 else ''}**."
+
+                # Show top issues (up to 5)
+                if issue_count > 0:
+                    message += "\n\nHere are the most recent:"
+                    for issue in issues[:5]:
+                        title = issue.get("title", "Untitled")
+                        number = issue.get("number", "?")
+                        labels = ", ".join(
+                            label.get("name", "") for label in issue.get("labels", [])
+                        )
+                        label_str = f" ({labels})" if labels else ""
+                        message += f"\n- **#{number}**: {title}{label_str}"
+
+                    if issue_count > 5:
+                        message += f"\n\n...and {issue_count - 5} more."
+            else:
+                message = "You don't have any open issues right now."
+
+            return IntentProcessingResult(
+                success=True,
+                message=message,
+                intent_data={
+                    "category": "query",
+                    "action": "list_issues_query",
+                    "context": {
+                        "issue_count": len(issues) if issues else 0,
+                    },
+                },
+            )
+
+        except Exception as e:
+            self.logger.error(f"Failed to list issues: {e}")
+            return IntentProcessingResult(
+                success=True,
+                message="I wasn't able to fetch your issues right now. Please try again in a moment.",
+                intent_data={
+                    "category": "query",
+                    "action": "list_issues_query",
+                    "context": {"error": str(e)},
+                },
+            )
+
     async def _handle_meeting_time_query(
         self, intent: Intent, workflow_id: str, user_id: Optional[str] = None
     ) -> IntentProcessingResult:
@@ -3608,7 +3702,7 @@ class IntentService:
             )
 
     async def _handle_attention_query(
-        self, intent: Intent, workflow_id: str, session_id: str
+        self, intent: Intent, workflow_id: str, session_id: str, user_id: Optional[str] = None
     ) -> IntentProcessingResult:
         """
         Handle "What needs my attention?" query.
@@ -3730,7 +3824,8 @@ class IntentService:
                     CalendarIntegrationRouter,
                 )
 
-                calendar_router = CalendarIntegrationRouter()
+                # Issue #849: Thread user_id for user-scoped calendar auth
+                calendar_router = CalendarIntegrationRouter(user_id=user_id)
                 is_configured = await calendar_router.authenticate()
 
                 if is_configured:

@@ -153,6 +153,9 @@ class TestDisconnectSlack:
         mock_oauth_handler = MagicMock()
         mock_oauth_handler.revoke_workspace_access = AsyncMock(return_value=True)
 
+        mock_user = MagicMock()
+        mock_user.sub = "test-user-123"
+
         with (
             patch.dict(
                 "os.environ",
@@ -165,7 +168,7 @@ class TestDisconnectSlack:
                 return_value=mock_oauth_handler,
             ),
         ):
-            result = await disconnect_slack()
+            result = await disconnect_slack(current_user=mock_user)
 
             assert result["success"] is True
             assert result["message"] == "Slack disconnected"
@@ -176,6 +179,9 @@ class TestDisconnectSlack:
         """Should still succeed even if API revoke fails (clears local config)"""
         mock_oauth_handler = MagicMock()
         mock_oauth_handler.revoke_workspace_access = AsyncMock(side_effect=Exception("API error"))
+
+        mock_user = MagicMock()
+        mock_user.sub = "test-user-123"
 
         with (
             patch.dict(
@@ -190,7 +196,7 @@ class TestDisconnectSlack:
             ),
         ):
             # Should not raise, just log warning
-            result = await disconnect_slack()
+            result = await disconnect_slack(current_user=mock_user)
 
             assert result["success"] is True
             assert result["message"] == "Slack disconnected"

@@ -116,7 +116,10 @@ class TestAttentionQueryRouting:
                 intent, mock_workflow, "test-session"
             )
 
-            mock_handler.assert_called_once_with(intent, mock_workflow.id, "test-session")
+            # Issue #849: user_id is now threaded through to _handle_attention_query
+            mock_handler.assert_called_once_with(
+                intent, mock_workflow.id, "test-session", user_id=None
+            )
 
     @pytest.mark.asyncio
     async def test_routes_needs_attention_action(self, intent_service, mock_workflow):
@@ -577,7 +580,10 @@ class TestPreClassifierRoutingIntegration:
             )
 
             # Verify handler was called
-            mock_handler.assert_called_once_with(pre_intent, mock_workflow.id, "test-session")
+            # Issue #849: user_id is now threaded through to _handle_attention_query
+            mock_handler.assert_called_once_with(
+                pre_intent, mock_workflow.id, "test-session", user_id=None
+            )
             assert result.success is True
 
     @pytest.mark.asyncio

@@ -138,8 +138,11 @@ class TestSingleIntegrationTest:
         """Testing unknown integration should raise 404"""
         from fastapi import HTTPException
 
+        mock_user = MagicMock()
+        mock_user.sub = "test-user-123"
+
         with pytest.raises(HTTPException) as exc_info:
-            await check_integration_connection("unknown_integration")
+            await check_integration_connection("unknown_integration", current_user=mock_user)
 
         assert exc_info.value.status_code == 404
         assert "Unknown integration" in str(exc_info.value.detail)
@@ -147,10 +150,13 @@ class TestSingleIntegrationTest:
     @pytest.mark.asyncio
     async def test_successful_connection_returns_success(self):
         """Successful connection test should return success=True with latency"""
+        mock_user = MagicMock()
+        mock_user.sub = "test-user-123"
+
         with patch("web.api.routes.integrations._test_notion", new_callable=AsyncMock) as mock_test:
             mock_test.return_value = {"success": True}
 
-            response = await check_integration_connection("notion")
+            response = await check_integration_connection("notion", current_user=mock_user)
 
             assert response.success is True
             assert response.integration == "notion"
@@ -160,6 +166,9 @@ class TestSingleIntegrationTest:
     @pytest.mark.asyncio
     async def test_failed_connection_returns_error_guidance(self):
         """Failed connection should return error message and fix suggestion"""
+        mock_user = MagicMock()
+        mock_user.sub = "test-user-123"
+
         with patch("web.api.routes.integrations._test_notion", new_callable=AsyncMock) as mock_test:
             mock_test.return_value = {
                 "success": False,
@@ -167,7 +176,7 @@ class TestSingleIntegrationTest:
                 "error": "Invalid token",
             }
 
-            response = await check_integration_connection("notion")
+            response = await check_integration_connection("notion", current_user=mock_user)
 
             assert response.success is False
             assert response.integration == "notion"
@@ -177,10 +186,13 @@ class TestSingleIntegrationTest:
     @pytest.mark.asyncio
     async def test_connection_exception_handled_gracefully(self):
         """Exceptions during test should be caught and return proper response"""
+        mock_user = MagicMock()
+        mock_user.sub = "test-user-123"
+
         with patch("web.api.routes.integrations._test_notion", new_callable=AsyncMock) as mock_test:
             mock_test.side_effect = Exception("Network error")
 
-            response = await check_integration_connection("notion")
+            response = await check_integration_connection("notion", current_user=mock_user)
 
             assert response.success is False
             assert "Network error" in response.message or "Network error" in str(response.error)
@@ -192,12 +204,15 @@ class TestAllConnectionsEndpoint:
     @pytest.mark.asyncio
     async def test_test_all_returns_results_for_all_integrations(self):
         """Test all should return results for each integration"""
+        mock_user = MagicMock()
+        mock_user.sub = "test-user-123"
+
         with patch(
             "web.api.routes.integrations._test_integration", new_callable=AsyncMock
         ) as mock_test:
             mock_test.return_value = {"success": True}
 
-            results = await check_all_connections()
+            results = await check_all_connections(current_user=mock_user)
 
             assert len(results) == 4
             integration_names = {r.integration for r in results}
@@ -206,9 +221,12 @@ class TestAllConnectionsEndpoint:
     @pytest.mark.asyncio
     async def test_test_all_continues_after_individual_failure(self):
         """Test all should continue testing even if one fails"""
+        mock_user = MagicMock()
+        mock_user.sub = "test-user-123"
+
         call_count = 0
 
-        async def mock_test_with_failure(name):
+        async def mock_test_with_failure(name, user_id=None):
             nonlocal call_count
             call_count += 1
             if name == "notion":
@@ -218,7 +236,7 @@ class TestAllConnectionsEndpoint:
         with patch(
             "web.api.routes.integrations._test_integration", side_effect=mock_test_with_failure
         ):
-            results = await check_all_connections()
+            results = await check_all_connections(current_user=mock_user)
 
             # Should have tested all 4 integrations
             assert len(results) == 4

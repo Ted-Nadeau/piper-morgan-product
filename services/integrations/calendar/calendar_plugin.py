@@ -26,6 +26,9 @@ class CalendarPlugin(PiperPlugin):
     def __init__(self):
         """Initialize Calendar plugin with config service"""
         self.config_service = CalendarConfigService()
+        # Issue #849: CalendarPlugin is a singleton initialized without user context.
+        # This router is used for feature flags and status only, not authenticated data access.
+        # User-scoped calendar operations use ad-hoc CalendarIntegrationRouter(user_id=...) instances.
         self.integration_router = CalendarIntegrationRouter(self.config_service)
         self._api_router: Optional[APIRouter] = None
 

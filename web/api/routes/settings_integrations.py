@@ -423,7 +423,7 @@ async def handle_slack_callback(
 
 
 @router.post("/slack/disconnect")
-async def disconnect_slack():
+async def disconnect_slack(current_user: JWTClaims = Depends(get_current_user)):
     """
     Disconnect Slack integration.
 
@@ -437,7 +437,12 @@ async def disconnect_slack():
 
         # Try to remove from keychain
         try:
-            keychain.delete_api_key("slack_bot_token")
+            keychain.delete_api_key(
+                "slack_bot", username=current_user.sub
+            )  # Issue #849: User-scoped key for multi-tenancy isolation
+            keychain.delete_api_key(
+                "slack_user", username=current_user.sub
+            )  # Issue #849: Also remove user token on disconnect
         except Exception:
             pass
 
@@ -786,19 +791,24 @@ async def get_calendar_app_credentials_status(
 
 
 @router.get("/calendar")
-async def get_calendar_settings():
+async def get_calendar_settings(
+    current_user: JWTClaims = Depends(get_current_user),
+):
     """
     Get Google Calendar integration status.
 
     Returns whether Calendar is configured and validates connection if token present.
     Issue #537: ALPHA-SETUP-MANAGE - Integration Management Post-Setup
+    Issue #839: Use user-scoped keychain key
     """
     try:
         from services.infrastructure.keychain_service import KeychainService
         from services.integrations.calendar.oauth_handler import GoogleCalendarOAuthHandler
 
         keychain = KeychainService()
-        refresh_token = keychain.get_api_key("google_calendar")
+        # Issue #839: Use user-scoped key to prevent cross-user leakage
+        key_name = f"google_calendar_{current_user.sub}"
+        refresh_token = keychain.get_api_key(key_name)
 
         if refresh_token:
             # Validate the token by attempting to refresh it
@@ -981,25 +991,28 @@ async def handle_calendar_callback(
 
 
 @router.post("/calendar/disconnect")
-async def disconnect_calendar():
+async def disconnect_calendar(
+    current_user: JWTClaims = Depends(get_current_user),
+):
     """
     Disconnect Google Calendar integration.
 
     Removes stored refresh token from keychain.
     Note: Does not revoke tokens on Google's side.
+    Issue #839: Use user-scoped keychain key
     """
     try:
         from services.infrastructure.keychain_service import KeychainService
 
         keychain = KeychainService()
 
-        # Remove refresh token from keychain
+        # Remove refresh token from keychain (user-scoped key)
         try:
-            keychain.delete_api_key("google_calendar")
+            keychain.delete_api_key(f"google_calendar_{current_user.sub}")
         except Exception:
             pass
 
-        logger.info("calendar_disconnected")
+        logger.info("calendar_disconnected", user_id=current_user.sub)
 
         return {
             "success": True,
@@ -1035,7 +1048,9 @@ async def get_calendar_list(current_user: JWTClaims = Depends(get_current_user))
 
     try:
         keychain = KeychainService()
-        refresh_token = keychain.get_api_key("google_calendar")
+        # Issue #839: Use user-scoped key
+        key_name = f"google_calendar_{current_user.sub}"
+        refresh_token = keychain.get_api_key(key_name)
 
         if not refresh_token:
             raise HTTPException(
@@ -1186,11 +1201,14 @@ async def save_calendar_preferences(
 
 
 @router.get("/status")
-async def get_all_oauth_status():
+async def get_all_oauth_status(
+    current_user: JWTClaims = Depends(get_current_user),
+):
     """
     Get connection status for all OAuth-based integrations.
 
     Returns connection status for Slack and Calendar.
+    Issue #839: Use user-scoped keychain key for calendar
     """
     from services.infrastructure.keychain_service import KeychainService
 
@@ -1213,9 +1231,10 @@ async def get_all_oauth_status():
         except Exception:
             pass
 
-        # Check Calendar
+        # Check Calendar (Issue #839: user-scoped key)
         try:
-            refresh_token = keychain.get_api_key("google_calendar")
+            key_name = f"google_calendar_{current_user.sub}"
+            refresh_token = keychain.get_api_key(key_name)
             if refresh_token:
                 status_result["calendar"]["connected"] = True
         except Exception:
@@ -1233,7 +1252,7 @@ async def get_all_oauth_status():
 
 
 @router.get("/notion")
-async def get_notion_settings():
+async def get_notion_settings(current_user: JWTClaims = Depends(get_current_user)):
     """
     Get Notion integration status.
 
@@ -1244,7 +1263,9 @@ async def get_notion_settings():
 
     try:
         keychain = KeychainService()
-        api_key = keychain.get_api_key("notion")
+        api_key = keychain.get_api_key(
+            "notion", username=current_user.sub
+        )  # Issue #849: User-scoped key for multi-tenancy isolation
 
         if api_key:
             # Validate the key and get workspace info
@@ -1334,7 +1355,7 @@ async def save_notion_key(
 
 
 @router.post("/notion/disconnect")
-async def disconnect_notion():
+async def disconnect_notion(current_user: JWTClaims = Depends(get_current_user)):
     """
     Disconnect Notion integration.
 
@@ -1348,7 +1369,9 @@ async def disconnect_notion():
 
         # Remove from keychain
         try:
-            keychain.delete_api_key("notion")
+            keychain.delete_api_key(
+                "notion", username=current_user.sub
+            )  # Issue #849: User-scoped key for multi-tenancy isolation
         except Exception:
             pass  # Key might not exist
 
@@ -1589,7 +1612,7 @@ async def get_github_settings():
 
 
 @router.post("/github/save")
-async def save_github_token(token: str):
+async def save_github_token(token: str, current_user: JWTClaims = Depends(get_current_user)):
     """
     Save or update GitHub personal access token.
 
@@ -1633,7 +1656,9 @@ async def save_github_token(token: str):
 
         # Token is valid - store in keychain for persistence
         keychain = KeychainService()
-        keychain.store_api_key("github_token", token)
+        keychain.store_api_key(
+            "github_token", token, username=current_user.sub
+        )  # Issue #849: User-scoped key for multi-tenancy isolation
 
         username = test_result.get("username", "GitHub User")
         logger.info("github_token_saved", username=username)
@@ -1655,7 +1680,7 @@ async def save_github_token(token: str):
 
 
 @router.post("/github/disconnect")
-async def disconnect_github():
+async def disconnect_github(current_user: JWTClaims = Depends(get_current_user)):
     """
     Disconnect GitHub integration.
 
@@ -1669,7 +1694,9 @@ async def disconnect_github():
 
         # Remove from keychain
         try:
-            keychain.delete_api_key("github_token")
+            keychain.delete_api_key(
+                "github_token", username=current_user.sub
+            )  # Issue #849: User-scoped key for multi-tenancy isolation
         except Exception:
             pass  # Key might not exist
 
@@ -1719,7 +1746,9 @@ async def get_github_repositories(current_user: JWTClaims = Depends(get_current_
 
     try:
         keychain = KeychainService()
-        token = keychain.get_api_key("github_token")
+        token = keychain.get_api_key(
+            "github_token", username=current_user.sub
+        )  # Issue #849: User-scoped key for multi-tenancy isolation
 
         # Also check environment variables as fallback
         if not token:
@@ -1955,7 +1984,7 @@ async def get_slack_oauth_url(
 
 
 @router.post("/slack/disconnect")
-async def disconnect_slack():
+async def disconnect_slack(current_user: JWTClaims = Depends(get_current_user)):
     """
     Disconnect Slack integration.
 

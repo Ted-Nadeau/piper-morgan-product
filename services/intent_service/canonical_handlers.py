@@ -159,7 +159,8 @@ class CanonicalHandlers:
                 return await self._handle_portfolio_query(intent, session_id, user_id)
             elif intent.category == IntentCategoryEnum.CONVERSATION:
                 # Issue #286: Handle CONVERSATION in canonical section
-                return await self._handle_conversation_query(intent, session_id)
+                # Issue #849: Thread user_id for user-scoped calendar auth
+                return await self._handle_conversation_query(intent, session_id, user_id=user_id)
             else:
                 # Fallback to conversation
                 return {
@@ -810,7 +811,8 @@ General AI assistants are great for general tasks. I'm specifically designed to 
         """
         # Issue #499: Check if this is an agenda request first
         if self._detect_agenda_request(intent):
-            return await self._handle_agenda_query(intent, session_id)
+            # Issue #849: Thread user_id for user-scoped calendar auth
+            return await self._handle_agenda_query(intent, session_id, user_id=user_id)
 
         # Issue #501: Check if this is a retrospective request
         if self._detect_retrospective_request(intent):
@@ -860,7 +862,8 @@ General AI assistants are great for general tasks. I'm specifically designed to 
             )
 
             # Issue #596: Pass user_id for timezone-aware calendar queries
-            calendar_adapter = CalendarIntegrationRouter()
+            # Issue #843: Pass user_id for user-scoped calendar authentication
+            calendar_adapter = CalendarIntegrationRouter(user_id=user_id)
             temporal_summary = await calendar_adapter.get_temporal_summary(user_id=user_id)
 
             # Issue #597: Check explicit success state before interpreting calendar data
@@ -1883,7 +1886,7 @@ General AI assistants are great for general tasks. I'm specifically designed to 
         else:
             return "Flexible time - consider strategic planning or methodology refinement."
 
-    async def _get_calendar_context(self) -> Optional[Dict]:
+    async def _get_calendar_context(self, user_id: Optional[str] = None) -> Optional[Dict]:
         """
         Issue #495: Get calendar context for meeting-aware guidance.
 
@@ -1903,7 +1906,8 @@ General AI assistants are great for general tasks. I'm specifically designed to 
                 CalendarIntegrationRouter,
             )
 
-            calendar_router = CalendarIntegrationRouter()
+            # Issue #849: Thread user_id for user-scoped calendar auth
+            calendar_router = CalendarIntegrationRouter(user_id=user_id)
 
             # Get next meeting
             next_meeting = await calendar_router.get_next_meeting()
@@ -2899,7 +2903,9 @@ What would you like to set up first?"""
 
         return message
 
-    async def _handle_agenda_query(self, intent: Intent, session_id: str) -> Dict:
+    async def _handle_agenda_query(
+        self, intent: Intent, session_id: str, user_id: Optional[str] = None
+    ) -> Dict:
         """
         Issue #499: Handle "What's on the agenda today?" queries.
 
@@ -2919,7 +2925,8 @@ What would you like to set up first?"""
         timezone_short = TIMEZONE_ABBREVIATIONS.get(timezone, "UTC")
 
         # 1. Get calendar context (reuse existing helper)
-        calendar_context = await self._get_calendar_context()
+        # Issue #849: Thread user_id for user-scoped calendar auth
+        calendar_context = await self._get_calendar_context(user_id=user_id)
 
         # 2. Get todos
         todos = await self._get_todays_todos(session_id)
@@ -4123,7 +4130,8 @@ What would you like to set up first?"""
             logger.warning(f"Using generic guidance, user context unavailable: {e}")
 
         # Issue #495: Try to get calendar context for meeting-aware guidance
-        calendar_context = await self._get_calendar_context()
+        # Issue #849: Thread user_id for user-scoped calendar auth
+        calendar_context = await self._get_calendar_context(user_id=user_id)
 
         # Issue #497: Gather project and priority metadata for rich context
         projects = user_context.projects if user_context else []
@@ -4889,7 +4897,9 @@ What would you like to set up first?"""
                 "requires_clarification": False,
             }
 
-    async def _handle_conversation_query(self, intent: Intent, session_id: str) -> Dict:
+    async def _handle_conversation_query(
+        self, intent: Intent, session_id: str, user_id: Optional[str] = None
+    ) -> Dict:
         """
         Handle CONVERSATION category intents (Tier 1 bypass).
 
@@ -4902,7 +4912,8 @@ What would you like to set up first?"""
         conversation_handler = ConversationHandler(session_manager=None)
 
         # Get conversation response
-        result = await conversation_handler.respond(intent, session_id)
+        # Issue #849: Thread user_id for user-scoped calendar auth
+        result = await conversation_handler.respond(intent, session_id, user_id=user_id)
 
         # Return in canonical format (Dict)
         return {

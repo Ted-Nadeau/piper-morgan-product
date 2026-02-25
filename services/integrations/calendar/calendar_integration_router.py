@@ -50,10 +50,11 @@ class CalendarIntegrationRouter:
         Initialize router with feature flag checking and config service.
 
         Issue #586: Added user_id parameter for timezone-aware calendar queries.
+        Issue #843: Passes user_id to adapter for user-scoped authentication.
 
         Args:
             config_service: Optional CalendarConfigService instance
-            user_id: Optional user ID for timezone-aware queries
+            user_id: Optional user ID for timezone-aware queries and user-scoped auth
         """
         # Use FeatureFlags service for consistency with GitHub router
         self.use_spatial = FeatureFlags.should_use_spatial_calendar()
@@ -71,8 +72,10 @@ class CalendarIntegrationRouter:
             try:
                 from services.mcp.consumer.google_calendar_adapter import GoogleCalendarMCPAdapter
 
-                # Pass config service to adapter
-                self.spatial_calendar = GoogleCalendarMCPAdapter(self.config_service)
+                # Issue #843: Pass user_id to adapter for user-scoped keychain auth
+                self.spatial_calendar = GoogleCalendarMCPAdapter(
+                    self.config_service, user_id=user_id
+                )
             except ImportError as e:
                 warnings.warn(f"Spatial calendar unavailable: {e}")
 
@@ -471,11 +474,15 @@ class CalendarIntegrationRouter:
 
 
 # Convenience factory function
-def create_calendar_integration() -> CalendarIntegrationRouter:
+def create_calendar_integration(user_id: Optional[str] = None) -> CalendarIntegrationRouter:
     """
     Factory function to create CalendarIntegrationRouter instance.
+
+    Args:
+        user_id: Optional user ID for user-scoped keychain authentication
 
     Returns:
         CalendarIntegrationRouter: Configured router instance
     """
-    return CalendarIntegrationRouter()
+    # Issue #849: Accept user_id for user-scoped calendar auth
+    return CalendarIntegrationRouter(user_id=user_id)

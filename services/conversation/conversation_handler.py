@@ -87,7 +87,9 @@ class ConversationHandler:
         self.clarifying_generator = ConversationAwareClarifyingGenerator()
         self.session_manager = session_manager
 
-    async def respond(self, intent: Intent, session_id: str = None) -> Dict[str, Any]:
+    async def respond(
+        self, intent: Intent, session_id: str = None, user_id: Optional[str] = None
+    ) -> Dict[str, Any]:
         """Generate appropriate conversational response"""
         import random
 
@@ -104,7 +106,8 @@ class ConversationHandler:
 
         # Issue #102: Enhanced greeting with calendar awareness
         if intent.action == "greeting":
-            return await self._respond_to_greeting(intent, session_id)
+            # Issue #849: Thread user_id for user-scoped calendar auth
+            return await self._respond_to_greeting(intent, session_id, user_id=user_id)
 
         # Issue #407: Handle other conversational actions with consciousness
         if intent.action == "farewell":
@@ -121,21 +124,26 @@ class ConversationHandler:
             "workflow_id": None,
         }
 
-    async def _get_calendar_summary(self) -> Optional[Dict[str, Any]]:
+    async def _get_calendar_summary(
+        self, user_id: Optional[str] = None
+    ) -> Optional[Dict[str, Any]]:
         """Issue #102: Get calendar summary for greeting enhancement."""
         try:
             from services.integrations.calendar.calendar_integration_router import (
                 CalendarIntegrationRouter,
             )
 
-            calendar_router = CalendarIntegrationRouter()
+            # Issue #849: Thread user_id for user-scoped calendar auth
+            calendar_router = CalendarIntegrationRouter(user_id=user_id)
             summary = await calendar_router.get_temporal_summary()
             return summary
         except Exception as e:
             logger.warning(f"Could not fetch calendar for greeting: {e}")
             return None
 
-    async def _respond_to_greeting(self, intent: Intent, session_id: str = None) -> Dict[str, Any]:
+    async def _respond_to_greeting(
+        self, intent: Intent, session_id: str = None, user_id: Optional[str] = None
+    ) -> Dict[str, Any]:
         """
         Issue #102: Generate calendar-aware greeting response.
         Issue #490: Check for portfolio onboarding trigger.
@@ -160,7 +168,8 @@ class ConversationHandler:
                 return onboarding_response
 
         # Get calendar summary (may be None if unavailable)
-        calendar_summary = await self._get_calendar_summary()
+        # Issue #849: Thread user_id for user-scoped calendar auth
+        calendar_summary = await self._get_calendar_summary(user_id=user_id)
 
         # Issue #407: Use consciousness-enhanced greeting
         response = format_greeting_conscious(calendar_summary=calendar_summary)
