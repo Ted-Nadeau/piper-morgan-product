@@ -372,6 +372,14 @@ class PreClassifier:
         r"\bshow.*issue\s*#?\d+\b",
         r"\bissue\s*#?\d+\s*details\b",
         r"\bget issue\s*#?\d+\b",
+        # Issue #845: Issue listing / count queries
+        r"\bhow many.*issues\b",
+        r"\bopen issues\b",
+        r"\bmy issues\b",
+        r"\blist.*issues\b",
+        r"\bshow.*issues\b",
+        r"\bissue count\b",
+        r"\bissues.*assigned\b",
     ]
 
     # Productivity query - Query #51
@@ -860,6 +868,20 @@ class PreClassifier:
                 ]
             ):
                 action = "comment_issue_query"
+            # Issue #845: Issue listing / count queries
+            elif any(
+                re.search(pattern, clean_for_matching)
+                for pattern in [
+                    r"\bhow many.*issues\b",
+                    r"\bopen issues\b",
+                    r"\bmy issues\b",
+                    r"\blist.*issues\b",
+                    r"\bshow.*issues\b",
+                    r"\bissue count\b",
+                    r"\bissues.*assigned\b",
+                ]
+            ):
+                action = "list_issues_query"
             else:
                 # Review issue query - Query #60
                 action = "review_issue_query"
@@ -1213,6 +1235,19 @@ class PreClassifier:
         ]
         if PreClassifier._matches_patterns(message, comment_patterns):
             return "comment_issue_query"
+
+        # Issue #845: Issue listing / count queries
+        list_issues_patterns = [
+            r"\bhow many.*issues\b",
+            r"\bopen issues\b",
+            r"\bmy issues\b",
+            r"\blist.*issues\b",
+            r"\bshow.*issues\b",
+            r"\bissue count\b",
+            r"\bissues.*assigned\b",
+        ]
+        if PreClassifier._matches_patterns(message, list_issues_patterns):
+            return "list_issues_query"
 
         return "review_issue_query"
 

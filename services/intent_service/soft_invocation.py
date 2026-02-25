@@ -96,6 +96,8 @@ def _compile_patterns() -> List[Tuple[List[re.Pattern], str, Dict[str, str], Dic
                 r"\b(?:i need to|we need to|should|let'?s)\b.*\b(?:schedule|set up|plan)\b.*\b(?:meeting|call|sync)\b",
                 r"\bwe should\b.*\b(?:talk about|discuss|go over)\b",
                 r"\b(?:can someone|can we|could we)\b.*\b(?:meet|get\b.*\btogether|sync)\b",
+                # Issue #844: Implied meeting needs with team discussion
+                r"\b(?:i need to|we need to|should)\b.*\b(?:discuss|talk about|go over)\b.*\bwith (?:the team|everyone)\b",
             ],
             "meeting",
             {
@@ -155,6 +157,9 @@ def _compile_patterns() -> List[Tuple[List[re.Pattern], str, Dict[str, str], Dic
                 r"\b(?:the team needs|we need)\b.*\b(?:alignment|to be aligned|to sync|coordination)\b",
                 r"\b(?:everyone|the team|people) (?:seems?|are|is)\b.*\b(?:out of sync|disconnected|not aligned|on different pages)\b",
                 r"\bwe should (?:do|have|start)\b.*\b(?:standup|check-in|daily sync)\b",
+                # Issue #844: Personal agency + team alignment expressions
+                r"\bi (?:really )?(?:need to|want to|gotta|have to)\b.*\b(?:get )?(?:the team|everyone|people)\b.*\b(?:aligned|in sync|on the same page|coordinated|together)\b",
+                r"\b(?:i need to|we need to|should)\b.*\b(?:make sure|ensure)\b.*\b(?:everyone|the team|people)\b.*\b(?:aligned|in sync|on the same page|coordinated)\b",
             ],
             "standup",
             {
@@ -400,8 +405,20 @@ class WorkflowOfferService:
 
     @staticmethod
     def _key(session_id: str, user_id: Optional[str] = None) -> str:
-        """Build composite key for user-scoped stores (#817)."""
+        """Build composite key for user-scoped throttling stores (#817)."""
         return f"{user_id or 'anonymous'}:{session_id}"
+
+    @staticmethod
+    def _offer_key(session_id: str, **kwargs) -> str:
+        """Build key for pending offer store — session-scoped only.
+
+        Issue #846: Pending offers use session_id alone, not composite key.
+        user_id in the key caused mismatch when auth state changes between
+        turns (e.g., Turn 1 stores as 'alice:sess', Turn 2 looks up
+        'anonymous:sess' after cookie expiry). Offers are transient
+        (one-turn lifetime) so user scoping is unnecessary.
+        """
+        return session_id
 
     def should_offer(
         self,
@@ -469,13 +486,13 @@ class WorkflowOfferService:
         self, session_id: str, offer: Dict[str, Any], user_id: Optional[str] = None
     ) -> None:
         """Store a pending offer awaiting user response."""
-        self._pending_offers[self._key(session_id, user_id)] = offer
+        self._pending_offers[self._offer_key(session_id)] = offer
 
     def get_and_clear_pending_offer(
         self, session_id: str, user_id: Optional[str] = None
     ) -> Optional[Dict[str, Any]]:
         """Retrieve and clear a pending offer. Returns None if no offer pending."""
-        return self._pending_offers.pop(self._key(session_id, user_id), None)
+        return self._pending_offers.pop(self._offer_key(session_id), None)
 
     def format_offer(self, offer: WorkflowOffer, base_response: str) -> str:
         """

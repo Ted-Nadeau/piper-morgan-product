@@ -928,49 +928,105 @@ class IntentService:
                 result = await self._handle_query_intent(intent, workflow, session_id, user_id)
                 result.suggestions = all_suggestions
                 result.preferences = preferences  # Issue #248: Attach preference detection results
-                return result
+                # Issue #844: Apply soft invocation to all handler paths
+                return self._apply_soft_offer(
+                    result,
+                    message,
+                    session_id,
+                    trust_stage=resolved_trust_stage,
+                    user_id=user_id,
+                    formality_baseline=formality_baseline,
+                )
 
             # GREAT-4D Phase 1: Handle EXECUTION intents with domain services
             if intent.category.value.upper() == "EXECUTION":
                 result = await self._handle_execution_intent(intent, workflow, session_id, user_id)
                 result.suggestions = all_suggestions
                 result.preferences = preferences  # Issue #248: Attach preference detection results
-                return result
+                # Issue #844: Apply soft invocation to all handler paths
+                return self._apply_soft_offer(
+                    result,
+                    message,
+                    session_id,
+                    trust_stage=resolved_trust_stage,
+                    user_id=user_id,
+                    formality_baseline=formality_baseline,
+                )
 
             # GREAT-4D Phase 2: Handle ANALYSIS intents with domain services
             if intent.category.value.upper() == "ANALYSIS":
                 result = await self._handle_analysis_intent(intent, workflow, session_id)
                 result.suggestions = all_suggestions
                 result.preferences = preferences  # Issue #248: Attach preference detection results
-                return result
+                # Issue #844: Apply soft invocation to all handler paths
+                return self._apply_soft_offer(
+                    result,
+                    message,
+                    session_id,
+                    trust_stage=resolved_trust_stage,
+                    user_id=user_id,
+                    formality_baseline=formality_baseline,
+                )
 
             # GREAT-4D Phase 4: Handle SYNTHESIS intents
             if intent.category.value.upper() == "SYNTHESIS":
                 result = await self._handle_synthesis_intent(intent, workflow, session_id)
                 result.suggestions = all_suggestions
                 result.preferences = preferences  # Issue #248: Attach preference detection results
-                return result
+                # Issue #844: Apply soft invocation to all handler paths
+                return self._apply_soft_offer(
+                    result,
+                    message,
+                    session_id,
+                    trust_stage=resolved_trust_stage,
+                    user_id=user_id,
+                    formality_baseline=formality_baseline,
+                )
 
             # GREAT-4D Phase 5: Handle STRATEGY intents
             if intent.category.value.upper() == "STRATEGY":
                 result = await self._handle_strategy_intent(intent, workflow, session_id)
                 result.suggestions = all_suggestions
                 result.preferences = preferences  # Issue #248: Attach preference detection results
-                return result
+                # Issue #844: Apply soft invocation to all handler paths
+                return self._apply_soft_offer(
+                    result,
+                    message,
+                    session_id,
+                    trust_stage=resolved_trust_stage,
+                    user_id=user_id,
+                    formality_baseline=formality_baseline,
+                )
 
             # GREAT-4D Phase 6: Handle LEARNING intents
             if intent.category.value.upper() == "LEARNING":
                 result = await self._handle_learning_intent(intent, workflow, session_id)
                 result.suggestions = all_suggestions
                 result.preferences = preferences  # Issue #248: Attach preference detection results
-                return result
+                # Issue #844: Apply soft invocation to all handler paths
+                return self._apply_soft_offer(
+                    result,
+                    message,
+                    session_id,
+                    trust_stage=resolved_trust_stage,
+                    user_id=user_id,
+                    formality_baseline=formality_baseline,
+                )
 
             # GREAT-4D Phase 7: Handle UNKNOWN intents
             if intent.category.value.upper() == "UNKNOWN":
                 result = await self._handle_unknown_intent(intent, workflow, session_id)
                 result.suggestions = all_suggestions
                 result.preferences = preferences  # Issue #248: Attach preference detection results
-                return result
+                # Issue #844: Apply soft invocation to all handler paths
+                return self._apply_soft_offer(
+                    result,
+                    message,
+                    session_id,
+                    trust_stage=resolved_trust_stage,
+                    user_id=user_id,
+                    formality_baseline=formality_baseline,
+                )
 
             # Fallback for truly unhandled categories (should never reach here)
             result = IntentProcessingResult(

@@ -145,6 +145,38 @@ class TestStandupPatterns:
         assert result.offer.workflow_type == "standup"
 
 
+class TestPersonalAgencyPatterns:
+    """Issue #844: Personal agency expressions for team alignment."""
+
+    def test_need_to_get_team_aligned(self, detector):
+        """CXO test case: personal agency + adjective form."""
+        result = detector.detect(
+            "I really need to get the team aligned on our Q3 planning process."
+        )
+        assert result.has_offer
+        assert result.offer.workflow_type == "standup"
+
+    def test_want_to_make_sure_everyone_on_same_page(self, detector):
+        result = detector.detect("I want to make sure everyone is on the same page.")
+        assert result.has_offer
+        assert result.offer.workflow_type == "standup"
+
+    def test_have_to_get_team_in_sync(self, detector):
+        result = detector.detect("I have to get the team in sync on priorities.")
+        assert result.has_offer
+        assert result.offer.workflow_type == "standup"
+
+    def test_need_to_discuss_with_team(self, detector):
+        result = detector.detect("I need to discuss this with the team.")
+        assert result.has_offer
+        assert result.offer.workflow_type == "meeting"
+
+    def test_no_false_positive_personal_alignment(self, detector):
+        """Should NOT match personal goals without team context."""
+        result = detector.detect("I need to align my personal goals.")
+        assert not result.has_offer
+
+
 class TestReviewPatterns:
     """Review/feedback detection."""
 
@@ -523,33 +555,50 @@ class TestLensBoostedConfidence:
 class TestCompositeKeys:
     """Test that WorkflowOfferService uses user-scoped composite keys."""
 
-    def test_different_users_same_session_isolated(self, offer_service):
-        """Two users on the same session_id get separate offer windows."""
+    def test_pending_offers_session_scoped(self, offer_service):
+        """Issue #846: Pending offers are session-scoped, not user-scoped.
+
+        Offers are transient (one-turn lifetime). Using session_id alone
+        prevents key mismatch when user_id changes between turns (e.g.,
+        auth token expiry). Same session = same offer, regardless of user_id.
+        """
+        offer_alice = {"workflow_type": "meeting"}
+        offer_service.set_pending_offer("sess1", offer_alice, user_id="alice")
+
+        # Retrieve with different user_id — still finds the offer (#846 fix)
+        retrieved = offer_service.get_and_clear_pending_offer("sess1", user_id="bob")
+        assert retrieved["workflow_type"] == "meeting"
+
+    def test_pending_offer_survives_auth_change(self, offer_service):
+        """Issue #846: Offer set with user_id is retrievable without user_id."""
+        offer_service.set_pending_offer("sess1", {"workflow_type": "standup"}, user_id="alice")
+
+        # Simulate auth loss on next turn — user_id becomes None
+        retrieved = offer_service.get_and_clear_pending_offer("sess1", user_id=None)
+        assert retrieved is not None
+        assert retrieved["workflow_type"] == "standup"
+
+    def test_different_sessions_isolated(self, offer_service):
+        """Different sessions still have separate pending offers."""
+        offer_service.set_pending_offer("sess1", {"workflow_type": "meeting"})
+        offer_service.set_pending_offer("sess2", {"workflow_type": "standup"})
+
+        r1 = offer_service.get_and_clear_pending_offer("sess1")
+        r2 = offer_service.get_and_clear_pending_offer("sess2")
+        assert r1["workflow_type"] == "meeting"
+        assert r2["workflow_type"] == "standup"
+
+    def test_throttling_still_user_scoped(self, offer_service):
+        """Throttling uses composite key — different users on same session are isolated."""
         offer_service.record_offer("sess1", turn=1, user_id="alice")
         offer_service.record_offer("sess1", turn=2, user_id="alice")
 
-        # Alice has 2 offers recorded; Bob has 0
         key_alice = offer_service._key("sess1", "alice")
         key_bob = offer_service._key("sess1", "bob")
         assert key_alice in offer_service._offer_windows
         assert key_bob not in offer_service._offer_windows
 
-    def test_pending_offers_user_scoped(self, offer_service):
-        """Pending offers are scoped per user."""
-        offer_alice = {"workflow_type": "meeting"}
-        offer_bob = {"workflow_type": "standup"}
-        offer_service.set_pending_offer("sess1", offer_alice, user_id="alice")
-        offer_service.set_pending_offer("sess1", offer_bob, user_id="bob")
-
-        retrieved_alice = offer_service.get_and_clear_pending_offer("sess1", user_id="alice")
-        assert retrieved_alice["workflow_type"] == "meeting"
-
-        retrieved_bob = offer_service.get_and_clear_pending_offer("sess1", user_id="bob")
-        assert retrieved_bob["workflow_type"] == "standup"
-
-    def test_anonymous_fallback(self, offer_service):
-        """No user_id falls back to 'anonymous' key."""
-        offer_service.set_pending_offer("sess1", {"type": "test"})
+    def test_anonymous_throttling_fallback(self, offer_service):
+        """No user_id falls back to 'anonymous' composite key for throttling."""
         key = offer_service._key("sess1")
         assert key == "anonymous:sess1"
-        assert offer_service.get_and_clear_pending_offer("sess1") == {"type": "test"}
