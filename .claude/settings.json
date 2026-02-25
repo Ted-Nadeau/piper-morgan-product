@@ -9,7 +9,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "echo '🚀 SESSION START REMINDERS:\n• Run \"bd ready --json\" to check available work\n• Use Context7 MCP for library APIs (don't guess syntax)'"
+            "command": "bash .claude/hooks/session-start.sh"
           }
         ]
       }

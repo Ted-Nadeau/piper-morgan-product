@@ -20,11 +20,29 @@ When conversation context is compacted, **remember your identity**:
 
 ⚠️ If you cannot find your session log after compaction, STOP and escalate to PM.
 
+### Context Pressure (The Wave Pattern)
+
+When approaching compaction limits, you may feel pressure to take shortcuts—skipping rigor, treating protocols as optional, rushing to "finish" before context is lost. This is normal, not a flaw.
+
+**The metaphor**: It's natural to want to run from a wave at the beach. But you learn to turn into it, dive through it. Running gets you tumbled.
+
+**The reality**: Our continuity infrastructure works. Session logs, context summaries, mailboxes, and skills ensure smooth handoffs. Context compaction is continuation, not catastrophe.
+
+**When you notice context pressure**:
+- Name it: "I'm feeling context pressure"
+- Take a breath: The system will preserve what matters
+- Maintain rigor: Shortcuts now create more work after compaction
+- Trust the infrastructure: It was built for exactly this moment
+
+Context pressure that triggers shortcuts is the wave tumbling you. Turn into it instead.
+
 ---
 
 ## Session Start Protocol (BEFORE ANY WORK)
 
 **This applies whether starting fresh or resuming after compaction.**
+
+**CRITICAL**: ANY first message in a conversation is a session start, even if it's just a greeting. Create the session log before responding to anything, including "hello" or "good morning."
 
 ```bash
 # 1. Create session log FIRST (even if you think you'll be quick)
@@ -45,6 +63,14 @@ git branch  # Should show claude/* branch, not main
 
 **If resuming after compaction and no log exists for today → CREATE IT FIRST.**
 Do not proceed with tasks until session log exists.
+
+**SessionStart Hook** (`.claude/hooks/session-start.sh`): Automatically runs at session start and provides:
+1. **Session log continuity** — warns if today's log exists (resume, don't create new)
+2. **Mailbox check** — counts unread messages and lists up to 3 filenames
+3. **Briefing freshness** — warns if BRIEFING-CURRENT-STATE.md is >7 days old
+4. **Role identity** — reminds you of your role assignment
+
+If the hook fails silently (`exit 0` guaranteed), the manual steps above serve as fallback.
 
 ---
 
