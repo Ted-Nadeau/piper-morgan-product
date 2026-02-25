@@ -363,7 +363,7 @@ class SchemaValidator:
             bool: ["Boolean", "BOOLEAN"],
             datetime: ["DateTime", "DATETIME"],
             dict: ["JSON"],
-            list: ["JSON"],
+            list: ["JSON", "ARRAY"],  # ARRAY is valid for list types (e.g., embedding vectors)
         }
 
         common_fields = set(domain_fields.keys()) & set(db_fields.keys())

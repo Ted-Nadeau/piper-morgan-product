@@ -203,7 +203,7 @@ tzdata==2025.2
 urllib3==2.4.0
 # uvicorn: run ASGI app <- main.py (server entry)
 uvicorn==0.24.0
-uvloop==0.21.0; sys_platform != 'win32'  # Unix-only; uvicorn uses it for faster event loop. Skipped on Windows.
+uvloop==0.21.0; sys_platform != 'win32'
 virtualenv==20.31.2
 watchfiles==1.0.5
 websocket-client==1.8.0

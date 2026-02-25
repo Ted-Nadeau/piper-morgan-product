@@ -127,7 +127,7 @@ class TestBypassPrevention:
         """Personality enhancement is output processing, should be exempt."""
         # This endpoint processes Piper's output, not user input
         response = await authenticated_client.post(
-            "/api/personality/enhance", json={"text": "Test response", "context": {}}
+            "/api/v1/personality/enhance", json={"text": "Test response", "context": {}}
         )
         # Should not require intent (it's exempt)
         # 200 (success), 422 (validation error), or 500 (services not initialized in test) are acceptable

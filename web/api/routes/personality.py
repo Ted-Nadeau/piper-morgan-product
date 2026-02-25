@@ -2,9 +2,9 @@
 Personality Configuration API Routes
 
 Provides endpoints for managing user personality preferences and response enhancement.
-- GET /api/personality/profile/{user_id} - Retrieve personality configuration
-- PUT /api/personality/profile/{user_id} - Update personality configuration
-- POST /api/personality/enhance - Enhance response with personality
+- GET /api/v1/personality/profile/{user_id} - Retrieve personality configuration
+- PUT /api/v1/personality/profile/{user_id} - Update personality configuration
+- POST /api/v1/personality/enhance - Enhance response with personality
 
 Issue #123: Phase 3 Route Organization (Part of INFR-MAINT-REFACTOR)
 Previously: Inline in web/app.py (lines 799-889)
@@ -14,17 +14,17 @@ Now: Extracted to separate router module
 import structlog
 from fastapi import APIRouter, Request
 
-from web.personality_integration import PiperConfigParser, PersonalityResponseEnhancer, WebPersonalityConfig
-from web.utils.error_responses import (
-    internal_error,
-    not_found_error,
-    validation_error,
+from web.personality_integration import (
+    PersonalityResponseEnhancer,
+    PiperConfigParser,
+    WebPersonalityConfig,
 )
+from web.utils.error_responses import internal_error, not_found_error, validation_error
 
 logger = structlog.get_logger()
 
 # Router configuration
-router = APIRouter(prefix="/api/personality", tags=["personality"])
+router = APIRouter(prefix="/api/v1/personality", tags=["personality"])
 
 # These are initialized in WebComponentsInitializationPhase during startup
 # and stored in app.state for dependency injection (Phase 4 - INFR-MAINT-REFACTOR)
@@ -67,7 +67,9 @@ async def update_personality_profile(user_id: str, request: Request):
     """Update user's personality preferences"""
     try:
         # Get config_parser from app state (initialized in app.py)
-        config_parser = request.app.state.config_parser if hasattr(request.app.state, 'config_parser') else None
+        config_parser = (
+            request.app.state.config_parser if hasattr(request.app.state, "config_parser") else None
+        )
         if not config_parser:
             return internal_error("Configuration parser not initialized")
 
@@ -108,9 +110,7 @@ async def enhance_response(request: Request):
     try:
         # Get both config_parser and personality_enhancer from app state
         config_parser = (
-            request.app.state.config_parser
-            if hasattr(request.app.state, "config_parser")
-            else None
+            request.app.state.config_parser if hasattr(request.app.state, "config_parser") else None
         )
         personality_enhancer = (
             request.app.state.personality_enhancer
@@ -142,9 +142,7 @@ async def enhance_response(request: Request):
         config = config_parser.load_personality_config(user_id)
 
         # Enhance response
-        enhanced_content = personality_enhancer.enhance_response(
-            content, config, confidence
-        )
+        enhanced_content = personality_enhancer.enhance_response(content, config, confidence)
 
         return {
             "status": "success",
@@ -157,9 +155,7 @@ async def enhance_response(request: Request):
         }
     except (ValueError, TypeError) as e:
         # Validation errors - return 422
-        return validation_error(
-            f"Invalid enhancement request: {str(e)}", {"error": str(e)}
-        )
+        return validation_error(f"Invalid enhancement request: {str(e)}", {"error": str(e)})
     except Exception as e:
         # Processing errors - return 500
         logger.error(f"Error enhancing response: {e}", exc_info=True)

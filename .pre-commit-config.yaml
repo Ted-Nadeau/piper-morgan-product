@@ -153,3 +153,15 @@ repos:
           When pushing to production with a version change in pyproject.toml,
           requires docs/releases/RELEASE-NOTES-vX.Y.Z.md to exist.
           See docs/internal/operations/release-runbook.md for details.
+      - id: api-versioning-check
+        name: API Versioning Convention
+        entry: python3 scripts/check-api-versioning.py
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+        files: '^(web/|templates/|services/).*\.(py|html|js)$'
+        description: |
+          Enforces /api/v1/ prefix on all API endpoints.
+          Prevents silent 404s from inconsistent paths and API version drift.
+          See CLAUDE.md 'API Conventions' section for details.

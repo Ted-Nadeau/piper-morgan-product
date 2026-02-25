@@ -404,7 +404,7 @@
         const startTime = Date.now();
 
         try {
-          const response = await fetch("/api/standup?format=human-readable");
+          const response = await fetch("/api/v1/standup?format=human-readable");
 
           if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);

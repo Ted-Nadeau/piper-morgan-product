@@ -104,13 +104,19 @@ async def get_latest_conversation(
             has_turns=has_turns,
         )
 
+        # Issue #788: Add Z suffix to indicate UTC timezone for proper JS parsing
+        # Issue #788: Replace +00:00 with Z for JS Date parsing
         return LatestConversationResponse(
             conversation=ConversationSummary(
                 id=conversation.id,
                 title=conversation.title or "Conversation",
-                created_at=conversation.created_at.isoformat() if conversation.created_at else "",
+                created_at=(
+                    conversation.created_at.isoformat().replace("+00:00", "Z")
+                    if conversation.created_at
+                    else ""
+                ),
                 last_activity_at=(
-                    conversation.last_activity_at.isoformat()
+                    conversation.last_activity_at.isoformat().replace("+00:00", "Z")
                     if conversation.last_activity_at
                     else None
                 ),
@@ -176,13 +182,17 @@ async def get_conversation_turns(
         turns = await conv_repo.get_conversation_turns(conversation_id, limit=limit)
         logger.info("DEBUG #574: turns fetched", turn_count=len(turns))
 
+        # Issue #788: Add Z suffix to indicate UTC timezone for proper JS parsing
+        # Issue #788: Replace +00:00 with Z for JS Date parsing
         return [
             ConversationTurnResponse(
                 id=turn.id,
                 turn_number=turn.turn_number,
                 user_message=turn.user_message,
                 assistant_response=turn.assistant_response,
-                created_at=turn.created_at.isoformat() if turn.created_at else "",
+                created_at=(
+                    turn.created_at.isoformat().replace("+00:00", "Z") if turn.created_at else ""
+                ),
             )
             for turn in turns
         ]
@@ -247,17 +257,20 @@ class CreateConversationResponse(BaseModel):
 async def list_conversations(
     limit: int = 50,
     offset: int = 0,
+    search: str | None = None,
     current_user: JWTClaims = Depends(get_current_user),
     conv_repo: ConversationRepository = Depends(get_conversation_repository),
 ) -> ConversationListResponse:
     """
-    List all conversations for the current user.
+    List all conversations for the current user, optionally filtered by search.
 
     Issue #565: Populates conversation history sidebar.
+    Issue #786: GLUE-HISTORY-DIFF - Added search parameter for History sidebar.
 
     Args:
         limit: Maximum number of conversations (default 50)
         offset: Number to skip for pagination
+        search: Optional search string to filter by title (case-insensitive)
         current_user: Current authenticated user
         conv_repo: Conversation repository (injected)
 
@@ -265,10 +278,15 @@ async def list_conversations(
         ConversationListResponse with list of conversations and has_more flag
     """
     try:
-        # Get conversations for user
-        conversations = await conv_repo.list_for_user(
-            current_user.sub, limit=limit + 1, offset=offset
-        )
+        # Get conversations for user (with optional search filter)
+        if search and search.strip():
+            conversations = await conv_repo.search_for_user(
+                current_user.sub, search.strip(), limit=limit + 1, offset=offset
+            )
+        else:
+            conversations = await conv_repo.list_for_user(
+                current_user.sub, limit=limit + 1, offset=offset
+            )
 
         # Check if there are more
         has_more = len(conversations) > limit
@@ -283,10 +301,16 @@ async def list_conversations(
                 ConversationListItem(
                     id=conv.id,
                     title=conv.title or "New conversation",
-                    # Issue #587: Append Z to indicate UTC timezone for proper JS parsing
-                    created_at=f"{conv.created_at.isoformat()}Z" if conv.created_at else "",
+                    # Issue #788: Replace +00:00 with Z for JS Date parsing (can't have both)
+                    created_at=(
+                        conv.created_at.isoformat().replace("+00:00", "Z")
+                        if conv.created_at
+                        else ""
+                    ),
                     updated_at=(
-                        f"{conv.last_activity_at.isoformat()}Z" if conv.last_activity_at else None
+                        conv.last_activity_at.isoformat().replace("+00:00", "Z")
+                        if conv.last_activity_at
+                        else None
                     ),
                     turn_count=turn_count,
                 )
@@ -337,10 +361,15 @@ async def create_conversation(
             conversation_id=conversation.id,
         )
 
+        # Issue #788: Replace +00:00 with Z for JS Date parsing
         return CreateConversationResponse(
             id=conversation.id,
             title=conversation.title or "New conversation",
-            created_at=conversation.created_at.isoformat() if conversation.created_at else "",
+            created_at=(
+                conversation.created_at.isoformat().replace("+00:00", "Z")
+                if conversation.created_at
+                else ""
+            ),
         )
 
     except Exception as e:
@@ -394,12 +423,19 @@ async def get_conversation(
 
         turn_count = await conv_repo.get_turn_count(conversation_id)
 
+        # Issue #788: Replace +00:00 with Z for JS Date parsing
         return ConversationListItem(
             id=conversation.id,
             title=conversation.title or "New conversation",
-            created_at=conversation.created_at.isoformat() if conversation.created_at else "",
+            created_at=(
+                conversation.created_at.isoformat().replace("+00:00", "Z")
+                if conversation.created_at
+                else ""
+            ),
             updated_at=(
-                conversation.last_activity_at.isoformat() if conversation.last_activity_at else None
+                conversation.last_activity_at.isoformat().replace("+00:00", "Z")
+                if conversation.last_activity_at
+                else None
             ),
             turn_count=turn_count,
         )
@@ -488,12 +524,19 @@ async def update_conversation_title(
         # Return updated conversation
         turn_count = await conv_repo.get_turn_count(conversation_id)
 
+        # Issue #788: Replace +00:00 with Z for JS Date parsing
         return ConversationListItem(
             id=conversation.id,
             title=title,
-            created_at=conversation.created_at.isoformat() if conversation.created_at else "",
+            created_at=(
+                conversation.created_at.isoformat().replace("+00:00", "Z")
+                if conversation.created_at
+                else ""
+            ),
             updated_at=(
-                conversation.last_activity_at.isoformat() if conversation.last_activity_at else None
+                conversation.last_activity_at.isoformat().replace("+00:00", "Z")
+                if conversation.last_activity_at
+                else None
             ),
             turn_count=turn_count,
         )

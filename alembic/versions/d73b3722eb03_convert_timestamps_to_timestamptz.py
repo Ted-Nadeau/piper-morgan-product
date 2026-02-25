@@ -107,27 +107,94 @@ def upgrade() -> None:
 
     Existing naive timestamps are interpreted as UTC, which is correct
     since all our code uses UTC for database operations.
+
+    Note: Uses IF EXISTS to handle tables that may not exist on fresh installs
+    where some tables were created via create_all() instead of migrations.
     """
+    from sqlalchemy import text
+
+    from alembic import context
+
+    connection = context.get_context().connection
+
     for table_name, column_name in COLUMNS_TO_CONVERT:
-        op.execute(
-            f"""
-            ALTER TABLE {table_name}
-            ALTER COLUMN {column_name} TYPE TIMESTAMPTZ
-            USING {column_name} AT TIME ZONE 'UTC'
-        """
+        # Check if table exists before trying to alter
+        result = connection.execute(
+            text(
+                "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = :table_name)"
+            ),
+            {"table_name": table_name},
         )
+        table_exists = result.scalar()
+
+        if table_exists:
+            # Check if column exists
+            result = connection.execute(
+                text(
+                    """
+                    SELECT EXISTS (
+                        SELECT 1 FROM information_schema.columns
+                        WHERE table_name = :table_name AND column_name = :column_name
+                    )
+                    """
+                ),
+                {"table_name": table_name, "column_name": column_name},
+            )
+            column_exists = result.scalar()
+
+            if column_exists:
+                op.execute(
+                    f"""
+                    ALTER TABLE {table_name}
+                    ALTER COLUMN {column_name} TYPE TIMESTAMPTZ
+                    USING {column_name} AT TIME ZONE 'UTC'
+                """
+                )
 
 
 def downgrade() -> None:
     """Convert timestamptz columns back to timestamp without time zone.
 
     This preserves the UTC values as naive timestamps.
+
+    Note: Uses table/column existence checks for resilience.
     """
+    from sqlalchemy import text
+
+    from alembic import context
+
+    connection = context.get_context().connection
+
     for table_name, column_name in COLUMNS_TO_CONVERT:
-        op.execute(
-            f"""
-            ALTER TABLE {table_name}
-            ALTER COLUMN {column_name} TYPE TIMESTAMP
-            USING {column_name} AT TIME ZONE 'UTC'
-        """
+        # Check if table exists before trying to alter
+        result = connection.execute(
+            text(
+                "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = :table_name)"
+            ),
+            {"table_name": table_name},
         )
+        table_exists = result.scalar()
+
+        if table_exists:
+            # Check if column exists
+            result = connection.execute(
+                text(
+                    """
+                    SELECT EXISTS (
+                        SELECT 1 FROM information_schema.columns
+                        WHERE table_name = :table_name AND column_name = :column_name
+                    )
+                    """
+                ),
+                {"table_name": table_name, "column_name": column_name},
+            )
+            column_exists = result.scalar()
+
+            if column_exists:
+                op.execute(
+                    f"""
+                    ALTER TABLE {table_name}
+                    ALTER COLUMN {column_name} TYPE TIMESTAMP
+                    USING {column_name} AT TIME ZONE 'UTC'
+                """
+                )

@@ -1,0 +1,75 @@
+# Proto-Pattern Tracking
+
+_Candidates for formalization that need additional evidence before full pattern status._
+
+**Purpose**: Track emerging practices that have been observed but not yet proven across multiple instances. Proto-patterns graduate to full patterns when they meet the evidence threshold (typically 2+ additional instances beyond initial observation).
+
+**Review cadence**: Evaluated during 6-week pattern sweeps. Proto-patterns that meet evidence threshold get promoted; those with no new instances after two sweeps get archived.
+
+---
+
+## Active Proto-Patterns
+
+### PP-001: Design Archaeology
+
+**Observed**: February 3, 2026 (Pattern Sweep 2.0, #777)
+**Source**: History sidebar design investigation (February 2, 2026)
+**CIO Decision**: Deferred to proto-pattern tracking (February 4, 2026)
+**Elevation Criteria**: 2+ additional instances before March 17, 2026 sweep
+
+**Description**: When investigating a design question, conduct archaeological analysis of how the current design evolved before proposing changes. Examines commit history, omnibus logs, and decision records to understand *why* the current state exists — preventing accidental reversal of intentional decisions.
+
+**Known Instance**:
+1. History sidebar 404 investigation (#780) — discovered that sidebar design had evolved through 3 distinct phases, each responding to different user feedback. Without archaeology, the fix would have reverted to Phase 1 design.
+
+**What Would Make This a Pattern**:
+- Additional instances of design archaeology preventing regressions
+- Evidence that skipping archaeology led to problems (negative instances)
+- Distinct enough from Pattern-042 (Investigation-Only Protocol) to warrant separate documentation
+
+**Related Patterns**:
+- Pattern-042: Investigation-Only Protocol (investigation discipline, but not design-specific)
+- Pattern-060: Cascade Investigation (investigation breadth, not historical depth)
+
+---
+
+## Archived Proto-Patterns
+
+_Proto-patterns that were not elevated after two sweep cycles._
+
+### Historical (Pre-Tracking)
+
+The following were identified informally but never tracked with this mechanism:
+
+- **Primate in the Loop** — Human oversight pattern (December 2025). Subsumed by existing patterns (006, 047).
+- **Small Scripts Win** — Preference for small focused scripts (December 2025). Too general to be a pattern.
+- **Session Failure Conditions** — Conditions that cause session failures (December 2025). Covered by STOP conditions in CLAUDE.md.
+
+---
+
+## Process
+
+### Adding a Proto-Pattern
+
+1. Identify candidate during pattern sweep or ad-hoc observation
+2. Verify it's genuinely distinct from existing patterns (FALSE POSITIVE test)
+3. Add entry to Active Proto-Patterns with: observation date, source, known instances, elevation criteria
+4. Set review date (next scheduled sweep)
+
+### Elevating a Proto-Pattern
+
+1. During pattern sweep, review active proto-patterns for new instances
+2. If evidence threshold met: draft full pattern document, submit for CIO approval
+3. Move entry from Active to the main pattern index
+4. Remove from this file
+
+### Archiving a Proto-Pattern
+
+1. If no new instances after two sweep cycles (~12 weeks), archive
+2. Move to Archived section with brief explanation
+3. Can be reactivated if new evidence surfaces
+
+---
+
+_Created: February 5, 2026_
+_Per CIO assignment (memo-cio-pattern-sweep-response-2026-02-04)_

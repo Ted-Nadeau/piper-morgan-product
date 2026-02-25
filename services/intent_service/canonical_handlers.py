@@ -873,6 +873,12 @@ General AI assistants are great for general tasks. I'm specifically designed to 
                     message += "\n\n⚠️ Note: Calendar data unavailable right now."
                 calendar_context["calendar_service"] = "unavailable"
                 calendar_context["error"] = temporal_summary.get("error")
+            # Issue #789: Check if calendar is connected before mentioning it
+            # Option A (alpha): Silent - don't mention calendar at all if not connected
+            elif not temporal_summary.get("calendar_connected", True):
+                logger.info("Calendar not connected - skipping calendar mentions (Issue #789)")
+                calendar_context["calendar_connected"] = False
+                # Don't add any calendar message - just proceed without mentioning it
             # Adjust calendar detail based on spatial pattern
             elif spatial_pattern == "EMBEDDED":
                 # EMBEDDED: Minimal - just current/next meeting

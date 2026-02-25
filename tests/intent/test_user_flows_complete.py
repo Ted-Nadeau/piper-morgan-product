@@ -168,7 +168,7 @@ class TestPersonalityIntegration:
     def test_personality_enhance_is_exempt(self, client):
         """Personality enhancement should not require intent."""
         response = client.post(
-            "/api/personality/enhance", json={"text": "Test response", "context": {}}
+            "/api/v1/personality/enhance", json={"text": "Test response", "context": {}}
         )
 
         # GREAT-5: Should work or validation error, but NOT crash (500) or missing (404)

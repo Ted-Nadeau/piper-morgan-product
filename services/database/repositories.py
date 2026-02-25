@@ -1087,6 +1087,44 @@ class ConversationRepository(BaseRepository):
 
         return [c.to_domain() for c in db_convs]
 
+    async def search_for_user(
+        self, user_id: str, query: str, limit: int = 50, offset: int = 0
+    ) -> List[domain.Conversation]:
+        """
+        Search conversations by title for a user.
+
+        Issue #786: GLUE-HISTORY-DIFF - History sidebar search.
+
+        Args:
+            user_id: The user ID to search conversations for
+            query: Search string to match against title (case-insensitive)
+            limit: Maximum number of conversations to return (default 50)
+            offset: Number of conversations to skip for pagination
+
+        Returns:
+            List of Conversation domain objects matching the search, newest first
+        """
+        from services.database.models import ConversationDB
+
+        # Case-insensitive search on title using ILIKE
+        search_pattern = f"%{query}%"
+        stmt = (
+            select(ConversationDB)
+            .where(ConversationDB.user_id == user_id)
+            .where(ConversationDB.is_active == True)
+            .where(ConversationDB.title.ilike(search_pattern))
+            .order_by(
+                func.coalesce(ConversationDB.last_activity_at, ConversationDB.created_at).desc()
+            )
+            .offset(offset)
+            .limit(limit)
+        )
+
+        result = await self.session.execute(stmt)
+        db_convs = result.scalars().all()
+
+        return [c.to_domain() for c in db_convs]
+
     async def get_by_id(self, conversation_id: str) -> Optional[domain.Conversation]:
         """
         Get a specific conversation by ID.

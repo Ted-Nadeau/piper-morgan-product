@@ -112,7 +112,7 @@ echo "===================================" >> $RESULTS_FILE
 test_endpoint \
     "Personality - Profile with defaults" \
     "GET" \
-    "/api/personality/profile/test-user" \
+    "/api/v1/personality/profile/test-user" \
     "" \
     "200"
 
@@ -120,7 +120,7 @@ test_endpoint \
 test_endpoint \
     "Personality - Enhance request" \
     "POST" \
-    "/api/personality/enhance" \
+    "/api/v1/personality/enhance" \
     '{"content": "test content", "context": "test"}' \
     "200"
 

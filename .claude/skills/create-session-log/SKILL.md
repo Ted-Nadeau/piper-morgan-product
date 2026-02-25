@@ -214,6 +214,24 @@ If you truly started fresh today and there's no prior log, that's fine - create 
 
 ---
 
+## Pattern Families
+
+At session start, identify which pattern families apply to your work:
+
+```markdown
+**Active pattern families this session**: [list applicable families]
+```
+
+Common families:
+- **Completion Theater** (045/046/047/049): Multi-phase work, closing issues
+- **Investigation** (006/041-043/060): Bug fixing, incident response
+- **Grammar Application** (050-058): Feature development, UX work
+- **Multi-Agent Coordination** (029/059/010/021/037): Cross-domain decisions
+
+See [PATTERN-FAMILIES.md](../../../docs/internal/architecture/current/patterns/PATTERN-FAMILIES.md) for full family index.
+
+---
+
 ## Anti-Patterns to Avoid
 
 | Don't Do This | Why | Do This Instead |

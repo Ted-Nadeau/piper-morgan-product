@@ -188,14 +188,14 @@ python scripts/filter_known_failures.py
 
 ```bash
 # Build and test Docker containers
-docker-compose build
-docker-compose up -d
+docker compose build
+docker compose up -d
 
 # Verify container Python version
-docker-compose exec app python --version  # Should show 3.11.x
+docker compose exec app python --version  # Should show 3.11.x
 
 # Run tests in container
-docker-compose exec app pytest tests/ -v
+docker compose exec app pytest tests/ -v
 ```
 
 ## Pull Request Requirements

@@ -491,7 +491,10 @@
                 </div>
             </div>
 
-            <button id="next-2" class="auth-button" disabled>Continue</button>
+            <div class="button-group" style="display: flex; gap: 1rem; justify-content: space-between;">
+                <button type="button" id="back-2" class="auth-button secondary">Back</button>
+                <button id="next-2" class="auth-button" disabled>Continue</button>
+            </div>
         </div>
 
         <!-- Step 3: Account Creation -->
@@ -515,7 +518,10 @@
                     <label for="password-confirm">Confirm Password</label>
                     <input type="password" id="password-confirm" name="password_confirm" required />
                 </div>
-                <button type="submit" class="auth-button">Create Account</button>
+                <div class="button-group" style="display: flex; gap: 1rem; justify-content: space-between;">
+                    <button type="button" id="back-3" class="auth-button secondary">Back</button>
+                    <button type="submit" class="auth-button">Create Account</button>
+                </div>
             </form>
         </div>
 

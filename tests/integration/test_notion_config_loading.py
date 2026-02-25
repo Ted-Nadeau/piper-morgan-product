@@ -4,11 +4,13 @@ Implements test coverage for NotionConfigService YAML loading functionality,
 ensuring proper configuration priority order: env vars > PIPER.user.md > defaults.
 
 Pattern based on Calendar configuration loading tests.
+
+Issue #782: Updated to pass user_id parameter (required by Issue #734).
 """
 
 import os
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -17,6 +19,37 @@ from services.integrations.notion.config_service import (
     NotionConfigService,
     NotionEnvironment,
 )
+
+# Test user ID for multi-tenancy (Issue #734)
+TEST_USER_ID = "test_user_notion_config"
+
+
+@pytest.fixture(autouse=True)
+def isolate_config_service():
+    """Isolate config service from external dependencies during tests.
+
+    Issue #782: Config service has multiple fallback sources:
+    1. Environment variables
+    2. PIPER.user.md file
+    3. Keychain service
+
+    This fixture ensures tests aren't affected by real credentials.
+    """
+    # Clear any NOTION env vars that might interfere
+    original_env = {}
+    notion_vars = [k for k in os.environ if k.startswith("NOTION")]
+    for var in notion_vars:
+        original_env[var] = os.environ.pop(var)
+
+    # Mock keychain to return None
+    with patch("services.infrastructure.keychain_service.KeychainService") as mock:
+        mock_instance = MagicMock()
+        mock_instance.get_api_key.return_value = None
+        mock.return_value = mock_instance
+        yield mock
+
+    # Restore original env vars
+    os.environ.update(original_env)
 
 
 class TestNotionConfigLoading:
@@ -54,7 +87,7 @@ notion:
             with patch.object(Path, "read_text", return_value=piper_config.read_text()):
                 # Load config
                 service = NotionConfigService()
-                config = service.get_config()
+                config = service.get_config(TEST_USER_ID)
 
                 # Verify values from PIPER.user.md
                 assert config.api_key == "test_key_from_file"
@@ -96,7 +129,7 @@ notion:
             with patch.object(Path, "exists", return_value=True):
                 with patch.object(Path, "read_text", return_value=piper_config.read_text()):
                     service = NotionConfigService()
-                    config = service.get_config()
+                    config = service.get_config(TEST_USER_ID)
 
                     # Verify env vars override user config
                     assert config.api_key == "env_override_key"
@@ -128,7 +161,7 @@ notion:
         with patch.object(Path, "exists", return_value=True):
             with patch.object(Path, "read_text", return_value=piper_config.read_text()):
                 service = NotionConfigService()
-                config = service.get_config()
+                config = service.get_config(TEST_USER_ID)
 
                 # Verify defaults
                 assert config.api_key == ""
@@ -145,7 +178,7 @@ notion:
         with patch.object(Path, "exists", return_value=False):
             # Should not raise exception
             service = NotionConfigService()
-            config = service.get_config()
+            config = service.get_config(TEST_USER_ID)
 
             # Should use defaults
             assert config.api_key == ""
@@ -172,7 +205,7 @@ notion:
             with patch.object(Path, "read_text", return_value=piper_config.read_text()):
                 # Should not raise exception
                 service = NotionConfigService()
-                config = service.get_config()
+                config = service.get_config(TEST_USER_ID)
 
                 # Should use defaults
                 assert config.api_key == ""
@@ -198,7 +231,7 @@ notion:
         with patch.object(Path, "exists", return_value=True):
             with patch.object(Path, "read_text", return_value=piper_config.read_text()):
                 service = NotionConfigService()
-                config = service.get_config()
+                config = service.get_config(TEST_USER_ID)
 
                 # Verify authentication section properly parsed
                 assert config.api_key == "secret_test_api_key_123"
@@ -223,7 +256,7 @@ notion:
         with patch.object(Path, "exists", return_value=True):
             with patch.object(Path, "read_text", return_value=piper_config.read_text()):
                 service = NotionConfigService()
-                config = service.get_config()
+                config = service.get_config(TEST_USER_ID)
 
                 # Should use defaults for authentication
                 assert config.api_key == ""
@@ -252,7 +285,7 @@ notion:
         with patch.object(Path, "exists", return_value=True):
             with patch.object(Path, "read_text", return_value=piper_config.read_text()):
                 service = NotionConfigService()
-                config = service.get_config()
+                config = service.get_config(TEST_USER_ID)
 
                 # Verify API config
                 assert config.api_base_url == "https://custom.api.notion.com/v1"
@@ -277,7 +310,7 @@ notion:
         with patch.object(Path, "exists", return_value=True):
             with patch.object(Path, "read_text", return_value=piper_config.read_text()):
                 service = NotionConfigService()
-                config = service.get_config()
+                config = service.get_config(TEST_USER_ID)
 
                 # Verify environment parsed correctly
                 assert config.environment == NotionEnvironment.PRODUCTION
@@ -304,7 +337,7 @@ notion:
             with patch.object(Path, "exists", return_value=True):
                 with patch.object(Path, "read_text", return_value=piper_config.read_text()):
                     service = NotionConfigService()
-                    config = service.get_config()
+                    config = service.get_config(TEST_USER_ID)
 
                     # Verify env var overrides user config
                     assert config.environment == NotionEnvironment.STAGING
@@ -343,7 +376,7 @@ notion:
             with patch.object(Path, "exists", return_value=True):
                 with patch.object(Path, "read_text", return_value=piper_config.read_text()):
                     service = NotionConfigService()
-                    config = service.get_config()
+                    config = service.get_config(TEST_USER_ID)
 
                     # Verify priority order:
                     # 1. api_key from env var (highest)
@@ -383,7 +416,7 @@ notion:
         with patch.object(Path, "exists", return_value=True):
             with patch.object(Path, "read_text", return_value=piper_config.read_text()):
                 service = NotionConfigService()
-                config = service.get_config()
+                config = service.get_config(TEST_USER_ID)
 
                 # Verify partial config loads
                 assert config.api_key == "partial_key"
@@ -401,7 +434,7 @@ notion:
         with patch.object(Path, "exists", return_value=True):
             with patch.object(Path, "read_text", return_value=piper_config.read_text()):
                 service = NotionConfigService()
-                config = service.get_config()
+                config = service.get_config(TEST_USER_ID)
 
                 # Should use all defaults
                 assert config.api_key == ""
@@ -424,7 +457,7 @@ Just some text here.
         with patch.object(Path, "exists", return_value=True):
             with patch.object(Path, "read_text", return_value=piper_config.read_text()):
                 service = NotionConfigService()
-                config = service.get_config()
+                config = service.get_config(TEST_USER_ID)
 
                 # Should gracefully fall back to defaults
                 assert config.api_key == ""
@@ -447,7 +480,7 @@ notion:
         with patch.object(Path, "exists", return_value=True):
             with patch.object(Path, "read_text", return_value=piper_config.read_text()):
                 service = NotionConfigService()
-                config = service.get_config()
+                config = service.get_config(TEST_USER_ID)
 
                 # Verify rate limit loaded
                 assert config.requests_per_minute == 100
@@ -474,7 +507,7 @@ notion:
             with patch.object(Path, "exists", return_value=True):
                 with patch.object(Path, "read_text", return_value=piper_config.read_text()):
                     service = NotionConfigService()
-                    config = service.get_config()
+                    config = service.get_config(TEST_USER_ID)
 
                     # Verify env var overrides
                     assert config.requests_per_minute == 120
@@ -502,10 +535,10 @@ class TestNotionConfigServiceBasics:
         service = NotionConfigService()
 
         # First call loads config
-        config1 = service.get_config()
+        config1 = service.get_config(TEST_USER_ID)
 
         # Second call should return same instance (cached)
-        config2 = service.get_config()
+        config2 = service.get_config(TEST_USER_ID)
 
         assert config1 is config2
 
@@ -528,7 +561,7 @@ notion:
         with patch.object(Path, "exists", return_value=True):
             with patch.object(Path, "read_text", return_value=piper_config.read_text()):
                 service = NotionConfigService()
-                assert service.is_configured() is True
+                assert service.is_configured(TEST_USER_ID) is True
 
         # Without API key (should return False)
         empty_config = tmp_path / "PIPER.empty.md"
@@ -537,4 +570,4 @@ notion:
         with patch.object(Path, "exists", return_value=True):
             with patch.object(Path, "read_text", return_value=empty_config.read_text()):
                 service2 = NotionConfigService()
-                assert service2.is_configured() is False
+                assert service2.is_configured(TEST_USER_ID) is False

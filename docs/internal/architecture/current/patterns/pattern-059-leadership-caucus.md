@@ -134,6 +134,21 @@ Identified by HOSR during Jan 16-22 workstream review as "Leadership Cascade," r
 | Mailbox System | Async cross-role communication | Any time | 1:1 or 1:many |
 | **Leadership Caucus (059)** | Sync multi-advisor alignment | Before complex work | PM + multiple advisors |
 
+### Differentiation: Pattern-059 vs Pattern-029
+
+Pattern-059 and [Pattern-029: Multi-Agent Coordination](pattern-029-multi-agent-coordination.md) both involve multiple agents but serve different purposes:
+
+| Dimension | Pattern-059 (Leadership Caucus) | Pattern-029 (Multi-Agent Coordination) |
+|-----------|---------------------------------|----------------------------------------|
+| **Domain** | Leadership alignment | Technical execution |
+| **Purpose** | Align on cross-cutting decisions before work begins | Coordinate parallel implementation work |
+| **Participants** | Advisory agents (CXO, Architect, PPM) + PM | Coding agents (Backend, Frontend, Analyst) |
+| **Timing** | Before execution | During execution |
+| **Output** | Decisions, assignments, implementation direction | Code, tests, validated changes |
+| **Coordination** | Facilitated discussion, real-time decision capture | Cross-validation, handoffs, parallel phases |
+
+**In practice**: A Leadership Caucus (059) produces the decision and assignment that triggers a Multi-Agent Coordination (029) deployment. They are sequential, not competing — one decides *what* and *how*; the other *executes*.
+
 ### Alternatives
 
 - **Direct consultation**: For single-domain decisions

@@ -1,9 +1,8 @@
 # Piper Morgan Alpha - Quick Start
 
-**Version**: 0.8.5.1
+**Version**: 0.8.5.3
 **Branch**: `production` (stable alpha releases)
 **For**: Experienced developers who want to dive in fast
-**Time**: 2-5 minutes setup, plus initial configuration
 
 > 📍 **Branch Info**: This quickstart uses the `production` branch, which receives stable alpha releases. The `main` branch is for active development and may have bugs.
 
@@ -11,17 +10,51 @@
 
 ---
 
-## What's New in 0.8.5.1
+## Time & Storage Requirements
 
-**14 Alpha Testing Bug Fixes** - Fast-follow patch addressing issues discovered during post-MUX testing.
+| Step | First Run | Subsequent Runs |
+|------|-----------|-----------------|
+| Clone repository | 1-2 min (~91MB with --depth 1) | N/A |
+| Install Python packages | 5-10 min (~216 packages, ~1GB) | 1-2 min |
+| Docker image download | 10-30 min (~4GB, depends on connection) | Skipped if cached |
+| Database migrations | 1-2 min | 30 sec |
+| Setup wizard | 2-5 min | N/A |
+| **Total (first time)** | **20-50 minutes** | **5-10 min** |
 
-**Authentication & Session Fixes** - Logout now works correctly, username displays properly, conversations persist when typing directly.
+**Storage Requirements**:
+- Docker images: ~4GB
+- Python packages: ~1GB
+- Database: ~100MB (grows with usage)
+- **Total**: ~6GB free disk space recommended
 
-**Portfolio Onboarding Fixed** - Projects now save to database correctly. Multiple root causes addressed.
+---
 
-**Navigation & UI Improvements** - History sidebar works, first-time user routing fixed, autofill disabled on chat input.
+## What's New in 0.8.5.3
 
-See [Release Notes v0.8.5.1](releases/RELEASE-NOTES-v0.8.5.1.md) for full details.
+**Windows Compatibility & Setup UX** - 14 issues resolved from Ted Nadeau's Windows testing.
+
+**Windows Installation (#795, #797)** - uvloop now skipped on Windows. CRLF line endings no longer break Docker.
+
+**Database Migrations (#796)** - Missing migrations for products, features, work_items tables created.
+
+**Installation Validator (#806)** - New `scripts/validate_install.py` verifies all components working.
+
+**Better Errors (#808)** - Error messages now include specific fix suggestions.
+
+**Database Migration Required**: Run `alembic upgrade head` after updating.
+
+See [Release Notes v0.8.5.3](releases/RELEASE-NOTES-v0.8.5.3.md) for full details.
+
+---
+
+## Choose Your Path
+
+| I want to... | Use this guide | Time |
+|--------------|----------------|------|
+| **Try Piper Morgan** (alpha testing) | This guide (ALPHA_QUICKSTART.md) | 20-50 min |
+| **Develop/contribute code** | [SETUP.md](../SETUP.md) | 30-60 min |
+
+> 🔮 **Future**: A hosted version and Docker Hub images are planned for 2026, which will enable a true "5-minute setup" for users who just want to run Piper. For now, all paths require the developer setup.
 
 ---
 
@@ -33,7 +66,7 @@ See [Release Notes v0.8.5.1](releases/RELEASE-NOTES-v0.8.5.1.md) for full detail
 
 ---
 
-## Automated Setup (Recommended - 2 minutes)
+## Automated Setup (Recommended for Alpha Testers)
 
 **For macOS/Linux/WSL2:**
 ```bash
@@ -70,41 +103,53 @@ REM → Launch the setup wizard at http://localhost:8001/setup
 ## Manual Setup (If You Prefer Full Control)
 
 ```bash
-# 1. Clone and setup (using production branch for alpha testing)
+# 1. Clone and setup (~2-3 min)
 # --depth 1 gives you a fast ~91MB download (vs ~800MB full history)
 git clone --depth 1 -b production https://github.com/mediajunkie/piper-morgan-product.git
 cd piper-morgan-product
 python3.12 -m venv venv && source venv/bin/activate
 # Requires Python 3.11 or 3.12 - verify with: python --version
-pip install -r requirements.txt
 
-# 2. Configure environment variables (CRITICAL - 1 min)
+# 2. Install dependencies (~5-10 min first time, 216 packages)
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+# ☕ This downloads ~1GB of packages - good time for a coffee break
+
+# 3. Configure environment variables (~1 min)
 cp .env.example .env
 # Edit .env and set JWT_SECRET_KEY:
 # Generate a secure key: openssl rand -hex 32
 # Add to .env: JWT_SECRET_KEY=your-generated-key-here
 # Note: .env is gitignored and survives git pull operations
 
-# 3. Start Docker containers
-docker-compose up -d
+# 4. Start Docker containers (~10-30 min first time)
+docker compose up -d
+# First run downloads ~4GB of images (PostgreSQL, Redis, etc.)
+# ☕ Another good coffee break opportunity
+# Subsequent runs: instant (images are cached)
 
-# 4. Run database migrations (REQUIRED)
+# 5. Run database migrations (~1-2 min)
 python -m alembic upgrade head
 # This creates/updates all database tables
 
-# 5. Start server for first-time setup
+# 6. Start server for first-time setup
 python main.py
 # → Opens http://localhost:8001/setup (GUI setup wizard)
 
-# 6. Complete setup wizard (web browser)
+# 7. Complete setup wizard (~2-5 min)
 # → Navigate through visual setup screens
 # → Configure API keys, create user account
 # → See "Setup Wizard Walkthrough" below for details
 
-# 7. Configure preferences (optional, 2 mins)
+# 8. Configure preferences (optional, ~2 min)
 python main.py preferences
 # → Answer 5 questions about your work style
 # → Or skip and configure later via Settings page
+
+# 9. Validate installation (optional)
+python scripts/validate_install.py
+# → Checks all components are working
+# → Shows clear pass/fail status
 ```
 
 ---
@@ -206,7 +251,7 @@ After logging in to http://localhost:8001:
 
 ---
 
-## Testing Focus for 0.8.5.1
+## Testing Focus for 0.8.5.3
 
 **What's Stable** (light testing recommended):
 - ✅ Setup wizard (GUI and CLI)
@@ -214,14 +259,14 @@ After logging in to http://localhost:8001:
 - ✅ Chat interface
 - ✅ Lists, todos, projects, files
 - ✅ Integration Dashboard and OAuth connections
+- ✅ Windows installation and setup
 
 **Where to Focus Testing** (these need your attention):
+- 🔍 **Installation validator**: Run `python scripts/validate_install.py`
+- 🔍 **Windows setup**: Fresh install on Windows systems
+- 🔍 **Error messages**: Trigger errors and check for helpful fix suggestions
 - 🔍 **Lifecycle indicators**: Check that projects and todos show lifecycle state
-- 🔍 **Work Items view**: New view at /work-items
-- 🔍 **Project Detail view**: Click into a project to see its detail page
 - 🔍 **Accessibility**: Keyboard navigation, screen reader compatibility
-- 🔍 **File handling**: Upload, download, analysis
-- 🔍 **Permission system**: Sharing resources, role-based access
 
 ---
 
@@ -257,8 +302,8 @@ docker ps | grep postgres
 # Should show: piper-postgres running on port 5433
 
 # Reset database completely (WARNING: deletes all data):
-docker-compose down -v
-docker-compose up -d
+docker compose down -v
+docker compose up -d
 python -m alembic upgrade head
 ```
 
@@ -284,6 +329,14 @@ python main.py setup
 # Check server is running: python main.py
 # Try: http://127.0.0.1:8001
 ```
+
+### Windows: localhost doesn't work?
+
+**Problem**: `http://localhost:8001` gives connection error, but `http://127.0.0.1:8001` works.
+
+**Why**: Windows may resolve `localhost` to IPv6 (`::1`) while Piper binds to IPv4 (`127.0.0.1`).
+
+**Solution**: Use `http://127.0.0.1:8001` instead of `localhost:8001` on Windows.
 
 ### Environment variables not loading after git pull?
 
@@ -311,9 +364,48 @@ python main.py
 # The setup wizard stores API keys separately (in secure keyring)
 ```
 
+### Commands not found after restarting terminal?
+
+If `python main.py` gives errors like "No module named..." or commands aren't found:
+
+```bash
+# You need to reactivate your virtual environment!
+# The venv deactivates when you close your terminal.
+
+# Mac/Linux:
+cd piper-morgan-product
+source venv/bin/activate
+
+# Windows PowerShell:
+cd piper-morgan-product
+.\venv\Scripts\Activate.ps1
+
+# Windows Command Prompt:
+cd piper-morgan-product
+venv\Scripts\activate.bat
+
+# Your prompt should now show (venv) - try your command again
+python main.py
+```
+
 ---
 
 ## Key Commands Reference
+
+> ⚠️ **Important**: All commands must be run inside an activated virtual environment!
+>
+> **Activate venv each time you open a new terminal:**
+> ```bash
+> # Mac/Linux:
+> source venv/bin/activate
+>
+> # Windows PowerShell:
+> .\venv\Scripts\Activate.ps1
+>
+> # Windows Command Prompt:
+> venv\Scripts\activate.bat
+> ```
+> Your prompt should show `(venv)` when activated.
 
 ```bash
 python main.py              # Start server (opens browser automatically)
@@ -340,7 +432,7 @@ After `python main.py` starts the server at http://localhost:8001:
 
 ---
 
-## What's Working in 0.8.5.1
+## What's Working in 0.8.5.3
 
 ✅ **MUX-IMPLEMENT Complete** (0.8.5):
    - WCAG 2.1 AA accessibility compliance
@@ -385,7 +477,7 @@ After `python main.py` starts the server at http://localhost:8001:
    - ARIA landmarks throughout
 
 ✅ **Quality Validation**:
-   - 5253 automated tests passing
+   - 5307 automated tests passing
    - CI/CD quality gates
    - UI stability improvements (638 template tests)
 
@@ -398,18 +490,18 @@ See [ALPHA_KNOWN_ISSUES.md](ALPHA_KNOWN_ISSUES.md) for complete status and known
 - **Full Guide**: [ALPHA_TESTING_GUIDE.md](ALPHA_TESTING_GUIDE.md) (comprehensive setup)
 - **Known Issues**: [ALPHA_KNOWN_ISSUES.md](ALPHA_KNOWN_ISSUES.md) (bugs and status)
 - **Legal**: [ALPHA_AGREEMENT_v2.md](ALPHA_AGREEMENT_v2.md) (terms and conditions)
-- **Version Info**: [VERSION_NUMBERING.md](VERSION_NUMBERING.md) (what 0.8.5.1 means)
+- **Version Info**: [VERSION_NUMBERING.md](VERSION_NUMBERING.md) (what 0.8.5.3 means)
 
 ---
 
 ## Remember
 
-This is **alpha software** (0.8.5.1). Expect bugs. Don't use for production. You're responsible for API costs. See `ALPHA_AGREEMENT_v2.md` for details.
+This is **alpha software** (0.8.5.3). Expect bugs. Don't use for production. You're responsible for API costs. See `ALPHA_AGREEMENT_v2.md` for details.
 
-**Testing Focus**: Core features are stable. Focus your testing on the new lifecycle indicators, Work Items view, and accessibility improvements.
+**Testing Focus**: Windows compatibility is now stable. Focus your testing on the installation validator, error messages, and lifecycle indicators.
 
 ---
 
 **Happy testing!** 🚀
 
-_Last Updated: January 28, 2026_
+_Last Updated: February 11, 2026_

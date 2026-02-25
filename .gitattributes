@@ -1,5 +1,8 @@
-# Shell scripts must use LF so they run in Linux containers (fixes "bad interpreter" on Windows hosts)
+# Force LF line endings for shell scripts (Windows compatibility)
+# Without this, Git on Windows may convert to CRLF, breaking Docker containers
 *.sh text eol=lf
+scripts/**/*.sh text eol=lf
+.pre-commit-hooks/*.sh text eol=lf
 
 # Use bd merge for beads JSONL files
 .beads/beads.jsonl merge=beads

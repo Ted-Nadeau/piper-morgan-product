@@ -726,6 +726,27 @@ async def create_user(req: CreateUserRequest):
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Username '{req.username}' already exists",
             )
+        # Provide helpful error messages for common database issues
+        elif "relation" in error_str and "does not exist" in error_str:
+            logger.error("user_creation_failed_missing_table", username=req.username, error=str(e))
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=(
+                    "Database tables are missing. "
+                    "Run 'python -m alembic upgrade head' to create them, "
+                    "then try again."
+                ),
+            )
+        elif "connection" in error_str or "connect" in error_str:
+            logger.error("user_creation_failed_db_connection", username=req.username, error=str(e))
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=(
+                    "Cannot connect to database. "
+                    "Ensure Docker is running: 'docker compose up -d', "
+                    "then try again."
+                ),
+            )
         else:
             logger.error("user_creation_failed", username=req.username, error=str(e), exc_info=True)
             raise HTTPException(

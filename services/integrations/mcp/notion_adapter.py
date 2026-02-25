@@ -50,13 +50,13 @@ class NotionMCPAdapter(BaseSpatialAdapter):
         self.token_counter = TokenCounter()
 
         # Notion client configuration with service injection pattern
-        if config_service:
-            # Use service injection pattern (preferred)
-            self.config_service = config_service
-            self.config = config_service.get_config()
-        else:
-            # Fallback to static config for backward compatibility
-            self.config_service = None
+        # Note: We use lazy config loading - don't call get_config() here because
+        # at startup time there's no user context. Config is loaded when needed.
+        # Issue #781: Fixed crash from calling get_config() without user_id
+        self.config_service = config_service
+        self.config = None  # Lazy load when user context available
+        if not config_service:
+            # Fallback to static config for backward compatibility (no user context)
             self.config = NotionConfig()
 
         self._notion_client: Optional[Client] = None
@@ -73,6 +73,10 @@ class NotionMCPAdapter(BaseSpatialAdapter):
     def _initialize_client(self):
         """Initialize Notion client with configuration."""
         try:
+            # Skip initialization if config not yet loaded (lazy loading)
+            if self.config is None:
+                logger.debug("Skipping client init - config not loaded (lazy loading)")
+                return
             api_key = self.config.get_api_key()
             if api_key:
                 # Use API version 2025-09-03 with ClientOptions
@@ -858,5 +862,6 @@ class NotionMCPAdapter(BaseSpatialAdapter):
 
     def __del__(self):
         """Destructor to ensure cleanup"""
-        if self._session and not self._session.closed:
+        # Issue #781: Guard against AttributeError if __init__ failed early
+        if hasattr(self, "_session") and self._session and not self._session.closed:
             asyncio.create_task(self.close())

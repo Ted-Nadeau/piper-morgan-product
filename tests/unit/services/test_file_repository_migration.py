@@ -12,7 +12,7 @@ Enhanced with complete test data isolation to prevent "6 files instead of 3" fai
 """
 
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from unittest.mock import Mock
 from uuid import uuid4
 
@@ -86,8 +86,8 @@ async def test_file_repository_with_async_session(async_transaction):
             file_type="application/pdf",
             file_size=1024,
             storage_path="/uploads/test_document.pdf",
-            upload_time=datetime.now(),
-            last_referenced=datetime.now(),
+            upload_time=datetime.now(timezone.utc),
+            last_referenced=datetime.now(timezone.utc),
             reference_count=0,
             metadata={"test": "data"},
         )
@@ -113,8 +113,8 @@ async def test_file_repository_with_config_service(async_transaction):
         file_type="application/pdf",
         file_size=1024,
         storage_path="/uploads/config_test.pdf",
-        upload_time=datetime.now(),
-        last_referenced=datetime.now(),
+        upload_time=datetime.now(timezone.utc),
+        last_referenced=datetime.now(timezone.utc),
         reference_count=0,
         metadata={"test": "config_service"},
     )
@@ -145,8 +145,8 @@ async def test_get_file_by_id(async_transaction):
         file_type="application/pdf",
         file_size=2048,
         storage_path="/uploads/retrieval_test.pdf",
-        upload_time=datetime.now(),
-        last_referenced=datetime.now(),
+        upload_time=datetime.now(timezone.utc),
+        last_referenced=datetime.now(timezone.utc),
         reference_count=0,
         metadata={"test": "retrieval"},
     )
@@ -190,8 +190,8 @@ async def test_get_files_for_session(async_transaction):
                 file_type="text/plain",
                 file_size=100 * (i + 1),
                 storage_path=f"/uploads/file_{i}.txt",
-                upload_time=datetime.now() - timedelta(minutes=i),
-                last_referenced=datetime.now(),
+                upload_time=datetime.now(timezone.utc) - timedelta(minutes=i),
+                last_referenced=datetime.now(timezone.utc),
                 reference_count=0,
                 metadata={},
             )
@@ -237,8 +237,8 @@ async def test_search_files_by_name(async_transaction):
                 file_type=file_type,
                 file_size=1000,
                 storage_path=f"/uploads/{filename}",
-                upload_time=datetime.now(),
-                last_referenced=datetime.now(),
+                upload_time=datetime.now(timezone.utc),
+                last_referenced=datetime.now(timezone.utc),
                 reference_count=0,
                 metadata={},
             )
@@ -268,8 +268,8 @@ async def test_increment_reference_count(async_transaction):
         file_type="application/msword",
         file_size=5000,
         storage_path="/uploads/important.doc",
-        upload_time=datetime.now() - timedelta(hours=1),
-        last_referenced=datetime.now() - timedelta(hours=1),
+        upload_time=datetime.now(timezone.utc) - timedelta(hours=1),
+        last_referenced=datetime.now(timezone.utc) - timedelta(hours=1),
         reference_count=0,
         metadata={},
     )
@@ -301,8 +301,8 @@ async def test_delete_file(async_transaction):
         file_type="application/pdf",
         file_size=1024,
         storage_path="/uploads/delete_test.pdf",
-        upload_time=datetime.now(),
-        last_referenced=datetime.now(),
+        upload_time=datetime.now(timezone.utc),
+        last_referenced=datetime.now(timezone.utc),
         reference_count=0,
         metadata={},
     )
@@ -344,8 +344,8 @@ async def test_file_repository_returns_domain_models(async_transaction):
         file_type="application/pdf",
         file_size=1024,
         storage_path="/uploads/domain_test.pdf",
-        upload_time=datetime.now(),
-        last_referenced=datetime.now(),
+        upload_time=datetime.now(timezone.utc),
+        last_referenced=datetime.now(timezone.utc),
         reference_count=0,
         metadata={"test": "domain_model"},
     )

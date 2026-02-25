@@ -342,13 +342,9 @@
   (function() {
     'use strict';
 
-    // Date group labels
-    const DATE_GROUPS = {
-      today: 'Today',
-      yesterday: 'Yesterday',
-      thisWeek: 'This Week',
-      older: 'Older',
-    };
+    // Issue #786: GLUE-HISTORY-DIFF - Monthly grouping for archive-oriented display
+    // This differentiates History sidebar (Layer 2: accumulated knowledge)
+    // from Conversation list (Layer 1: active sessions with Today/Yesterday grouping)
 
     let isOpen = false;
     let currentPage = 1;
@@ -358,28 +354,26 @@
     let overlayElement = null;
 
     /**
-     * Determine date group for a timestamp
+     * Get month key for grouping (e.g., "2026-02" for February 2026)
      * @param {Date} date - The date to categorize
-     * @returns {string} - Group key (today, yesterday, thisWeek, older)
+     * @returns {string} - Month key in YYYY-MM format for sorting
      */
-    function getDateGroup(date) {
-      const now = new Date();
-      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
-      const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+    function getMonthKey(date) {
+      const d = new Date(date);
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      return `${year}-${month}`;
+    }
 
-      const itemDate = new Date(date);
-      const itemDay = new Date(itemDate.getFullYear(), itemDate.getMonth(), itemDate.getDate());
-
-      if (itemDay.getTime() >= today.getTime()) {
-        return 'today';
-      } else if (itemDay.getTime() >= yesterday.getTime()) {
-        return 'yesterday';
-      } else if (itemDay.getTime() >= weekAgo.getTime()) {
-        return 'thisWeek';
-      } else {
-        return 'older';
-      }
+    /**
+     * Format month key for display (e.g., "February 2026")
+     * @param {string} monthKey - Month key in YYYY-MM format
+     * @returns {string} - Human-readable month label
+     */
+    function formatMonthLabel(monthKey) {
+      const [year, month] = monthKey.split('-');
+      const date = new Date(parseInt(year), parseInt(month) - 1, 1);
+      return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
     }
 
     /**
@@ -402,24 +396,35 @@
     }
 
     /**
-     * Group conversations by date
+     * Group conversations by month (Issue #786: GLUE-HISTORY-DIFF)
+     * Archive-oriented grouping for Layer 2 History sidebar
      * @param {Array} conversations - List of conversation objects
-     * @returns {Object} - Grouped conversations
+     * @returns {Object} - Grouped conversations by month key, with _order array
      */
-    function groupByDate(conversations) {
-      const groups = {
-        today: [],
-        yesterday: [],
-        thisWeek: [],
-        older: [],
-      };
+    function groupByMonth(conversations) {
+      const groups = {};
+      const monthOrder = [];
 
       conversations.forEach(conv => {
-        const group = getDateGroup(conv.timestamp || conv.created_at);
-        groups[group].push(conv);
+        const monthKey = getMonthKey(conv.timestamp || conv.created_at || conv.updated_at);
+        if (!groups[monthKey]) {
+          groups[monthKey] = [];
+          monthOrder.push(monthKey);
+        }
+        groups[monthKey].push(conv);
       });
 
+      // Sort months descending (newest first)
+      monthOrder.sort((a, b) => b.localeCompare(a));
+
+      // Attach order for rendering
+      groups._order = monthOrder;
       return groups;
+    }
+
+    // Keep old function name as alias for backward compatibility
+    function groupByDate(conversations) {
+      return groupByMonth(conversations);
     }
 
     /**
@@ -468,18 +473,20 @@
     }
 
     /**
-     * Render grouped conversations
-     * @param {Object} groups - Grouped conversations
+     * Render grouped conversations (Issue #786: GLUE-HISTORY-DIFF)
+     * Uses monthly grouping for archive-oriented display
+     * @param {Object} groups - Grouped conversations with _order array
      * @param {HTMLElement} container - Container element
      */
     function renderGroups(groups, container) {
       container.innerHTML = '';
 
-      const groupOrder = ['today', 'yesterday', 'thisWeek', 'older'];
+      // Use _order array for month ordering (newest first)
+      const groupOrder = groups._order || [];
 
-      groupOrder.forEach(groupKey => {
-        const items = groups[groupKey];
-        if (items.length === 0) return;
+      groupOrder.forEach(monthKey => {
+        const items = groups[monthKey];
+        if (!items || items.length === 0) return;
 
         const template = document.getElementById('history-group-template');
         if (!template) return;
@@ -487,9 +494,9 @@
         const clone = template.content.cloneNode(true);
         const group = clone.querySelector('.history-group');
 
-        // Header
+        // Header - format month key as "February 2026"
         const header = group.querySelector('.history-group-header');
-        header.textContent = DATE_GROUPS[groupKey];
+        header.textContent = formatMonthLabel(monthKey);
 
         // Items
         const itemsContainer = group.querySelector('.history-group-items');
@@ -504,7 +511,7 @@
       });
 
       // Empty state
-      const totalItems = Object.values(groups).reduce((sum, g) => sum + g.length, 0);
+      const totalItems = groupOrder.reduce((sum, key) => sum + (groups[key]?.length || 0), 0);
       if (totalItems === 0) {
         const empty = document.createElement('div');
         empty.className = 'history-empty';
@@ -698,9 +705,11 @@
       toggle: toggle,
       update: update,
       setPrivacyState: setPrivacyState,
-      groupByDate: groupByDate,
+      groupByDate: groupByDate,  // Alias to groupByMonth for compatibility
+      groupByMonth: groupByMonth,
       formatTime: formatTime,
-      DATE_GROUPS: DATE_GROUPS,
+      formatMonthLabel: formatMonthLabel,
+      getMonthKey: getMonthKey,
     };
 
     // Mark as loaded

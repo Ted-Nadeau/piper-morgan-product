@@ -14,7 +14,7 @@ from services.orchestration.integration.performance_monitoring import Performanc
 from services.orchestration.integration.session_integration import SessionIntegration
 from services.orchestration.integration.workflow_integration import WorkflowIntegration
 
-router = APIRouter(prefix="/api/orchestration", tags=["orchestration"])
+router = APIRouter(prefix="/api/v1/orchestration", tags=["orchestration"])
 
 
 # Request/Response models

@@ -1,7 +1,7 @@
 # Piper Morgan Alpha Testing Guide
 
-**Version**: 0.8.5.1
-**Last Updated**: January 31, 2026
+**Version**: 0.8.5.3
+**Last Updated**: February 11, 2026
 **For**: Alpha Testers
 
 ---
@@ -9,8 +9,8 @@
 ## Returning Tester? Start Here
 
 If you already have Piper set up and running, skip straight to what matters:
-- **[What's New in 0.8.5.1](#whats-new-in-0851)** - MUX complete, accessibility, lifecycle indicators
-- **[What to Test in 0.8.5.1](#what-to-test-in-0851)** - Priority testing areas for this release
+- **[What's New in 0.8.5.3](#whats-new-in-0853)** - Windows compatibility, setup UX improvements
+- **[What to Test in 0.8.5.3](#what-to-test-in-0853)** - Priority testing areas for this release
 - **[Troubleshooting](#chapter-3-troubleshooting)** - If something isn't working
 
 ---
@@ -76,7 +76,7 @@ This guide has three main sections:
 
 **⚠️ ALPHA SOFTWARE WARNING ⚠️**
 
-This is pre-release alpha software (version 0.8.5.1). By proceeding, you acknowledge:
+This is pre-release alpha software (version 0.8.5.3). By proceeding, you acknowledge:
 
 1. **Expected Issues**: Bugs, crashes, and incomplete features are normal
 2. **Data Loss Risk**: Your data may be lost at any time without warning
@@ -91,26 +91,38 @@ See `ALPHA_AGREEMENT_v2.md` for complete legal terms.
 
 ---
 
-## What's New in 0.8.5.1
+## What's New in 0.8.5.3
 
-**MUX-IMPLEMENT Complete** - The Modeled User Experience super epic is done. This is the biggest release since alpha started:
+**Windows Compatibility & Setup UX** - This release addresses 14 issues from Ted Nadeau's Windows testing:
 
-- **WCAG 2.1 AA Accessibility**: All color contrast ratios meet accessibility standards (11 colors fixed, all ratios ≥4.5:1). ARIA landmarks throughout navigation and command palette. Keyboard navigation, high contrast mode, and reduced motion support.
-- **Lifecycle State Persistence**: Projects, work items, features, and todos now persist lifecycle state to the database with visual indicators in the UI.
-- **New Views**: Work Items view and Project Detail view with lifecycle indicators.
-- **Design Token System v1.1.0**: Centralized CSS tokens with documented contrast ratios.
-- **ProcessRegistry**: Guided processes (onboarding, standup) now use a unified architecture (ADR-049).
+- **Windows Installation (#795)**: Fixed uvloop dependency blocking Windows installation with PEP 508 environment markers.
+- **Database Migrations (#796)**: Created missing migrations for `products`, `features`, and `work_items` tables.
+- **CRLF Handling (#797)**: Added .gitattributes rules to prevent Docker startup failures from Windows line endings.
+- **Installation Validator (#806)**: New `scripts/validate_install.py` script verifies all components are working.
+- **Actionable Errors (#808)**: Error messages now include specific fix suggestions.
+- **Documentation**: Realistic time estimates (20-50 min first setup), docker compose syntax, venv activation reminders, Windows localhost workaround.
+**Database Migration Required**: Run `alembic upgrade head` after updating.
 
-**Since 0.8.4** (included in this release):
-- Fresh install fixes for new testers (#605-#609)
-- Calendar bug fixes (human-readable times, correct day handling)
-- Chat auto-loads conversation on refresh
-- Portfolio onboarding on first greeting
-- Integration Settings management from the UI
-- Interactive Standup Assistant with conversational flow
-- 5253 automated tests passing (up from ~2100)
+See [Release Notes v0.8.5.3](releases/RELEASE-NOTES-v0.8.5.3.md) for full details.
 
-See [Release Notes v0.8.5](releases/RELEASE-NOTES-v0.8.5.md) for full details.
+<details>
+<summary><strong>Previous release (0.8.5.2)</strong></summary>
+
+**Bug Fixes**: Chat persistence (#787), date formatting (#788), calendar false positive (#789).
+
+</details>
+
+<details>
+<summary><strong>Previous release (0.8.5)</strong></summary>
+
+**MUX-IMPLEMENT Complete** - The Modeled User Experience super epic:
+- WCAG 2.1 AA Accessibility (11 colors fixed, all ratios ≥4.5:1)
+- Lifecycle State Persistence with visual indicators
+- New Views: Work Items and Project Detail
+- ProcessRegistry for guided processes (ADR-049)
+- 5253 automated tests passing
+
+</details>
 
 <details>
 <summary><strong>Previous release history (0.8.3 - 0.8.4.3)</strong></summary>
@@ -386,16 +398,16 @@ Click the button to go to the login page and start using Piper Morgan.
 
 This chapter covers what to test and how. If you're already set up, **start here**.
 
-## What to Test in 0.8.5.1
+## What to Test in 0.8.5.3
 
-Setup, login, chat, and core workflows are stable. The MUX-IMPLEMENT epic brought significant UI improvements. **Focus your testing on new features and the improved experience.**
+Windows compatibility and setup experience are the focus of this release. **Test the installation validator and new error handling.**
 
 ### Priority Testing Areas
 
-1. **Lifecycle Indicators** - Do projects and todos show their lifecycle state? Does it persist across sessions?
-2. **Work Items View** - Navigate to /work-items. Create, view, and manage work items.
-3. **Project Detail View** - Click into any project to see its detail page with work items.
-4. **Accessibility** - Try keyboard-only navigation. Tab through the interface. Try the command palette.
+1. **Installation Validator** - Run `python scripts/validate_install.py` and verify all checks pass
+2. **Windows Setup** - If on Windows, verify fresh installation works without issues
+3. **Error Messages** - Trigger errors (e.g., stop Docker) and verify helpful fix suggestions appear
+4. **Lifecycle Indicators** - Do projects and todos show their lifecycle state?
 5. **Interactive Standup Assistant** - Try "let's write a standup" or "/standup" in chat
 6. **Integration Dashboard** - Settings → Integrations, test buttons, health status display
 7. **Workflow Management** - Lists, todos, projects (CRUD operations, sharing, permissions)
@@ -601,7 +613,7 @@ The setup wizard (GUI or CLI) will guide you through Docker installation with pl
 
 **"Database not accessible"**
 
-- Ensure database is running: `docker-compose up -d db`
+- Ensure database is running: `docker compose up -d db`
 - Wait 10 seconds for database to start
 - Check Docker containers: `docker ps`
 
@@ -736,7 +748,7 @@ SEVERITY: [blocker/major/minor]
 If the setup wizard fails, you can fall back to manual configuration:
 
 1. **Environment Variables**: Copy `.env.example` to `.env` and edit
-2. **Database**: Run `docker-compose up -d db`
+2. **Database**: Run `docker compose up -d db`
 3. **API Keys**: Manually add to `.env` file
 4. **Database Migration**: Run database setup scripts
 
@@ -744,9 +756,53 @@ See original testing guide for detailed manual steps.
 
 ---
 
+## Advanced: Browsing the Database Directly
+
+For debugging and development, you can browse the PostgreSQL database directly:
+
+### Connection Details
+
+| Setting | Value |
+|---------|-------|
+| Host | `localhost` (or `127.0.0.1` on Windows) |
+| Port | `5433` (note: not default 5432) |
+| Database | `piper_morgan` |
+| Username | `piper` (from docker-compose.yml) |
+| Password | `dev_changeme_in_production` (from docker-compose.yml) |
+
+### GUI Tools (Optional)
+
+**pgAdmin** (recommended for beginners):
+1. Download from https://www.pgadmin.org/
+2. Add Server → Enter connection details above
+3. Browse tables under Databases → piper_morgan → Schemas → public → Tables
+
+**DBeaver** (full-featured alternative):
+1. Download from https://dbeaver.io/
+2. New Connection → PostgreSQL → Enter connection details
+3. Browse schema visually
+
+### Command Line Access
+
+```bash
+# Connect via Docker container
+docker exec -it piper-postgres psql -U piper -d piper_morgan
+
+# List tables
+\dt
+
+# Query example
+SELECT * FROM users;
+
+# Exit
+\q
+```
+
+---
+
 ## Questions?
 
-Remember: This is alpha software (version 0.8.5.1). The GUI setup wizard handles most complexity, but you're still testing early-stage software. Expect bugs and incomplete features.
+Remember: This is alpha software (version 0.8.5.3). The GUI setup wizard handles most complexity, but you're still testing early-stage software. Expect bugs and incomplete features.
 
 If guided setup seems overwhelming, a hosted version is planned for later in 2026.
 
@@ -763,5 +819,5 @@ Thank you for being an early adopter and helping us improve! 🚀
 
 ---
 
-_Last updated: January 28, 2026_
-_Software version: 0.8.5.1_
+_Last updated: February 11, 2026_
+_Software version: 0.8.5.3_
