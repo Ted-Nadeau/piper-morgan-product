@@ -1,3 +1,5 @@
+# Shell scripts must use LF so they run in Linux containers (fixes "bad interpreter" on Windows hosts)
+*.sh text eol=lf
 
 # Use bd merge for beads JSONL files
 .beads/beads.jsonl merge=beads
