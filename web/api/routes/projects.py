@@ -7,7 +7,7 @@ Provides project CRUD endpoints with ownership validation:
 - User-isolated project access
 """
 
-from typing import Optional
+from typing import Any, Dict, Optional
 
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -16,7 +16,8 @@ from pydantic import BaseModel
 from services.auth.auth_middleware import get_current_user
 from services.auth.jwt_service import JWTClaims
 from services.domain import models as domain
-from web.api.dependencies import get_project_repository
+from services.shared_types import IntegrationType
+from web.api.dependencies import get_project_integration_repository, get_project_repository
 
 router = APIRouter(prefix="/api/v1/projects", tags=["projects"])
 logger = structlog.get_logger(__name__)
@@ -43,6 +44,22 @@ class CreateProjectRequest(BaseModel):
 
     name: str
     description: Optional[str] = None
+
+
+class CreateIntegrationRequest(BaseModel):
+    """Request model for creating a project integration (Issue #859)"""
+
+    type: str  # IntegrationType value: "github", "jira", "linear", "slack"
+    name: str
+    config: Dict[str, Any]
+
+
+class UpdateIntegrationRequest(BaseModel):
+    """Request model for updating a project integration (Issue #859)"""
+
+    name: Optional[str] = None
+    config: Optional[Dict[str, Any]] = None
+    is_active: Optional[bool] = None
 
 
 @router.post("")
@@ -831,4 +848,380 @@ async def get_my_project_role(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to get project role",
+        )
+
+
+# --- Project Integration Endpoints (Issue #859) ---
+
+
+@router.get("/{project_id}/integrations")
+async def list_project_integrations(
+    project_id: str,
+    current_user: JWTClaims = Depends(get_current_user),
+    project_repo=Depends(get_project_repository),
+    integration_repo=Depends(get_project_integration_repository),
+) -> dict:
+    """
+    List all integrations for a project.
+
+    Issue #859: Project integration CRUD API.
+    """
+    try:
+        project = await project_repo.get_by_id(project_id, owner_id=current_user.sub)
+        if not project:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Project not found: {project_id}",
+            )
+
+        integrations = await integration_repo.list_by_project(
+            project_id=project_id, owner_id=current_user.sub
+        )
+
+        logger.info(
+            "list_project_integrations",
+            user_id=current_user.sub,
+            project_id=project_id,
+            count=len(integrations),
+        )
+
+        return {
+            "project_id": project_id,
+            "integrations": [
+                {
+                    "id": i.id,
+                    "type": i.type.value,
+                    "name": i.name,
+                    "config": i.config,
+                    "is_active": i.is_active,
+                    "created_at": i.created_at.isoformat() if i.created_at else None,
+                }
+                for i in integrations
+            ],
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(
+            "list_integrations_error",
+            user_id=current_user.sub,
+            project_id=project_id,
+            error=str(e),
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to list integrations",
+        )
+
+
+@router.post("/{project_id}/integrations", status_code=status.HTTP_201_CREATED)
+async def create_project_integration(
+    project_id: str,
+    request: CreateIntegrationRequest,
+    current_user: JWTClaims = Depends(get_current_user),
+    project_repo=Depends(get_project_repository),
+    integration_repo=Depends(get_project_integration_repository),
+) -> dict:
+    """
+    Create a new integration for a project.
+
+    Validates integration type and config before creating.
+
+    Issue #859: Project integration CRUD API.
+    """
+    try:
+        project = await project_repo.get_by_id(project_id, owner_id=current_user.sub)
+        if not project:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Project not found: {project_id}",
+            )
+
+        # Validate integration type
+        try:
+            integration_type = IntegrationType(request.type)
+        except ValueError:
+            valid_types = [t.value for t in IntegrationType]
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid integration type '{request.type}'. Valid types: {valid_types}",
+            )
+
+        # Validate config using domain model
+        integration = domain.ProjectIntegration(
+            type=integration_type,
+            name=request.name,
+            config=request.config,
+            project_id=project_id,
+        )
+        if not integration.validate_config():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid config for {integration_type.value} integration",
+            )
+
+        # Check for duplicate type
+        existing = await integration_repo.get_by_project_and_type(
+            project_id=project_id,
+            integration_type=integration_type,
+            owner_id=current_user.sub,
+        )
+        if existing:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"Integration of type '{integration_type.value}' already exists for this project",
+            )
+
+        created = await integration_repo.create(
+            id=integration.id,
+            project_id=project_id,
+            type=integration_type,
+            name=request.name,
+            config=request.config,
+        )
+
+        logger.info(
+            "integration_created",
+            user_id=current_user.sub,
+            project_id=project_id,
+            integration_id=created.id,
+            type=integration_type.value,
+        )
+
+        return {
+            "id": created.id,
+            "project_id": project_id,
+            "type": integration_type.value,
+            "name": request.name,
+            "config": request.config,
+            "is_active": True,
+            "created_at": created.created_at.isoformat() if created.created_at else None,
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(
+            "create_integration_error",
+            user_id=current_user.sub,
+            project_id=project_id,
+            error=str(e),
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to create integration",
+        )
+
+
+@router.get("/{project_id}/integrations/{integration_id}")
+async def get_project_integration(
+    project_id: str,
+    integration_id: str,
+    current_user: JWTClaims = Depends(get_current_user),
+    project_repo=Depends(get_project_repository),
+    integration_repo=Depends(get_project_integration_repository),
+) -> dict:
+    """
+    Get a specific integration for a project.
+
+    Issue #859: Project integration CRUD API.
+    """
+    try:
+        project = await project_repo.get_by_id(project_id, owner_id=current_user.sub)
+        if not project:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Project not found: {project_id}",
+            )
+
+        db_integration = await integration_repo.get_by_id(integration_id)
+        if not db_integration or db_integration.project_id != project_id:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Integration not found: {integration_id}",
+            )
+
+        integration = db_integration.to_domain()
+
+        logger.info(
+            "integration_retrieved",
+            user_id=current_user.sub,
+            project_id=project_id,
+            integration_id=integration_id,
+        )
+
+        return {
+            "id": integration.id,
+            "project_id": project_id,
+            "type": integration.type.value,
+            "name": integration.name,
+            "config": integration.config,
+            "is_active": integration.is_active,
+            "created_at": integration.created_at.isoformat() if integration.created_at else None,
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(
+            "get_integration_error",
+            user_id=current_user.sub,
+            project_id=project_id,
+            integration_id=integration_id,
+            error=str(e),
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve integration",
+        )
+
+
+@router.put("/{project_id}/integrations/{integration_id}")
+async def update_project_integration(
+    project_id: str,
+    integration_id: str,
+    request: UpdateIntegrationRequest,
+    current_user: JWTClaims = Depends(get_current_user),
+    project_repo=Depends(get_project_repository),
+    integration_repo=Depends(get_project_integration_repository),
+) -> dict:
+    """
+    Update an integration for a project.
+
+    Issue #859: Project integration CRUD API.
+    """
+    try:
+        project = await project_repo.get_by_id(project_id, owner_id=current_user.sub)
+        if not project:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Project not found: {project_id}",
+            )
+
+        db_integration = await integration_repo.get_by_id(integration_id)
+        if not db_integration or db_integration.project_id != project_id:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Integration not found: {integration_id}",
+            )
+
+        # Build update kwargs
+        update_kwargs = {}
+        if request.name is not None:
+            update_kwargs["name"] = request.name
+        if request.config is not None:
+            # Validate new config against integration type
+            test_integration = domain.ProjectIntegration(
+                type=db_integration.type,
+                config=request.config,
+            )
+            if not test_integration.validate_config():
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Invalid config for {db_integration.type.value} integration",
+                )
+            update_kwargs["config"] = request.config
+        if request.is_active is not None:
+            update_kwargs["is_active"] = request.is_active
+
+        if not update_kwargs:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No fields to update",
+            )
+
+        updated = await integration_repo.update(integration_id, **update_kwargs)
+
+        logger.info(
+            "integration_updated",
+            user_id=current_user.sub,
+            project_id=project_id,
+            integration_id=integration_id,
+            fields=list(update_kwargs.keys()),
+        )
+
+        return {
+            "id": updated.id,
+            "project_id": project_id,
+            "type": updated.type.value,
+            "name": updated.name,
+            "config": updated.config,
+            "is_active": updated.is_active,
+            "created_at": updated.created_at.isoformat() if updated.created_at else None,
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(
+            "update_integration_error",
+            user_id=current_user.sub,
+            project_id=project_id,
+            integration_id=integration_id,
+            error=str(e),
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to update integration",
+        )
+
+
+@router.delete("/{project_id}/integrations/{integration_id}")
+async def delete_project_integration(
+    project_id: str,
+    integration_id: str,
+    current_user: JWTClaims = Depends(get_current_user),
+    project_repo=Depends(get_project_repository),
+    integration_repo=Depends(get_project_integration_repository),
+) -> dict:
+    """
+    Delete an integration from a project.
+
+    Issue #859: Project integration CRUD API.
+    """
+    try:
+        project = await project_repo.get_by_id(project_id, owner_id=current_user.sub)
+        if not project:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Project not found: {project_id}",
+            )
+
+        db_integration = await integration_repo.get_by_id(integration_id)
+        if not db_integration or db_integration.project_id != project_id:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Integration not found: {integration_id}",
+            )
+
+        await integration_repo.delete(integration_id)
+
+        logger.info(
+            "integration_deleted",
+            user_id=current_user.sub,
+            project_id=project_id,
+            integration_id=integration_id,
+        )
+
+        return {"deleted": True, "integration_id": integration_id}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(
+            "delete_integration_error",
+            user_id=current_user.sub,
+            project_id=project_id,
+            integration_id=integration_id,
+            error=str(e),
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to delete integration",
         )

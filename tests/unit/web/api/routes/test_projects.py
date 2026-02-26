@@ -201,3 +201,299 @@ class TestProjectsListRoute:
         assert data["count"] == 1
         assert data["source"] == "database"
         assert data["projects"][0]["name"] == "Test Project"
+
+
+class TestProjectIntegrationEndpoints859:
+    """Tests for project integration CRUD endpoints (Issue #859)."""
+
+    @pytest.fixture
+    def mock_current_user(self):
+        user_id = str(uuid4())
+        return MockJWTClaims(sub=user_id)
+
+    @pytest.fixture
+    def mock_project(self, mock_current_user):
+        project = MagicMock()
+        project.id = str(uuid4())
+        project.name = "Test Project"
+        project.owner_id = mock_current_user.sub
+        return project
+
+    @pytest.fixture
+    def mock_project_repo(self, mock_project):
+        repo = MagicMock()
+        repo.get_by_id = AsyncMock(return_value=mock_project)
+        return repo
+
+    @pytest.fixture
+    def mock_integration(self, mock_project):
+        """Create a mock integration DB object (BaseRepository.get_by_id returns DB model)."""
+        from services.shared_types import IntegrationType
+
+        integration = MagicMock()
+        integration.id = str(uuid4())
+        integration.project_id = mock_project.id
+        integration.type = IntegrationType.GITHUB
+        integration.name = "Main Repository"
+        integration.config = {"repository": "owner/repo"}
+        integration.is_active = True
+        integration.created_at = None
+        # to_domain() returns a domain object
+        domain_obj = MagicMock()
+        domain_obj.id = integration.id
+        domain_obj.type = IntegrationType.GITHUB
+        domain_obj.name = "Main Repository"
+        domain_obj.config = {"repository": "owner/repo"}
+        domain_obj.is_active = True
+        domain_obj.created_at = None
+        integration.to_domain.return_value = domain_obj
+        return integration
+
+    @pytest.fixture
+    def mock_integration_repo(self):
+        repo = MagicMock()
+        repo.list_by_project = AsyncMock(return_value=[])
+        repo.get_by_project_and_type = AsyncMock(return_value=None)
+        repo.get_by_id = AsyncMock(return_value=None)
+        repo.create = AsyncMock()
+        repo.update = AsyncMock()
+        repo.delete = AsyncMock(return_value=True)
+        return repo
+
+    @pytest.fixture
+    def app_and_client(self, mock_current_user, mock_project_repo, mock_integration_repo):
+        from services.auth.auth_middleware import get_current_user
+        from web.api.dependencies import get_project_integration_repository, get_project_repository
+        from web.api.routes.projects import router
+
+        app = FastAPI()
+        app.include_router(router)
+        app.dependency_overrides[get_current_user] = lambda: mock_current_user
+        app.dependency_overrides[get_project_repository] = lambda: mock_project_repo
+        app.dependency_overrides[get_project_integration_repository] = lambda: mock_integration_repo
+        client = TestClient(app)
+        return app, client
+
+    # --- LIST ---
+
+    def test_list_integrations_empty(self, app_and_client, mock_project):
+        _, client = app_and_client
+        response = client.get(f"/api/v1/projects/{mock_project.id}/integrations")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["project_id"] == mock_project.id
+        assert data["integrations"] == []
+
+    def test_list_integrations_with_results(
+        self, app_and_client, mock_project, mock_integration_repo
+    ):
+        from services.shared_types import IntegrationType
+
+        domain_integration = MagicMock()
+        domain_integration.id = str(uuid4())
+        domain_integration.type = IntegrationType.GITHUB
+        domain_integration.name = "Main Repo"
+        domain_integration.config = {"repository": "owner/repo"}
+        domain_integration.is_active = True
+        domain_integration.created_at = None
+        mock_integration_repo.list_by_project = AsyncMock(return_value=[domain_integration])
+
+        _, client = app_and_client
+        response = client.get(f"/api/v1/projects/{mock_project.id}/integrations")
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data["integrations"]) == 1
+        assert data["integrations"][0]["type"] == "github"
+        assert data["integrations"][0]["name"] == "Main Repo"
+
+    def test_list_integrations_project_not_found(self, app_and_client, mock_project_repo):
+        mock_project_repo.get_by_id = AsyncMock(return_value=None)
+        _, client = app_and_client
+        response = client.get(f"/api/v1/projects/{uuid4()}/integrations")
+        assert response.status_code == 404
+
+    # --- CREATE ---
+
+    def test_create_integration_success(self, app_and_client, mock_project, mock_integration_repo):
+        created = MagicMock()
+        created.id = str(uuid4())
+        created.created_at = None
+        mock_integration_repo.create = AsyncMock(return_value=created)
+
+        _, client = app_and_client
+        response = client.post(
+            f"/api/v1/projects/{mock_project.id}/integrations",
+            json={"type": "github", "name": "Main Repo", "config": {"repository": "owner/repo"}},
+        )
+        assert response.status_code == 201
+        data = response.json()
+        assert data["type"] == "github"
+        assert data["name"] == "Main Repo"
+        assert data["config"] == {"repository": "owner/repo"}
+
+    def test_create_integration_invalid_type(self, app_and_client, mock_project):
+        _, client = app_and_client
+        response = client.post(
+            f"/api/v1/projects/{mock_project.id}/integrations",
+            json={"type": "invalid", "name": "Bad", "config": {}},
+        )
+        assert response.status_code == 400
+        assert "Invalid integration type" in response.json()["detail"]
+
+    def test_create_integration_invalid_config(self, app_and_client, mock_project):
+        _, client = app_and_client
+        response = client.post(
+            f"/api/v1/projects/{mock_project.id}/integrations",
+            json={"type": "github", "name": "No Repo Key", "config": {"wrong": "key"}},
+        )
+        assert response.status_code == 400
+        assert "Invalid config" in response.json()["detail"]
+
+    def test_create_integration_duplicate_type(
+        self, app_and_client, mock_project, mock_integration_repo
+    ):
+        mock_integration_repo.get_by_project_and_type = AsyncMock(return_value=MagicMock())
+        _, client = app_and_client
+        response = client.post(
+            f"/api/v1/projects/{mock_project.id}/integrations",
+            json={"type": "github", "name": "Dup", "config": {"repository": "owner/repo"}},
+        )
+        assert response.status_code == 409
+        assert "already exists" in response.json()["detail"]
+
+    def test_create_integration_project_not_found(self, app_and_client, mock_project_repo):
+        mock_project_repo.get_by_id = AsyncMock(return_value=None)
+        _, client = app_and_client
+        response = client.post(
+            f"/api/v1/projects/{uuid4()}/integrations",
+            json={"type": "github", "name": "X", "config": {"repository": "o/r"}},
+        )
+        assert response.status_code == 404
+
+    # --- GET ---
+
+    def test_get_integration_success(
+        self, app_and_client, mock_project, mock_integration, mock_integration_repo
+    ):
+        mock_integration_repo.get_by_id = AsyncMock(return_value=mock_integration)
+        _, client = app_and_client
+        response = client.get(
+            f"/api/v1/projects/{mock_project.id}/integrations/{mock_integration.id}"
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["id"] == mock_integration.id
+        assert data["type"] == "github"
+
+    def test_get_integration_not_found(self, app_and_client, mock_project):
+        _, client = app_and_client
+        response = client.get(f"/api/v1/projects/{mock_project.id}/integrations/{uuid4()}")
+        assert response.status_code == 404
+
+    def test_get_integration_wrong_project(
+        self, app_and_client, mock_project, mock_integration, mock_integration_repo
+    ):
+        """Integration exists but belongs to different project."""
+        mock_integration.project_id = str(uuid4())  # Different project
+        mock_integration_repo.get_by_id = AsyncMock(return_value=mock_integration)
+        _, client = app_and_client
+        response = client.get(
+            f"/api/v1/projects/{mock_project.id}/integrations/{mock_integration.id}"
+        )
+        assert response.status_code == 404
+
+    # --- UPDATE ---
+
+    def test_update_integration_name(
+        self, app_and_client, mock_project, mock_integration, mock_integration_repo
+    ):
+        from services.shared_types import IntegrationType
+
+        mock_integration_repo.get_by_id = AsyncMock(return_value=mock_integration)
+        updated = MagicMock()
+        updated.id = mock_integration.id
+        updated.type = IntegrationType.GITHUB
+        updated.name = "Renamed Repo"
+        updated.config = {"repository": "owner/repo"}
+        updated.is_active = True
+        updated.created_at = None
+        mock_integration_repo.update = AsyncMock(return_value=updated)
+
+        _, client = app_and_client
+        response = client.put(
+            f"/api/v1/projects/{mock_project.id}/integrations/{mock_integration.id}",
+            json={"name": "Renamed Repo"},
+        )
+        assert response.status_code == 200
+        assert response.json()["name"] == "Renamed Repo"
+
+    def test_update_integration_invalid_config(
+        self, app_and_client, mock_project, mock_integration, mock_integration_repo
+    ):
+        mock_integration_repo.get_by_id = AsyncMock(return_value=mock_integration)
+        _, client = app_and_client
+        response = client.put(
+            f"/api/v1/projects/{mock_project.id}/integrations/{mock_integration.id}",
+            json={"config": {"wrong": "key"}},
+        )
+        assert response.status_code == 400
+        assert "Invalid config" in response.json()["detail"]
+
+    def test_update_integration_empty_body(
+        self, app_and_client, mock_project, mock_integration, mock_integration_repo
+    ):
+        mock_integration_repo.get_by_id = AsyncMock(return_value=mock_integration)
+        _, client = app_and_client
+        response = client.put(
+            f"/api/v1/projects/{mock_project.id}/integrations/{mock_integration.id}",
+            json={},
+        )
+        assert response.status_code == 400
+        assert "No fields to update" in response.json()["detail"]
+
+    # --- DELETE ---
+
+    def test_delete_integration_success(
+        self, app_and_client, mock_project, mock_integration, mock_integration_repo
+    ):
+        mock_integration_repo.get_by_id = AsyncMock(return_value=mock_integration)
+        _, client = app_and_client
+        response = client.delete(
+            f"/api/v1/projects/{mock_project.id}/integrations/{mock_integration.id}"
+        )
+        assert response.status_code == 200
+        assert response.json()["deleted"] is True
+
+    def test_delete_integration_not_found(self, app_and_client, mock_project):
+        _, client = app_and_client
+        response = client.delete(f"/api/v1/projects/{mock_project.id}/integrations/{uuid4()}")
+        assert response.status_code == 404
+
+    # --- OWNERSHIP VERIFICATION ---
+
+    def test_all_endpoints_verify_project_ownership(self, app_and_client, mock_project_repo):
+        """All integration endpoints should return 404 when project not owned by user."""
+        mock_project_repo.get_by_id = AsyncMock(return_value=None)
+        _, client = app_and_client
+        fake_pid = str(uuid4())
+        fake_iid = str(uuid4())
+
+        assert client.get(f"/api/v1/projects/{fake_pid}/integrations").status_code == 404
+        assert (
+            client.post(
+                f"/api/v1/projects/{fake_pid}/integrations",
+                json={"type": "github", "name": "X", "config": {"repository": "o/r"}},
+            ).status_code
+            == 404
+        )
+        assert client.get(f"/api/v1/projects/{fake_pid}/integrations/{fake_iid}").status_code == 404
+        assert (
+            client.put(
+                f"/api/v1/projects/{fake_pid}/integrations/{fake_iid}",
+                json={"name": "X"},
+            ).status_code
+            == 404
+        )
+        assert (
+            client.delete(f"/api/v1/projects/{fake_pid}/integrations/{fake_iid}").status_code == 404
+        )

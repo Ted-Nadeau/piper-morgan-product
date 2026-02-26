@@ -23,6 +23,7 @@ if TYPE_CHECKING:
 
 from services.database.repositories import (
     ConversationRepository,
+    ProjectIntegrationRepository,
     ProjectRepository,
     WorkItemRepository,
 )
@@ -167,6 +168,18 @@ async def get_project_repository() -> AsyncGenerator[ProjectRepository, None]:
     async with AsyncSessionFactory.session_scope_fresh() as session:
         yield ProjectRepository(session)
         # Commit changes after successful route execution
+        await session.commit()
+
+
+async def get_project_integration_repository() -> (
+    AsyncGenerator[ProjectIntegrationRepository, None]
+):
+    """Dependency injection for ProjectIntegrationRepository.
+
+    Issue #859: Project integration CRUD endpoints.
+    """
+    async with AsyncSessionFactory.session_scope_fresh() as session:
+        yield ProjectIntegrationRepository(session)
         await session.commit()
 
 
