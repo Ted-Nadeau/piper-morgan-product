@@ -1736,7 +1736,7 @@ General AI assistants are great for general tasks. I'm specifically designed to 
             }
 
         # Issue #496: Fetch priority metadata from GitHub
-        priority_metadata = await self._get_priority_metadata()
+        priority_metadata = await self._get_priority_metadata(user_id=user_id)
 
         # Adjust response detail based on spatial pattern
         if spatial_pattern == "GRANULAR":
@@ -1892,13 +1892,23 @@ General AI assistants are great for general tasks. I'm specifically designed to 
 
         Returns next meeting and free time blocks if calendar is configured.
         Falls back gracefully if calendar is not available.
+
+        Issue #847: Uses config_service.is_configured(user_id) instead of
+        plugin.is_configured() which always returns False without user context (#784).
         """
         try:
-            # Check if calendar plugin is registered and configured
-            registry = get_plugin_registry()
-            calendar_plugin = registry.get_plugin("calendar")
+            # Issue #847: Check configuration using config_service with user_id
+            # Plugin-level is_configured() always returns False without user context (#784)
+            if not user_id:
+                return None
 
-            if not calendar_plugin or not calendar_plugin.is_configured():
+            from services.integrations.calendar.config_service import CalendarConfigService
+
+            try:
+                config_service = CalendarConfigService()
+                if not config_service.is_configured(user_id):
+                    return None
+            except Exception:
                 return None
 
             # Get calendar router from plugin
@@ -2018,7 +2028,7 @@ General AI assistants are great for general tasks. I'm specifically designed to 
             logger.debug(f"Project metadata unavailable: {e}")
             return {}
 
-    async def _get_priority_metadata(self) -> Dict[str, Any]:
+    async def _get_priority_metadata(self, user_id: Optional[str] = None) -> Dict[str, Any]:
         """
         Issue #496: Get priority-related metadata from GitHub.
 
@@ -2028,14 +2038,27 @@ General AI assistants are great for general tasks. I'm specifically designed to 
         - milestone_info: Current milestone if any
 
         Falls back gracefully if GitHub is not available.
+
+        Issue #847: Uses config_service.is_configured(user_id) instead of
+        plugin.is_configured() which always returns False without user context (#784).
         """
         try:
-            # Check if GitHub plugin is registered and configured
-            registry = get_plugin_registry()
-            github_plugin = registry.get_plugin("github")
+            # Issue #847: Check configuration using config_service with user_id
+            # Plugin-level is_configured() always returns False without user context (#784)
+            if not user_id:
+                logger.debug("No user_id, returning empty priority metadata")
+                return {}
 
-            if not github_plugin or not github_plugin.is_configured():
-                logger.debug("GitHub not configured, returning empty priority metadata")
+            from services.integrations.github.config_service import GitHubConfigService
+
+            try:
+                config_service = GitHubConfigService()
+                if not config_service.is_configured(user_id):
+                    logger.debug(
+                        "GitHub not configured for user, returning empty priority metadata"
+                    )
+                    return {}
+            except Exception:
                 return {}
 
             # Import and instantiate GitHub domain service
@@ -4136,7 +4159,7 @@ What would you like to set up first?"""
         # Issue #497: Gather project and priority metadata for rich context
         projects = user_context.projects if user_context else []
         project_metadata = await self._get_project_metadata(projects) if projects else {}
-        priority_metadata = await self._get_priority_metadata()
+        priority_metadata = await self._get_priority_metadata(user_id=user_id)
 
         # Issue #497: Synthesize focus recommendation from all context
         focus_recommendation = self._synthesize_focus_recommendation(

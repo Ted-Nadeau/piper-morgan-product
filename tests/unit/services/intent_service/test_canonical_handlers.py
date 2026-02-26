@@ -3782,3 +3782,131 @@ class TestProjectSpecificQuery:
 
         # Assert - STANDARD should not show priorities (only GRANULAR does)
         assert "🎯 **Current Priorities**:" not in result
+
+
+class TestIntegrationTipLogic847:
+    """
+    Issue #847: Verify tip logic uses config_service.is_configured(user_id)
+    instead of plugin.is_configured() which always returns False.
+    """
+
+    def test_tip_not_shown_when_calendar_configured(self, canonical_handlers):
+        """Calendar configured → no 'Connect your calendar' tip."""
+        # calendar_context with has_calendar=True means config check passed
+        calendar_context = {"has_calendar": True}
+        project_metadata = {"some_project": {"has_github": True}}
+        priority_metadata = {"has_github": True, "high_priority_issues": []}
+
+        user_context = MagicMock()
+        user_context.projects = ["MyProject"]
+        user_context.priorities = []
+
+        result = canonical_handlers._synthesize_focus_recommendation(
+            current_hour=10,
+            user_context=user_context,
+            calendar_context=calendar_context,
+            project_metadata=project_metadata,
+            priority_metadata=priority_metadata,
+        )
+
+        assert "calendar" not in result["missing_integrations"]
+        # Should not suggest connecting calendar
+        for suggestion in result["suggestions"]:
+            assert "Connect your calendar" not in suggestion
+
+    def test_tip_shown_when_calendar_not_configured(self, canonical_handlers):
+        """Calendar not configured → 'Connect your calendar' tip shown."""
+        result = canonical_handlers._synthesize_focus_recommendation(
+            current_hour=10,
+            user_context=MagicMock(projects=[], priorities=[]),
+            calendar_context=None,
+            project_metadata={},
+            priority_metadata={},
+        )
+
+        assert "calendar" in result["missing_integrations"]
+
+    def test_tip_not_shown_when_github_configured(self, canonical_handlers):
+        """GitHub configured → no 'Connect GitHub' tip."""
+        priority_metadata = {"has_github": True, "high_priority_issues": []}
+        project_metadata = {"proj": {"has_github": True}}
+
+        result = canonical_handlers._synthesize_focus_recommendation(
+            current_hour=10,
+            user_context=MagicMock(projects=["proj"], priorities=[]),
+            calendar_context=None,
+            project_metadata=project_metadata,
+            priority_metadata=priority_metadata,
+        )
+
+        assert "github" not in result["missing_integrations"]
+
+    def test_tip_shown_when_github_not_configured(self, canonical_handlers):
+        """GitHub not configured → 'Connect GitHub' tip shown."""
+        result = canonical_handlers._synthesize_focus_recommendation(
+            current_hour=10,
+            user_context=MagicMock(projects=[], priorities=[]),
+            calendar_context=None,
+            project_metadata={},
+            priority_metadata={},
+        )
+
+        assert "github" in result["missing_integrations"]
+
+    def test_context_level_rich_when_all_configured(self, canonical_handlers):
+        """All integrations configured → context_level is 'rich'."""
+        result = canonical_handlers._synthesize_focus_recommendation(
+            current_hour=10,
+            user_context=MagicMock(projects=["proj"], priorities=["p1"]),
+            calendar_context={"has_calendar": True},
+            project_metadata={"proj": {}},
+            priority_metadata={"has_github": True},
+        )
+
+        assert result["context_level"] == "rich"
+
+    @pytest.mark.asyncio
+    async def test_get_calendar_context_uses_config_service(self, canonical_handlers):
+        """_get_calendar_context checks config_service, not plugin.is_configured()."""
+        with patch(
+            "services.integrations.calendar.config_service.CalendarConfigService"
+        ) as MockConfigService:
+            mock_config = MagicMock()
+            mock_config.is_configured.return_value = False
+            MockConfigService.return_value = mock_config
+
+            result = await canonical_handlers._get_calendar_context(user_id="test-user")
+
+            # Should have checked config service with user_id
+            mock_config.is_configured.assert_called_once_with("test-user")
+            # Config says not configured → should return None
+            assert result is None
+
+    @pytest.mark.asyncio
+    async def test_get_priority_metadata_uses_config_service(self, canonical_handlers):
+        """_get_priority_metadata checks config_service, not plugin.is_configured()."""
+        with patch(
+            "services.integrations.github.config_service.GitHubConfigService"
+        ) as MockConfigService:
+            mock_config = MagicMock()
+            mock_config.is_configured.return_value = False
+            MockConfigService.return_value = mock_config
+
+            result = await canonical_handlers._get_priority_metadata(user_id="test-user")
+
+            # Should have checked config service with user_id
+            mock_config.is_configured.assert_called_once_with("test-user")
+            # Config says not configured → should return empty dict
+            assert result == {}
+
+    @pytest.mark.asyncio
+    async def test_get_calendar_context_returns_none_without_user_id(self, canonical_handlers):
+        """_get_calendar_context returns None when no user_id provided."""
+        result = await canonical_handlers._get_calendar_context(user_id=None)
+        assert result is None
+
+    @pytest.mark.asyncio
+    async def test_get_priority_metadata_returns_empty_without_user_id(self, canonical_handlers):
+        """_get_priority_metadata returns empty dict when no user_id provided."""
+        result = await canonical_handlers._get_priority_metadata(user_id=None)
+        assert result == {}
