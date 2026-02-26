@@ -50,7 +50,12 @@ async def get_current_user_optional(
 
     Issue #455: Checks both Authorization header AND auth_token cookie
     to support web UI authentication with credentials: 'include'.
+
+    Issue #840: Sets request.state.auth_expired = True when a token was present
+    but expired, so the route can signal the frontend to re-authenticate.
     """
+    from services.auth.jwt_service import TokenExpired
+
     # Extract token from Authorization header or cookie (Issue #455)
     token = None
     if credentials:
@@ -67,15 +72,17 @@ async def get_current_user_optional(
         if jwt_service is None:
             jwt_service = JWTService()
 
-        print(
-            f"DEBUG #490: Attempting JWT verification, token present={bool(token)}, token_length={len(token) if token else 0}"
-        )
         # Issue #490: Use validate_token (async) not verify_token (doesn't exist)
         claims = await jwt_service.validate_token(token)
-        print(f"DEBUG #490: JWT verified successfully, user_id={claims.sub if claims else None}")
         return claims
+    except TokenExpired:
+        # Issue #840: Token was present but expired — flag for route to signal frontend
+        request.state.auth_expired = True
+        logger.warning(
+            "auth_token_expired", detail="Token present but expired, flagging for frontend redirect"
+        )
+        return None
     except Exception as e:
-        print(f"DEBUG #490: JWT verification FAILED: {e}")
         logger.debug(f"JWT verification failed (continuing as unauthenticated): {e}")
         return None
 
@@ -322,6 +329,8 @@ async def process_intent(
             "preferences": result.preferences,  # Issue #248: Preference detection results
             "session_id": session_id,  # Issue #787: Return session_id for frontend sync
             "conversation_created": conversation_created,  # Issue #787: Signal sidebar refresh
+            # Issue #840: Signal frontend when auth has expired so it can redirect to login
+            "auth_expired": getattr(request.state, "auth_expired", False),
         }
 
         # Add error fields if present (semantic/validation errors from service)

@@ -1006,12 +1006,23 @@ class ConversationRepository(BaseRepository):
         if existing:
             return
 
-        # Create new conversation
+        # Issue #840: Refuse to create conversation without valid user_id.
+        # Conversations with user_id="unknown" become permanently invisible
+        # in list_for_user() — better to skip creation (turn save will fail
+        # on FK constraint) than create an orphaned record.
+        if not user_id:
+            logger.error(
+                "ensure_conversation_exists_refused_no_user_id",
+                conversation_id=conversation_id,
+                reason="Cannot create conversation without user_id — would be invisible in sidebar",
+            )
+            return
+
         conversation = ConversationDB(
             id=conversation_id,
-            user_id=user_id or conversation_id,  # Use conversation_id as fallback
+            user_id=user_id,
             session_id=conversation_id,
-            title=f"Conversation",
+            title="Conversation",
             context={},
             is_active=True,
         )

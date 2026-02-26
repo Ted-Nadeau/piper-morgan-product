@@ -469,6 +469,18 @@
         if (result.conversation_created && typeof loadConversations === 'function') {
           loadConversations();
         }
+
+        // Issue #840: Detect expired auth token and redirect to login
+        if (result.auth_expired) {
+          const warningDiv = appendMessage(
+            "Your session has expired. Redirecting to login so you can continue with full features...",
+            false
+          );
+          warningDiv.classList.add("reply");
+          setTimeout(() => {
+            window.location.href = "/login";
+          }, 2000);
+        }
       } catch (error) {
         // Replace the 'thinking' message with a new error message (with 'error' class)
         const errorDiv = appendMessage("", false);

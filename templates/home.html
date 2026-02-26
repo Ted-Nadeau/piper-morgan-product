@@ -1895,7 +1895,10 @@
           // Issue #786: Search by title
           if (query) params.set('search', query);
 
-          const response = await fetch(`/api/v1/conversations?${params}`);
+          // Issue #840: Must include credentials for authenticated API access
+          const response = await fetch(`/api/v1/conversations?${params}`, {
+            credentials: 'include'
+          });
           if (!response.ok) {
             throw new Error(`Failed to fetch conversations: ${response.status}`);
           }
