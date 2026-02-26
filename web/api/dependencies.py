@@ -25,6 +25,7 @@ from services.database.repositories import (
     ConversationRepository,
     ProjectIntegrationRepository,
     ProjectRepository,
+    RepositoryRepository,
     WorkItemRepository,
 )
 from services.database.session_factory import AsyncSessionFactory
@@ -180,6 +181,16 @@ async def get_project_integration_repository() -> (
     """
     async with AsyncSessionFactory.session_scope_fresh() as session:
         yield ProjectIntegrationRepository(session)
+        await session.commit()
+
+
+async def get_repository_repository() -> AsyncGenerator[RepositoryRepository, None]:
+    """Dependency injection for RepositoryRepository.
+
+    Issue #866: Repository as first-class domain entity.
+    """
+    async with AsyncSessionFactory.session_scope_fresh() as session:
+        yield RepositoryRepository(session)
         await session.commit()
 
 

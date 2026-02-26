@@ -54,14 +54,23 @@ class TestSetupProjectCreation:
 
     @pytest.mark.asyncio
     async def test_create_project_with_github_repo(self):
-        """Should create project and link GitHub repo."""
+        """Should create project, Repository entity, link, AND legacy integration (#866 dual-write)."""
+        from services.domain.models import Repository as DomainRepo
         from web.api.routes.setup import SetupProjectRequest, create_setup_project
 
         user_id = str(uuid4())
         project_id = str(uuid4())
+        repo_id = str(uuid4())
 
         mock_project = MagicMock()
         mock_project.id = project_id
+
+        mock_repo_entity = DomainRepo(
+            id=repo_id,
+            owner_id=user_id,
+            provider="github",
+            full_name="owner/backend-api",
+        )
 
         with patch("web.api.routes.setup.AsyncSessionFactory") as MockFactory:
             mock_session = AsyncMock()
@@ -73,6 +82,7 @@ class TestSetupProjectCreation:
             with (
                 patch("services.database.repositories.ProjectRepository") as MockProjectRepo,
                 patch("services.database.repositories.ProjectIntegrationRepository") as MockIntRepo,
+                patch("services.database.repositories.RepositoryRepository") as MockRepoRepo,
             ):
                 mock_repo = MagicMock()
                 mock_repo.create = AsyncMock(return_value=mock_project)
@@ -81,6 +91,11 @@ class TestSetupProjectCreation:
                 mock_int_repo = MagicMock()
                 mock_int_repo.create = AsyncMock()
                 MockIntRepo.return_value = mock_int_repo
+
+                mock_repo_repo = MagicMock()
+                mock_repo_repo.create_repository = AsyncMock(return_value=mock_repo_entity)
+                mock_repo_repo.link_to_project = AsyncMock()
+                MockRepoRepo.return_value = mock_repo_repo
 
                 req = SetupProjectRequest(
                     user_id=user_id,
@@ -91,7 +106,22 @@ class TestSetupProjectCreation:
                 result = await create_setup_project(req)
 
         assert result.success is True
-        # Verify integration was created
+
+        # Verify NEW Repository entity was created (#866)
+        mock_repo_repo.create_repository.assert_called_once()
+        created_repo = mock_repo_repo.create_repository.call_args[0][0]
+        assert created_repo.full_name == "owner/backend-api"
+        assert created_repo.provider == "github"
+        assert created_repo.owner_id == user_id
+
+        # Verify NEW link was created (#866)
+        mock_repo_repo.link_to_project.assert_called_once()
+        link_kwargs = mock_repo_repo.link_to_project.call_args[1]
+        assert link_kwargs["repository_id"] == repo_id
+        assert link_kwargs["project_id"] == project_id
+        assert link_kwargs["is_primary"] is True
+
+        # Verify LEGACY integration was also created (dual-write)
         mock_int_repo.create.assert_called_once()
         int_kwargs = mock_int_repo.create.call_args[1]
         assert int_kwargs["project_id"] == project_id

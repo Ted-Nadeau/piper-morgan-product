@@ -344,6 +344,71 @@ class ProjectIntegration:
 
 
 @dataclass
+class Repository:
+    """A code repository — first-class, provider-agnostic domain entity.
+
+    Repositories are independent objects that can be linked to zero or more
+    projects via many-to-many relationship (ProjectRepositoryLink).
+    Issue #866: Repository as first-class domain entity.
+    """
+
+    id: str = field(default_factory=lambda: str(uuid4()))
+    owner_id: str = ""  # UUID FK to users — who registered this repo
+    provider: str = "github"  # "github", "gitlab", "bitbucket"
+    full_name: str = ""  # e.g. "mediajunkie/piper-morgan-product"
+    display_name: str = ""  # User-friendly name, defaults to repo part of full_name
+    url: str = ""  # e.g. "https://github.com/mediajunkie/piper-morgan-product"
+    is_active: bool = True
+    created_at: datetime = field(default_factory=datetime.now)
+    updated_at: datetime = field(default_factory=datetime.now)
+
+    def __post_init__(self):
+        """Auto-derive display_name from full_name if not set."""
+        if not self.display_name and self.full_name:
+            self.display_name = (
+                self.full_name.split("/")[-1] if "/" in self.full_name else self.full_name
+            )
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "id": self.id,
+            "owner_id": self.owner_id,
+            "provider": self.provider,
+            "full_name": self.full_name,
+            "display_name": self.display_name,
+            "url": self.url,
+            "is_active": self.is_active,
+            "created_at": self.created_at.isoformat(),
+            "updated_at": self.updated_at.isoformat(),
+        }
+
+
+@dataclass
+class ProjectRepositoryLink:
+    """Link between a Project and a Repository (many-to-many).
+
+    Issue #866: Repository as first-class domain entity.
+    """
+
+    id: str = field(default_factory=lambda: str(uuid4()))
+    project_id: str = ""
+    repository_id: str = ""
+    is_primary: bool = False  # Whether this is the "main" repo for the project
+    linked_at: datetime = field(default_factory=datetime.now)
+    linked_by: str = ""  # User who created the link
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "id": self.id,
+            "project_id": self.project_id,
+            "repository_id": self.repository_id,
+            "is_primary": self.is_primary,
+            "linked_at": self.linked_at.isoformat(),
+            "linked_by": self.linked_by,
+        }
+
+
+@dataclass
 class Project:
     """A PM project with multiple tool integrations"""
 
@@ -352,6 +417,7 @@ class Project:
     name: str = ""
     description: str = ""
     integrations: List[ProjectIntegration] = field(default_factory=list)
+    repositories: List["Repository"] = field(default_factory=list)
     shared_with: List[SharePermission] = field(default_factory=list)
     is_default: bool = False
     is_archived: bool = False
@@ -372,7 +438,17 @@ class Project:
         return None
 
     def get_github_repository(self) -> Optional[str]:
-        """Get GitHub repository for this project"""
+        """Get GitHub repository for this project.
+
+        Checks Repository entities first (#866 M2M model), falls back to
+        ProjectIntegration config for backward compatibility.
+        """
+        # New path: check linked Repository entities
+        for repo in self.repositories:
+            if repo.provider == "github" and repo.is_active:
+                return repo.full_name
+
+        # Legacy fallback: check ProjectIntegration config
         github_integration = self.get_integration(IntegrationType.GITHUB)
         return github_integration.config.get("repository") if github_integration else None
 
@@ -405,6 +481,7 @@ class Project:
                 }
                 for integ in self.integrations
             ],
+            "repositories": [repo.to_dict() for repo in self.repositories],
             "shared_with": [perm.to_dict() for perm in self.shared_with],
             "is_default": self.is_default,
             "is_archived": self.is_archived,

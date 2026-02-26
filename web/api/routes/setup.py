@@ -927,8 +927,14 @@ async def create_setup_project(req: SetupProjectRequest):
     account creation step. Called between account creation and setup completion.
 
     Issue #860: Setup wizard project-repo linking step.
+    Issue #866: Dual-write — creates both Repository entity and legacy ProjectIntegration.
     """
-    from services.database.repositories import ProjectIntegrationRepository, ProjectRepository
+    from services.database.repositories import (
+        ProjectIntegrationRepository,
+        ProjectRepository,
+        RepositoryRepository,
+    )
+    from services.domain import models as domain
     from services.shared_types import IntegrationType
 
     try:
@@ -960,6 +966,27 @@ async def create_setup_project(req: SetupProjectRequest):
                         detail="GitHub repo must be in owner/repo format",
                     )
 
+                # New: Create Repository entity (#866)
+                repo_repo = RepositoryRepository(session)
+                repo_entity = await repo_repo.create_repository(
+                    domain.Repository(
+                        owner_id=req.user_id,
+                        provider="github",
+                        full_name=repo_name,
+                        display_name=repo_name.split("/")[-1],
+                        url=f"https://github.com/{repo_name}",
+                    )
+                )
+
+                # New: Link to project (#866)
+                await repo_repo.link_to_project(
+                    repository_id=repo_entity.id,
+                    project_id=project_id,
+                    linked_by=req.user_id,
+                    is_primary=True,
+                )
+
+                # Legacy: Also create ProjectIntegration for backward compatibility
                 integration_repo = ProjectIntegrationRepository(session)
                 await integration_repo.create(
                     id=str(uuid.uuid4()),

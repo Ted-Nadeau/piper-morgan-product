@@ -12,6 +12,8 @@ from .models import (  # Core Entities; PM-009: Project Management; Workflow & I
     Product,
     Project,
     ProjectIntegration,
+    ProjectRepositoryLink,
+    Repository,
     Stakeholder,
     Task,
     Workflow,
@@ -28,6 +30,9 @@ __all__ = [
     # PM-009: Project Management
     "Project",
     "ProjectIntegration",
+    # #866: Repository as first-class entity
+    "Repository",
+    "ProjectRepositoryLink",
     # Workflow & Intent
     "Intent",
     "Task",

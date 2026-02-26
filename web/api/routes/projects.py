@@ -851,6 +851,26 @@ async def get_my_project_role(
         )
 
 
+# --- Project Repository Endpoints (Issue #866) ---
+
+
+@router.get("/{project_id}/repositories")
+async def list_project_repositories(
+    project_id: str,
+    current_user: JWTClaims = Depends(get_current_user),
+    project_repo=Depends(get_project_repository),
+) -> dict:
+    """List repositories linked to a project."""
+    project = await project_repo.get_by_id(project_id, owner_id=current_user.sub)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    return {
+        "project_id": project_id,
+        "repositories": [repo.to_dict() for repo in project.repositories],
+    }
+
+
 # --- Project Integration Endpoints (Issue #859) ---
 
 

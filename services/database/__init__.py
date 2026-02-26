@@ -10,6 +10,8 @@ from .models import (
     Product,
     ProjectDB,
     ProjectIntegrationDB,
+    ProjectRepositoryLinkDB,
+    RepositoryDB,
     Stakeholder,
     Task,
     Workflow,
@@ -21,6 +23,7 @@ from .repositories import (
     ProjectIntegrationRepository,
     ProjectRepository,
     RepositoryFactory,
+    RepositoryRepository,
     TaskRepository,
     WorkflowRepository,
     WorkItemRepository,
@@ -40,6 +43,8 @@ __all__ = [
     "Stakeholder",
     "ProjectDB",
     "ProjectIntegrationDB",
+    "RepositoryDB",
+    "ProjectRepositoryLinkDB",
     # Repositories
     "ProductRepository",
     "FeatureRepository",
@@ -48,5 +53,6 @@ __all__ = [
     "TaskRepository",
     "ProjectRepository",
     "ProjectIntegrationRepository",
+    "RepositoryRepository",
     "RepositoryFactory",
 ]

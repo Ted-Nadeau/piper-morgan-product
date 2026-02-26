@@ -24,6 +24,8 @@ from .models import (
     Product,
     ProjectDB,
     ProjectIntegrationDB,
+    ProjectRepositoryLinkDB,
+    RepositoryDB,
     Task,
     Workflow,
     WorkItem,
@@ -188,7 +190,14 @@ class ProjectRepository(BaseRepository):
             filters.append(ProjectDB.owner_id == owner_id)
 
         result = await self.session.execute(
-            select(ProjectDB).options(selectinload(ProjectDB.integrations)).where(and_(*filters))
+            select(ProjectDB)
+            .options(
+                selectinload(ProjectDB.integrations),
+                selectinload(ProjectDB.repository_links).selectinload(
+                    ProjectRepositoryLinkDB.repository
+                ),
+            )
+            .where(and_(*filters))
         )
         db_project = result.scalar_one_or_none()
         if db_project:
@@ -198,7 +207,12 @@ class ProjectRepository(BaseRepository):
     async def get_default_project(self) -> Optional[domain.Project]:
         result = await self.session.execute(
             select(ProjectDB)
-            .options(selectinload(ProjectDB.integrations))  # Eager load for async
+            .options(
+                selectinload(ProjectDB.integrations),
+                selectinload(ProjectDB.repository_links).selectinload(
+                    ProjectRepositoryLinkDB.repository
+                ),
+            )
             .where(ProjectDB.is_default == True, ProjectDB.is_archived == False)
         )
         db_project = result.scalar_one_or_none()
@@ -216,7 +230,12 @@ class ProjectRepository(BaseRepository):
 
         result = await self.session.execute(
             select(ProjectDB)
-            .options(selectinload(ProjectDB.integrations))  # Eager load for async
+            .options(
+                selectinload(ProjectDB.integrations),
+                selectinload(ProjectDB.repository_links).selectinload(
+                    ProjectRepositoryLinkDB.repository
+                ),
+            )
             .where(and_(*filters))
             .order_by(ProjectDB.name)
         )
@@ -251,7 +270,12 @@ class ProjectRepository(BaseRepository):
 
         result = await self.session.execute(
             select(ProjectDB)
-            .options(selectinload(ProjectDB.integrations))  # Eager load for async
+            .options(
+                selectinload(ProjectDB.integrations),
+                selectinload(ProjectDB.repository_links).selectinload(
+                    ProjectRepositoryLinkDB.repository
+                ),
+            )
             .where(and_(*filters))
         )
         db_project = result.scalar_one_or_none()
@@ -290,7 +314,12 @@ class ProjectRepository(BaseRepository):
 
         result = await self.session.execute(
             select(ProjectDB)
-            .options(selectinload(ProjectDB.integrations))
+            .options(
+                selectinload(ProjectDB.integrations),
+                selectinload(ProjectDB.repository_links).selectinload(
+                    ProjectRepositoryLinkDB.repository
+                ),
+            )
             .where(and_(*filters))
             .order_by(ProjectDB.name)
             .limit(limit)
@@ -327,7 +356,14 @@ class ProjectRepository(BaseRepository):
             filters.append(ProjectDB.owner_id == owner_id)
 
         result = await self.session.execute(
-            select(ProjectDB).where(and_(*filters)).options(selectinload(ProjectDB.integrations))
+            select(ProjectDB)
+            .where(and_(*filters))
+            .options(
+                selectinload(ProjectDB.integrations),
+                selectinload(ProjectDB.repository_links).selectinload(
+                    ProjectRepositoryLinkDB.repository
+                ),
+            )
         )
         db_project = result.scalar_one_or_none()
         return db_project.to_domain() if db_project else None
@@ -357,7 +393,12 @@ class ProjectRepository(BaseRepository):
         # Verify the caller is the owner
         result = await self.session.execute(
             select(ProjectDB)
-            .options(selectinload(ProjectDB.integrations))  # Eager load for async
+            .options(
+                selectinload(ProjectDB.integrations),
+                selectinload(ProjectDB.repository_links).selectinload(
+                    ProjectRepositoryLinkDB.repository
+                ),
+            )
             .where(and_(ProjectDB.id == project_id, ProjectDB.owner_id == owner_id))
         )
         db_project = result.scalar_one_or_none()
@@ -416,7 +457,12 @@ class ProjectRepository(BaseRepository):
         # Verify the caller is the owner
         result = await self.session.execute(
             select(ProjectDB)
-            .options(selectinload(ProjectDB.integrations))  # Eager load for async
+            .options(
+                selectinload(ProjectDB.integrations),
+                selectinload(ProjectDB.repository_links).selectinload(
+                    ProjectRepositoryLinkDB.repository
+                ),
+            )
             .where(and_(ProjectDB.id == project_id, ProjectDB.owner_id == owner_id))
         )
         db_project = result.scalar_one_or_none()
@@ -470,7 +516,12 @@ class ProjectRepository(BaseRepository):
         # Verify the caller is the owner
         result = await self.session.execute(
             select(ProjectDB)
-            .options(selectinload(ProjectDB.integrations))  # Eager load for async
+            .options(
+                selectinload(ProjectDB.integrations),
+                selectinload(ProjectDB.repository_links).selectinload(
+                    ProjectRepositoryLinkDB.repository
+                ),
+            )
             .where(and_(ProjectDB.id == project_id, ProjectDB.owner_id == owner_id))
         )
         db_project = result.scalar_one_or_none()
@@ -582,6 +633,118 @@ class ProjectIntegrationRepository(BaseRepository):
 
         result = await self.session.execute(query.order_by(ProjectIntegrationDB.type))
         return [db_integration.to_domain() for db_integration in result.scalars().all()]
+
+
+class RepositoryRepository(BaseRepository):
+    """Repository for Repository (code repo) operations.
+
+    Issue #866: Repository as first-class domain entity.
+    """
+
+    model = RepositoryDB
+
+    async def create_repository(self, repo: domain.Repository) -> domain.Repository:
+        """Create a new repository."""
+        db_repo = RepositoryDB.from_domain(repo)
+        self.session.add(db_repo)
+        await self.session.flush()
+        await self.session.refresh(db_repo)
+        return db_repo.to_domain()
+
+    async def get_by_id(
+        self, repo_id: str, owner_id: Optional[str] = None
+    ) -> Optional[domain.Repository]:
+        """Get repository by ID, optionally verifying ownership."""
+        filters = [RepositoryDB.id == repo_id]
+        if owner_id:
+            filters.append(RepositoryDB.owner_id == owner_id)
+        result = await self.session.execute(select(RepositoryDB).where(and_(*filters)))
+        db_repo = result.scalar_one_or_none()
+        return db_repo.to_domain() if db_repo else None
+
+    async def get_by_full_name(
+        self, full_name: str, provider: str = "github", owner_id: Optional[str] = None
+    ) -> Optional[domain.Repository]:
+        """Get repository by provider + full_name, optionally scoped to owner."""
+        filters = [
+            RepositoryDB.full_name == full_name,
+            RepositoryDB.provider == provider,
+        ]
+        if owner_id:
+            filters.append(RepositoryDB.owner_id == owner_id)
+        result = await self.session.execute(select(RepositoryDB).where(and_(*filters)))
+        db_repo = result.scalar_one_or_none()
+        return db_repo.to_domain() if db_repo else None
+
+    async def list_by_owner(
+        self, owner_id: str, provider: Optional[str] = None, active_only: bool = True
+    ) -> List[domain.Repository]:
+        """List all repositories owned by a user."""
+        filters: List = [RepositoryDB.owner_id == owner_id]
+        if provider:
+            filters.append(RepositoryDB.provider == provider)
+        if active_only:
+            filters.append(RepositoryDB.is_active == True)
+        result = await self.session.execute(
+            select(RepositoryDB).where(and_(*filters)).order_by(RepositoryDB.full_name)
+        )
+        return [db.to_domain() for db in result.scalars().all()]
+
+    async def list_by_project(self, project_id: str) -> List[domain.Repository]:
+        """Get all repositories linked to a project."""
+        result = await self.session.execute(
+            select(RepositoryDB)
+            .join(ProjectRepositoryLinkDB, RepositoryDB.id == ProjectRepositoryLinkDB.repository_id)
+            .where(ProjectRepositoryLinkDB.project_id == project_id)
+            .order_by(RepositoryDB.full_name)
+        )
+        return [db.to_domain() for db in result.scalars().all()]
+
+    async def link_to_project(
+        self,
+        repository_id: str,
+        project_id: str,
+        linked_by: str,
+        is_primary: bool = False,
+    ) -> domain.ProjectRepositoryLink:
+        """Create a project-repository link."""
+        link = ProjectRepositoryLinkDB(
+            id=str(uuid.uuid4()),
+            project_id=project_id,
+            repository_id=repository_id,
+            is_primary=is_primary,
+            linked_by=linked_by,
+        )
+        self.session.add(link)
+        await self.session.flush()
+        await self.session.refresh(link)
+        return link.to_domain()
+
+    async def unlink_from_project(self, repository_id: str, project_id: str) -> bool:
+        """Remove a project-repository link."""
+        result = await self.session.execute(
+            select(ProjectRepositoryLinkDB).where(
+                and_(
+                    ProjectRepositoryLinkDB.repository_id == repository_id,
+                    ProjectRepositoryLinkDB.project_id == project_id,
+                )
+            )
+        )
+        link = result.scalar_one_or_none()
+        if link:
+            await self.session.delete(link)
+            await self.session.flush()
+            return True
+        return False
+
+    async def get_project_links(self, repository_id: str) -> List[domain.ProjectRepositoryLink]:
+        """Get all projects linked to a repository."""
+        result = await self.session.execute(
+            select(ProjectRepositoryLinkDB)
+            .where(ProjectRepositoryLinkDB.repository_id == repository_id)
+            .order_by(ProjectRepositoryLinkDB.linked_at)
+        )
+        return [link.to_domain() for link in result.scalars().all()]
 
 
 class KnowledgeGraphRepository(BaseRepository):

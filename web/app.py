@@ -221,6 +221,9 @@ RouterInitializer.mount_router(
 RouterInitializer.mount_router(app, "web.api.routes.lists", "router", "Lists API")
 RouterInitializer.mount_router(app, "web.api.routes.todos", "router", "Todos SEC-RBAC API")
 RouterInitializer.mount_router(app, "web.api.routes.projects", "router", "Projects API")
+RouterInitializer.mount_router(
+    app, "web.api.routes.repositories", "router", "Repositories API"  # Issue #866
+)
 RouterInitializer.mount_router(app, "web.api.routes.feedback", "router", "Feedback API")
 RouterInitializer.mount_router(
     app, "web.api.routes.knowledge_graph", "router", "Knowledge Graph API"

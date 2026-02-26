@@ -546,6 +546,9 @@ class ProjectDB(Base):
     integrations = relationship(
         "ProjectIntegrationDB", back_populates="project", cascade="all, delete-orphan"
     )
+    repository_links = relationship(
+        "ProjectRepositoryLinkDB", back_populates="project", cascade="all, delete-orphan"
+    )
 
     def to_domain(self) -> domain.Project:
         # Convert shared_with JSON to SharePermission objects
@@ -580,6 +583,10 @@ class ProjectDB(Base):
         )
         # Map integrations relationship
         project.integrations = [integration.to_domain() for integration in self.integrations]
+        # Map repositories through link table (#866)
+        project.repositories = [
+            link.repository.to_domain() for link in self.repository_links if link.repository
+        ]
         return project
 
     @classmethod
@@ -639,6 +646,114 @@ class ProjectIntegrationDB(Base):
             config=integration.config,
             is_active=integration.is_active,
             created_at=integration.created_at,
+        )
+
+
+class RepositoryDB(Base):
+    """A code repository — first-class, provider-agnostic entity.
+
+    Issue #866: Repository as first-class domain entity.
+    """
+
+    __tablename__ = "repositories"
+    __table_args__ = (
+        UniqueConstraint(
+            "owner_id", "provider", "full_name", name="uq_repositories_owner_provider_fullname"
+        ),
+        Index("idx_repositories_owner_id", "owner_id"),
+        Index("idx_repositories_full_name", "full_name"),
+    )
+
+    id = Column(String, primary_key=True)
+    owner_id = Column(postgresql.UUID(as_uuid=False), ForeignKey("users.id"), nullable=False)
+    provider = Column(String(50), nullable=False, default="github")
+    full_name = Column(String, nullable=False)  # "owner/repo"
+    display_name = Column(String, nullable=False)
+    url = Column(String, nullable=True)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
+
+    # Relationships
+    project_links = relationship(
+        "ProjectRepositoryLinkDB", back_populates="repository", cascade="all, delete-orphan"
+    )
+
+    def to_domain(self) -> domain.Repository:
+        return domain.Repository(
+            id=self.id,
+            owner_id=self.owner_id or "",
+            provider=self.provider,
+            full_name=self.full_name,
+            display_name=self.display_name,
+            url=self.url or "",
+            is_active=self.is_active,
+            created_at=self.created_at,
+            updated_at=self.updated_at,
+        )
+
+    @classmethod
+    def from_domain(cls, repo: domain.Repository) -> "RepositoryDB":
+        return cls(
+            id=repo.id,
+            owner_id=repo.owner_id,
+            provider=repo.provider,
+            full_name=repo.full_name,
+            display_name=repo.display_name,
+            url=repo.url,
+            is_active=repo.is_active,
+            created_at=repo.created_at,
+            updated_at=repo.updated_at,
+        )
+
+
+class ProjectRepositoryLinkDB(Base):
+    """Join table: Project <-> Repository many-to-many.
+
+    Issue #866: Repository as first-class domain entity.
+    """
+
+    __tablename__ = "project_repository_links"
+    __table_args__ = (
+        UniqueConstraint("project_id", "repository_id", name="uq_project_repo_link"),
+        Index("idx_project_repo_links_project_id", "project_id"),
+        Index("idx_project_repo_links_repository_id", "repository_id"),
+    )
+
+    id = Column(String, primary_key=True)
+    project_id = Column(String, ForeignKey("projects.id"), nullable=False)
+    repository_id = Column(String, ForeignKey("repositories.id"), nullable=False)
+    is_primary = Column(Boolean, default=False)
+    linked_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    linked_by = Column(String, nullable=False)  # User who created the link
+
+    # Relationships
+    project = relationship("ProjectDB", back_populates="repository_links")
+    repository = relationship("RepositoryDB", back_populates="project_links")
+
+    def to_domain(self) -> domain.ProjectRepositoryLink:
+        return domain.ProjectRepositoryLink(
+            id=self.id,
+            project_id=self.project_id,
+            repository_id=self.repository_id,
+            is_primary=self.is_primary,
+            linked_at=self.linked_at,
+            linked_by=self.linked_by,
+        )
+
+    @classmethod
+    def from_domain(cls, link: domain.ProjectRepositoryLink) -> "ProjectRepositoryLinkDB":
+        return cls(
+            id=link.id,
+            project_id=link.project_id,
+            repository_id=link.repository_id,
+            is_primary=link.is_primary,
+            linked_at=link.linked_at,
+            linked_by=link.linked_by,
         )
 
 
