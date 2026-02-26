@@ -101,6 +101,24 @@ class TestProjectSetupPatterns:
         assert result.has_offer
         assert result.offer.workflow_type == "project_setup"
 
+    def test_lost_track_of(self, detector):
+        """Issue #850: 'lost track of' idiom."""
+        result = detector.detect("I've lost track of all the open tasks")
+        assert result.has_offer
+        assert result.offer.workflow_type == "project_setup"
+
+    def test_lost_sight_of(self, detector):
+        """Issue #850: 'lost sight of' idiom."""
+        result = detector.detect("I've lost sight of the original plan")
+        assert result.has_offer
+        assert result.offer.workflow_type == "project_setup"
+
+    def test_fallen_behind_on(self, detector):
+        """Issue #850: 'fallen behind on' idiom."""
+        result = detector.detect("I've fallen behind on organizing the backlog")
+        assert result.has_offer
+        assert result.offer.workflow_type == "project_setup"
+
 
 class TestStatusCheckPatterns:
     """Status/deadline concern detection."""
@@ -122,6 +140,24 @@ class TestStatusCheckPatterns:
 
     def test_how_are_things_going(self, detector):
         result = detector.detect("How are things going with the migration?")
+        assert result.has_offer
+        assert result.offer.workflow_type == "status_check"
+
+    def test_will_we_finish_on_time(self, detector):
+        """Issue #850: 'will we finish on time' expression."""
+        result = detector.detect("Will we finish on time for the launch?")
+        assert result.has_offer
+        assert result.offer.workflow_type == "status_check"
+
+    def test_will_we_make_it_by(self, detector):
+        """Issue #850: 'will we make it by' expression."""
+        result = detector.detect("Will we make it by the Friday deadline?")
+        assert result.has_offer
+        assert result.offer.workflow_type == "status_check"
+
+    def test_will_we_be_ready_in_time(self, detector):
+        """Issue #850: 'will we be ready in time' expression."""
+        result = detector.detect("Will we be ready in time for the demo?")
         assert result.has_offer
         assert result.offer.workflow_type == "status_check"
 
@@ -190,6 +226,36 @@ class TestReviewPatterns:
         assert result.has_offer
         assert result.offer.workflow_type == "review"
 
+    def test_another_pair_of_eyes(self, detector):
+        """Issue #850: 'another pair of eyes' idiom."""
+        result = detector.detect("This needs another pair of eyes before we ship it")
+        assert result.has_offer
+        assert result.offer.workflow_type == "review"
+
+    def test_could_use_some_feedback(self, detector):
+        """Issue #850: 'could use some feedback' expression."""
+        result = detector.detect("I could use some feedback on this approach")
+        assert result.has_offer
+        assert result.offer.workflow_type == "review"
+
+    def test_would_love_feedback(self, detector):
+        """Issue #850: 'would love feedback' expression."""
+        result = detector.detect("I would love feedback on the new layout")
+        assert result.has_offer
+        assert result.offer.workflow_type == "review"
+
+    def test_can_this_get_another_look(self, detector):
+        """Issue #850: 'can this get another look' expression."""
+        result = detector.detect("Can this get another look before we merge?")
+        assert result.has_offer
+        assert result.offer.workflow_type == "review"
+
+    def test_fresh_pair_of_eyes(self, detector):
+        """Issue #850: 'a fresh pair of eyes' variant."""
+        result = detector.detect("This could use a fresh pair of eyes")
+        assert result.has_offer
+        assert result.offer.workflow_type == "review"
+
 
 class TestPriorityPatterns:
     """Priority/focus detection."""
@@ -206,6 +272,42 @@ class TestPriorityPatterns:
 
     def test_what_should_i_work_on(self, detector):
         result = detector.detect("What should I work on first?")
+        assert result.has_offer
+        assert result.offer.workflow_type == "priority_check"
+
+    def test_im_overwhelmed(self, detector):
+        """Issue #850: Emotional overwhelm expression."""
+        result = detector.detect("I'm overwhelmed with all these tasks")
+        assert result.has_offer
+        assert result.offer.workflow_type == "priority_check"
+
+    def test_im_drowning(self, detector):
+        """Issue #850: 'drowning' emotional expression."""
+        result = detector.detect("I'm drowning in work right now")
+        assert result.has_offer
+        assert result.offer.workflow_type == "priority_check"
+
+    def test_im_swamped(self, detector):
+        """Issue #850: 'swamped' emotional expression."""
+        result = detector.detect("I'm swamped this week")
+        assert result.has_offer
+        assert result.offer.workflow_type == "priority_check"
+
+    def test_im_buried(self, detector):
+        """Issue #850: 'buried' emotional expression."""
+        result = detector.detect("I'm buried under all these requests")
+        assert result.has_offer
+        assert result.offer.workflow_type == "priority_check"
+
+    def test_everything_feels_urgent(self, detector):
+        """Issue #850: 'everything feels urgent' expression."""
+        result = detector.detect("Everything feels urgent right now")
+        assert result.has_offer
+        assert result.offer.workflow_type == "priority_check"
+
+    def test_everything_seems_pressing(self, detector):
+        """Issue #850: 'everything seems pressing' expression."""
+        result = detector.detect("Everything seems pressing and I can't decide what to tackle")
         assert result.has_offer
         assert result.offer.workflow_type == "priority_check"
 

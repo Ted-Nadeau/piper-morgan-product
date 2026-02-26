@@ -1073,3 +1073,257 @@ class TestPreClassifierRoutingIntegration:
             assert result is not None, f"Failed to classify: {query}"
             assert result.category == IntentCategory.QUERY, f"Wrong category for: {query}"
             assert result.action == "comment_issue_query", f"Wrong action for: {query}"
+
+
+class TestListPRsRouting:
+    """Test routing to list PRs handler (Issue #851)"""
+
+    @pytest.mark.asyncio
+    async def test_routes_list_prs_query_action(self, intent_service, mock_workflow):
+        """Test that list_prs_query action routes to list PRs handler"""
+        intent = Intent(
+            category=IntentCategory.QUERY,
+            action="list_prs_query",
+            context={"original_message": "show my PRs"},
+        )
+
+        with patch.object(
+            intent_service, "_handle_list_prs_query", new_callable=AsyncMock
+        ) as mock_handler:
+            mock_handler.return_value = IntentProcessingResult(
+                success=True,
+                message="You have 3 open PRs",
+                intent_data={"category": "query", "action": "list_prs_query"},
+            )
+
+            result = await intent_service._handle_query_intent(
+                intent, mock_workflow, "test-session"
+            )
+
+            mock_handler.assert_called_once_with(intent, mock_workflow.id)
+
+    @pytest.mark.asyncio
+    async def test_routes_list_prs_action(self, intent_service, mock_workflow):
+        """Test that list_prs action also routes to list PRs handler"""
+        intent = Intent(
+            category=IntentCategory.QUERY,
+            action="list_prs",
+            context={"original_message": "my pull requests"},
+        )
+
+        with patch.object(
+            intent_service, "_handle_list_prs_query", new_callable=AsyncMock
+        ) as mock_handler:
+            mock_handler.return_value = IntentProcessingResult(
+                success=True,
+                message="You have 2 open PRs",
+                intent_data={"category": "query", "action": "list_prs"},
+            )
+
+            result = await intent_service._handle_query_intent(
+                intent, mock_workflow, "test-session"
+            )
+
+            mock_handler.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_routes_list_pull_requests_action(self, intent_service, mock_workflow):
+        """Test that list_pull_requests action also routes to list PRs handler"""
+        intent = Intent(
+            category=IntentCategory.QUERY,
+            action="list_pull_requests",
+            context={"original_message": "open pull requests"},
+        )
+
+        with patch.object(
+            intent_service, "_handle_list_prs_query", new_callable=AsyncMock
+        ) as mock_handler:
+            mock_handler.return_value = IntentProcessingResult(
+                success=True,
+                message="You have 5 open PRs",
+                intent_data={"category": "query", "action": "list_pull_requests"},
+            )
+
+            result = await intent_service._handle_query_intent(
+                intent, mock_workflow, "test-session"
+            )
+
+            mock_handler.assert_called_once()
+
+
+class TestListPRsResults:
+    """Test list PRs handler response formatting (Issue #851)"""
+
+    @pytest.mark.asyncio
+    async def test_returns_pr_list_with_results(self, intent_service):
+        """Test handler returns formatted PR list when PRs exist"""
+        intent = Intent(
+            category=IntentCategory.QUERY,
+            action="list_prs_query",
+            context={"original_message": "show my PRs"},
+        )
+
+        mock_open_items = [
+            {
+                "number": 100,
+                "title": "Add feature X",
+                "html_url": "https://github.com/test/repo/pull/100",
+                "pull_request": {"url": "https://api.github.com/repos/test/repo/pulls/100"},
+            },
+            {
+                "number": 101,
+                "title": "Fix bug Y",
+                "html_url": "https://github.com/test/repo/pull/101",
+                "pull_request": {"url": "https://api.github.com/repos/test/repo/pulls/101"},
+            },
+            {
+                "number": 50,
+                "title": "Regular issue (not a PR)",
+            },
+        ]
+
+        with patch(
+            "services.integrations.github.github_integration_router.GitHubIntegrationRouter"
+        ) as MockRouter:
+            mock_router = MagicMock()
+            mock_router.config_service.is_configured.return_value = True
+            mock_router.initialize = AsyncMock()
+            mock_router.get_open_issues = AsyncMock(return_value=mock_open_items)
+            MockRouter.return_value = mock_router
+
+            result = await intent_service._handle_list_prs_query(intent, "test-workflow-id")
+
+            assert result.success is True
+            assert "2 open PRs" in result.message
+            assert "#100" in result.message
+            assert "Add feature X" in result.message
+            assert "#101" in result.message
+            assert "Fix bug Y" in result.message
+            # Issue without pull_request field should be excluded
+            assert "#50" not in result.message
+            assert result.intent_data["action"] == "list_prs_query"
+            assert result.intent_data["context"]["pr_count"] == 2
+
+    @pytest.mark.asyncio
+    async def test_returns_no_prs_message(self, intent_service):
+        """Test handler returns appropriate message when no PRs exist"""
+        intent = Intent(
+            category=IntentCategory.QUERY,
+            action="list_prs_query",
+            context={"original_message": "show my PRs"},
+        )
+
+        # Return only non-PR issues
+        mock_open_items = [
+            {"number": 50, "title": "Regular issue"},
+        ]
+
+        with patch(
+            "services.integrations.github.github_integration_router.GitHubIntegrationRouter"
+        ) as MockRouter:
+            mock_router = MagicMock()
+            mock_router.config_service.is_configured.return_value = True
+            mock_router.initialize = AsyncMock()
+            mock_router.get_open_issues = AsyncMock(return_value=mock_open_items)
+            MockRouter.return_value = mock_router
+
+            result = await intent_service._handle_list_prs_query(intent, "test-workflow-id")
+
+            assert result.success is True
+            assert "don't have any open pull requests" in result.message
+            assert result.intent_data["context"]["pr_count"] == 0
+
+    @pytest.mark.asyncio
+    async def test_returns_not_configured_message(self, intent_service):
+        """Test handler returns graceful message when GitHub is not configured"""
+        intent = Intent(
+            category=IntentCategory.QUERY,
+            action="list_prs_query",
+            context={"original_message": "show my PRs"},
+        )
+
+        with patch(
+            "services.integrations.github.github_integration_router.GitHubIntegrationRouter"
+        ) as MockRouter:
+            mock_router = MagicMock()
+            mock_router.config_service.is_configured.return_value = False
+            mock_router.initialize = AsyncMock()
+            MockRouter.return_value = mock_router
+
+            result = await intent_service._handle_list_prs_query(intent, "test-workflow-id")
+
+            assert result.success is True
+            assert "GitHub isn't configured" in result.message
+
+    @pytest.mark.asyncio
+    async def test_handles_error_gracefully(self, intent_service):
+        """Test handler returns graceful error message on failure"""
+        intent = Intent(
+            category=IntentCategory.QUERY,
+            action="list_prs_query",
+            context={"original_message": "show my PRs"},
+        )
+
+        with patch(
+            "services.integrations.github.github_integration_router.GitHubIntegrationRouter"
+        ) as MockRouter:
+            MockRouter.side_effect = Exception("Connection failed")
+
+            result = await intent_service._handle_list_prs_query(intent, "test-workflow-id")
+
+            assert result.success is True
+            assert "wasn't able to fetch" in result.message
+            assert "error" in result.intent_data["context"]
+
+
+class TestListPRsPreClassifierRouting:
+    """Test pre-classifier pattern detection for PR listing queries (Issue #851)"""
+
+    def test_list_prs_query_routes_to_query_category(self):
+        """Test 'show my PRs' routes to QUERY category with list_prs_query action"""
+        from services.intent_service.pre_classifier import PreClassifier
+
+        result = PreClassifier.pre_classify("show my PRs")
+
+        assert result is not None
+        assert result.category == IntentCategory.QUERY
+        assert result.action == "list_prs_query"
+        assert result.confidence == 1.0
+
+    def test_list_prs_query_variants(self):
+        """Test PR listing query pattern variants all route correctly"""
+        from services.intent_service.pre_classifier import PreClassifier
+
+        test_cases = [
+            "show my PRs",
+            "show my pull requests",
+            "my PRs",
+            "my pull requests",
+            "list PRs",
+            "list pull requests",
+            "open pull requests",
+            "open PRs",
+            "PRs assigned to me",
+            "pull requests assigned to me",
+        ]
+
+        for query in test_cases:
+            result = PreClassifier.pre_classify(query)
+            assert result is not None, f"Failed to classify: {query}"
+            assert result.category == IntentCategory.QUERY, f"Wrong category for: {query}"
+            assert result.action == "list_prs_query", f"Wrong action for: {query}"
+
+    def test_get_github_action_returns_list_prs_query(self):
+        """Test _get_github_action returns list_prs_query for PR listing messages"""
+        from services.intent_service.pre_classifier import PreClassifier
+
+        test_cases = [
+            "show my prs",
+            "my pull requests",
+            "open prs",
+            "list pull requests",
+        ]
+
+        for message in test_cases:
+            action = PreClassifier._get_github_action(message)
+            assert action == "list_prs_query", f"Wrong action for: {message}"

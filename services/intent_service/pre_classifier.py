@@ -380,6 +380,17 @@ class PreClassifier:
         r"\bshow.*issues\b",
         r"\bissue count\b",
         r"\bissues.*assigned\b",
+        # Issue #851: PR listing queries
+        r"\bshow my prs\b",
+        r"\bshow my pull requests\b",
+        r"\bmy prs\b",
+        r"\bmy pull requests\b",
+        r"\blist.*prs\b",
+        r"\blist.*pull requests\b",
+        r"\bopen pull requests\b",
+        r"\bopen prs\b",
+        r"\bprs assigned to me\b",
+        r"\bpull requests assigned to me\b",
     ]
 
     # Productivity query - Query #51
@@ -882,6 +893,23 @@ class PreClassifier:
                 ]
             ):
                 action = "list_issues_query"
+            # Issue #851: PR listing queries
+            elif any(
+                re.search(pattern, clean_for_matching)
+                for pattern in [
+                    r"\bshow my prs\b",
+                    r"\bshow my pull requests\b",
+                    r"\bmy prs\b",
+                    r"\bmy pull requests\b",
+                    r"\blist.*prs\b",
+                    r"\blist.*pull requests\b",
+                    r"\bopen pull requests\b",
+                    r"\bopen prs\b",
+                    r"\bprs assigned to me\b",
+                    r"\bpull requests assigned to me\b",
+                ]
+            ):
+                action = "list_prs_query"
             else:
                 # Review issue query - Query #60
                 action = "review_issue_query"
@@ -1248,6 +1276,22 @@ class PreClassifier:
         ]
         if PreClassifier._matches_patterns(message, list_issues_patterns):
             return "list_issues_query"
+
+        # Issue #851: PR listing queries
+        list_prs_patterns = [
+            r"\bshow my prs\b",
+            r"\bshow my pull requests\b",
+            r"\bmy prs\b",
+            r"\bmy pull requests\b",
+            r"\blist.*prs\b",
+            r"\blist.*pull requests\b",
+            r"\bopen pull requests\b",
+            r"\bopen prs\b",
+            r"\bprs assigned to me\b",
+            r"\bpull requests assigned to me\b",
+        ]
+        if PreClassifier._matches_patterns(message, list_prs_patterns):
+            return "list_prs_query"
 
         return "review_issue_query"
 

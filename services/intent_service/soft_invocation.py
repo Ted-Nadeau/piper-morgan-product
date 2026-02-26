@@ -118,6 +118,9 @@ def _compile_patterns() -> List[Tuple[List[re.Pattern], str, Dict[str, str], Dic
                 r"\b(?:i need to|we need to|help me)\b.*\b(?:organize|structure|plan out)\b",
                 r"\bthings are (?:getting|becoming)\b.*\b(?:complicated|messy|scattered|disorganized)\b",
                 r"\b(?:i don'?t know|not sure)\b.*\b(?:where to start|how to organize|how to structure)\b",
+                # Issue #850: "lost track" / "lost sight of" / "fallen behind on"
+                r"\bi'?ve (?:lost track|lost sight)\b.*\bof\b",
+                r"\bi'?ve (?:fallen behind|gotten behind)\b.*\bon\b",
             ],
             "project_setup",
             {
@@ -138,6 +141,8 @@ def _compile_patterns() -> List[Tuple[List[re.Pattern], str, Dict[str, str], Dic
                 r"\b(?:i don'?t know|not sure)\b.*\b(?:where (?:things|we) stand|progress|how (?:things|we) are doing)\b",
                 r"\bare we (?:on track|behind|going to make)\b",
                 r"\bhow (?:are things|is the project|are we)\b.*\b(?:going|progressing|looking)\b",
+                # Issue #850: "will we finish on time" / "will we make it by..."
+                r"\bwill we (?:finish|make it|be (?:done|ready))\b.*\b(?:on time|by|before|in time)\b",
             ],
             "status_check",
             {
@@ -178,6 +183,12 @@ def _compile_patterns() -> List[Tuple[List[re.Pattern], str, Dict[str, str], Dic
             [
                 r"\b(?:can someone|could someone|someone needs to|need someone to)\b.*\b(?:review|look at|check|give feedback)\b",
                 r"\b(?:i need|we need)\b.*\b(?:feedback|review|second opinion|another set of eyes)\b",
+                # Issue #850: "another pair of eyes" / "another set of eyes" / "another look"
+                r"\b(?:needs?|could use|wants?)\b.*\b(?:another (?:pair of eyes|set of eyes|look)|a (?:second|fresh) (?:look|pair of eyes))\b",
+                # Issue #850: "could use some feedback" / "would love feedback"
+                r"\b(?:could use|would (?:love|appreciate|like))\b.*\b(?:some )?(?:feedback|input|review)\b",
+                # Issue #850: "can this get another look" / "get a look at this"
+                r"\b(?:can|could)\b.*\b(?:this|it|that)\b.*\bget\b.*\b(?:another look|a (?:look|review|check))\b",
             ],
             "review",
             {
@@ -197,6 +208,9 @@ def _compile_patterns() -> List[Tuple[List[re.Pattern], str, Dict[str, str], Dic
                 r"\b(?:i don'?t know|not sure)\b.*\b(?:what to (?:focus on|work on|prioritize)|my priorities)\b",
                 r"\b(?:too many|so many)\b.*\b(?:things|tasks|priorities|items)\b.*\b(?:to do|going on|happening)\b",
                 r"\bwhat should i\b.*\b(?:focus on|work on|do (?:first|next))\b",
+                # Issue #850: Emotional overwhelm expressions
+                r"\bi'?m (?:so |really )?(?:overwhelmed|drowning|swamped|buried|underwater)\b",
+                r"\beverything (?:feels|seems|is)\b.*\b(?:urgent|pressing|a priority|on fire)\b",
             ],
             "priority_check",
             {

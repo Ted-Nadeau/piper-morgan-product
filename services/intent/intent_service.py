@@ -1571,6 +1571,10 @@ class IntentService:
         elif intent.action in ["list_issues", "list_issues_query"]:
             return await self._handle_list_issues_query(intent, workflow.id)
 
+        # Issue #851: PR listing queries
+        elif intent.action in ["list_prs", "list_prs_query", "list_pull_requests"]:
+            return await self._handle_list_prs_query(intent, workflow.id)
+
         # Issue #518: Calendar queries (Canonical Queries #34, #35, #61)
         # Issue #586: Pass user_id for timezone-aware queries
         elif intent.action in ["meeting_time", "how_much_time_in_meetings", "calendar_analysis"]:
@@ -3027,6 +3031,90 @@ class IntentService:
                 intent_data={
                     "category": "query",
                     "action": "list_issues_query",
+                    "context": {"error": str(e)},
+                },
+            )
+
+    async def _handle_list_prs_query(
+        self, intent: Intent, workflow_id: str
+    ) -> IntentProcessingResult:
+        """
+        Handle "Show my PRs" and similar PR listing queries.
+
+        Issue #851: Routes PR listing queries to GitHub PR data instead of
+        falling through to the LLM classifier.
+        """
+        self.logger.info("Processing list PRs query")
+
+        try:
+            from services.integrations.github.github_integration_router import (
+                GitHubIntegrationRouter,
+            )
+
+            github_router = GitHubIntegrationRouter()
+            await github_router.initialize()
+
+            # Check if GitHub is configured
+            if not github_router.config_service.is_configured():
+                return IntentProcessingResult(
+                    success=True,
+                    message=(
+                        "I'd love to show you your pull requests, but GitHub isn't configured yet. "
+                        "To enable GitHub integration, please add your GITHUB_TOKEN to your environment "
+                        "or configure it in PIPER.user.md. Once configured, I can list your PRs!"
+                    ),
+                    intent_data={
+                        "category": "query",
+                        "action": "list_prs_query",
+                        "context": {"configured": False},
+                    },
+                )
+
+            # Get open items (includes PRs via pull_request field)
+            open_items = await github_router.get_open_issues(limit=100)
+
+            # Filter to only PRs
+            prs = [item for item in open_items if item.get("pull_request")]
+
+            if prs:
+                pr_count = len(prs)
+                message = f"You have **{pr_count} open PR{'s' if pr_count != 1 else ''}**."
+
+                # Show top PRs (up to 5)
+                message += "\n\nHere are the most recent:"
+                for pr in prs[:5]:
+                    title = pr.get("title", "Untitled")
+                    number = pr.get("number", "?")
+                    url = pr.get("html_url", "")
+                    message += f"\n- **#{number}**: {title}"
+                    if url:
+                        message += f"\n  {url}"
+
+                if pr_count > 5:
+                    message += f"\n\n...and {pr_count - 5} more."
+            else:
+                message = "You don't have any open pull requests right now."
+
+            return IntentProcessingResult(
+                success=True,
+                message=message,
+                intent_data={
+                    "category": "query",
+                    "action": "list_prs_query",
+                    "context": {
+                        "pr_count": len(prs),
+                    },
+                },
+            )
+
+        except Exception as e:
+            self.logger.error(f"Failed to list PRs: {e}")
+            return IntentProcessingResult(
+                success=True,
+                message="I wasn't able to fetch your pull requests right now. Please try again in a moment.",
+                intent_data={
+                    "category": "query",
+                    "action": "list_prs_query",
                     "context": {"error": str(e)},
                 },
             )
