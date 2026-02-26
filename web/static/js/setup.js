@@ -352,7 +352,7 @@
             const data = await response.json();
 
             if (data.success) {
-                showStep(4);
+                showStep(4);  // Step 4: Projects (Issue #860)
             } else {
                 showError(data.message || 'Unable to complete setup.', 'Setup Failed');
             }
@@ -372,6 +372,118 @@
     async function checkSetupStatus() {
         // No-op: setup wizard is always accessible
         // Users who already have an account can use the "Log In" link
+    }
+
+    // =========================================================================
+    // Step 4: Projects Setup (Issue #860)
+    // =========================================================================
+
+    const setupProjects = [];  // Track projects added during setup
+
+    function renderSetupProjects() {
+        const listEl = document.getElementById('setup-projects-list');
+        if (!listEl) return;
+
+        if (setupProjects.length === 0) {
+            listEl.innerHTML = '';
+            return;
+        }
+
+        listEl.innerHTML = setupProjects.map((p, i) => `
+            <div class="service-status ready" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <div>
+                    <strong>${p.name}</strong>
+                    ${p.repo ? ` — <span style="color: #6c757d;">${p.repo}</span>` : ''}
+                </div>
+                <button type="button" onclick="window._removeSetupProject(${i})"
+                    style="background: none; border: none; color: #dc3545; cursor: pointer; font-size: 16px;"
+                    title="Remove">✕</button>
+            </div>
+        `).join('');
+    }
+
+    // Expose remove function globally (called from inline onclick)
+    window._removeSetupProject = function(index) {
+        setupProjects.splice(index, 1);
+        renderSetupProjects();
+    };
+
+    const addProjectBtn = document.getElementById('add-project-btn');
+    if (addProjectBtn) {
+        addProjectBtn.addEventListener('click', async function() {
+            const nameInput = document.getElementById('setup-project-name');
+            const repoInput = document.getElementById('setup-github-repo');
+            const errorEl = document.getElementById('setup-project-error');
+
+            const projectName = nameInput.value.trim();
+            const githubRepo = repoInput.value.trim();
+
+            // Validate
+            if (!projectName) {
+                errorEl.textContent = 'Project name is required.';
+                errorEl.style.display = 'block';
+                return;
+            }
+
+            if (githubRepo && !githubRepo.includes('/')) {
+                errorEl.textContent = 'GitHub repo must be in owner/repo format.';
+                errorEl.style.display = 'block';
+                return;
+            }
+
+            errorEl.style.display = 'none';
+            addProjectBtn.disabled = true;
+            addProjectBtn.textContent = 'Adding...';
+
+            try {
+                const response = await fetch('/setup/projects', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: userId,
+                        project_name: projectName,
+                        project_description: '',
+                        github_repo: githubRepo || null
+                    })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    setupProjects.push({
+                        id: data.project_id,
+                        name: projectName,
+                        repo: githubRepo || null
+                    });
+                    renderSetupProjects();
+                    nameInput.value = '';
+                    repoInput.value = '';
+                    if (typeof Toast !== 'undefined') {
+                        Toast.success('Project Added', data.message);
+                    }
+                } else {
+                    const errorMessage = data.message || data.detail || 'Failed to create project.';
+                    errorEl.textContent = errorMessage;
+                    errorEl.style.display = 'block';
+                }
+            } catch (err) {
+                errorEl.textContent = 'Unable to create project. Please try again.';
+                errorEl.style.display = 'block';
+            } finally {
+                addProjectBtn.disabled = false;
+                addProjectBtn.textContent = 'Add Project';
+            }
+        });
+    }
+
+    // Skip and Continue buttons for step 4
+    const skipProjectsBtn = document.getElementById('skip-projects-btn');
+    if (skipProjectsBtn) {
+        skipProjectsBtn.addEventListener('click', () => showStep(5));
+    }
+
+    const next4Btn = document.getElementById('next-4');
+    if (next4Btn) {
+        next4Btn.addEventListener('click', () => showStep(5));
     }
 
     // =========================================================================

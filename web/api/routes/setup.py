@@ -14,7 +14,7 @@ from datetime import datetime, timezone
 from typing import Dict, Optional
 
 import structlog
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import select, text
 
@@ -895,6 +895,111 @@ async def complete_setup(req: SetupCompleteRequest):
 
 
 # ============================================================================
+# Project Setup Endpoints (Issue #860: Setup Wizard Project-Repo Linking)
+# ============================================================================
+
+
+class SetupProjectRequest(BaseModel):
+    """Request model for creating a project during setup."""
+
+    user_id: str = Field(description="User ID (UUID) who owns this project")
+    project_name: str = Field(description="Project name")
+    project_description: str = Field(default="", description="Optional project description")
+    github_repo: Optional[str] = Field(
+        default=None, description="GitHub repo in owner/repo format (optional)"
+    )
+
+
+class SetupProjectResponse(BaseModel):
+    """Response model for project creation during setup."""
+
+    success: bool
+    project_id: str = ""
+    message: str = ""
+
+
+@router.post("/projects", response_model=SetupProjectResponse)
+async def create_setup_project(req: SetupProjectRequest):
+    """
+    Create a project (and optionally link a GitHub repo) during setup wizard.
+
+    This endpoint does NOT require JWT auth — it uses user_id from the
+    account creation step. Called between account creation and setup completion.
+
+    Issue #860: Setup wizard project-repo linking step.
+    """
+    from services.database.repositories import ProjectIntegrationRepository, ProjectRepository
+    from services.shared_types import IntegrationType
+
+    try:
+        if not req.project_name or not req.project_name.strip():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Project name is required",
+            )
+
+        async with AsyncSessionFactory.session_scope_fresh() as session:
+            project_repo = ProjectRepository(session)
+
+            # Create the project
+            created_project = await project_repo.create(
+                name=req.project_name.strip(),
+                description=req.project_description,
+                owner_id=req.user_id,
+            )
+
+            project_id = created_project.id
+
+            # Optionally link a GitHub repo
+            if req.github_repo and req.github_repo.strip():
+                repo_name = req.github_repo.strip()
+                # Basic format validation (owner/repo)
+                if "/" not in repo_name:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="GitHub repo must be in owner/repo format",
+                    )
+
+                integration_repo = ProjectIntegrationRepository(session)
+                await integration_repo.create(
+                    id=str(uuid.uuid4()),
+                    project_id=project_id,
+                    type=IntegrationType.GITHUB,
+                    name=repo_name.split("/")[-1],
+                    config={"repository": repo_name},
+                )
+
+            await session.commit()
+
+        logger.info(
+            "setup_project_created",
+            user_id=req.user_id,
+            project_id=project_id,
+            has_github_repo=bool(req.github_repo),
+        )
+
+        return SetupProjectResponse(
+            success=True,
+            project_id=project_id,
+            message=f"Project '{req.project_name}' created",
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(
+            "setup_project_creation_failed",
+            user_id=req.user_id,
+            error=str(e),
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create project: {str(e)}",
+        )
+
+
+# ============================================================================
 # Slack OAuth Endpoints (Issue #528: ALPHA-SETUP-SLACK)
 # ============================================================================
 
@@ -1194,13 +1299,14 @@ async def handle_calendar_oauth_callback(
 
 
 @router.get("/calendar/status")
-async def get_calendar_status():
+async def get_calendar_status(request: Request):
     """
     Get Calendar configuration status for setup wizard.
 
     Checks if refresh token exists in keychain.
 
     Issue #529: ALPHA-SETUP-CALENDAR
+    Issue #839: Use user-scoped keychain key
 
     Returns:
         dict with configured status
@@ -1208,8 +1314,23 @@ async def get_calendar_status():
     try:
         from services.infrastructure.keychain_service import KeychainService
 
+        # Issue #839: Get user_id for user-scoped keychain lookup
+        user_id = None
+        try:
+            from services.auth.jwt_service import JWTService
+
+            token = request.cookies.get("auth_token")
+            if token:
+                jwt_service = JWTService()
+                claims = jwt_service.validate_token(token)
+                if claims:
+                    user_id = claims.sub
+        except Exception:
+            pass  # Fall back to non-scoped key if auth unavailable
+
         keychain = KeychainService()
-        refresh_token = keychain.get_api_key("google_calendar")
+        key_name = f"google_calendar_{user_id}" if user_id else "google_calendar"
+        refresh_token = keychain.get_api_key(key_name)
 
         if refresh_token:
             return {
