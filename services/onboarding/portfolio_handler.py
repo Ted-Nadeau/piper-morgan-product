@@ -80,6 +80,21 @@ class PortfolioOnboardingHandler:
         r"\bthat'?s? (correct|right)\b",
     ]
 
+    # Issue #863: Repo-linking patterns for GATHERING_REPOS state
+    REPO_FORMAT_PATTERN = re.compile(r"^[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+$")
+
+    SKIP_REPO_PATTERNS = [
+        r"\b(skip|no repo|no repository|none|pass|next)\b",
+        r"\bdon'?t have (a |one|any)?",
+        r"\bno$",
+    ]
+
+    SKIP_ALL_REPOS_PATTERNS = [
+        r"\bskip (all|everything|the rest|repos|repositories)\b",
+        r"\bno repos?\b",
+        r"\bnone of them\b",
+    ]
+
     def __init__(self, manager: PortfolioOnboardingManager):
         """
         Initialize the handler.
@@ -153,6 +168,8 @@ class PortfolioOnboardingHandler:
             return self._handle_gathering(session, user_message)
         elif session.state == PortfolioOnboardingState.CONFIRMING:
             return self._handle_confirming(session, user_message)
+        elif session.state == PortfolioOnboardingState.GATHERING_REPOS:
+            return self._handle_gathering_repos(session, user_message)
         else:
             # Terminal state - shouldn't receive turns
             return OnboardingResponse(
@@ -236,7 +253,27 @@ class PortfolioOnboardingHandler:
 
         # Check if user is affirming they want to add more projects
         # (e.g., "Yes, I have another project to tell you about")
+        # Issue #841: Also attempt extraction — user may embed project name
+        # in confirmation (e.g., "Yes, I have another one called Dynamic Atlas")
         if self._matches_patterns(message_lower, self.CONFIRM_PATTERNS):
+            # Try extraction — confirmation may contain a project name
+            project_info = self._extract_project_info(user_message)
+            # Only treat as submission if extraction found a named pattern match
+            # (not the fallback which just uses the raw message text)
+            if project_info.get("source") == "pattern":
+                project_name = project_info.get("name", "your project")
+                self.manager.add_project(session.id, project_info)
+                is_first = len(session.captured_projects) <= 1
+                ack = acknowledge_project(project_name, is_first_project=is_first)
+                more_prompt = get_more_projects_prompt()
+                response_message = f"{ack} {more_prompt}"
+                self.manager.add_turn(session.id, user_message, response_message)
+                return OnboardingResponse(
+                    message=response_message,
+                    state=PortfolioOnboardingState.GATHERING_PROJECTS,
+                    is_complete=False,
+                )
+            # Bare confirmation — just prompt for more
             response_message = get_add_more_prompt()
             self.manager.add_turn(session.id, user_message, response_message)
             return OnboardingResponse(
@@ -277,12 +314,12 @@ class PortfolioOnboardingHandler:
         if len(session.captured_projects) > 1:
             designated = self._try_designate_main_project(message_lower, session)
             if designated is not None:
-                # User named a project or declined — complete the onboarding
-                return self._complete_onboarding(session, user_message)
+                # User named a project or declined — proceed to repo linking
+                return self._transition_to_repo_gathering(session, user_message)
 
         # Check for confirmation (save portfolio)
         if self._matches_patterns(message_lower, self.CONFIRM_PATTERNS):
-            return self._complete_onboarding(session, user_message)
+            return self._transition_to_repo_gathering(session, user_message)
 
         # User wants to add more
         if "more" in message_lower or "another" in message_lower or "add" in message_lower:
@@ -314,7 +351,7 @@ class PortfolioOnboardingHandler:
             # Treat unclear response as possible project designation attempt
             designated = self._try_designate_main_project(message_lower, session, fuzzy=True)
             if designated is not None:
-                return self._complete_onboarding(session, user_message)
+                return self._transition_to_repo_gathering(session, user_message)
 
         # Re-prompt
         response_message = get_confirmation_prompt(project_names)
@@ -456,18 +493,19 @@ class PortfolioOnboardingHandler:
             message: User's message describing their project
 
         Returns:
-            Dict with 'name' and optionally 'description'
+            Dict with 'name', optionally 'description', and 'source' indicating
+            extraction method ('pattern' for named patterns, 'fallback' otherwise)
         """
         message = message.strip()
 
         # Try to extract name with "called" or "named"
         called_match = re.search(
-            r"(?:called|named)\s+['\"]?([^'\",.]+)['\"]?", message, re.IGNORECASE
+            r"(?:called|named)\s+['\"']?([^'\",.]+)['\"']?", message, re.IGNORECASE
         )
         if called_match:
             name = called_match.group(1).strip()
             description = message
-            return {"name": name, "description": description}
+            return {"name": name, "description": description, "source": "pattern"}
 
         # Try to extract "[main/my/the] project is X" pattern - check this BEFORE "X project"
         project_is_match = re.search(
@@ -478,7 +516,7 @@ class PortfolioOnboardingHandler:
         if project_is_match:
             name = project_is_match.group(1).strip()
             description = message
-            return {"name": name, "description": description}
+            return {"name": name, "description": description, "source": "pattern"}
 
         # Try to extract "another project is X" or "one project is X" pattern
         another_match = re.search(
@@ -489,7 +527,7 @@ class PortfolioOnboardingHandler:
         if another_match:
             name = another_match.group(1).strip()
             description = message
-            return {"name": name, "description": description}
+            return {"name": name, "description": description, "source": "pattern"}
 
         # Try to extract from "I'm building/working on X" or "I work on X" or "I also work on X"
         # Note: handles both "working on" and "work on"
@@ -508,7 +546,7 @@ class PortfolioOnboardingHandler:
                 flags=re.IGNORECASE,
             )
             description = message
-            return {"name": name, "description": description}
+            return {"name": name, "description": description, "source": "pattern"}
 
         # Try to extract "X project" pattern (e.g., "a task management project")
         # This is a fallback pattern since it's less specific
@@ -520,7 +558,7 @@ class PortfolioOnboardingHandler:
         if project_match:
             name = project_match.group(1).strip()
             description = message
-            return {"name": name, "description": description}
+            return {"name": name, "description": description, "source": "pattern"}
 
         # Fallback - use first sentence or whole message as name
         first_sentence = message.split(".")[0].strip()
@@ -531,7 +569,7 @@ class PortfolioOnboardingHandler:
         else:
             name = first_sentence
 
-        return {"name": name, "description": message}
+        return {"name": name, "description": message, "source": "fallback"}
 
     def _matches_patterns(self, text: str, patterns: list) -> bool:
         """Check if text matches any of the given regex patterns."""
@@ -539,3 +577,97 @@ class PortfolioOnboardingHandler:
             if re.search(pattern, text, re.IGNORECASE):
                 return True
         return False
+
+    # -----------------------------------------------------------------
+    # Issue #863: Repo-gathering methods
+    # -----------------------------------------------------------------
+
+    def _transition_to_repo_gathering(self, session, user_message: str) -> OnboardingResponse:
+        """Transition from confirming to repo gathering: ask about first project's repo."""
+        # Auto-set single project as default
+        if len(session.captured_projects) == 1:
+            session.captured_projects[0]["is_default"] = True
+
+        self.manager.transition_state(session.id, PortfolioOnboardingState.GATHERING_REPOS)
+        session.repo_project_index = 0
+
+        project_name = session.captured_projects[0].get("name", "your project")
+        response_message = self._get_repo_prompt(project_name, is_first=True)
+        self.manager.add_turn(session.id, user_message, response_message)
+
+        return OnboardingResponse(
+            message=response_message,
+            state=PortfolioOnboardingState.GATHERING_REPOS,
+            is_complete=False,
+        )
+
+    def _handle_gathering_repos(self, session, user_message: str) -> OnboardingResponse:
+        """Handle repo linking for each project during onboarding."""
+        message_lower = user_message.lower().strip()
+        current_index = session.repo_project_index
+        current_project = session.captured_projects[current_index]
+
+        # Check for "skip all" — skip remaining projects and complete
+        if self._matches_patterns(message_lower, self.SKIP_ALL_REPOS_PATTERNS):
+            return self._complete_onboarding(session, user_message)
+
+        # Check for "skip" (this project only)
+        if self._matches_patterns(message_lower, self.SKIP_REPO_PATTERNS):
+            return self._advance_repo_gathering(session, user_message)
+
+        # Try to extract repo from message
+        repo_input = user_message.strip()
+        if self.REPO_FORMAT_PATTERN.match(repo_input):
+            # Valid format — store it
+            current_project["repo"] = repo_input
+            return self._advance_repo_gathering(session, user_message)
+
+        # Invalid format — re-prompt with hint
+        project_name = current_project.get("name", "your project")
+        response_message = (
+            f"That doesn't look like a repo format. "
+            f"Please enter it as owner/repo-name "
+            f"(e.g., mediajunkie/healthtrack), or say 'skip' to move on."
+        )
+        self.manager.add_turn(session.id, user_message, response_message)
+
+        return OnboardingResponse(
+            message=response_message,
+            state=PortfolioOnboardingState.GATHERING_REPOS,
+            is_complete=False,
+        )
+
+    def _advance_repo_gathering(self, session, user_message: str) -> OnboardingResponse:
+        """Move to the next project's repo prompt, or complete if all done."""
+        next_index = session.repo_project_index + 1
+
+        if next_index >= len(session.captured_projects):
+            # All projects asked about — complete
+            return self._complete_onboarding(session, user_message)
+
+        # Move to next project
+        session.repo_project_index = next_index
+        next_project = session.captured_projects[next_index]
+        project_name = next_project.get("name", "your project")
+
+        response_message = self._get_repo_prompt(project_name, is_first=False)
+        self.manager.add_turn(session.id, user_message, response_message)
+
+        return OnboardingResponse(
+            message=response_message,
+            state=PortfolioOnboardingState.GATHERING_REPOS,
+            is_complete=False,
+        )
+
+    def _get_repo_prompt(self, project_name: str, is_first: bool) -> str:
+        """Generate the prompt asking about a project's repo."""
+        if is_first:
+            return (
+                f"Great! One more optional step — would you like to link a GitHub "
+                f"repository to **{project_name}**? Enter it as owner/repo-name "
+                f"(e.g., mediajunkie/healthtrack), or say 'skip'."
+            )
+        return (
+            f"How about **{project_name}** — any GitHub repo to link? "
+            f"(owner/repo-name, or 'skip')"
+        )

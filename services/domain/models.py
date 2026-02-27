@@ -1755,8 +1755,11 @@ class PortfolioOnboardingSession:
     previous_state: Optional[PortfolioOnboardingState] = None
 
     # Captured project info
-    # List of dicts: [{"name": "HealthTrack", "description": "Fitness app"}]
+    # List of dicts: [{"name": "HealthTrack", "description": "Fitness app", "repo": "owner/repo"}]
     captured_projects: List[Dict[str, Any]] = field(default_factory=list)
+
+    # Repo-linking iteration index (Issue #863)
+    repo_project_index: int = 0
 
     # Conversation turns
     turns: List[ConversationTurn] = field(default_factory=list)
@@ -1775,6 +1778,7 @@ class PortfolioOnboardingSession:
             "state": self.state.value,
             "previous_state": self.previous_state.value if self.previous_state else None,
             "captured_projects": self.captured_projects,
+            "repo_project_index": self.repo_project_index,
             "turns": [t.to_dict() for t in self.turns],
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,

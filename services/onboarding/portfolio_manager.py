@@ -56,8 +56,13 @@ class PortfolioOnboardingManager:
         ],
         PortfolioOnboardingState.CONFIRMING: [
             PortfolioOnboardingState.GATHERING_PROJECTS,  # User wants to add more
+            PortfolioOnboardingState.GATHERING_REPOS,  # Proceed to repo linking (#863)
             PortfolioOnboardingState.COMPLETE,  # User confirmed, save projects
             PortfolioOnboardingState.DECLINED,  # User cancelled
+        ],
+        PortfolioOnboardingState.GATHERING_REPOS: [
+            PortfolioOnboardingState.GATHERING_REPOS,  # Next project's repo
+            PortfolioOnboardingState.COMPLETE,  # All done / skip all
         ],
         PortfolioOnboardingState.COMPLETE: [],  # Terminal state
         PortfolioOnboardingState.DECLINED: [],  # Terminal state

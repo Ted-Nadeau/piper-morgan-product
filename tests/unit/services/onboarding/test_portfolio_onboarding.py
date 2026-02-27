@@ -203,8 +203,13 @@ class TestPortfolioOnboardingHandler:
         response = handler.handle_turn(onboarding_id, "That's all")
         assert response.state == PortfolioOnboardingState.CONFIRMING
 
-        # Confirm
+        # Confirm → now goes to repo gathering (#863)
         response = handler.handle_turn(onboarding_id, "Yes, save it")
+        assert response.state == PortfolioOnboardingState.GATHERING_REPOS
+        assert response.is_complete is False
+
+        # Skip repos → complete
+        response = handler.handle_turn(onboarding_id, "skip")
         assert response.state == PortfolioOnboardingState.COMPLETE
         assert response.is_complete is True
         assert response.captured_projects is not None
@@ -343,6 +348,35 @@ class TestStateTransitionEdgeCases:
         updated = manager.transition_state(session.id, PortfolioOnboardingState.GATHERING_PROJECTS)
         assert updated.state == PortfolioOnboardingState.GATHERING_PROJECTS
 
+    def test_confirming_to_gathering_repos(self, manager):
+        """CONFIRMING → GATHERING_REPOS is valid (#863)."""
+        session = manager.create_session("session-123", "user-456")
+        manager.transition_state(session.id, PortfolioOnboardingState.GATHERING_PROJECTS)
+        manager.transition_state(session.id, PortfolioOnboardingState.CONFIRMING)
+
+        updated = manager.transition_state(session.id, PortfolioOnboardingState.GATHERING_REPOS)
+        assert updated.state == PortfolioOnboardingState.GATHERING_REPOS
+
+    def test_gathering_repos_to_complete(self, manager):
+        """GATHERING_REPOS → COMPLETE is valid (#863)."""
+        session = manager.create_session("session-123", "user-456")
+        manager.transition_state(session.id, PortfolioOnboardingState.GATHERING_PROJECTS)
+        manager.transition_state(session.id, PortfolioOnboardingState.CONFIRMING)
+        manager.transition_state(session.id, PortfolioOnboardingState.GATHERING_REPOS)
+
+        updated = manager.transition_state(session.id, PortfolioOnboardingState.COMPLETE)
+        assert updated.state == PortfolioOnboardingState.COMPLETE
+
+    def test_gathering_repos_can_loop(self, manager):
+        """GATHERING_REPOS → GATHERING_REPOS is valid (next project's repo)."""
+        session = manager.create_session("session-123", "user-456")
+        manager.transition_state(session.id, PortfolioOnboardingState.GATHERING_PROJECTS)
+        manager.transition_state(session.id, PortfolioOnboardingState.CONFIRMING)
+        manager.transition_state(session.id, PortfolioOnboardingState.GATHERING_REPOS)
+
+        updated = manager.transition_state(session.id, PortfolioOnboardingState.GATHERING_REPOS)
+        assert updated.state == PortfolioOnboardingState.GATHERING_REPOS
+
 
 class TestGlueMainProj:
     """Issue #766: GLUE-MAINPROJ — Fix repeated 'main project' question.
@@ -422,6 +456,9 @@ class TestGlueMainProj:
         handler.handle_turn(oid, "Project Alpha")
         handler.handle_turn(oid, "that's all")
         response = handler.handle_turn(oid, "yes")
+        assert response.state == PortfolioOnboardingState.GATHERING_REPOS
+        # Skip repo → complete
+        response = handler.handle_turn(oid, "skip")
         assert response.is_complete
         assert response.captured_projects[0].get("is_default") is True
 
@@ -431,8 +468,11 @@ class TestGlueMainProj:
         handler.handle_turn(oid, "Project Alpha")
         handler.handle_turn(oid, "Project Beta")
         handler.handle_turn(oid, "done")
-        # User designates Alpha as main
+        # User designates Alpha as main → goes to repo gathering (#863)
         response = handler.handle_turn(oid, "Alpha")
+        assert response.state == PortfolioOnboardingState.GATHERING_REPOS
+        # Skip all repos → complete
+        response = handler.handle_turn(oid, "skip all")
         assert response.is_complete
         # Find which project is marked as default
         defaults = [p for p in response.captured_projects if p.get("is_default")]
@@ -445,8 +485,11 @@ class TestGlueMainProj:
         handler.handle_turn(oid, "Project Alpha")
         handler.handle_turn(oid, "Project Beta")
         handler.handle_turn(oid, "done")
-        # User declines to pick a primary
+        # User declines to pick a primary → goes to repo gathering (#863)
         response = handler.handle_turn(oid, "just save them")
+        assert response.state == PortfolioOnboardingState.GATHERING_REPOS
+        # Skip all repos → complete
+        response = handler.handle_turn(oid, "skip all")
         assert response.is_complete
         defaults = [p for p in response.captured_projects if p.get("is_default")]
         assert len(defaults) == 0
@@ -479,11 +522,14 @@ class TestGlueMainProj:
         assert "main focus" in r4.message.lower()
         assert r4.state == PortfolioOnboardingState.CONFIRMING
 
-        # Designate Beta as main
+        # Designate Beta as main → goes to repo gathering (#863)
         r5 = handler.handle_turn(oid, "Beta")
-        assert r5.is_complete
-        assert r5.state == PortfolioOnboardingState.COMPLETE
-        defaults = [p for p in r5.captured_projects if p.get("is_default")]
+        assert r5.state == PortfolioOnboardingState.GATHERING_REPOS
+        # Skip all repos → complete
+        r6 = handler.handle_turn(oid, "skip all")
+        assert r6.is_complete
+        assert r6.state == PortfolioOnboardingState.COMPLETE
+        defaults = [p for p in r6.captured_projects if p.get("is_default")]
         assert len(defaults) == 1
         assert "Beta" in defaults[0]["name"]
 
@@ -499,5 +545,207 @@ class TestGlueMainProj:
         assert r2.state == PortfolioOnboardingState.CONFIRMING
 
         r3 = handler.handle_turn(oid, "yes")
-        assert r3.is_complete
-        assert r3.captured_projects[0].get("is_default") is True
+        assert r3.state == PortfolioOnboardingState.GATHERING_REPOS
+        # Skip repo → complete
+        r4 = handler.handle_turn(oid, "skip")
+        assert r4.is_complete
+        assert r4.captured_projects[0].get("is_default") is True
+
+
+class TestRepoGathering:
+    """Issue #863: Portfolio onboarding — ask for repos during project setup.
+
+    Tests the GATHERING_REPOS state: linking GitHub repos to projects
+    during onboarding, with skip support and format validation.
+    """
+
+    @pytest.fixture
+    def handler(self):
+        manager = PortfolioOnboardingManager()
+        return PortfolioOnboardingHandler(manager)
+
+    def _drive_to_confirming(self, handler, projects=None):
+        """Helper: drive onboarding to CONFIRMING with given projects."""
+        if projects is None:
+            projects = ["Project Alpha"]
+
+        start = handler.start_onboarding("session-863", "user-863")
+        oid = start.metadata["onboarding_id"]
+        handler.handle_turn(oid, "Sure")  # Accept
+
+        for name in projects:
+            handler.handle_turn(oid, name)
+
+        handler.handle_turn(oid, "that's all")  # → CONFIRMING
+        return oid
+
+    # --- Transition from CONFIRMING to GATHERING_REPOS ---
+
+    def test_repo_step_offered_after_confirmation(self, handler):
+        """Confirming 'yes' → GATHERING_REPOS, message mentions repo."""
+        oid = self._drive_to_confirming(handler)
+        response = handler.handle_turn(oid, "yes")
+
+        assert response.state == PortfolioOnboardingState.GATHERING_REPOS
+        assert response.is_complete is False
+        assert "repo" in response.message.lower()
+        assert "Project Alpha" in response.message
+
+    def test_repo_step_offered_multi_project(self, handler):
+        """Multi-project: after main-project designation → GATHERING_REPOS."""
+        oid = self._drive_to_confirming(handler, ["Alpha", "Beta"])
+        response = handler.handle_turn(oid, "Alpha")  # Designate main
+
+        assert response.state == PortfolioOnboardingState.GATHERING_REPOS
+        assert "Alpha" in response.message  # Asks about first project
+
+    # --- Valid repo format ---
+
+    def test_valid_repo_format_accepted(self, handler):
+        """owner/repo format is accepted and stored."""
+        oid = self._drive_to_confirming(handler)
+        handler.handle_turn(oid, "yes")  # → GATHERING_REPOS
+
+        response = handler.handle_turn(oid, "mediajunkie/healthtrack")
+        assert response.state == PortfolioOnboardingState.COMPLETE
+        assert response.is_complete is True
+        assert response.captured_projects[0].get("repo") == "mediajunkie/healthtrack"
+
+    def test_repo_format_edge_cases(self, handler):
+        """Various valid owner/repo formats."""
+        valid_formats = [
+            "a/b",
+            "org-name/repo.name",
+            "Owner/REPO-123",
+            "my_org/my_repo",
+            "dotted.org/dotted.repo",
+        ]
+        for repo_name in valid_formats:
+            oid = self._drive_to_confirming(handler)
+            handler.handle_turn(oid, "yes")
+            response = handler.handle_turn(oid, repo_name)
+            assert (
+                response.state == PortfolioOnboardingState.COMPLETE
+            ), f"'{repo_name}' should be accepted as valid"
+            assert response.captured_projects[0].get("repo") == repo_name
+
+    # --- Invalid repo format ---
+
+    def test_invalid_repo_format_reprompts(self, handler):
+        """Bad format → stays in GATHERING_REPOS, shows hint."""
+        oid = self._drive_to_confirming(handler)
+        handler.handle_turn(oid, "yes")
+
+        response = handler.handle_turn(oid, "not-a-repo")
+        assert response.state == PortfolioOnboardingState.GATHERING_REPOS
+        assert "owner/repo" in response.message.lower()
+        assert "skip" in response.message.lower()
+
+    def test_repo_format_invalid_cases(self, handler):
+        """Various invalid formats should be rejected."""
+        invalid_formats = ["noslash", "/leading", "trailing/", "has spaces/repo", ""]
+        for bad_input in invalid_formats:
+            oid = self._drive_to_confirming(handler)
+            handler.handle_turn(oid, "yes")
+            response = handler.handle_turn(oid, bad_input)
+            assert (
+                response.state == PortfolioOnboardingState.GATHERING_REPOS
+            ), f"'{bad_input}' should be rejected"
+
+    # --- Skip operations ---
+
+    def test_skip_single_project_repo(self, handler):
+        """'skip' for single project → COMPLETE, no repo in data."""
+        oid = self._drive_to_confirming(handler)
+        handler.handle_turn(oid, "yes")
+
+        response = handler.handle_turn(oid, "skip")
+        assert response.state == PortfolioOnboardingState.COMPLETE
+        assert response.is_complete is True
+        assert response.captured_projects[0].get("repo") is None
+
+    def test_skip_all_repos(self, handler):
+        """'skip all' with multiple projects → immediately completes."""
+        oid = self._drive_to_confirming(handler, ["Alpha", "Beta", "Gamma"])
+        handler.handle_turn(oid, "Alpha")  # Designate main → GATHERING_REPOS
+
+        response = handler.handle_turn(oid, "skip all")
+        assert response.state == PortfolioOnboardingState.COMPLETE
+        assert response.is_complete is True
+        # No repos on any project
+        for p in response.captured_projects:
+            assert p.get("repo") is None
+
+    def test_none_skips_repo(self, handler):
+        """'none' should skip the current project's repo."""
+        oid = self._drive_to_confirming(handler)
+        handler.handle_turn(oid, "yes")
+
+        response = handler.handle_turn(oid, "none")
+        assert response.state == PortfolioOnboardingState.COMPLETE
+        assert response.is_complete is True
+
+    # --- Multi-project iteration ---
+
+    def test_multi_project_iterates_through_all(self, handler):
+        """Should ask about each project in turn."""
+        oid = self._drive_to_confirming(handler, ["Alpha", "Beta"])
+        handler.handle_turn(oid, "Alpha")  # Designate main → GATHERING_REPOS
+
+        # First project: provide repo
+        r1 = handler.handle_turn(oid, "org/alpha-repo")
+        assert r1.state == PortfolioOnboardingState.GATHERING_REPOS
+        assert "Beta" in r1.message  # Asks about second project
+
+        # Second project: provide repo → complete
+        r2 = handler.handle_turn(oid, "org/beta-repo")
+        assert r2.state == PortfolioOnboardingState.COMPLETE
+        assert r2.captured_projects[0].get("repo") == "org/alpha-repo"
+        assert r2.captured_projects[1].get("repo") == "org/beta-repo"
+
+    def test_multi_project_mixed_repos(self, handler):
+        """3 projects: provide repo, skip, provide repo → correct data."""
+        oid = self._drive_to_confirming(handler, ["Alpha", "Beta", "Gamma"])
+        handler.handle_turn(oid, "Alpha")  # Designate main → GATHERING_REPOS
+
+        handler.handle_turn(oid, "org/alpha-repo")  # Alpha: repo
+        handler.handle_turn(oid, "skip")  # Beta: skip
+        response = handler.handle_turn(oid, "org/gamma-repo")  # Gamma: repo
+
+        assert response.state == PortfolioOnboardingState.COMPLETE
+        assert response.captured_projects[0].get("repo") == "org/alpha-repo"
+        assert response.captured_projects[1].get("repo") is None
+        assert response.captured_projects[2].get("repo") == "org/gamma-repo"
+
+    # --- Full flow integration ---
+
+    def test_full_flow_single_project_with_repo(self, handler):
+        """Complete flow: 1 project + repo → COMPLETE with repo in data."""
+        start = handler.start_onboarding("session-863", "user-863")
+        oid = start.metadata["onboarding_id"]
+
+        handler.handle_turn(oid, "Sure")  # Accept
+        handler.handle_turn(oid, "HealthTrack")  # Add project
+        handler.handle_turn(oid, "that's all")  # Done → CONFIRMING
+        handler.handle_turn(oid, "yes")  # Confirm → GATHERING_REPOS
+        response = handler.handle_turn(oid, "mediajunkie/healthtrack")
+
+        assert response.state == PortfolioOnboardingState.COMPLETE
+        assert response.is_complete is True
+        assert response.captured_projects[0].get("repo") == "mediajunkie/healthtrack"
+        assert response.captured_projects[0].get("is_default") is True
+
+    def test_backward_compat_no_repo_key(self, handler):
+        """Skipping repos produces same shape as old flow (no 'repo' key)."""
+        start = handler.start_onboarding("session-863", "user-863")
+        oid = start.metadata["onboarding_id"]
+
+        handler.handle_turn(oid, "Sure")
+        handler.handle_turn(oid, "HealthTrack")
+        handler.handle_turn(oid, "that's all")
+        handler.handle_turn(oid, "yes")  # → GATHERING_REPOS
+        response = handler.handle_turn(oid, "skip")  # → COMPLETE
+
+        assert response.is_complete is True
+        # No repo key should be present (backward compat)
+        assert "repo" not in response.captured_projects[0]

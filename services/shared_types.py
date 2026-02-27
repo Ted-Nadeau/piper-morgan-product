@@ -235,6 +235,7 @@ class PortfolioOnboardingState(Enum):
     INITIATED = "initiated"  # Piper offered onboarding, awaiting user response
     GATHERING_PROJECTS = "gathering_projects"  # Collecting project info
     CONFIRMING = "confirming"  # Confirming captured info before save
+    GATHERING_REPOS = "gathering_repos"  # Optionally linking repos to projects (#863)
     COMPLETE = "complete"  # Projects saved, onboarding done
     DECLINED = "declined"  # User said no thanks
 

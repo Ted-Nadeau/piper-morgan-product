@@ -310,31 +310,47 @@ class ConversationHandler:
 
             from sqlalchemy import text
 
-            from services.database.repositories import ProjectRepository
+            from services.database.repositories import ProjectRepository, RepositoryRepository
             from services.database.session_factory import AsyncSessionFactory
             from services.domain import models as domain
 
             async with AsyncSessionFactory.session_scope() as db_session:
                 project_repo = ProjectRepository(db_session)
+                repo_repo = RepositoryRepository(db_session)
 
                 for project_data in captured_projects:
-                    project = domain.Project(
-                        id=None,  # Will be generated
+                    # Create the project
+                    created_project = await project_repo.create(
                         owner_id=user_id,
                         name=project_data.get("name", "Untitled Project"),
                         description=project_data.get("description", ""),
-                        is_default=False,
+                        is_default=project_data.get("is_default", False),
                         is_archived=False,
                     )
 
-                    # Use BaseRepository.create via ProjectRepository
-                    await project_repo.create(
-                        owner_id=user_id,
-                        name=project.name,
-                        description=project.description,
-                        is_default=False,
-                        is_archived=False,
-                    )
+                    # Issue #863: Link repo if one was provided during onboarding
+                    repo_full_name = project_data.get("repo")
+                    if repo_full_name:
+                        existing = await repo_repo.get_by_full_name(
+                            repo_full_name, owner_id=user_id
+                        )
+                        if existing:
+                            repo_entity = existing
+                        else:
+                            repo_domain = domain.Repository(
+                                owner_id=user_id,
+                                full_name=repo_full_name,
+                                provider="github",
+                                url=f"https://github.com/{repo_full_name}",
+                            )
+                            repo_entity = await repo_repo.create_repository(repo_domain)
+
+                        await repo_repo.link_to_project(
+                            repository_id=repo_entity.id,
+                            project_id=created_project.id,
+                            linked_by=user_id,
+                            is_primary=True,
+                        )
 
                 # Mark user's setup as complete (Issue #490)
                 await db_session.execute(
@@ -347,10 +363,12 @@ class ConversationHandler:
 
                 await db_session.commit()
 
+                repo_count = sum(1 for p in captured_projects if p.get("repo"))
                 logger.info(
                     "portfolio_onboarding_projects_persisted",
                     user_id=user_id,
                     project_count=len(captured_projects),
+                    repo_count=repo_count,
                     setup_complete=True,
                 )
 
