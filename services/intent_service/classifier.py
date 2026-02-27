@@ -799,6 +799,16 @@ class IntentClassifier:
         if context:
             context_info = f"\nContext: {json.dumps(context, indent=2)}"
 
+            # Issue #852: Enrich with explicit continuation hint for LLM
+            continuation_hint = context.get("contextual_continuation_hint")
+            if continuation_hint:
+                context_info += (
+                    f'\n\nIMPORTANT: The user was just offered "{continuation_hint}" '
+                    "and is responding affirmatively. Classify their intent as "
+                    "accepting this offer — determine the appropriate category "
+                    "and action for fulfilling the offered topic."
+                )
+
         # Prepare spatial context for LLM
         spatial_context_info = ""
         if spatial_context:

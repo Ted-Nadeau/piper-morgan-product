@@ -382,6 +382,36 @@ Piper: "Moved to Tuesday 10am. 1 hour enough or longer?"
 - Ask for missing slots conversationally, grouped logically
 - Allow slot modification after initial fill
 
+### 4.4 Offer Tracking: Actionable vs. Contextual (#852)
+
+**Bright-line rule** (Chief Architect): Offers Piper makes fall into exactly two categories, with different tracking mechanisms.
+
+**Actionable offers** — "yes" invokes a named workflow:
+- Tracked by `WorkflowOfferService` via `action_required` in handler response
+- User says "yes" → `detect_offer_response()` → workflow trigger (slot filling, etc.)
+- Example: "Want me to schedule that meeting?" → `action_required: "schedule_meeting"`
+- Storage: `IntentProcessingResult.pending_offer`
+
+**Contextual offers** — "yes" means "continue/elaborate":
+- Tracked by `ConversationContext.last_offer` via `offer_hint` in handler response
+- User says "yes" → continuation hint injected into classifier → LLM interprets
+- Example: "Would you like me to explain how project context works?" → LLM handles
+- Storage: `ConversationContext.last_offer` (one-turn memory, always cleared)
+
+**Data flow for contextual offers**:
+```
+Turn N: canonical_handler returns {message, intent, offer_hint}
+        → intent_service stores offer_hint as ConversationContext.last_offer
+
+Turn N+1: intent_service checks last_offer
+           → detects bare affirmative via detect_offer_response()
+           → passes continuation_hint to classifier context
+           → classifier enriches LLM prompt with offer context
+           → last_offer cleared (regardless of user response)
+```
+
+**Key files**: `conversation_context.py` (LastOffer), `intent_service.py` (store + consume), `classifier.py` (LLM prompt enrichment), `canonical_handlers.py` (offer_hint annotations)
+
 ---
 
 ## 5. Anti-Robotics Patterns
@@ -496,6 +526,25 @@ Piper: "Moved to Tuesday 10am. 1 hour enough or longer?"
 - Default to minimal confirmation for simple actions
 - Expand only when: user is new, action is complex, or outcome needs verification
 - Trust users to ask if they want more detail
+
+### 5.8 Entity Names vs. Parrot Confirmations
+
+**Principle**: Entity names are identifiers, not user input to paraphrase.
+
+When responses reference specific entities (projects, people, meetings), the name should be echoed exactly so the user knows which entity is being referenced. This is distinct from parrot confirmations, which echo the user's full message.
+
+| Pattern | Example | Acceptable? |
+|---------|---------|-------------|
+| Entity name echo | "I couldn't find a project called 'Q3 Roadmap'" | ✅ Yes |
+| Entity name echo | "Are you sure you want to delete 'Henderson Account'?" | ✅ Yes |
+| Parrot confirmation | "You said 'schedule meeting with Sarah Tuesday'" | ❌ No |
+| Parrot confirmation | "You want to create a project. I will create a project." | ❌ No |
+
+**Formatting guideline**: Use single quotes around entity names in prose to distinguish them from surrounding text.
+
+**Colleague Test application**: A colleague would say "You mean the Henderson account?" not "You mean the thing you mentioned." Entity specificity is natural; full-message echoing is robotic.
+
+**Gate 2 audit note**: Entity name echoing should NOT be flagged as parrot behavior during anti-flattening verification.
 
 ---
 

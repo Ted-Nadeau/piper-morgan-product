@@ -489,6 +489,38 @@ class IntentService:
                     )
                 # Neither accept nor decline — user moved on. Continue normal processing.
 
+            # Issue #852: Contextual offer continuation
+            # If the user was offered something contextual (not a workflow) on the
+            # previous turn, check if they're accepting it with a bare affirmative.
+            # One-turn memory: always clear, regardless of user response.
+            contextual_continuation_hint = None
+            if session_id:
+                from services.intent_service.conversation_context import get_or_create_context
+
+                try:
+                    _conv_ctx = get_or_create_context(session_id)
+                except (ValueError, KeyError):
+                    _conv_ctx = None  # Non-UUID session_id — skip offer tracking
+                if _conv_ctx and _conv_ctx.last_offer:
+                    last_offer = _conv_ctx.last_offer
+                    _conv_ctx.last_offer = None  # One-turn memory: always clear
+
+                    response_type = detect_offer_response(message)
+                    if response_type == "accept":
+                        contextual_continuation_hint = last_offer.continuation_hint
+                        self.logger.info(
+                            "contextual_offer_accepted",
+                            continuation_hint=contextual_continuation_hint,
+                            session_id=session_id,
+                        )
+                    else:
+                        self.logger.debug(
+                            "contextual_offer_expired",
+                            offer_hint=last_offer.continuation_hint,
+                            user_response_type=response_type,
+                            session_id=session_id,
+                        )
+
             # Issue #826: Resolve trust stage from real computation service
             # Pre-fetch here so _apply_soft_offer() receives resolved domain data
             resolved_trust_stage = None
@@ -606,7 +638,15 @@ class IntentService:
             # Issue #595: Multi-intent classification
             # Use classify_multiple to detect all intents in message
             self.logger.info(f"Processing intent with OrchestrationEngine: {message}")
-            multi_result = await self.intent_classifier.classify_multiple(message)
+            # Issue #852: Pass contextual continuation hint to classifier
+            classification_context = (
+                {"contextual_continuation_hint": contextual_continuation_hint}
+                if contextual_continuation_hint
+                else None
+            )
+            multi_result = await self.intent_classifier.classify_multiple(
+                message, context=classification_context
+            )
 
             # Issue #764: Multi-substantive intent orchestration
             # Count substantive (non-conversational) intents
@@ -879,6 +919,33 @@ class IntentService:
                         },
                         user_id=user_id,
                     )
+
+                # Issue #852: Track contextual offer for continuation detection
+                # Complements action_required (line 864) — different storage, same location.
+                # action_required → WorkflowOfferService (triggers workflows)
+                # offer_hint → ConversationContext.last_offer (gives LLM context)
+                offer_hint = canonical_result.get("offer_hint")
+                if offer_hint and session_id:
+                    from services.intent_service.conversation_context import (
+                        LastOffer,
+                        get_or_create_context,
+                    )
+
+                    try:
+                        conv_ctx = get_or_create_context(session_id)
+                    except (ValueError, KeyError):
+                        conv_ctx = None  # Non-UUID session_id — skip offer tracking
+                    if conv_ctx:
+                        conv_ctx.last_offer = LastOffer(
+                            offer_type="contextual",
+                            continuation_hint=offer_hint["continuation_hint"],
+                            offer_text=offer_hint.get("offer_text", ""),
+                        )
+                        self.logger.info(
+                            "contextual_offer_tracked",
+                            continuation_hint=offer_hint["continuation_hint"],
+                            session_id=session_id,
+                        )
 
                 canonical_response = IntentProcessingResult(
                     success=True,

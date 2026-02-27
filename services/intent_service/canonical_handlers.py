@@ -2566,6 +2566,11 @@ From there you can:
 3. Link projects to GitHub repositories
 
 Would you like me to explain what information to include for each project?"""
+            # Issue #852: Track contextual offer for continuation
+            offer_hint = {
+                "continuation_hint": "explain what information to include for each project",
+                "offer_text": "Would you like me to explain what information to include for each project?",
+            }
         else:
             # No projects yet - guide through setup
             message = """I'd be happy to help you set up your projects!
@@ -2581,6 +2586,11 @@ To configure your project portfolio:
 - **Repository**: (Optional) GitHub repo for issue integration
 
 Would you like me to explain more about how Piper uses project context, or are you ready to set up your first project?"""
+            # Issue #852: Track contextual offer for continuation
+            offer_hint = {
+                "continuation_hint": "explain how Piper uses project context",
+                "offer_text": "Would you like me to explain more about how Piper uses project context?",
+            }
 
         return {
             "message": message,
@@ -2596,6 +2606,7 @@ Would you like me to explain more about how Piper uses project context, or are y
             },
             "setup_type": "projects",
             "requires_clarification": False,
+            "offer_hint": offer_hint,  # Issue #852
         }
 
     def _format_integration_setup_guidance(self) -> Dict:
@@ -2665,6 +2676,11 @@ Each integration has its own setup process. Would you like guidance on setting u
             },
             "setup_type": "integrations",
             "requires_clarification": False,
+            # Issue #852: Track contextual offer for continuation
+            "offer_hint": {
+                "continuation_hint": "provide guidance on setting up a specific integration",
+                "offer_text": "Would you like guidance on setting up a specific integration?",
+            },
         }
 
     def _format_general_setup_guidance(self) -> Dict:
@@ -4422,7 +4438,7 @@ What would you like to set up first?"""
                         "Would you like me to search for something else?"
                     )
 
-                return {
+                result_dict = {
                     "message": response,
                     "intent": {
                         "category": IntentCategoryEnum.MEMORY.value,
@@ -4435,6 +4451,13 @@ What would you like to set up first?"""
                     },
                     "requires_clarification": False,
                 }
+                # Issue #852: Track contextual offer only when search failed
+                if result.total_matches == 0:
+                    result_dict["offer_hint"] = {
+                        "continuation_hint": "search conversation history for a different topic",
+                        "offer_text": "Would you like me to search for something else?",
+                    }
+                return result_dict
 
             elif user_id:
                 # Get recent conversation history
@@ -4462,7 +4485,7 @@ What would you like to set up first?"""
                         "to getting to know you better as we work together!"
                     )
 
-                return {
+                result_dict = {
                     "message": response,
                     "intent": {
                         "category": IntentCategoryEnum.MEMORY.value,
@@ -4475,6 +4498,13 @@ What would you like to set up first?"""
                     },
                     "requires_clarification": False,
                 }
+                # Issue #852: Track contextual offer when more history available
+                if result.conversations and result.total_count > 3:
+                    result_dict["offer_hint"] = {
+                        "continuation_hint": "explore more conversation history",
+                        "offer_text": "Would you like to explore more of our history?",
+                    }
+                return result_dict
 
             # Fallback if no user_id available
             return {
@@ -4726,7 +4756,7 @@ What would you like to set up first?"""
                         response = (
                             "You don't have any active projects yet. " "Would you like to add one?"
                         )
-                    return {
+                    result_dict = {
                         "message": response,
                         "intent": {
                             "category": IntentCategoryEnum.PORTFOLIO.value,
@@ -4736,6 +4766,13 @@ What would you like to set up first?"""
                         },
                         "requires_clarification": False,
                     }
+                    # Issue #852: Track contextual offer when no projects exist
+                    if not projects:
+                        result_dict["offer_hint"] = {
+                            "continuation_hint": "add a new project",
+                            "offer_text": "Would you like to add one?",
+                        }
+                    return result_dict
 
                 # Handle archive operation
                 if operation == "archive" and project_name:
@@ -4773,6 +4810,11 @@ What would you like to set up first?"""
                                 "context": {"searched_name": project_name},
                             },
                             "requires_clarification": True,
+                            # Issue #852: Track contextual offer
+                            "offer_hint": {
+                                "continuation_hint": "list all projects",
+                                "offer_text": "Would you like me to list your projects?",
+                            },
                         }
 
                 # Handle delete operation (with confirmation)
@@ -4813,6 +4855,11 @@ What would you like to set up first?"""
                                 "context": {"searched_name": project_name},
                             },
                             "requires_clarification": True,
+                            # Issue #852: Track contextual offer
+                            "offer_hint": {
+                                "continuation_hint": "list all projects",
+                                "offer_text": "Would you like me to list your projects?",
+                            },
                         }
 
                 # Handle restore operation
@@ -4850,6 +4897,11 @@ What would you like to set up first?"""
                                 "context": {"searched_name": project_name},
                             },
                             "requires_clarification": True,
+                            # Issue #852: Track contextual offer
+                            "offer_hint": {
+                                "continuation_hint": "list archived projects",
+                                "offer_text": "Would you like me to list your archived projects?",
+                            },
                         }
 
                 # Handle search operation
@@ -4875,7 +4927,7 @@ What would you like to set up first?"""
                             f"I couldn't find any projects matching '{search_terms}'. "
                             "Would you like to see all your projects?"
                         )
-                    return {
+                    result_dict = {
                         "message": response,
                         "intent": {
                             "category": IntentCategoryEnum.PORTFOLIO.value,
@@ -4888,6 +4940,13 @@ What would you like to set up first?"""
                         },
                         "requires_clarification": len(results) == 0,
                     }
+                    # Issue #852: Track contextual offer when search found no results
+                    if not results:
+                        result_dict["offer_hint"] = {
+                            "continuation_hint": "list all projects",
+                            "offer_text": "Would you like to see all your projects?",
+                        }
+                    return result_dict
 
             # Fallback for unrecognized portfolio operations (outside session - no DB needed)
             return {

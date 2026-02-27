@@ -33,6 +33,23 @@ class FollowUpType(str, Enum):
 
 
 @dataclass
+class LastOffer:
+    """Tracks the most recent contextual offer for continuation detection (#852).
+
+    When Piper makes a contextual offer ("Would you like me to explain more?"),
+    this stores the continuation hint so the next turn's classifier knows what
+    "yes" refers to. One-turn memory — cleared on every new turn regardless.
+
+    Bright-line rule (Chief Architect): If "yes" invokes a named workflow,
+    use action_required. If "yes" means "continue/elaborate," use this.
+    """
+
+    offer_type: str  # "contextual" (for now; "actionable" reserved for future use)
+    continuation_hint: str  # What to continue with, e.g. "explain how project context works"
+    offer_text: str = ""  # Original offer text for logging/debugging
+
+
+@dataclass
 class ConversationTurn:
     """
     A single turn in the conversation.
@@ -81,6 +98,9 @@ class ConversationContext:
 
     # Lens stack for topic digression/restoration (#763 GLUE-FOLLOWUP)
     lens_stack: list[str] = field(default_factory=list)
+
+    # Issue #852: Track last contextual offer for continuation detection
+    last_offer: Optional[LastOffer] = None
 
     def add_turn(
         self,

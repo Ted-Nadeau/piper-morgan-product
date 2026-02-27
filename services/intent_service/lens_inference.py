@@ -226,6 +226,7 @@ async def decode_follow_up_with_llm(
     turns: list[Any],
     current_lens: str,
     llm_service: Any,
+    continuation_hint: Optional[str] = None,  # Issue #852
 ) -> Optional[Intent]:
     """
     Use the LLM to decode a complex follow-up that rules can't handle.
@@ -234,16 +235,28 @@ async def decode_follow_up_with_llm(
     ("What about tomorrow instead?"), lens shifts within topic
     ("Who's attending?"), and action shifts ("Cancel the 2pm").
 
+    Issue #852: Also handles contextual offer continuations when a
+    continuation_hint is provided (user said "yes" to a contextual offer).
+
     Args:
         message: The user's follow-up message
         turns: Recent ConversationTurn objects
         current_lens: The current conversational lens
         llm_service: LLM service for the completion call
+        continuation_hint: Optional hint about what was offered (#852)
 
     Returns:
         A resolved Intent if it's a follow-up, None if it's a new topic
     """
     history = _format_conversation_history(turns)
+
+    # Issue #852: Enrich history with continuation context
+    if continuation_hint:
+        history += (
+            f'\n\nPrevious offer: The user was offered "{continuation_hint}" '
+            "and appears to be accepting."
+        )
+
     prompt = LENS_DECODER_PROMPT.format(
         conversation_history=history,
         current_lens=current_lens,
