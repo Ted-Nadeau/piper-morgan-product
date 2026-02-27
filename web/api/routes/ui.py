@@ -410,6 +410,16 @@ async def calendar_settings_page(request: Request):
     )
 
 
+@router.get("/settings/projects", response_class=HTMLResponse)
+async def settings_projects_page(request: Request):
+    """Project integration and repository management settings (Issue #861)"""
+    templates = _get_templates(request)
+    user_context = _extract_user_context(request)
+    return templates.TemplateResponse(
+        "settings_projects.html", {"request": request, "user": user_context}
+    )
+
+
 @router.get("/lists", response_class=HTMLResponse)
 async def lists_ui(request: Request):
     """Lists management page with permission-aware UI (Issue #376)"""

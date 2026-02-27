@@ -1,0 +1,170 @@
+"""
+Unit tests for Project Settings UI page.
+Issue #861: Settings page — project integration management.
+"""
+
+import os
+
+import pytest
+
+pytestmark = pytest.mark.unit
+
+
+class TestSettingsProjectsRoute:
+    """Test that settings/projects route exists and is properly configured."""
+
+    def test_route_exists_in_ui_module(self):
+        """Verify settings_projects_page is importable from ui routes."""
+        from web.api.routes.ui import settings_projects_page
+
+        assert callable(settings_projects_page)
+
+    def test_route_has_docstring(self):
+        """Verify the route function has a docstring referencing #861."""
+        from web.api.routes.ui import settings_projects_page
+
+        assert settings_projects_page.__doc__ is not None
+        assert "861" in settings_projects_page.__doc__
+
+    def test_route_function_signature(self):
+        """Verify the route expects a Request parameter."""
+        import inspect
+
+        from web.api.routes.ui import settings_projects_page
+
+        sig = inspect.signature(settings_projects_page)
+        assert "request" in sig.parameters
+
+
+class TestSettingsProjectsCard:
+    """Test that the Projects card appears in settings-index.html."""
+
+    def test_projects_card_in_settings_index(self):
+        """Verify settings-index.html contains Projects card linking to /settings/projects."""
+        with open("templates/settings-index.html") as f:
+            content = f.read()
+        assert "/settings/projects" in content
+        assert "Projects" in content
+
+    def test_projects_card_has_description(self):
+        """Verify Projects card has descriptive text."""
+        with open("templates/settings-index.html") as f:
+            content = f.read()
+        assert "Repository linking" in content or "repositories" in content.lower()
+        assert "Integration config" in content or "integrations" in content.lower()
+
+
+class TestSettingsProjectsTemplate:
+    """Test that settings_projects.html template exists and has required elements."""
+
+    def test_template_exists(self):
+        """Verify template file exists."""
+        assert os.path.exists("templates/settings_projects.html")
+
+    def test_template_includes_navigation(self):
+        """Verify template includes navigation component."""
+        with open("templates/settings_projects.html") as f:
+            content = f.read()
+        assert "components/navigation.html" in content
+
+    def test_template_includes_breadcrumbs(self):
+        """Verify template includes breadcrumbs component."""
+        with open("templates/settings_projects.html") as f:
+            content = f.read()
+        assert "components/breadcrumbs.html" in content
+
+    def test_template_includes_toast(self):
+        """Verify template includes toast notification component."""
+        with open("templates/settings_projects.html") as f:
+            content = f.read()
+        assert "components/toast.html" in content
+
+    def test_template_includes_confirmation_dialog(self):
+        """Verify template includes confirmation dialog component."""
+        with open("templates/settings_projects.html") as f:
+            content = f.read()
+        assert "components/confirmation-dialog.html" in content
+
+    def test_template_includes_dialog_js(self):
+        """Verify template loads dialog.js."""
+        with open("templates/settings_projects.html") as f:
+            content = f.read()
+        assert "dialog.js" in content
+
+    def test_template_includes_toast_js(self):
+        """Verify template loads toast.js."""
+        with open("templates/settings_projects.html") as f:
+            content = f.read()
+        assert "toast.js" in content
+
+    def test_template_uses_design_tokens(self):
+        """Verify template references tokens.css for design consistency."""
+        with open("templates/settings_projects.html") as f:
+            content = f.read()
+        assert "tokens.css" in content
+
+    def test_template_calls_projects_api(self):
+        """Verify template calls the projects API endpoint."""
+        with open("templates/settings_projects.html") as f:
+            content = f.read()
+        assert "/api/v1/projects" in content
+
+    def test_template_calls_repositories_api(self):
+        """Verify template calls the repositories API endpoint."""
+        with open("templates/settings_projects.html") as f:
+            content = f.read()
+        assert "/api/v1/repositories" in content
+
+    def test_template_has_project_selector(self):
+        """Verify template has a project selector element."""
+        with open("templates/settings_projects.html") as f:
+            content = f.read()
+        assert "project-select" in content
+
+    def test_template_has_repositories_section(self):
+        """Verify template has a repositories section."""
+        with open("templates/settings_projects.html") as f:
+            content = f.read()
+        assert "repositories-section" in content
+
+    def test_template_has_integrations_section(self):
+        """Verify template has an integrations section."""
+        with open("templates/settings_projects.html") as f:
+            content = f.read()
+        assert "integrations-section" in content
+
+    def test_template_has_aria_labels(self):
+        """Verify template includes ARIA labels for accessibility."""
+        with open("templates/settings_projects.html") as f:
+            content = f.read()
+        assert "aria-label" in content
+
+    def test_template_uses_credentials_include(self):
+        """Verify all fetch calls include credentials for auth."""
+        with open("templates/settings_projects.html") as f:
+            content = f.read()
+        # Every fetch call should include credentials
+        assert content.count("credentials: 'include'") >= 3
+
+    def test_template_has_back_link(self):
+        """Verify template has a back link to settings."""
+        with open("templates/settings_projects.html") as f:
+            content = f.read()
+        assert 'href="/settings"' in content
+        assert "Back to Settings" in content
+
+    def test_template_has_empty_states(self):
+        """Verify template handles empty states for repos and integrations."""
+        with open("templates/settings_projects.html") as f:
+            content = f.read()
+        assert "No repositories linked" in content or "No repositories" in content.lower()
+        assert "No integrations configured" in content or "No integrations" in content.lower()
+
+    def test_template_has_integration_type_metadata(self):
+        """Verify template defines metadata for all integration types."""
+        with open("templates/settings_projects.html") as f:
+            content = f.read()
+        assert "github" in content
+        assert "jira" in content
+        assert "linear" in content
+        assert "slack" in content
