@@ -593,6 +593,25 @@ class PreClassifier:
         r"\b(?:show|list|view)\s+(?:my\s+)?(?:all\s+)?(?:archived\s+)?projects\b",
     ]
 
+    # Repository management patterns (Issue #862)
+    REPO_MANAGEMENT_PATTERNS = [
+        # Link operations - "link owner/repo to project"
+        r"\blink\s+(?:(?:my|the|a)\s+)?(?:repo(?:sitory)?)\s+(?:to\s+)",
+        r"\blink\s+[\w.-]+/[\w.-]+",
+        r"\bconnect\s+(?:(?:my|the|a)\s+)?(?:repo(?:sitory)?)\s+(?:to\s+)",
+        r"\bconnect\s+[\w.-]+/[\w.-]+",
+        r"\badd\s+(?:(?:my|the|a)\s+)?(?:repo(?:sitory)?)\s+to\s+",
+        r"\badd\s+[\w.-]+/[\w.-]+\s+to\s+",
+        # Unlink operations - "unlink repo from project"
+        r"\bunlink\s+(?:(?:my|the|a)\s+)?(?:repo(?:sitory)?)",
+        r"\bremove\s+(?:(?:my|the|a)\s+)?(?:repo(?:sitory)?)\s+from\s+",
+        r"\bdisconnect\s+(?:(?:my|the|a)\s+)?(?:repo(?:sitory)?)",
+        # List operations - "show my repos", "which repos are linked?"
+        r"\b(?:show|list|view|which)\s+(?:(?:my|the)\s+)?(?:linked\s+)?repos\b",
+        r"\bwhich\s+repos?\s+(?:are\s+)?(?:linked|connected)\b",
+        r"\bshow\s+(?:project\s+)?repositories\b",
+    ]
+
     # File reference patterns (with variations and typo tolerance)
     FILE_REFERENCE_PATTERNS = [
         # Direct references
@@ -722,6 +741,18 @@ class PreClassifier:
             return Intent(
                 category=IntentCategory.QUERY,
                 action="update_document_query",
+                confidence=1.0,
+                context={"original_message": message},
+            )
+
+        # Issue #862: Check REPO_MANAGEMENT before PORTFOLIO (more specific)
+        # "link owner/repo to project" routes to repo management handler
+        if PreClassifier._matches_patterns(
+            clean_for_matching, PreClassifier.REPO_MANAGEMENT_PATTERNS
+        ):
+            return Intent(
+                category=IntentCategory.PORTFOLIO,
+                action="manage_repos",
                 confidence=1.0,
                 context={"original_message": message},
             )
@@ -1115,6 +1146,8 @@ class PreClassifier:
             (PreClassifier.MEMORY_PATTERNS, IntentCategory.MEMORY, "get_memory"),
             # Portfolio patterns (Issue #675)
             (PreClassifier.PORTFOLIO_PATTERNS, IntentCategory.PORTFOLIO, "manage_portfolio"),
+            # Repo management patterns (Issue #862)
+            (PreClassifier.REPO_MANAGEMENT_PATTERNS, IntentCategory.PORTFOLIO, "manage_repos"),
             # Status patterns
             (PreClassifier.STATUS_PATTERNS, IntentCategory.STATUS, "get_project_status"),
             # Priority patterns

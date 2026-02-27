@@ -4522,6 +4522,10 @@ What would you like to set up first?"""
         - "Search projects for Y" → PortfolioService.search_projects()
         - "Show my projects" → PortfolioService.list_active_projects()
         """
+        # Delegate repo management to dedicated handler (Issue #862)
+        if intent.action == "manage_repos":
+            return await self._handle_repo_management(intent, session_id, user_id)
+
         import re
 
         from services.database.repositories import ProjectRepository
@@ -4919,6 +4923,432 @@ What would you like to set up first?"""
                 },
                 "requires_clarification": False,
             }
+
+    async def _handle_repo_management(
+        self, intent: Intent, session_id: str, user_id: str = None
+    ) -> Dict:
+        """
+        Handle repository management intents — link, unlink, list repos for projects.
+
+        Issue #862: Conversational handler for 'link repo to project'.
+        Uses #866 RepositoryRepository APIs (not ProjectIntegration).
+        """
+        import re
+
+        from services.database.repositories import ProjectRepository, RepositoryRepository
+        from services.database.session_factory import AsyncSessionFactory
+        from services.domain import models as domain
+
+        try:
+            original_message = intent.context.get("original_message", "")
+            message_lower = original_message.lower().strip()
+
+            if not user_id:
+                return {
+                    "message": (
+                        "I need to know who you are to manage repositories. "
+                        "Please sign in first."
+                    ),
+                    "intent": {
+                        "category": IntentCategoryEnum.PORTFOLIO.value,
+                        "action": "manage_repos",
+                        "confidence": 1.0,
+                        "context": {},
+                    },
+                    "requires_clarification": False,
+                }
+
+            # Detect operation and extract entities
+            operation = None
+            repo_name = None
+            project_name = None
+
+            # Extract repo name (owner/repo format) from original message
+            repo_match = re.search(r"([\w.-]+/[\w.-]+)", original_message)
+            if repo_match:
+                repo_name = repo_match.group(1)
+
+            # Link patterns
+            link_patterns = [
+                r"\b(?:link|connect|add)\s+(?:(?:my|the|a)\s+)?(?:repo(?:sitory)?\s+)?(?:[\w.-]+/[\w.-]+)\s+to\s+(?:(?:my|the)\s+)?(?:project\s+)?(.+)",
+                r"\b(?:link|connect|add)\s+(?:(?:my|the|a)\s+)?(?:repo(?:sitory)?)\s+to\s+(?:(?:my|the)\s+)?(?:project\s+)?(.+)",
+            ]
+            for pattern in link_patterns:
+                match = re.search(pattern, message_lower, re.IGNORECASE)
+                if match:
+                    operation = "link"
+                    project_name = self._clean_trailing_words(match.group(1).strip())
+                    break
+
+            # Unlink patterns
+            if not operation:
+                unlink_patterns = [
+                    r"\b(?:unlink|disconnect|remove)\s+(?:(?:my|the|a)\s+)?(?:repo(?:sitory)?\s+)?(?:[\w.-]+/[\w.-]+)\s+from\s+(?:(?:my|the)\s+)?(?:project\s+)?(.+)",
+                    r"\b(?:unlink|disconnect|remove)\s+(?:(?:my|the|a)\s+)?(?:repo(?:sitory)?)\s+from\s+(?:(?:my|the)\s+)?(?:project\s+)?(.+)",
+                ]
+                for pattern in unlink_patterns:
+                    match = re.search(pattern, message_lower, re.IGNORECASE)
+                    if match:
+                        operation = "unlink"
+                        project_name = self._clean_trailing_words(match.group(1).strip())
+                        break
+
+            # List patterns
+            if not operation:
+                list_patterns = [
+                    r"\b(?:show|list|view|which)\s+(?:(?:my|the)\s+)?(?:linked\s+)?repos\b",
+                    r"\bwhich\s+repos?\s+(?:are\s+)?(?:linked|connected)\b",
+                    r"\bshow\s+(?:project\s+)?repositories\b",
+                ]
+                for pattern in list_patterns:
+                    if re.search(pattern, message_lower, re.IGNORECASE):
+                        operation = "list"
+                        # Check if project name is mentioned
+                        proj_match = re.search(
+                            r"(?:for|of|on)\s+(?:(?:my|the)\s+)?(?:project\s+)?(.+)",
+                            message_lower,
+                        )
+                        if proj_match:
+                            project_name = self._clean_trailing_words(proj_match.group(1).strip())
+                        break
+
+            # Fallback: detect unlink/disconnect verb even without "from <project>"
+            if not operation:
+                if re.search(
+                    r"\b(?:unlink|disconnect)\s+(?:(?:my|the|a)\s+)?(?:repo(?:sitory)?)",
+                    message_lower,
+                ):
+                    operation = "unlink"
+
+            # Default to list if no operation detected
+            if not operation:
+                operation = "list"
+
+            async with AsyncSessionFactory.session_scope() as session:
+                project_repo = ProjectRepository(session)
+                repo_repo = RepositoryRepository(session)
+
+                # --- LINK ---
+                if operation == "link":
+                    if not repo_name:
+                        return {
+                            "message": (
+                                "Which repository would you like to link? "
+                                "Please provide the repository name in owner/repo format "
+                                "(e.g., mediajunkie/piper-morgan)."
+                            ),
+                            "intent": {
+                                "category": IntentCategoryEnum.PORTFOLIO.value,
+                                "action": "link_repo",
+                                "confidence": 1.0,
+                                "context": {"needs": "repo_name"},
+                            },
+                            "requires_clarification": True,
+                        }
+
+                    if not project_name:
+                        return {
+                            "message": (
+                                f"Which project should I link {repo_name} to? "
+                                "Please tell me the project name."
+                            ),
+                            "intent": {
+                                "category": IntentCategoryEnum.PORTFOLIO.value,
+                                "action": "link_repo",
+                                "confidence": 1.0,
+                                "context": {
+                                    "repo_name": repo_name,
+                                    "needs": "project_name",
+                                },
+                            },
+                            "requires_clarification": True,
+                        }
+
+                    # Find project
+                    project = await project_repo.find_by_name(name=project_name, owner_id=user_id)
+                    if not project:
+                        return {
+                            "message": (
+                                f"I couldn't find a project called '{project_name}'. "
+                                "Check the name and try again, or say 'show my projects' "
+                                "to see your project list."
+                            ),
+                            "intent": {
+                                "category": IntentCategoryEnum.PORTFOLIO.value,
+                                "action": "link_repo",
+                                "confidence": 1.0,
+                                "context": {
+                                    "repo_name": repo_name,
+                                    "project_name": project_name,
+                                    "error": "project_not_found",
+                                },
+                            },
+                            "requires_clarification": False,
+                        }
+
+                    # Find or create repo
+                    repo = await repo_repo.get_by_full_name(
+                        full_name=repo_name, provider="github", owner_id=user_id
+                    )
+                    if not repo:
+                        # Register the repo first
+                        repo = await repo_repo.create_repository(
+                            domain.Repository(
+                                owner_id=user_id,
+                                provider="github",
+                                full_name=repo_name,
+                                display_name=repo_name.split("/")[-1],
+                                url=f"https://github.com/{repo_name}",
+                            )
+                        )
+
+                    # Check if already linked
+                    existing_links = await repo_repo.get_project_links(repo.id)
+                    for link in existing_links:
+                        if link.project_id == project.id:
+                            return {
+                                "message": (
+                                    f"{repo_name} is already linked to {project.name}. "
+                                    "No changes needed."
+                                ),
+                                "intent": {
+                                    "category": IntentCategoryEnum.PORTFOLIO.value,
+                                    "action": "link_repo",
+                                    "confidence": 1.0,
+                                    "context": {
+                                        "repo_name": repo_name,
+                                        "project_name": project.name,
+                                        "status": "already_linked",
+                                    },
+                                },
+                                "requires_clarification": False,
+                            }
+
+                    # Create the link
+                    await repo_repo.link_to_project(
+                        repository_id=repo.id,
+                        project_id=project.id,
+                        linked_by=user_id,
+                    )
+
+                    return {
+                        "message": (
+                            f"Done! I've linked {repo_name} to your {project.name} project. "
+                            "I can now help you track issues, PRs, and activity for this repo."
+                        ),
+                        "intent": {
+                            "category": IntentCategoryEnum.PORTFOLIO.value,
+                            "action": "link_repo",
+                            "confidence": 1.0,
+                            "context": {
+                                "repo_name": repo_name,
+                                "project_name": project.name,
+                                "project_id": project.id,
+                                "repository_id": repo.id,
+                            },
+                        },
+                        "requires_clarification": False,
+                    }
+
+                # --- UNLINK ---
+                if operation == "unlink":
+                    if not repo_name or not project_name:
+                        return {
+                            "message": (
+                                "To unlink a repository, tell me both the repo name "
+                                "(owner/repo) and the project name. For example: "
+                                "'unlink mediajunkie/piper-morgan from Piper Morgan'"
+                            ),
+                            "intent": {
+                                "category": IntentCategoryEnum.PORTFOLIO.value,
+                                "action": "unlink_repo",
+                                "confidence": 1.0,
+                                "context": {"needs": "both"},
+                            },
+                            "requires_clarification": True,
+                        }
+
+                    project = await project_repo.find_by_name(name=project_name, owner_id=user_id)
+                    if not project:
+                        return {
+                            "message": f"I couldn't find a project called '{project_name}'.",
+                            "intent": {
+                                "category": IntentCategoryEnum.PORTFOLIO.value,
+                                "action": "unlink_repo",
+                                "confidence": 1.0,
+                                "context": {"error": "project_not_found"},
+                            },
+                            "requires_clarification": False,
+                        }
+
+                    repo = await repo_repo.get_by_full_name(
+                        full_name=repo_name, provider="github", owner_id=user_id
+                    )
+                    if not repo:
+                        return {
+                            "message": f"I couldn't find a repository called '{repo_name}'.",
+                            "intent": {
+                                "category": IntentCategoryEnum.PORTFOLIO.value,
+                                "action": "unlink_repo",
+                                "confidence": 1.0,
+                                "context": {"error": "repo_not_found"},
+                            },
+                            "requires_clarification": False,
+                        }
+
+                    removed = await repo_repo.unlink_from_project(repo.id, project.id)
+                    if not removed:
+                        return {
+                            "message": (
+                                f"{repo_name} wasn't linked to {project.name}. "
+                                "Nothing to remove."
+                            ),
+                            "intent": {
+                                "category": IntentCategoryEnum.PORTFOLIO.value,
+                                "action": "unlink_repo",
+                                "confidence": 1.0,
+                                "context": {"status": "not_linked"},
+                            },
+                            "requires_clarification": False,
+                        }
+
+                    return {
+                        "message": (f"Done! I've unlinked {repo_name} from {project.name}."),
+                        "intent": {
+                            "category": IntentCategoryEnum.PORTFOLIO.value,
+                            "action": "unlink_repo",
+                            "confidence": 1.0,
+                            "context": {
+                                "repo_name": repo_name,
+                                "project_name": project.name,
+                            },
+                        },
+                        "requires_clarification": False,
+                    }
+
+                # --- LIST ---
+                if operation == "list":
+                    if project_name:
+                        # List repos for a specific project
+                        project = await project_repo.find_by_name(
+                            name=project_name, owner_id=user_id
+                        )
+                        if not project:
+                            return {
+                                "message": (f"I couldn't find a project called '{project_name}'."),
+                                "intent": {
+                                    "category": IntentCategoryEnum.PORTFOLIO.value,
+                                    "action": "list_repos",
+                                    "confidence": 1.0,
+                                    "context": {"error": "project_not_found"},
+                                },
+                                "requires_clarification": False,
+                            }
+
+                        repos = await repo_repo.list_by_project(project.id)
+                        if repos:
+                            repo_lines = []
+                            for r in repos:
+                                icon = {"github": "🐙", "gitlab": "🦊", "bitbucket": "🪣"}.get(
+                                    r.provider, "📦"
+                                )
+                                repo_lines.append(f"- {icon} {r.full_name} ({r.provider})")
+                            response = (
+                                f"**{project.name}** has {len(repos)} linked "
+                                f"{'repository' if len(repos) == 1 else 'repositories'}:\n\n"
+                                + "\n".join(repo_lines)
+                            )
+                        else:
+                            response = (
+                                f"{project.name} doesn't have any linked repositories yet. "
+                                "You can link one by saying something like "
+                                "'link owner/repo to " + project.name + "'."
+                            )
+
+                        return {
+                            "message": response,
+                            "intent": {
+                                "category": IntentCategoryEnum.PORTFOLIO.value,
+                                "action": "list_repos",
+                                "confidence": 1.0,
+                                "context": {
+                                    "project_name": project.name,
+                                    "repo_count": len(repos) if repos else 0,
+                                },
+                            },
+                            "requires_clarification": False,
+                        }
+                    else:
+                        # List all user's repos
+                        repos = await repo_repo.list_by_owner(owner_id=user_id)
+                        if repos:
+                            repo_lines = []
+                            for r in repos:
+                                icon = {"github": "🐙", "gitlab": "🦊", "bitbucket": "🪣"}.get(
+                                    r.provider, "📦"
+                                )
+                                repo_lines.append(f"- {icon} {r.full_name} ({r.provider})")
+                            response = (
+                                f"You have {len(repos)} registered "
+                                f"{'repository' if len(repos) == 1 else 'repositories'}:\n\n"
+                                + "\n".join(repo_lines)
+                                + "\n\nTo see which project a repo is linked to, "
+                                "ask 'show repos for [project name]'."
+                            )
+                        else:
+                            response = (
+                                "You don't have any registered repositories yet. "
+                                "You can register one by saying 'link owner/repo to [project]'."
+                            )
+
+                        return {
+                            "message": response,
+                            "intent": {
+                                "category": IntentCategoryEnum.PORTFOLIO.value,
+                                "action": "list_repos",
+                                "confidence": 1.0,
+                                "context": {"repo_count": len(repos) if repos else 0},
+                            },
+                            "requires_clarification": False,
+                        }
+
+        except Exception as e:
+            logger.error(f"Repo management handler error: {e}")
+            return {
+                "message": (
+                    "I'm having trouble managing repositories right now. "
+                    "Please try again in a moment."
+                ),
+                "intent": {
+                    "category": IntentCategoryEnum.PORTFOLIO.value,
+                    "action": "manage_repos_error",
+                    "confidence": 0.5,
+                    "context": {"error": str(e)},
+                },
+                "requires_clarification": False,
+            }
+
+    @staticmethod
+    def _clean_trailing_words(name: str) -> str:
+        """Remove common trailing filler words from extracted names."""
+        if not name:
+            return name
+        trailing_words = [
+            "please",
+            "now",
+            "thanks",
+            "thank you",
+            "asap",
+            "for me",
+            "right now",
+            "immediately",
+            "today",
+        ]
+        cleaned = name.strip()
+        for word in trailing_words:
+            if cleaned.lower().endswith(f" {word}"):
+                cleaned = cleaned[: -(len(word) + 1)].strip()
+        return cleaned
 
     async def _handle_conversation_query(
         self, intent: Intent, session_id: str, user_id: Optional[str] = None
