@@ -216,23 +216,23 @@ class TestHistoryGroupTemplate:
 
 
 class TestDateGroups:
-    """Tests for date grouping constants."""
+    """Tests for month-based date grouping functions (#786)."""
 
-    def test_today_group_defined(self, history_html):
-        """Today group should be defined."""
-        assert "today: 'Today'" in history_html
+    def test_group_by_month_defined(self, history_html):
+        """groupByMonth function should be defined."""
+        assert "groupByMonth" in history_html
 
-    def test_yesterday_group_defined(self, history_html):
-        """Yesterday group should be defined."""
-        assert "yesterday: 'Yesterday'" in history_html
+    def test_get_month_key_defined(self, history_html):
+        """getMonthKey function should be defined."""
+        assert "getMonthKey" in history_html
 
-    def test_this_week_group_defined(self, history_html):
-        """This Week group should be defined."""
-        assert "thisWeek: 'This Week'" in history_html
+    def test_format_month_label_defined(self, history_html):
+        """formatMonthLabel function should be defined."""
+        assert "formatMonthLabel" in history_html
 
-    def test_older_group_defined(self, history_html):
-        """Older group should be defined."""
-        assert "older: 'Older'" in history_html
+    def test_group_by_date_alias_defined(self, history_html):
+        """groupByDate alias should exist for compatibility."""
+        assert "groupByDate" in history_html
 
 
 class TestPagination:

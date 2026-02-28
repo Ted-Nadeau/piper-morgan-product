@@ -297,8 +297,9 @@ class TestDisconnectKeyCorrectness849:
 
         source = inspect.getsource(settings_integrations)
 
-        assert 'delete_api_key("slack_bot", username=current_user.sub)' in source
-        assert 'delete_api_key("slack_user", username=current_user.sub)' in source
+        # Verify user-scoped key deletion (code may be split across lines by black)
+        assert '"slack_bot", username=current_user.sub' in source
+        assert '"slack_user", username=current_user.sub' in source
         assert 'delete_api_key("slack_bot_token")' not in source
 
     @pytest.mark.asyncio
