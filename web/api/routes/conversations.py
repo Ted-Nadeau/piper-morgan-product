@@ -221,6 +221,7 @@ class ConversationListItem(BaseModel):
     created_at: str
     updated_at: Optional[str] = None
     turn_count: int = 0
+    lifecycle_state: str = "active"  # Issue #715
 
 
 class ConversationListResponse(BaseModel):
@@ -251,6 +252,7 @@ class CreateConversationResponse(BaseModel):
     id: str
     title: str
     created_at: str
+    lifecycle_state: str = "active"  # Issue #715
 
 
 @router.get("", response_model=ConversationListResponse)
@@ -258,34 +260,59 @@ async def list_conversations(
     limit: int = 50,
     offset: int = 0,
     search: str | None = None,
+    state: str | None = None,
     current_user: JWTClaims = Depends(get_current_user),
     conv_repo: ConversationRepository = Depends(get_conversation_repository),
 ) -> ConversationListResponse:
     """
-    List all conversations for the current user, optionally filtered by search.
+    List all conversations for the current user, optionally filtered by search and state.
 
     Issue #565: Populates conversation history sidebar.
     Issue #786: GLUE-HISTORY-DIFF - Added search parameter for History sidebar.
+    Issue #715: Added state parameter for lifecycle filtering.
 
     Args:
         limit: Maximum number of conversations (default 50)
         offset: Number to skip for pagination
         search: Optional search string to filter by title (case-insensitive)
+        state: Optional lifecycle state filter (active, archived). Default: active
         current_user: Current authenticated user
         conv_repo: Conversation repository (injected)
 
     Returns:
         ConversationListResponse with list of conversations and has_more flag
     """
+    from services.shared_types import ConversationLifecycleState
+
     try:
+        # Issue #715: Parse lifecycle state filter
+        lifecycle_state = None
+        if state:
+            try:
+                lifecycle_state = ConversationLifecycleState(state.lower())
+            except ValueError:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Invalid state: {state}. Valid values: active, archived",
+                )
+
         # Get conversations for user (with optional search filter)
         if search and search.strip():
+            # search_for_user has its own default states (ACTIVE + ARCHIVED)
+            states = [lifecycle_state] if lifecycle_state else None
             conversations = await conv_repo.search_for_user(
-                current_user.sub, search.strip(), limit=limit + 1, offset=offset
+                current_user.sub,
+                search.strip(),
+                limit=limit + 1,
+                offset=offset,
+                states=states,
             )
         else:
             conversations = await conv_repo.list_for_user(
-                current_user.sub, limit=limit + 1, offset=offset
+                current_user.sub,
+                limit=limit + 1,
+                offset=offset,
+                state=lifecycle_state,
             )
 
         # Check if there are more
@@ -313,6 +340,9 @@ async def list_conversations(
                         else None
                     ),
                     turn_count=turn_count,
+                    lifecycle_state=(
+                        conv.lifecycle_state.value if conv.lifecycle_state else "active"
+                    ),
                 )
             )
 
@@ -321,10 +351,13 @@ async def list_conversations(
             user_id=current_user.sub,
             count=len(items),
             has_more=has_more,
+            state_filter=state,
         )
 
         return ConversationListResponse(conversations=items, has_more=has_more)
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error("Failed to list conversations", error=str(e), user_id=current_user.sub)
         raise HTTPException(
@@ -369,6 +402,9 @@ async def create_conversation(
                 conversation.created_at.isoformat().replace("+00:00", "Z")
                 if conversation.created_at
                 else ""
+            ),
+            lifecycle_state=(
+                conversation.lifecycle_state.value if conversation.lifecycle_state else "active"
             ),
         )
 
@@ -438,6 +474,9 @@ async def get_conversation(
                 else None
             ),
             turn_count=turn_count,
+            lifecycle_state=(
+                conversation.lifecycle_state.value if conversation.lifecycle_state else "active"
+            ),
         )
 
     except HTTPException:
@@ -539,6 +578,9 @@ async def update_conversation_title(
                 else None
             ),
             turn_count=turn_count,
+            lifecycle_state=(
+                conversation.lifecycle_state.value if conversation.lifecycle_state else "active"
+            ),
         )
 
     except HTTPException:
@@ -553,4 +595,182 @@ async def update_conversation_title(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to update conversation title",
+        )
+
+
+# --- Lifecycle state transitions (Issue #715, spec #858) ---
+
+
+class UpdateStateRequest(BaseModel):
+    """Request body for conversation state transitions."""
+
+    state: str  # "active" or "archived"
+
+
+class StateTransitionResponse(BaseModel):
+    """Response for state transition operations."""
+
+    id: str
+    lifecycle_state: str
+    message: str
+
+
+@router.patch("/{conversation_id}/state")
+async def update_conversation_state(
+    conversation_id: str,
+    request: UpdateStateRequest,
+    current_user: JWTClaims = Depends(get_current_user),
+    conv_repo: ConversationRepository = Depends(get_conversation_repository),
+) -> StateTransitionResponse:
+    """
+    Update conversation lifecycle state (archive or reactivate).
+
+    Issue #715: Conversation lifecycle state transitions.
+    Spec #858 Section 2: ACTIVE ↔ ARCHIVED transitions.
+
+    Args:
+        conversation_id: The conversation ID to update
+        request: Target state ("active" or "archived")
+        current_user: Current authenticated user
+        conv_repo: Conversation repository (injected)
+
+    Returns:
+        StateTransitionResponse with new state and confirmation message
+    """
+    try:
+        target_state = request.state.lower()
+        if target_state not in ("active", "archived"):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid target state: {request.state}. Valid values: active, archived",
+            )
+
+        # Get conversation and verify ownership
+        conversation = await conv_repo.get_by_id(conversation_id)
+
+        if not conversation:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Conversation not found",
+            )
+
+        if str(conversation.user_id) != str(current_user.sub):
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Conversation not found",
+            )
+
+        # Execute state transition
+        if target_state == "archived":
+            result = await conv_repo.archive_conversation(conversation_id)
+            if not result:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="Conversation cannot be archived (not in ACTIVE state)",
+                )
+            message = "Conversation archived"
+        else:  # active (reactivate)
+            result = await conv_repo.reactivate_conversation(conversation_id)
+            if not result:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="Conversation cannot be reactivated (not in ARCHIVED state)",
+                )
+            message = "Conversation reactivated"
+
+        logger.info(
+            "conversation_state_changed",
+            user_id=current_user.sub,
+            conversation_id=conversation_id,
+            new_state=target_state,
+        )
+
+        return StateTransitionResponse(
+            id=conversation_id,
+            lifecycle_state=target_state,
+            message=message,
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(
+            "Failed to update conversation state",
+            error=str(e),
+            user_id=current_user.sub,
+            conversation_id=conversation_id,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to update conversation state",
+        )
+
+
+@router.delete("/{conversation_id}")
+async def delete_conversation(
+    conversation_id: str,
+    current_user: JWTClaims = Depends(get_current_user),
+    conv_repo: ConversationRepository = Depends(get_conversation_repository),
+) -> StateTransitionResponse:
+    """
+    Soft-delete a conversation.
+
+    Issue #715: Conversation lifecycle state transitions.
+    Spec #858 Section 2: ACTIVE/ARCHIVED → DELETED (terminal, no return).
+
+    Args:
+        conversation_id: The conversation ID to delete
+        current_user: Current authenticated user
+        conv_repo: Conversation repository (injected)
+
+    Returns:
+        StateTransitionResponse confirming deletion
+    """
+    try:
+        # Get conversation and verify ownership
+        conversation = await conv_repo.get_by_id(conversation_id)
+
+        if not conversation:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Conversation not found",
+            )
+
+        if str(conversation.user_id) != str(current_user.sub):
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Conversation not found",
+            )
+
+        result = await conv_repo.delete_conversation(conversation_id)
+        if not result:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Conversation cannot be deleted (already deleted)",
+            )
+
+        logger.info(
+            "conversation_deleted",
+            user_id=current_user.sub,
+            conversation_id=conversation_id,
+        )
+
+        return StateTransitionResponse(
+            id=conversation_id,
+            lifecycle_state="deleted",
+            message="Conversation deleted",
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(
+            "Failed to delete conversation",
+            error=str(e),
+            user_id=current_user.sub,
+            conversation_id=conversation_id,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to delete conversation",
         )

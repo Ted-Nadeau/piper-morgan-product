@@ -431,6 +431,25 @@ class ConversationalLens(str, Enum):
     GENERAL = "general"  # No specific lens / general conversation
 
 
+class ConversationLifecycleState(str, Enum):
+    """
+    Lifecycle states for conversation entities.
+
+    Issue #715: MUX-HOME-CONVERSATIONS-LIFECYCLE
+    Spec #858: Conversation Lifecycle Specification v1.1
+
+    Maps to entity lifecycle model subset:
+      ACTIVE → RATIFIED, ARCHIVED → ARCHIVED, COMPOSTED → COMPOSTED
+    User-visible states are simpler (Active, Archived, Gone) —
+    internal states inform Piper's behavior, not UI labels.
+    """
+
+    ACTIVE = "active"  # Current, accessible — user engaged or recently was
+    ARCHIVED = "archived"  # Preserved for reference, searchable, not in active use
+    COMPOSTED = "composted"  # Content distilled into learning, not user-visible
+    DELETED = "deleted"  # Soft-deleted by user action
+
+
 class SlotFillingState(str, Enum):
     """
     State machine for slot-filling conversations.

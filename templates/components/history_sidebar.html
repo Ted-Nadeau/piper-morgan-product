@@ -168,6 +168,22 @@
     /* Channel indicator */
   }
 
+  /* Issue #715: Archived conversation dimmed treatment */
+  .history-item.archived {
+    opacity: 0.6;
+  }
+
+  .history-item.archived .history-item-topic::after {
+    content: 'archived';
+    font-size: 10px;
+    font-weight: 400;
+    color: #94a3b8;
+    background: #f1f5f9;
+    padding: 1px 6px;
+    border-radius: 4px;
+    margin-left: auto;
+  }
+
   /* Empty state */
   .history-empty {
     padding: 40px 20px;
@@ -467,6 +483,11 @@
         channel.textContent = conversation.channel;
       } else {
         channel.style.display = 'none';
+      }
+
+      // Issue #715: Apply archived visual treatment
+      if (conversation.lifecycle_state === 'archived') {
+        item.classList.add('archived');
       }
 
       return item;

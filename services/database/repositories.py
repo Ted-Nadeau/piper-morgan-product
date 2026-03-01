@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 import services.domain.models as domain
-from services.shared_types import EdgeType, IntegrationType, NodeType
+from services.shared_types import ConversationLifecycleState, EdgeType, IntegrationType, NodeType
 
 from .connection import db
 from .models import (
@@ -1157,6 +1157,7 @@ class ConversationRepository(BaseRepository):
 
         This is needed because conversation_turns has a FK to conversations.
         Issue #563: Called before saving turns to handle new sessions.
+        Issue #715: Sets lifecycle_state=ACTIVE on creation.
 
         Args:
             conversation_id: The conversation/session ID
@@ -1188,6 +1189,7 @@ class ConversationRepository(BaseRepository):
             title="Conversation",
             context={},
             is_active=True,
+            lifecycle_state=ConversationLifecycleState.ACTIVE.value,
         )
 
         self.session.add(conversation)
@@ -1199,19 +1201,20 @@ class ConversationRepository(BaseRepository):
         Get the most recent active conversation for a user.
 
         Issue #563: Used for "Continue where you left off" prompt.
+        Issue #715: Filters by lifecycle_state instead of is_active.
 
         Args:
             user_id: The user ID to find conversations for
 
         Returns:
-            The most recent Conversation domain object, or None if no conversations exist
+            The most recent ACTIVE Conversation domain object, or None
         """
         from services.database.models import ConversationDB
 
         stmt = (
             select(ConversationDB)
             .where(ConversationDB.user_id == user_id)
-            .where(ConversationDB.is_active == True)
+            .where(ConversationDB.lifecycle_state == ConversationLifecycleState.ACTIVE.value)
             .order_by(ConversationDB.created_at.desc())
             .limit(1)
         )
@@ -1226,29 +1229,37 @@ class ConversationRepository(BaseRepository):
     # Issue #565: Additional methods for conversation sidebar
 
     async def list_for_user(
-        self, user_id: str, limit: int = 50, offset: int = 0
+        self,
+        user_id: str,
+        limit: int = 50,
+        offset: int = 0,
+        state: Optional[ConversationLifecycleState] = None,
     ) -> List[domain.Conversation]:
         """
         List conversations for a user, ordered by most recent first.
 
         Issue #565: Used for conversation history sidebar.
+        Issue #715: Filters by lifecycle_state instead of is_active.
 
         Args:
             user_id: The user ID to find conversations for
             limit: Maximum number of conversations to return (default 50)
             offset: Number of conversations to skip for pagination
+            state: Filter by lifecycle state (default: ACTIVE only)
 
         Returns:
             List of Conversation domain objects, newest first
         """
         from services.database.models import ConversationDB
 
+        filter_state = state or ConversationLifecycleState.ACTIVE
+
         # Issue #587: Sort by last_activity_at (most recently active first)
         # Use COALESCE to fall back to created_at for conversations with no activity yet
         stmt = (
             select(ConversationDB)
             .where(ConversationDB.user_id == user_id)
-            .where(ConversationDB.is_active == True)
+            .where(ConversationDB.lifecycle_state == filter_state.value)
             .order_by(
                 func.coalesce(ConversationDB.last_activity_at, ConversationDB.created_at).desc()
             )
@@ -1262,30 +1273,45 @@ class ConversationRepository(BaseRepository):
         return [c.to_domain() for c in db_convs]
 
     async def search_for_user(
-        self, user_id: str, query: str, limit: int = 50, offset: int = 0
+        self,
+        user_id: str,
+        query: str,
+        limit: int = 50,
+        offset: int = 0,
+        states: Optional[List[ConversationLifecycleState]] = None,
     ) -> List[domain.Conversation]:
         """
         Search conversations by title for a user.
 
         Issue #786: GLUE-HISTORY-DIFF - History sidebar search.
+        Issue #715: Filters by lifecycle_state. Defaults to ACTIVE + ARCHIVED
+        (search should find archived conversations per spec #858 Section 5).
 
         Args:
             user_id: The user ID to search conversations for
             query: Search string to match against title (case-insensitive)
             limit: Maximum number of conversations to return (default 50)
             offset: Number of conversations to skip for pagination
+            states: Lifecycle states to include (default: ACTIVE + ARCHIVED)
 
         Returns:
             List of Conversation domain objects matching the search, newest first
         """
         from services.database.models import ConversationDB
 
+        # Search spans ACTIVE + ARCHIVED by default (spec #858 Section 5)
+        filter_states = states or [
+            ConversationLifecycleState.ACTIVE,
+            ConversationLifecycleState.ARCHIVED,
+        ]
+        state_values = [s.value for s in filter_states]
+
         # Case-insensitive search on title using ILIKE
         search_pattern = f"%{query}%"
         stmt = (
             select(ConversationDB)
             .where(ConversationDB.user_id == user_id)
-            .where(ConversationDB.is_active == True)
+            .where(ConversationDB.lifecycle_state.in_(state_values))
             .where(ConversationDB.title.ilike(search_pattern))
             .order_by(
                 func.coalesce(ConversationDB.last_activity_at, ConversationDB.created_at).desc()
@@ -1324,6 +1350,7 @@ class ConversationRepository(BaseRepository):
         Create a new conversation for a user.
 
         Issue #565: Used when clicking "New Chat" in sidebar.
+        Issue #715: Sets lifecycle_state=ACTIVE on creation.
 
         Args:
             user_id: The user ID to create conversation for
@@ -1345,6 +1372,7 @@ class ConversationRepository(BaseRepository):
             title=title or "New conversation",
             context={},
             is_active=True,
+            lifecycle_state=ConversationLifecycleState.ACTIVE.value,
         )
 
         self.session.add(conversation)
@@ -1434,6 +1462,90 @@ class ConversationRepository(BaseRepository):
             return truncated + "..."
 
         return cleaned
+
+    # --- Lifecycle state transitions (Issue #715, spec #858) ---
+
+    async def archive_conversation(self, conversation_id: str) -> Optional[domain.Conversation]:
+        """
+        Archive a conversation (ACTIVE → ARCHIVED).
+
+        Issue #715: Sets lifecycle_state=ARCHIVED, records archived_at timestamp.
+        Spec #858 Section 2: ACTIVE → ARCHIVED transition.
+
+        Args:
+            conversation_id: The conversation ID to archive
+
+        Returns:
+            Updated Conversation domain object, or None if not found/not ACTIVE
+        """
+        from services.database.models import ConversationDB
+
+        db_conv = await self.session.get(ConversationDB, conversation_id)
+        if not db_conv or db_conv.lifecycle_state != ConversationLifecycleState.ACTIVE.value:
+            return None
+
+        db_conv.lifecycle_state = ConversationLifecycleState.ARCHIVED.value
+        db_conv.archived_at = datetime.now(timezone.utc)
+        await self.session.commit()
+        await self.session.refresh(db_conv)
+
+        logger.info("conversation_archived", conversation_id=conversation_id)
+        return db_conv.to_domain()
+
+    async def delete_conversation(self, conversation_id: str) -> Optional[domain.Conversation]:
+        """
+        Soft-delete a conversation (ACTIVE or ARCHIVED → DELETED).
+
+        Issue #715: Sets lifecycle_state=DELETED, records deleted_at timestamp.
+        Spec #858 Section 2: Terminal state, no return path.
+
+        Args:
+            conversation_id: The conversation ID to soft-delete
+
+        Returns:
+            Updated Conversation domain object, or None if not found/already deleted
+        """
+        from services.database.models import ConversationDB
+
+        db_conv = await self.session.get(ConversationDB, conversation_id)
+        if not db_conv or db_conv.lifecycle_state == ConversationLifecycleState.DELETED.value:
+            return None
+
+        db_conv.lifecycle_state = ConversationLifecycleState.DELETED.value
+        db_conv.deleted_at = datetime.now(timezone.utc)
+        db_conv.is_active = False  # Keep is_active in sync during deprecation period
+        await self.session.commit()
+        await self.session.refresh(db_conv)
+
+        logger.info("conversation_deleted", conversation_id=conversation_id)
+        return db_conv.to_domain()
+
+    async def reactivate_conversation(self, conversation_id: str) -> Optional[domain.Conversation]:
+        """
+        Reactivate an archived conversation (ARCHIVED → ACTIVE).
+
+        Issue #715: Sets lifecycle_state=ACTIVE, clears archived_at.
+        Spec #858 Section 2: Only ARCHIVED → ACTIVE is valid (not DELETED/COMPOSTED).
+
+        Args:
+            conversation_id: The conversation ID to reactivate
+
+        Returns:
+            Updated Conversation domain object, or None if not found/not ARCHIVED
+        """
+        from services.database.models import ConversationDB
+
+        db_conv = await self.session.get(ConversationDB, conversation_id)
+        if not db_conv or db_conv.lifecycle_state != ConversationLifecycleState.ARCHIVED.value:
+            return None
+
+        db_conv.lifecycle_state = ConversationLifecycleState.ACTIVE.value
+        db_conv.archived_at = None
+        await self.session.commit()
+        await self.session.refresh(db_conv)
+
+        logger.info("conversation_reactivated", conversation_id=conversation_id)
+        return db_conv.to_domain()
 
 
 # Repository factory

@@ -195,6 +195,39 @@
         color: var(--color-text-primary);
       }
 
+      /* Issue #715: Conversation action buttons (archive, delete) */
+      .conversation-actions {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        flex-shrink: 0;
+      }
+
+      .conversation-action-btn {
+        opacity: 0;
+        background: none;
+        border: none;
+        padding: 2px 4px;
+        cursor: pointer;
+        color: var(--color-text-secondary);
+        font-size: 12px;
+        border-radius: var(--border-radius-sm);
+        transition: opacity 0.15s, background 0.15s;
+      }
+
+      .conversation-item:hover .conversation-action-btn {
+        opacity: 1;
+      }
+
+      .conversation-action-btn:hover {
+        background: rgba(0,0,0,0.1);
+      }
+
+      .conversation-delete-btn:hover {
+        background: rgba(220,38,38,0.1);
+        color: #dc2626;
+      }
+
       .conversation-title-input {
         width: 100%;
         padding: var(--space-xs) var(--space-xs);
@@ -1426,7 +1459,8 @@
         const listEl = document.getElementById('conversation-list');
 
         try {
-          const response = await fetch('/api/v1/conversations', {
+          // Issue #715: Explicitly request ACTIVE conversations for left sidebar
+          const response = await fetch('/api/v1/conversations?state=active', {
             credentials: 'include'
           });
 
@@ -1533,7 +1567,11 @@
               <div class="conversation-title-wrapper">
                 <div class="conversation-title" id="title-${conv.id}">${escapeHtml(title)}</div>
               </div>
-              <button class="conversation-edit-btn" onclick="event.stopPropagation(); editConversationTitle('${conv.id}', '${escapeHtml(title).replace(/'/g, "\\'")}')" title="Edit title">&#9998;</button>
+              <div class="conversation-actions">
+                <button class="conversation-edit-btn" onclick="event.stopPropagation(); editConversationTitle('${conv.id}', '${escapeHtml(title).replace(/'/g, "\\'")}')" title="Edit title">&#9998;</button>
+                <button class="conversation-action-btn" onclick="event.stopPropagation(); archiveConversation('${conv.id}')" title="Archive">&#128451;</button>
+                <button class="conversation-action-btn conversation-delete-btn" onclick="event.stopPropagation(); deleteConversation('${conv.id}')" title="Delete">&#128465;</button>
+              </div>
             </div>
             <div class="conversation-meta">${date}${turnCount > 0 ? ' · ' + turnCount + ' messages' : ''}</div>
           </div>
@@ -1636,6 +1674,66 @@
           console.error('Failed to update title:', error);
           alert('Failed to update title: ' + error.message);
           await loadConversations(); // Refresh to restore original
+        }
+      }
+
+      // Issue #715: Archive a conversation
+      async function archiveConversation(conversationId) {
+        try {
+          const response = await fetch(`/api/v1/conversations/${conversationId}/state`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ state: 'archived' })
+          });
+
+          if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Failed to archive conversation');
+          }
+
+          // If we archived the active conversation, clear it
+          if (conversationId === activeConversationId) {
+            setActiveConversation(null);
+          }
+
+          // Refresh sidebar
+          await loadConversations();
+
+        } catch (error) {
+          console.error('Failed to archive conversation:', error);
+          alert('Failed to archive: ' + error.message);
+        }
+      }
+
+      // Issue #715: Delete a conversation (soft delete)
+      async function deleteConversation(conversationId) {
+        if (!confirm('Delete this conversation? This cannot be undone.')) {
+          return;
+        }
+
+        try {
+          const response = await fetch(`/api/v1/conversations/${conversationId}`, {
+            method: 'DELETE',
+            credentials: 'include'
+          });
+
+          if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Failed to delete conversation');
+          }
+
+          // If we deleted the active conversation, clear it
+          if (conversationId === activeConversationId) {
+            setActiveConversation(null);
+          }
+
+          // Refresh sidebar
+          await loadConversations();
+
+        } catch (error) {
+          console.error('Failed to delete conversation:', error);
+          alert('Failed to delete: ' + error.message);
         }
       }
 
@@ -1906,6 +2004,7 @@
           const data = await response.json();
 
           // Transform API response to HistorySidebar format
+          // Issue #715: Include lifecycle_state for visual differentiation
           return {
             conversations: data.conversations.map(conv => ({
               id: conv.id,
@@ -1913,7 +2012,8 @@
               summary: '', // API doesn't return summary yet
               timestamp: conv.updated_at || conv.created_at,
               is_private: false, // API doesn't return privacy status yet
-              channel: 'web'
+              channel: 'web',
+              lifecycle_state: conv.lifecycle_state || 'active'
             })),
             pagination: {
               page: page,

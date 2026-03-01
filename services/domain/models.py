@@ -29,6 +29,7 @@ from services.mux.ownership import OwnershipCategory, OwnershipMetadata
 
 # Import shared types for consistency
 from services.shared_types import (
+    ConversationLifecycleState,
     EdgeType,
     HardnessLevel,
     IntegrationType,
@@ -1611,7 +1612,12 @@ class Conversation:
     session_id: str = ""
     title: str = ""  # Optional conversation title/summary
     context: Dict[str, Any] = field(default_factory=dict)  # Conversation context
-    is_active: bool = True
+    is_active: bool = True  # DEPRECATED — use lifecycle_state (#715)
+
+    # Lifecycle (#715, spec #858)
+    lifecycle_state: ConversationLifecycleState = ConversationLifecycleState.ACTIVE
+    archived_at: Optional[datetime] = None
+    deleted_at: Optional[datetime] = None
 
     # Timestamps
     created_at: datetime = field(default_factory=datetime.now)
@@ -1630,6 +1636,9 @@ class Conversation:
             "title": self.title,
             "context": self.context,
             "is_active": self.is_active,
+            "lifecycle_state": self.lifecycle_state.value if self.lifecycle_state else "active",
+            "archived_at": self.archived_at.isoformat() if self.archived_at else None,
+            "deleted_at": self.deleted_at.isoformat() if self.deleted_at else None,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
             "last_activity_at": (

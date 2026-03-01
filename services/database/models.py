@@ -832,7 +832,11 @@ class ConversationDB(Base):
     session_id = Column(String, nullable=False)
     title = Column(String, nullable=False, default="")
     context = Column(postgresql.JSONB, nullable=False, default={})
-    is_active = Column(Boolean, nullable=False, default=True)
+    is_active = Column(Boolean, nullable=False, default=True)  # DEPRECATED — use lifecycle_state
+    # Issue #715: Conversation lifecycle states (spec #858)
+    lifecycle_state = Column(String(20), nullable=False, default="active")
+    archived_at = Column(DateTime(timezone=True), nullable=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
     updated_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
     last_activity_at = Column(DateTime(timezone=True), nullable=True)
@@ -840,9 +844,12 @@ class ConversationDB(Base):
     __table_args__ = (
         Index("idx_conversations_user_session", "user_id", "session_id"),
         Index("idx_conversations_last_activity", "last_activity_at"),
+        Index("idx_conversations_lifecycle_state", "lifecycle_state"),
     )
 
     def to_domain(self) -> domain.Conversation:
+        from services.shared_types import ConversationLifecycleState
+
         return domain.Conversation(
             id=self.id,
             user_id=self.user_id,
@@ -850,6 +857,9 @@ class ConversationDB(Base):
             title=self.title,
             context=self.context or {},
             is_active=self.is_active,
+            lifecycle_state=ConversationLifecycleState(self.lifecycle_state or "active"),
+            archived_at=self.archived_at,
+            deleted_at=self.deleted_at,
             created_at=self.created_at,
             updated_at=self.updated_at,
             last_activity_at=self.last_activity_at,
@@ -864,6 +874,11 @@ class ConversationDB(Base):
             title=conversation.title,
             context=conversation.context,
             is_active=conversation.is_active,
+            lifecycle_state=(
+                conversation.lifecycle_state.value if conversation.lifecycle_state else "active"
+            ),
+            archived_at=conversation.archived_at,
+            deleted_at=conversation.deleted_at,
             created_at=conversation.created_at,
             updated_at=conversation.updated_at,
             last_activity_at=conversation.last_activity_at,
