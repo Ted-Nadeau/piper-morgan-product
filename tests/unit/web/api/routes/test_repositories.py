@@ -12,6 +12,7 @@ from fastapi.testclient import TestClient
 
 from services.auth.jwt_service import JWTClaims
 from services.domain.models import Project, ProjectRepositoryLink, Repository
+from services.infrastructure.github_repo_validator import RepoValidationResult
 
 pytestmark = pytest.mark.unit
 
@@ -80,10 +81,15 @@ class TestCreateRepository:
         )
         client = _make_app(repo_repo_mock=repo_repo)
 
-        resp = client.post(
-            "/api/v1/repositories",
-            json={"full_name": "owner/my-repo"},
-        )
+        with patch(
+            "web.api.routes.repositories.validate_github_repo",
+            new_callable=AsyncMock,
+            return_value=RepoValidationResult(validated=False, exists=False, accessible=False),
+        ):
+            resp = client.post(
+                "/api/v1/repositories",
+                json={"full_name": "owner/my-repo"},
+            )
         assert resp.status_code == 201
         data = resp.json()
         assert data["full_name"] == "owner/my-repo"
@@ -122,6 +128,108 @@ class TestCreateRepository:
             json={"full_name": "owner/repo"},
         )
         assert resp.status_code == 409
+
+    def test_create_with_validation_success(self):
+        """Issue #867: Metadata populated when GitHub API validates."""
+        repo_repo = MagicMock()
+        repo_repo.get_by_full_name = AsyncMock(return_value=None)
+        repo_repo.create_repository = AsyncMock(
+            return_value=Repository(
+                id="repo-1",
+                owner_id=USER_ID,
+                provider="github",
+                full_name="owner/my-repo",
+                description="A cool repo",
+                language="Python",
+                visibility="public",
+                default_branch="main",
+            )
+        )
+        client = _make_app(repo_repo_mock=repo_repo)
+
+        with patch(
+            "web.api.routes.repositories.validate_github_repo",
+            new_callable=AsyncMock,
+            return_value=RepoValidationResult(
+                validated=True,
+                exists=True,
+                accessible=True,
+                description="A cool repo",
+                language="Python",
+                visibility="public",
+                default_branch="main",
+            ),
+        ):
+            resp = client.post(
+                "/api/v1/repositories",
+                json={"full_name": "owner/my-repo"},
+            )
+        assert resp.status_code == 201
+        data = resp.json()
+        assert data["description"] == "A cool repo"
+        assert data["language"] == "Python"
+        assert "validation_warning" not in data
+
+    def test_create_with_validation_not_found_still_creates(self):
+        """Issue #867: Repo created even if GitHub API returns 404; warning included."""
+        repo_repo = MagicMock()
+        repo_repo.get_by_full_name = AsyncMock(return_value=None)
+        repo_repo.create_repository = AsyncMock(
+            return_value=Repository(
+                id="repo-1",
+                owner_id=USER_ID,
+                provider="github",
+                full_name="owner/typo-repo",
+            )
+        )
+        client = _make_app(repo_repo_mock=repo_repo)
+
+        with patch(
+            "web.api.routes.repositories.validate_github_repo",
+            new_callable=AsyncMock,
+            return_value=RepoValidationResult(
+                validated=True,
+                exists=False,
+                accessible=False,
+                error="Repository 'owner/typo-repo' not found on GitHub",
+            ),
+        ):
+            resp = client.post(
+                "/api/v1/repositories",
+                json={"full_name": "owner/typo-repo"},
+            )
+        assert resp.status_code == 201
+        data = resp.json()
+        assert "validation_warning" in data
+        assert "not found" in data["validation_warning"]
+        repo_repo.create_repository.assert_called_once()
+
+    def test_create_without_token_skips_validation(self):
+        """Issue #867: No token → validation skipped, repo created normally."""
+        repo_repo = MagicMock()
+        repo_repo.get_by_full_name = AsyncMock(return_value=None)
+        repo_repo.create_repository = AsyncMock(
+            return_value=Repository(
+                id="repo-1",
+                owner_id=USER_ID,
+                provider="github",
+                full_name="owner/my-repo",
+            )
+        )
+        client = _make_app(repo_repo_mock=repo_repo)
+
+        with patch(
+            "web.api.routes.repositories.validate_github_repo",
+            new_callable=AsyncMock,
+            return_value=RepoValidationResult(validated=False, exists=False, accessible=False),
+        ):
+            resp = client.post(
+                "/api/v1/repositories",
+                json={"full_name": "owner/my-repo"},
+            )
+        assert resp.status_code == 201
+        assert "validation_warning" not in resp.json()
+        repo_repo.create_repository.assert_called_once()
 
 
 class TestListRepositories:

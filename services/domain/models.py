@@ -359,6 +359,11 @@ class Repository:
     display_name: str = ""  # User-friendly name, defaults to repo part of full_name
     url: str = ""  # e.g. "https://github.com/mediajunkie/piper-morgan-product"
     is_active: bool = True
+    # GitHub API metadata (Issue #867) — populated on validation success
+    description: Optional[str] = None
+    language: Optional[str] = None
+    visibility: Optional[str] = None  # "public" | "private" | "internal"
+    default_branch: Optional[str] = None
     created_at: datetime = field(default_factory=datetime.now)
     updated_at: datetime = field(default_factory=datetime.now)
 
@@ -378,6 +383,10 @@ class Repository:
             "display_name": self.display_name,
             "url": self.url,
             "is_active": self.is_active,
+            "description": self.description,
+            "language": self.language,
+            "visibility": self.visibility,
+            "default_branch": self.default_branch,
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat(),
         }

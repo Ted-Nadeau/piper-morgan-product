@@ -15,6 +15,10 @@ from services.auth.auth_middleware import get_current_user
 from services.auth.jwt_service import JWTClaims
 from services.database.models import RepositoryDB
 from services.domain import models as domain
+from services.infrastructure.github_repo_validator import (
+    apply_validation_metadata,
+    validate_github_repo,
+)
 from web.api.dependencies import get_project_repository, get_repository_repository
 
 logger = structlog.get_logger()
@@ -79,6 +83,16 @@ async def create_repository(
     if not url and req.provider == "github":
         url = f"https://github.com/{full_name}"
 
+    # Issue #867: Soft-validate via GitHub API (GitHub provider only)
+    validation_warning = None
+    if req.provider == "github":
+        validation = await validate_github_repo(full_name)
+        if validation.validated and not validation.exists:
+            validation_warning = validation.error
+            logger.warning(
+                "repo_api_validation_warning", full_name=full_name, error=validation.error
+            )
+
     repo = domain.Repository(
         owner_id=current_user.sub,
         provider=req.provider,
@@ -86,9 +100,14 @@ async def create_repository(
         display_name=display_name,
         url=url,
     )
+    if req.provider == "github":
+        apply_validation_metadata(repo, validation)
 
     created = await repo_repo.create_repository(repo)
-    return created.to_dict()
+    result = created.to_dict()
+    if validation_warning:
+        result["validation_warning"] = validation_warning
+    return result
 
 
 @router.get("")

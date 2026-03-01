@@ -966,17 +966,31 @@ async def create_setup_project(req: SetupProjectRequest):
                         detail="GitHub repo must be in owner/repo format",
                     )
 
-                # New: Create Repository entity (#866)
-                repo_repo = RepositoryRepository(session)
-                repo_entity = await repo_repo.create_repository(
-                    domain.Repository(
-                        owner_id=req.user_id,
-                        provider="github",
-                        full_name=repo_name,
-                        display_name=repo_name.split("/")[-1],
-                        url=f"https://github.com/{repo_name}",
-                    )
+                # Issue #867: Soft-validate via GitHub API
+                from services.infrastructure.github_repo_validator import (
+                    apply_validation_metadata,
+                    validate_github_repo,
                 )
+
+                validation = await validate_github_repo(repo_name)
+                if validation.validated and not validation.exists:
+                    logger.warning(
+                        "setup_repo_validation_warning",
+                        full_name=repo_name,
+                        error=validation.error,
+                    )
+
+                # Create Repository entity (#866)
+                repo_repo = RepositoryRepository(session)
+                repo_domain = domain.Repository(
+                    owner_id=req.user_id,
+                    provider="github",
+                    full_name=repo_name,
+                    display_name=repo_name.split("/")[-1],
+                    url=f"https://github.com/{repo_name}",
+                )
+                apply_validation_metadata(repo_domain, validation)
+                repo_entity = await repo_repo.create_repository(repo_domain)
 
                 # New: Link to project (#866)
                 await repo_repo.link_to_project(

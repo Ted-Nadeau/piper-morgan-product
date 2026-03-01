@@ -5254,17 +5254,30 @@ What would you like to set up first?"""
                     repo = await repo_repo.get_by_full_name(
                         full_name=repo_name, provider="github", owner_id=user_id
                     )
+                    validation_note = ""
                     if not repo:
-                        # Register the repo first
-                        repo = await repo_repo.create_repository(
-                            domain.Repository(
-                                owner_id=user_id,
-                                provider="github",
-                                full_name=repo_name,
-                                display_name=repo_name.split("/")[-1],
-                                url=f"https://github.com/{repo_name}",
-                            )
+                        # Issue #867: Soft-validate via GitHub API
+                        from services.infrastructure.github_repo_validator import (
+                            apply_validation_metadata,
+                            validate_github_repo,
                         )
+
+                        validation = await validate_github_repo(repo_name)
+                        if validation.validated and not validation.exists:
+                            validation_note = (
+                                " (Note: I couldn't verify this repo on GitHub"
+                                " — check the name in Settings if needed.)"
+                            )
+
+                        repo_domain = domain.Repository(
+                            owner_id=user_id,
+                            provider="github",
+                            full_name=repo_name,
+                            display_name=repo_name.split("/")[-1],
+                            url=f"https://github.com/{repo_name}",
+                        )
+                        apply_validation_metadata(repo_domain, validation)
+                        repo = await repo_repo.create_repository(repo_domain)
 
                     # Check if already linked
                     existing_links = await repo_repo.get_project_links(repo.id)
@@ -5299,6 +5312,7 @@ What would you like to set up first?"""
                         "message": (
                             f"Done! I've linked {repo_name} to your {project.name} project. "
                             "I can now help you track issues, PRs, and activity for this repo."
+                            f"{validation_note}"
                         ),
                         "intent": {
                             "category": IntentCategoryEnum.PORTFOLIO.value,

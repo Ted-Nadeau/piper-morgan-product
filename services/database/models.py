@@ -671,6 +671,11 @@ class RepositoryDB(Base):
     display_name = Column(String, nullable=False)
     url = Column(String, nullable=True)
     is_active = Column(Boolean, default=True)
+    # Issue #867: GitHub API metadata
+    description = Column(String, nullable=True)
+    language = Column(String(100), nullable=True)
+    visibility = Column(String(20), nullable=True)  # "public", "private", "internal"
+    default_branch = Column(String(255), nullable=True)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     updated_at = Column(
         DateTime(timezone=True),
@@ -692,6 +697,10 @@ class RepositoryDB(Base):
             display_name=self.display_name,
             url=self.url or "",
             is_active=self.is_active,
+            description=self.description,
+            language=self.language,
+            visibility=self.visibility,
+            default_branch=self.default_branch,
             created_at=self.created_at,
             updated_at=self.updated_at,
         )
@@ -706,6 +715,10 @@ class RepositoryDB(Base):
             display_name=repo.display_name,
             url=repo.url,
             is_active=repo.is_active,
+            description=repo.description,
+            language=repo.language,
+            visibility=repo.visibility,
+            default_branch=repo.default_branch,
             created_at=repo.created_at,
             updated_at=repo.updated_at,
         )

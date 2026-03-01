@@ -337,12 +337,27 @@ class ConversationHandler:
                         if existing:
                             repo_entity = existing
                         else:
+                            # Issue #867: Soft-validate via GitHub API
+                            from services.infrastructure.github_repo_validator import (
+                                apply_validation_metadata,
+                                validate_github_repo,
+                            )
+
+                            validation = await validate_github_repo(repo_full_name)
+                            if validation.validated and not validation.exists:
+                                logger.warning(
+                                    "onboarding_repo_validation_warning",
+                                    full_name=repo_full_name,
+                                    error=validation.error,
+                                )
+
                             repo_domain = domain.Repository(
                                 owner_id=user_id,
                                 full_name=repo_full_name,
                                 provider="github",
                                 url=f"https://github.com/{repo_full_name}",
                             )
+                            apply_validation_metadata(repo_domain, validation)
                             repo_entity = await repo_repo.create_repository(repo_domain)
 
                         await repo_repo.link_to_project(
