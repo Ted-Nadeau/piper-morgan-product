@@ -37,7 +37,7 @@ class TestDiscoveryPatternMatching:
             "what are you able to do",
             "show features",
             "available features",
-            "help me get started",
+            # Issue #814: "help me get started" moved to GUIDANCE (setup routing)
         ],
     )
     def test_discovery_patterns_match(self, message: str):

@@ -120,7 +120,7 @@ class PreClassifier:
         r"\bwhat.*able to do\b",
         r"\bshow.*features\b",
         r"\bavailable.*features\b",
-        r"\bhelp me get started\b",
+        # Issue #814: Removed r"\bhelp me get started\b" — routes to GUIDANCE (setup) not DISCOVERY
         # Issue #671: Bare "help" should show capabilities
         r"^help$",  # Exact match for bare "help"
         r"\bhelp\s*menu\b",

@@ -2609,6 +2609,113 @@ Would you like me to explain more about how Piper uses project context, or are y
             "offer_hint": offer_hint,  # Issue #852
         }
 
+    async def _handle_project_setup_request(
+        self, intent: Intent, session_id: str, user_id: str = None
+    ) -> Dict:
+        """
+        Issue #814: Handle explicit project setup requests with interactive routing.
+
+        0 projects: Start interactive portfolio onboarding conversation
+        N>0 projects: Acknowledge existing + offer to add more (CXO Option C)
+        No user_id: Fall back to static guidance
+        """
+        from services.personality.formality import DEFAULT_WARMTH, formality_label
+
+        # If no user_id, fall back to static guidance
+        if not user_id:
+            return self._format_project_setup_guidance(None)
+
+        # Fetch user context (same service already used in this code path)
+        user_context = None
+        try:
+            user_context = await user_context_service.get_user_context(session_id, user_id)
+        except Exception as e:
+            logger.warning(f"Could not fetch user context for setup routing: {e}")
+
+        has_projects = user_context and user_context.projects
+        project_names = user_context.projects if has_projects else []
+        project_count = len(project_names)
+
+        # Case 1: Zero projects — start interactive onboarding
+        if project_count == 0:
+            try:
+                from services.conversation.conversation_handler import _get_onboarding_components
+
+                _, onboarding_handler = _get_onboarding_components()
+                response = onboarding_handler.start_onboarding(session_id, user_id)
+
+                logger.info(
+                    "portfolio_onboarding_started_from_setup_request",
+                    user_id=user_id,
+                    session_id=session_id,
+                    onboarding_id=response.metadata.get("onboarding_id"),
+                )
+
+                return {
+                    "message": response.message,
+                    "intent": {
+                        "category": IntentCategoryEnum.GUIDANCE.value,
+                        "action": "portfolio_onboarding",
+                        "confidence": 1.0,
+                        "context": {
+                            "onboarding_id": response.metadata.get("onboarding_id"),
+                            "state": response.state.value,
+                            "triggered_by": "explicit_setup_request",
+                        },
+                    },
+                    "workflow_id": None,
+                    "onboarding_session": response.metadata.get("onboarding_id"),
+                }
+            except Exception as e:
+                logger.warning(f"Could not start portfolio onboarding: {e}")
+                return self._format_project_setup_guidance(None)
+
+        # Case 2: N>0 projects — state-aware response (CXO Option C)
+        label = formality_label(DEFAULT_WARMTH)
+
+        if label == "warm":
+            intro = f"You've already got {project_count} project{'s' if project_count != 1 else ''} set up"
+            outro = "Want to add another, or would you like to review what you have?"
+        elif label == "professional":
+            intro = f"You currently have {project_count} active project{'s' if project_count != 1 else ''}"
+            outro = "I can help you add a new project or review your existing portfolio."
+        else:  # balanced
+            intro = f"You have {project_count} project{'s' if project_count != 1 else ''} in your portfolio"
+            outro = "Would you like to add another project, or review your current setup?"
+
+        project_list = ""
+        for project in project_names[:5]:
+            project_list += f"- {project}\n"
+        if len(project_names) > 5:
+            project_list += f"- ... and {len(project_names) - 5} more\n"
+
+        message = f"""{intro}!
+
+**Your Projects:**
+{project_list}
+{outro}"""
+
+        return {
+            "message": message,
+            "intent": {
+                "category": IntentCategoryEnum.GUIDANCE.value,
+                "action": "provide_setup_guidance",
+                "confidence": 1.0,
+                "context": {
+                    "setup_topic": "projects",
+                    "has_existing_projects": True,
+                    "project_count": project_count,
+                    "triggered_by": "explicit_setup_request",
+                },
+            },
+            "setup_type": "projects",
+            "requires_clarification": False,
+            "offer_hint": {
+                "continuation_hint": "add another project or review existing portfolio",
+                "offer_text": outro,
+            },
+        }
+
     def _format_integration_setup_guidance(self) -> Dict:
         """
         Issue #498: Format guidance response for integration setup requests.
@@ -2659,7 +2766,9 @@ To connect integrations, visit the **Settings** hub:
 3. **Calendar** - Meeting awareness and scheduling
 4. **Notion** - Documentation and knowledge base
 
-Each integration has its own setup process. Would you like guidance on setting up a specific integration?"""
+Each integration has its own setup process. Would you like guidance on setting up a specific integration?
+
+Once you've connected an integration, let me know and I'll help test the connection."""
 
         return {
             "message": message,
@@ -4146,12 +4255,8 @@ What would you like to set up first?"""
         if setup_topic:
             # Route to appropriate setup guidance
             if setup_topic == "projects":
-                try:
-                    # Issue #582: Pass user_id to enable loading projects from database
-                    user_context = await user_context_service.get_user_context(session_id, user_id)
-                except Exception:
-                    user_context = None
-                return self._format_project_setup_guidance(user_context)
+                # Issue #814: Route to interactive onboarding or state-aware response
+                return await self._handle_project_setup_request(intent, session_id, user_id)
             elif setup_topic == "integrations":
                 return self._format_integration_setup_guidance()
             else:  # general
