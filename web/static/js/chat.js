@@ -454,7 +454,9 @@
 
         // Issue #676: Only show workflow status when valid workflow_id exists
         // Check for non-empty string to avoid spurious "Starting workflow..." messages
-        if (result.workflow_id && result.workflow_id.trim() !== '') {
+        // Issue #875: Don't poll if the response contains an error (workflow never started)
+        // Issue #878: Don't poll for clarification/validation responses (no async work started)
+        if (result.workflow_id && result.workflow_id.trim() !== '' && !result.error && !result.requires_clarification) {
           // If a workflow was started, create a new message bubble to poll for its status
           const statusDiv = appendMessage("Starting workflow...");
           statusDiv.classList.add("thinking");

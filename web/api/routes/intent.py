@@ -13,6 +13,12 @@ Pattern-007: Implements graceful degradation (async error handling)
 - Provides user-friendly degradation messages
 - Maintains consistent IntentResponse structure
 
+Design decision (Issue #875): This endpoint returns 200 OK for ALL responses from
+IntentService, including business-logic errors. Errors are conversational responses
+(displayed in the chat window), not HTTP error codes. Pattern-007 degradation handles
+infrastructure failures the same way. Only use validation_error()/HTTP 4xx for
+actual malformed HTTP requests (missing body, bad JSON, etc).
+
 Issue #123: Phase 3 Route Organization (Part of INFR-MAINT-REFACTOR)
 Previously: Inline in web/app.py (lines 419-658)
 Now: Extracted to separate router module
@@ -333,12 +339,20 @@ async def process_intent(
             "auth_expired": getattr(request.state, "auth_expired", False),
         }
 
-        # Add error fields if present (semantic/validation errors from service)
+        # Issue #878: Strip workflow_id from responses where no real async work started.
+        # Validation failures, errors, and clarification requests are immediate responses —
+        # if workflow_id leaks through, the frontend polls for 60s then shows timeout error.
+        if not result.success or result.error or result.requires_clarification:
+            response["workflow_id"] = None
+
+        # Issue #875: Business-logic errors from IntentService are conversational
+        # responses, not HTTP errors. Return 200 OK with error data in body so
+        # frontend displays the message in the chat window (not as a red error box).
+        # This restores the pre-refactor (#385) behavior accidentally changed Nov 2025.
         if result.error:
-            return validation_error(
-                result.error,
-                {"error_type": result.error_type} if result.error_type else None,
-            )
+            response["error"] = result.error
+            if result.error_type:
+                response["error_type"] = result.error_type
 
         return response
 

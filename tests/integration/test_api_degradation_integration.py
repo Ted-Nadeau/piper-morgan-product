@@ -113,12 +113,15 @@ class TestAPIDegradationIntegration:
         ):
             response = test_client.post("/api/v1/intent", json={"message": "Get project details"})
 
-            # Should return 422 for missing context
-            assert response.status_code == 422
+            # Issue #875: Business errors return 200 OK (conversational, not HTTP error)
+            assert response.status_code == 200
             data = response.json()
 
-            # Verify error message is helpful
-            assert "project_id" in data["message"].lower()
+            # Conversational message is in the response body
+            assert "message" in data
+            # Error metadata present for frontend to optionally use
+            assert data.get("error") == "Missing required context: project_id"
+            assert data.get("error_type") == "validation_error"
 
     def test_api_handles_file_service_degradation(self, test_client):
         """Test API handles file service exceptions gracefully"""
@@ -241,7 +244,7 @@ class TestAPIDegradationIntegration:
             assert "3 projects" in data["message"]
             assert data["intent"]["action"] == "list_projects"
 
-        # Test 2: Service returns validation error (returns 422)
+        # Test 2: Service returns business error (Issue #875: returns 200 OK, not 422)
         validation_result = IntentProcessingResult(
             success=False,
             message="Cannot process request",
@@ -267,10 +270,11 @@ class TestAPIDegradationIntegration:
         ):
             response = test_client.post("/api/v1/intent", json={"message": "Read file contents"})
 
-            # Returns 422 for validation errors (route handler line 194)
-            assert response.status_code == 422
+            # Issue #875: Business errors return 200 OK (conversational response)
+            assert response.status_code == 200
             data = response.json()
-            assert "File service temporarily unavailable" in data["message"]
+            assert data.get("error") == "File service temporarily unavailable"
+            assert "message" in data
 
     def test_api_error_recovery_mechanism(self, test_client):
         """Test API can recover from temporary failures"""
@@ -326,11 +330,14 @@ class TestAPIDegradationIntegration:
             "process_intent",
             side_effect=side_effect,
         ):
-            # First call returns degradation result with error (422 response for validation errors)
+            # First call returns degradation result with error (Issue #875: 200 OK, not 422)
             response1 = test_client.post("/api/v1/intent", json={"message": "List all projects"})
-            assert response1.status_code == 422  # Validation error response
+            assert response1.status_code == 200  # Business error is conversational response
             data1 = response1.json()
-            assert "Database temporarily unavailable" in data1["message"]
+            assert (
+                data1.get("error")
+                == "Database temporarily unavailable. Please ensure Docker is running and try again."
+            )
 
             # Second call should work normally (200 with success response)
             response2 = test_client.post("/api/v1/intent", json={"message": "List all projects"})
@@ -420,3 +427,43 @@ class TestAPIDegradationIntegration:
             assert "project2" in data["message"]
             assert data["intent"]["action"] == "list_projects"
             assert data["workflow_id"] == "workflow-123"
+
+    def test_intent_business_error_returns_200_not_422(self, test_client):
+        """Contract: IntentService business errors are conversational, not HTTP errors.
+
+        Issue #875: The Nov 2025 refactor (#385) accidentally converted business-logic
+        errors to HTTP 422 via validation_error(). This test prevents that regression.
+
+        Design decision: The intent endpoint returns 200 OK for ALL responses from
+        IntentService. Errors are conversational responses displayed in the chat window,
+        not HTTP error codes.
+        """
+        from services.intent.intent_service import IntentProcessingResult
+
+        mock_result = IntentProcessingResult(
+            success=False,
+            message="I'd love to help with planning! Are you thinking sprint planning, a feature roadmap, or something else?",
+            intent_data={"type": "strategy", "confidence": 0.8, "action": "plan"},
+            error="planning_type_not_specified",
+            error_type="validation",
+        )
+        mock_service = AsyncMock()
+        mock_service.process_intent = AsyncMock(return_value=mock_result)
+
+        with patch.object(test_client.app.state, "intent_service", mock_service):
+            response = test_client.post(
+                "/api/v1/intent",
+                json={"message": "Help me plan Q3"},
+            )
+
+        # MUST be 200 OK — this is a conversational response, not an HTTP error
+        assert response.status_code == 200
+        data = response.json()
+
+        # Response contains the conversational message
+        assert "message" in data
+        assert "planning" in data["message"].lower()
+
+        # Error metadata is present for frontend to optionally use
+        assert data.get("error") == "planning_type_not_specified"
+        assert data.get("error_type") == "validation"

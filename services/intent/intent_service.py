@@ -4465,7 +4465,8 @@ class IntentService:
                     "confidence": intent.confidence,
                     "unhandled": True,  # Flag for analytics
                 },
-                workflow_id=workflow.id,
+                # Issue #878: No handler ran — don't set workflow_id or frontend will poll and timeout
+                workflow_id=None,
                 requires_clarification=False,
                 error=None,  # No error - graceful degradation
                 error_type=None,
@@ -7212,6 +7213,7 @@ Content to summarize:
 
         else:
             # Generic strategy - provide working response
+            # Issue #878: No handler ran — don't set workflow_id or frontend will poll and timeout
             return IntentProcessingResult(
                 success=True,
                 message=f"Strategy capability ready for '{intent.action}'. Specific implementation pending.",
@@ -7220,7 +7222,7 @@ Content to summarize:
                     "action": intent.action,
                     "confidence": intent.confidence,
                 },
-                workflow_id=workflow.id,
+                workflow_id=None,
                 requires_clarification=True,
                 clarification_type="strategy_scope",
             )
