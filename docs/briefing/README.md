@@ -6,13 +6,15 @@ This directory contains documentation for briefing in the Piper Morgan system.
 
 ## Documentation Files
 
-- **[Current State](CURRENT-STATE.md)** - Documentation and guidance
-- **[Methodology](METHODOLOGY.md)** - Documentation and guidance
-- **[Project](PROJECT.md)** - Documentation and guidance
+- **[Current State](BRIEFING-CURRENT-STATE.md)** - Sprint position, metrics, and blockers
+- **[Methodology](METHODOLOGY.md)** - Development methodology overview
+- **[Project](PROJECT.md)** - Project overview and context
 
-## Subdirectories
+## Essential Role Briefings
 
-- **[Roles](roles/README.md)** - Roles documentation
+- **[Agent](BRIEFING-ESSENTIAL-AGENT.md)** | **[Architect](BRIEFING-ESSENTIAL-ARCHITECT.md)** | **[Chief of Staff](BRIEFING-ESSENTIAL-CHIEF-STAFF.md)**
+- **[CIO](BRIEFING-ESSENTIAL-CIO.md)** | **[Comms](BRIEFING-ESSENTIAL-COMMS.md)** | **[CXO](BRIEFING-ESSENTIAL-CXO.md)**
+- **[HOSR](BRIEFING-ESSENTIAL-HOSR.md)** | **[Lead Dev](BRIEFING-ESSENTIAL-LEAD-DEV.md)** | **[LLM](BRIEFING-ESSENTIAL-LLM.md)** | **[PPM](BRIEFING-ESSENTIAL-PPM.md)**
 
 ## Navigation
 
@@ -20,5 +22,5 @@ This directory contains documentation for briefing in the Piper Morgan system.
 
 ---
 
-**Last Updated**: October 1, 2025
+**Last Updated**: March 3, 2026
 **Maintained By**: Documentation Team

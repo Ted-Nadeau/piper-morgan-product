@@ -3,7 +3,7 @@
 _Consolidated from pattern-catalog.md and PATTERN-INDEX.md_
 _Format: ADR-style numbered patterns_
 
-**Total Patterns**: 61 patterns (001-060) + template (000)
+**Total Patterns**: 62 patterns (001-061) + template (000)
 
 ## Pattern Categories
 
@@ -89,6 +89,7 @@ _Development methodology, quality assurance, and workflow management patterns_
 - [Pattern-049: Audit Cascade](pattern-049-audit-cascade.md) - Institutionalized skepticism at every handoff point (VELOCITY PATTERN)
 - [Pattern-059: Leadership Caucus](pattern-059-leadership-caucus.md) - Facilitated multi-advisor alignment for cross-cutting decisions (COORDINATION PATTERN)
 - [Pattern-060: Cascade Investigation](pattern-060-cascade-investigation.md) - Treat every bug fix as a trigger for category-wide audit (INVESTIGATION PATTERN)
+- [Pattern-061: Human-AI Collaboration Referee](pattern-061-human-ai-collaboration-referee.md) - Structured facilitation for human-AI decision processes (COORDINATION PATTERN)
 
 ### Grammar Application Patterns
 
@@ -116,6 +117,39 @@ See [pattern-000-template.md](pattern-000-template.md) for the standard template
 - **Emerging**: New patterns with initial validation
 - **Experimental**: Patterns under active development
 - **Deprecated**: Legacy patterns being phased out
+
+### Product Relevance Classification
+
+Every pattern should include a Product Relevance classification:
+
+- **Process-only**: Useful for building Piper, not applicable to Piper's users
+- **Portable**: Methodology that could become user-facing capability
+- **Converged**: Pattern already implemented as product feature
+
+When in doubt, default to "Process-only" — it can be reclassified later.
+
+## Pattern Sweep Process
+
+Pattern Sweeps occur every 6 weeks per the staggered audit calendar.
+
+### Sweep Checklist (Product Relevance)
+
+In addition to standard sweep activities, each sweep should:
+
+- [ ] Review each pattern's Product Relevance classification
+- [ ] Flag any "Process-only" patterns that should be reclassified as "Portable"
+- [ ] Note any "Portable" patterns ready for product discussion
+
+### Sweep Output Template Addition
+
+Each Pattern Sweep results document should include:
+
+```markdown
+## Product Relevance Summary
+- Portable patterns awaiting product review: [list]
+- Patterns reclassified this sweep: [list]
+- Converged patterns (methodology → product): [list]
+```
 
 ## Related Resources
 
@@ -155,5 +189,5 @@ Use the anti-pattern index to:
 
 ---
 
-_Last updated: February 5, 2026_
-_Added Cascade Investigation (060); updated anti-pattern count to 43_
+_Last updated: March 3, 2026_
+_Added Human-AI Collaboration Referee (061); total now 62 patterns_

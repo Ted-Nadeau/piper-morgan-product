@@ -1,7 +1,7 @@
 # CITATIONS.md
 
 **Project**: Piper Morgan - AI-Powered Product Management Assistant
-**Last Updated**: October 13, 2025
+**Last Updated**: March 3, 2026
 **Purpose**: Comprehensive attribution of ideas, frameworks, and research that inform our work
 
 > "We proudly acknowledge we build on the work of others while trying to contribute what we can to the common weal."
@@ -28,6 +28,14 @@
 - **Forward-Forward Algorithm** - Alternative to backpropagation (2022)
 - **Early work on distributed representations** (1986)
 - *Influenced: Spatial representation approaches in Piper's architecture*
+
+**Knowledge Graph Extraction Challenges**
+- **Yáñez Romero** - "Knowledge Graph Extraction Challenges" (Medium, January 2026)
+- LLMs produce fragmented KGs: treat extraction as generation rather than classification
+- Coreference problem ("Party A" vs "the aforementioned party" = separate nodes) maps to entity extraction challenges
+- Asserted vs. augmented graph distinction maps to trust/provenance architecture
+- Pipeline error propagation (90% × 90% = 81%) relevant to multi-stage learning pipeline design
+- *Flagged for: Architect consideration when learning system reaches entity extraction stage*
 
 **Attention Mechanisms**
 - **Vaswani et al.** - "Attention Is All You Need" (2017) - Transformer architecture
@@ -67,6 +75,36 @@
 - Technical, Human-Centered, Temporal, and Contextual evaluation dimensions
 - Comprehensive metrics beyond pure technical performance
 - *Used in: Success metrics framework, validation methodology*
+
+**Steve Yegge - Beads** (December 2025)
+- Git-backed memory system for AI coding agents
+- JSONL + SQLite architecture for persistent agent state
+- Solves the "50 First Dates" problem (agents losing context across sessions)
+- https://github.com/steveyegge/beads
+- *Studied for: Agent memory architecture, inspired beads implementation*
+
+**Steve Yegge - Gas Town** (January 2026)
+- Multi-agent orchestration framework for parallel AI coding
+- GUPP (Gas Town Universal Propulsion Principle): "If there is work on your hook, YOU MUST RUN IT"
+- Throughput-first philosophy with durable Git-backed workflows
+- https://github.com/steveyegge/gastown
+- *Analyzed for: Multi-agent patterns; philosophy deliberately differs (quality over throughput)*
+
+**Jesse Vincent - Agent Conflict Alert Pattern** (2025)
+- Technique for LLMs to signal when they feel overly conflicted
+- Suggested phrasing: "I think we're not in Kansas anymore, Dorothy"
+- *Adapted as: Time Lord Alert pattern for quality-over-time-constraint signaling*
+
+**Jesse Vincent - Engineering Notebook** (Prime Radiant, February 2026)
+- Automated ingestion of Claude Code JSONL transcripts → LLM summarization → browsable views (journal, project, calendar)
+- Convergent evolution with Piper's omnibus log system — same underlying problem (agentic work generates too much output for humans to track)
+- Our system ahead on cross-agent coordination and strategic decisions; his ahead on automation and open-source availability
+- *Analyzed for: Omnibus system automation potential, lower-layer transcript ingestion supplement*
+
+**Ethan Mollick - Spans of Control in Multi-Agent Systems** (One Useful Thing / Substack, February 2026)
+- Boundary objects, coupling tradeoffs, and middle management agents in AI orchestration
+- Validates empirical discoveries in Piper's multi-agent coordination patterns
+- *Referenced in: CIO innovation analysis (Feb 16, 2026); methodology-product convergence discussion*
 
 ### Prompting & Efficiency Techniques
 
@@ -160,13 +198,73 @@
 - Test-Driven Development
 - Multi-Agent Coordination
 - GitHub-First Tracking
+- *Note: The "flywheel" metaphor originates with Jim Collins (see below); our specific framework is original*
 - *Core methodology: All development work*
+
+**Jim Collins - "Good to Great"** (2001)
+- The Flywheel Effect: cumulative momentum from consistent effort
+- "Good to great comes about by a cumulative process—step by step, action by action"
+- The Doom Loop (anti-pattern): seeking single breakthrough moments
+- *Origin of: Flywheel metaphor now widespread in business/product contexts*
 
 **Architectural Decision Records (ADR)**
 **Michael Nygard** - "Documenting Architecture Decisions" (2011)
 - Lightweight architecture decision capture
 - Context-Decision-Consequences format
 - *Used in: All architectural documentation*
+
+### Root Cause Analysis
+
+**Five Whys** (Toyota Production System, 1950s)
+- **Taiichi Ohno** - Iterative interrogative technique for root cause identification
+- Ask "why" repeatedly (typically 5 times) to trace symptoms to root causes
+- *Used in: Bug investigation methodology, Cascade Investigation pattern (Pattern-060)*
+
+**Swiss Cheese Model**
+- **James Reason** - "Human Error" (1990)
+- Accident causation theory: failures occur when holes in multiple defense layers align
+- *Applied as: Debugging methodology — "layers work, alignment fails"*
+
+### Strategic Analysis
+
+**Wardley Mapping**
+- **Simon Wardley** - Strategic positioning through component evolution (2008-ongoing)
+- Maps components across Genesis → Custom → Product → Commodity evolution
+- *Used in: CXO strategic analysis, component positioning decisions*
+
+**Jobs-to-be-Done Framework**
+- **Clayton Christensen** - "Competing Against Luck" (2016)
+- Understanding what "job" customers hire products to do
+- *Applied in: Canonical query analysis, identifying feature gaps*
+
+### Decision-Making Principles
+
+**Chesterton's Fence**
+- **G.K. Chesterton** - "The Thing" (1929)
+- Principle: Don't remove something until you understand why it was put there
+- *Applied in: Refactoring decisions, methodology reflection*
+
+**Antifragile**
+- **Nassim Nicholas Taleb** - "Antifragile: Things That Gain from Disorder" (2012)
+- Systems that improve under stress rather than merely surviving
+- *Influenced: Error handling philosophy, learning from failures*
+
+### Reliability & Leadership
+
+**High Reliability Organization (HRO) Principles**
+- **Karl Weick & Kathleen Sutcliffe** - "Managing the Unexpected" (2007)
+- Preoccupation with failure, reluctance to simplify, sensitivity to operations
+- *Referenced in: Leadership patterns, executive coaching*
+
+**Mission Command / Commander's Intent**
+- Military doctrine for decentralized decision-making
+- Clear objectives with freedom in execution
+- *Applied in: Agent delegation patterns, leadership coaching*
+
+**The Checklist Manifesto**
+- **Atul Gawande** (2009)
+- Distinguishing "do-confirm" vs. "read-do" checklists
+- *Referenced alongside: HRO principles for procedural reliability*
 
 ---
 
@@ -217,6 +315,83 @@
 - Validated learning
 - *Applied in: Iterative development approach*
 
+**Radical Focus**
+**Christina Wodtke** (2016, 2nd ed. 2021)
+- OKRs (Objectives and Key Results) methodology
+- Weekly commitment and celebration cadences
+- One of four people who shaped modern OKRs (with Doerr, Grove, Drucker)
+- *Referenced in: Goal-setting patterns, celebration practices*
+
+---
+
+## UX & Human-AI Interaction Research
+
+### Frameworks & Practitioners
+
+**Cindy Chastain - "Experience Themes"** (Boxes and Arrows, 2009)
+- Using narrative themes from user research to guide UX design
+- "An Experience Theme encapsulates the value and focus of the experience from users' point of view"
+- Presented at IA Summit 2009
+- https://boxesandarrows.com/experience-themes/
+- *Applied in: Podcast preparation, leadership lessons framework*
+
+**Dan Saffer** (CMU HCII)
+- "Designing with AI" methodology
+- Matchmaking AI capabilities to design problems
+- *Referenced in: UX research reconnaissance (November 2025)*
+
+**Greg Nudelman** (UXforAI.com)
+- 35 AI projects documented with systematic practitioner patterns
+- Most comprehensive practitioner pattern work in AI UX
+- *Referenced in: UX research reconnaissance*
+
+**Jakob Nielsen** (UX Tigers)
+- "Articulation barrier" concept
+- Insight: Prompt engineering is a UX failure, not a user failure
+- *Influenced: Recognition interface design philosophy*
+
+**Victor Dibia** (Microsoft AutoGen)
+- Agent UX framework with four principles
+- *Referenced in: Agent design research*
+
+**Andrew Hinton**
+- Context definition: "An agent's understanding of relationships between elements in their environment"
+- *Crystallizing insight for: Architecture and context modeling*
+
+### Academic Research
+
+**Zhang et al.** - Trust Calibration Research
+- Finding: Confidence scores help calibrate trust, but local explanations (feature importance) had no effect
+- *Informed: Transparency and trust design decisions*
+
+**Adam et al.** (2024) - System-Initiated Delegation
+- Finding: When AI offers to take over (vs. user asking), users feel "self-threat" and resist more
+- *Influenced: Proactive assistance design philosophy*
+
+**IDEO Research** - AI Collaboration Study
+- Finding: 56% more ideas with AI-generated questions, 28% decrease with AI-generated example ideas
+- Key insight: "Questions scaffold; examples constrain"
+- *Applied in: Conversational scaffolding approach*
+
+---
+
+## Standards & Specifications
+
+**WCAG 2.1 / 2.2 Level AA** (W3C)
+- Web Content Accessibility Guidelines
+- Contrast requirements, ARIA labels, keyboard navigation
+- *Compliance target for: MUX accessibility sprint*
+
+**PEP 420** - Python Namespace Packages
+- Implicit namespace package specification
+- *Used to resolve: Shadow package conflicts in test infrastructure*
+
+**NIST Cryptographic Standards**
+- AES-256-GCM + HKDF encryption approach
+- *Referenced in: S2 Sprint encryption implementation*
+
+---
+
 ## Infrastructure & Technologies
 
 ### Web Technologies
@@ -260,6 +435,23 @@
 - **ChromaDB**: Vector database
 - **OpenAI Python SDK**: API integration
 - **Anthropic Python SDK**: Claude integration
+- **Google Generative AI SDK** (google-generativeai): Gemini model integration (October 2025)
+
+### Additional Python Libraries
+- **keyring** (Jason R. Coombs): OS-level keychain integration for secure credential storage
+- **Rich** (Will McGugan): Terminal UI formatting and rich text display
+- **asyncpg**: High-performance PostgreSQL async driver
+- **ONNX Runtime** (Microsoft): Cross-platform ML model inference
+- **scipy**: Scientific computing algorithms
+
+### MCP Tools
+- **Context7**: Documentation lookup service for library APIs
+  - *Integrated: October 2025*
+  - *Used in: Package compatibility verification, API documentation queries*
+
+### Mobile Development
+- **Expo / React Native**: Cross-platform mobile development framework
+  - *Used in: Mobile skunkworks PoC (December 2025)*
 
 ---
 
@@ -270,6 +462,25 @@
 - Lead Developer implementing core features
 - **John Phamvan** (Kind Systems CEO) - Tool recommendations and technical guidance
 - Community feedback shaping requirements
+
+### Advisors
+
+**Ted Nadeau** - Advisor + Alpha Tester
+- Why-Molecule Framework (Intent Specification DSL)
+- ADR-046, ADR-050 contributions
+- Micro-format architecture proposal
+- Comprehensive Windows testing and bug documentation
+- *Collaborating since: December 2025*
+
+**Sam Zimmerman** - Ethics Advisor
+- Three-layer ethics model: Inviolate boundaries / Adaptation mechanism / Ethical style
+- "Relationship-first ethics" framing
+- *Contributions: November-December 2025*
+
+**Cindy Chastain** - Advisor + Collaborator
+- Experience Themes framework application (see UX section for published work citation)
+- Documentary/podcast approach to storytelling
+- *Collaborating since: January 2026*
 
 ### Indirect Influences
 - The broader AI safety research community
@@ -282,11 +493,22 @@
 
 While building on these foundations, Piper Morgan contributes:
 
-1. **Excellence Flywheel Methodology**: Systematic approach to AI-assisted development
+1. **Excellence Flywheel Methodology**: Systematic approach to AI-assisted development (flywheel metaphor from Collins; specific framework original)
 2. **Wild Claim Verification Protocol**: Empirical validation framework
 3. **8-Dimensional Spatial Intelligence**: Novel PM context understanding
 4. **Debate-Driven CoD Pattern**: Multi-agent consensus at 5% token cost
 5. **Enhanced Autonomy Protocols**: 4h 45m unsupervised operation patterns
+6. **Time Lord Alert**: Pattern for signaling quality-over-time-constraint conflicts (alert mechanism adapted from Jesse Vincent)
+7. **Cascade Investigation Pattern** (Pattern-060): Systematic multi-layer debugging methodology
+8. **Cathedral Thinking Application**: Long-term purpose orientation (using folk parable tradition, not Raymond's open-source usage)
+
+### Inspirational Quotations (Folk Attributions)
+
+We use two quotations whose attributions are well-known to be approximate:
+
+- **"Cathedral Builder" parable** - Commonly attributed to Christopher Wren; first documented in Bruce Barton's "What Can a Man Believe?" (1927). The story is likely apocryphal but the concept of long-term, purpose-driven work is authentic to our usage.
+
+- **"Teach them to long for the endless immensity of the sea"** - Commonly attributed to Antoine de Saint-Exupéry; actually a folk paraphrase inspired by *Citadelle* (1948). First appeared in modern form circa 1995; attributed to Saint-Exupéry around 2007. See also: "Play it again, Sam" and "Lead on, Macduff" for similar folk-attribution patterns.
 
 ---
 

@@ -1,7 +1,7 @@
 # Architectural Decision Records (ADR) Index
 
-**Last Updated**: January 13, 2026
-**Total ADRs**: 55 (000-054)
+**Last Updated**: March 3, 2026
+**Total ADRs**: 61 (000-058, excluding field-mapping-report)
 **Status**: Active
 
 ## Overview
@@ -14,7 +14,7 @@ This index provides a complete catalog of all Architectural Decision Records (AD
 
 - [ADR-000: Meta-Platform](adr-000-meta-platform.md) - Core platform architecture foundation
 - [ADR-045: Object Model - "Entities Experience Moments in Places"](adr-045-object-model.md) - Foundational grammar for Piper's consciousness ("Entities experience Moments in Places")
-- [ADR-046: Micro-Format Agent Architecture](adr-046-micro-format-agent-architecture.md) - Typed input decomposition and specialized agent routing for coordination
+- [ADR-046: Moment Type Agent Architecture](adr-046-moment-type-agent-architecture.md) - Typed input decomposition and specialized agent routing for coordination
 
 ### Integration & Communication
 
@@ -36,6 +36,7 @@ This index provides a complete catalog of all Architectural Decision Records (AD
 - [ADR-006: Standardize Async Session Management](adr-006-standardize-async-session-management.md) - Session management patterns
 - [ADR-025: Unified Session Management Architecture](adr-025-unified-session-management.md) - Comprehensive session management
 - [ADR-041: Domain Primitives - Item and List Refactoring](adr-041-domain-primitives-refactoring.md) - Polymorphic inheritance with Item/List as universal primitives
+- [ADR-055: Object Model Implementation](adr-055-object-model-implementation.md) - Core Grammar & Lens Infrastructure for the object model
 
 ### Infrastructure & Operations
 
@@ -46,6 +47,9 @@ This index provides a complete catalog of all Architectural Decision Records (AD
 - [ADR-012: Protocol Ready JWT Authentication](adr-012-protocol-ready-jwt-authentication.md) - Authentication architecture
 - [ADR-027: Configuration Architecture: User vs. System Separation](adr-027-configuration-architecture-user-vs-system-separation.md) - Configuration architecture (may partly supersede ADR-010?)
 - [ADR-040: Local Database Per Environment](adr-040-local-database-per-environment.md) - CODE ≠ DATA architecture (git-managed code, PostgreSQL per environment data)
+- [ADR-044: Lightweight RBAC vs Traditional](adr-044-lightweight-rbac-vs-traditional.md) - Security architecture for role-based access control
+- [ADR-057: CommandRegistry](adr-057-command-registry.md) - Unified command discovery and routing
+- [ADR-058: Multi-Tenancy Isolation](adr-058-multi-tenancy-isolation.md) - Multi-tenancy isolation architecture
 
 ### Testing & Quality Assurance
 
@@ -61,6 +65,8 @@ This index provides a complete catalog of all Architectural Decision Records (AD
 - [ADR-020: Protocol Investment](adr-020-protocol-investment.md) - Protocol investment decisions
 - [ADR-021: Multi Federation](adr-021-multi-federation.md) - Multi-federation architecture
 - [ADR-038: Spatial Intelligence Architecture Patterns](adr-038-spatial-intelligence-patterns.md) - Two validated spatial patterns (Granular Adapter, Embedded Intelligence)
+- [ADR-042: Mobile Strategy - Progressive Enhancement](adr-042-mobile-strategy-progressive-enhancement.md) - Mobile development strategy
+- [ADR-056: Consciousness Expression Patterns](adr-056-consciousness-expression-patterns.md) - Consciousness expression patterns for entity awareness
 
 ### Core Patterns & Workflows
 
@@ -77,14 +83,13 @@ This index provides a complete catalog of all Architectural Decision Records (AD
 
 ### Methodological Architecture
 
-- [ADR-028: Three-Tier Verification Pyramid\(adr-028-verification-pyramid.md)\
-- Foundational framework for all agent coordination, requiring systematic evidence at each level before proceeding
+- [ADR-028: Three-Tier Verification Pyramid](adr-028-verification-pyramid.md) - Foundational framework for all agent coordination, requiring systematic evidence at each level before proceeding
 
 ## ADR Status Summary
 
-- **Total**: 55 ADRs (000-054)
-- **Accepted**: ~50 ADRs
-- **Proposed/Draft**: ~5 ADRs (047, 049, 050, 051, 053, 054)
+- **Total**: 61 ADRs (000-058)
+- **Accepted**: ~55 ADRs
+- **Proposed/Draft**: ~6 ADRs
 - **Superseded**: 0 ADRs
 - **Deprecated**: 0 ADRs
 
@@ -92,7 +97,7 @@ This index provides a complete catalog of all Architectural Decision Records (AD
 
 ### Creating New ADRs
 
-1. Use next sequential number (next: ADR-055)
+1. Use next sequential number (next: ADR-059)
 2. Follow naming convention: `adr-XXX-descriptive-title.md`
 3. Include required sections: Status, Date, Context, Decision, Consequences
 4. Update this index when adding new ADRs
@@ -106,6 +111,7 @@ This index provides a complete catalog of all Architectural Decision Records (AD
 
 ## Recent Changes
 
+- **March 3, 2026**: Docs audit — added ADR-042, ADR-044, ADR-055, ADR-056, ADR-057, ADR-058 to catalog (existed as files but missing from index). Total now 61.
 - **January 13, 2026**: Added ADR-053 (Trust Computation Architecture), ADR-054 (Cross-Session Memory Architecture) - Trust gradient and memory persistence from PDR-002; Updated ADR-052 (Tool-Based MCP Standardization)
 - **January 13, 2026**: Added ADR-050 (Conversation-as-Graph Model), ADR-051 (Unified User Session Context) - Multi-party conversation modeling and user context unification
 - **January 9, 2026**: Added ADR-049 (Conversational State and Hierarchical Intent) - Multi-turn conversation architecture from FTUX-PORTFOLIO
@@ -127,8 +133,8 @@ This index provides a complete catalog of all Architectural Decision Records (AD
 ## Related Documentation
 
 - [Architecture Overview](../architecture.md)
-- [Domain Models Index](../domain-models-index.md)
-- [Pattern Catalog](../pattern-catalog.md)
+- [Domain Models Index](../models/domain-models-index.md)
+- [Pattern Catalog](../patterns/README.md)
 - [Technical Specifications](../technical-spec.md)
 - [ADR-029: Domain Service Mediation Architecture](adr-029-domain-service-mediation-architecture.md) - Complete domain service mediation for external system access
 - [ADR-030: Configuration Service Centralization](adr-030-configuration-service-centralization.md) - Centralized configuration management through PortConfigurationService
