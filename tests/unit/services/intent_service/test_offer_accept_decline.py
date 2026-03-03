@@ -524,3 +524,119 @@ class TestSlotFillingOnAccept:
         assert result.success
         # Classifier should NOT have been called — slot filling handled it
         mock_classifier.classify_multiple.assert_not_awaited()
+
+
+class TestEmbeddedOfferRegistration:
+    """Issue #846: Canonical handler responses with embedded offers register as pending."""
+
+    @pytest.mark.asyncio
+    async def test_priority_offer_registers_as_pending(self, intent_service, mock_classifier):
+        """When priority handler returns action_required, a pending offer is registered."""
+        # Make canonical handler return priority offer with action_required
+        intent_service.canonical_handlers.handle = AsyncMock(
+            return_value={
+                "message": "You don't have any priorities configured yet. "
+                "Would you like me to help you set up your priority list?",
+                "action_required": "configure_priorities",
+                "intent": {
+                    "category": "priority",
+                    "action": "provide_priority",
+                    "confidence": 1.0,
+                },
+            }
+        )
+
+        # Simulate priority query
+        priority_intent = _make_intent(IntentCategory.PRIORITY, "provide_priority")
+        mock_classifier.classify.return_value = priority_intent
+        mock_classifier.classify_multiple.return_value = MultiIntentResult(
+            intents=[priority_intent],
+        )
+
+        await intent_service.process_intent(
+            message="What are my priorities?",
+            session_id="sess_embedded",
+            user_id=None,
+        )
+
+        # A pending offer should now exist
+        pending = intent_service.workflow_offer_service.get_and_clear_pending_offer(
+            "sess_embedded", user_id=None
+        )
+        assert pending is not None
+        assert pending["workflow_type"] == "priority_check"
+
+    @pytest.mark.asyncio
+    async def test_yes_after_priority_offer_is_accepted(self, intent_service, mock_classifier):
+        """Issue #846: 'Yes' after priority offer should be accepted, not classified as greeting."""
+        # Step 1: Canonical handler returns priority offer
+        intent_service.canonical_handlers.handle = AsyncMock(
+            return_value={
+                "message": "You don't have any priorities configured yet. "
+                "Would you like me to help you set up your priority list?",
+                "action_required": "configure_priorities",
+                "intent": {
+                    "category": "priority",
+                    "action": "provide_priority",
+                    "confidence": 1.0,
+                },
+            }
+        )
+
+        priority_intent = _make_intent(IntentCategory.PRIORITY, "provide_priority")
+        mock_classifier.classify.return_value = priority_intent
+        mock_classifier.classify_multiple.return_value = MultiIntentResult(
+            intents=[priority_intent],
+        )
+
+        await intent_service.process_intent(
+            message="What are my priorities?",
+            session_id="sess_yes_846",
+            user_id=None,
+        )
+
+        # Step 2: User responds "yes"
+        result = await intent_service.process_intent(
+            message="yes",
+            session_id="sess_yes_846",
+            user_id=None,
+        )
+
+        # Should be accepted, NOT classified as greeting
+        assert result.success
+        assert result.intent_data["category"] == "soft_offer_accepted"
+        assert result.intent_data["action"] == "priority_check"
+
+    @pytest.mark.asyncio
+    async def test_project_offer_registers_as_pending(self, intent_service, mock_classifier):
+        """Project setup offer should also register as pending."""
+        intent_service.canonical_handlers.handle = AsyncMock(
+            return_value={
+                "message": "You don't have any active projects configured yet. "
+                "Would you like me to help you set up your project portfolio?",
+                "action_required": "configure_projects",
+                "intent": {
+                    "category": "status",
+                    "action": "provide_status",
+                    "confidence": 1.0,
+                },
+            }
+        )
+
+        status_intent = _make_intent(IntentCategory.STATUS, "provide_status")
+        mock_classifier.classify.return_value = status_intent
+        mock_classifier.classify_multiple.return_value = MultiIntentResult(
+            intents=[status_intent],
+        )
+
+        await intent_service.process_intent(
+            message="What are my projects?",
+            session_id="sess_project_846",
+            user_id=None,
+        )
+
+        pending = intent_service.workflow_offer_service.get_and_clear_pending_offer(
+            "sess_project_846", user_id=None
+        )
+        assert pending is not None
+        assert pending["workflow_type"] == "project_setup"

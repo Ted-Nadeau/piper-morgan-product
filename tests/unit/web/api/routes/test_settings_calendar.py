@@ -18,6 +18,13 @@ from web.api.routes.settings_integrations import (
 )
 
 
+def _mock_current_user(user_id="test_user"):
+    """Create a mock JWTClaims object for testing."""
+    mock_user = MagicMock()
+    mock_user.sub = user_id
+    return mock_user
+
+
 class TestGetCalendarSettings:
     """Tests for GET /api/v1/settings/integrations/calendar"""
 
@@ -31,7 +38,7 @@ class TestGetCalendarSettings:
             "services.infrastructure.keychain_service.KeychainService",
             return_value=mock_keychain,
         ):
-            result = await get_calendar_settings()
+            result = await get_calendar_settings(current_user=_mock_current_user())
 
             assert result["configured"] is False
             assert result["valid"] is False
@@ -59,7 +66,7 @@ class TestGetCalendarSettings:
                 return_value=mock_handler,
             ),
         ):
-            result = await get_calendar_settings()
+            result = await get_calendar_settings(current_user=_mock_current_user())
 
             assert result["configured"] is True
             assert result["valid"] is True
@@ -84,7 +91,7 @@ class TestGetCalendarSettings:
                 return_value=mock_handler,
             ),
         ):
-            result = await get_calendar_settings()
+            result = await get_calendar_settings(current_user=_mock_current_user())
 
             assert result["configured"] is True
             assert result["valid"] is False
@@ -109,11 +116,25 @@ class TestGetCalendarSettings:
                 return_value=mock_handler,
             ),
         ):
-            result = await get_calendar_settings()
+            result = await get_calendar_settings(current_user=_mock_current_user())
 
             assert result["configured"] is True
             assert result["valid"] is False
             assert "API error" in result["error"]
+
+    @pytest.mark.asyncio
+    async def test_uses_user_scoped_keychain_key(self):
+        """Issue #839: Should use user-scoped keychain key for isolation"""
+        mock_keychain = MagicMock()
+        mock_keychain.get_api_key.return_value = None
+
+        with patch(
+            "services.infrastructure.keychain_service.KeychainService",
+            return_value=mock_keychain,
+        ):
+            await get_calendar_settings(current_user=_mock_current_user("user_abc"))
+
+            mock_keychain.get_api_key.assert_called_once_with("google_calendar_user_abc")
 
 
 class TestDisconnectCalendar:
@@ -129,11 +150,12 @@ class TestDisconnectCalendar:
             "services.infrastructure.keychain_service.KeychainService",
             return_value=mock_keychain,
         ):
-            result = await disconnect_calendar()
+            result = await disconnect_calendar(current_user=_mock_current_user("test_user"))
 
             assert result["success"] is True
             assert result["message"] == "Calendar disconnected"
-            mock_keychain.delete_api_key.assert_called_once_with("google_calendar")
+            # Issue #839: Should use user-scoped key
+            mock_keychain.delete_api_key.assert_called_once_with("google_calendar_test_user")
 
     @pytest.mark.asyncio
     async def test_succeeds_even_when_no_token_exists(self):
@@ -145,7 +167,7 @@ class TestDisconnectCalendar:
             "services.infrastructure.keychain_service.KeychainService",
             return_value=mock_keychain,
         ):
-            result = await disconnect_calendar()
+            result = await disconnect_calendar(current_user=_mock_current_user())
 
             assert result["success"] is True
             assert result["message"] == "Calendar disconnected"

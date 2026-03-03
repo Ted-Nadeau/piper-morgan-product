@@ -527,3 +527,115 @@ class TestCircuitBreakerBehavior:
 
                 assert events == []
                 mock_auth.assert_called_once()
+
+
+class TestUserScopedKeychainAuth:
+    """Tests for user-scoped keychain authentication (Issue #843)."""
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_authenticate_uses_user_scoped_key(self):
+        """Issue #843: Should use user-scoped keychain key when user_id is provided."""
+        with patch("services.mcp.consumer.google_calendar_adapter.GOOGLE_LIBS_AVAILABLE", True):
+            from services.mcp.consumer.google_calendar_adapter import GoogleCalendarMCPAdapter
+
+            adapter = GoogleCalendarMCPAdapter(user_id="alice_123")
+
+            mock_keychain = MagicMock()
+            mock_keychain.get_api_key.return_value = "alice_refresh_token"
+
+            mock_handler = MagicMock()
+            mock_tokens = MagicMock()
+            mock_tokens.access_token = "alice_access_token"
+            mock_handler.refresh_access_token = AsyncMock(return_value=mock_tokens)
+
+            mock_credentials = MagicMock()
+
+            with (
+                patch(
+                    "services.infrastructure.keychain_service.KeychainService",
+                    return_value=mock_keychain,
+                ),
+                patch(
+                    "services.integrations.calendar.oauth_handler.GoogleCalendarOAuthHandler",
+                    return_value=mock_handler,
+                ),
+                patch("services.mcp.consumer.google_calendar_adapter.build") as mock_build,
+                patch(
+                    "services.mcp.consumer.google_calendar_adapter.Credentials", mock_credentials
+                ),
+            ):
+                result = await adapter._authenticate_from_keychain()
+
+                assert result is True
+                # Should try user-scoped key first
+                mock_keychain.get_api_key.assert_any_call("google_calendar_alice_123")
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_authenticate_falls_back_to_legacy_key(self):
+        """Issue #843: Should fall back to legacy key when user-scoped key not found."""
+        with patch("services.mcp.consumer.google_calendar_adapter.GOOGLE_LIBS_AVAILABLE", True):
+            from services.mcp.consumer.google_calendar_adapter import GoogleCalendarMCPAdapter
+
+            adapter = GoogleCalendarMCPAdapter(user_id="bob_456")
+
+            mock_keychain = MagicMock()
+            # User-scoped key returns None, legacy key returns token
+            mock_keychain.get_api_key.side_effect = lambda key: (
+                "legacy_refresh_token" if key == "google_calendar" else None
+            )
+
+            mock_handler = MagicMock()
+            mock_tokens = MagicMock()
+            mock_tokens.access_token = "legacy_access_token"
+            mock_handler.refresh_access_token = AsyncMock(return_value=mock_tokens)
+
+            mock_credentials = MagicMock()
+
+            with (
+                patch(
+                    "services.infrastructure.keychain_service.KeychainService",
+                    return_value=mock_keychain,
+                ),
+                patch(
+                    "services.integrations.calendar.oauth_handler.GoogleCalendarOAuthHandler",
+                    return_value=mock_handler,
+                ),
+                patch("services.mcp.consumer.google_calendar_adapter.build") as mock_build,
+                patch(
+                    "services.mcp.consumer.google_calendar_adapter.Credentials", mock_credentials
+                ),
+            ):
+                result = await adapter._authenticate_from_keychain()
+
+                assert result is True
+                # Should try user-scoped first, then legacy
+                assert mock_keychain.get_api_key.call_count == 2
+                mock_keychain.get_api_key.assert_any_call("google_calendar_bob_456")
+                mock_keychain.get_api_key.assert_any_call("google_calendar")
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_authenticate_system_user_uses_legacy_key_only(self):
+        """Issue #843: System user_id should skip user-scoped key."""
+        with patch("services.mcp.consumer.google_calendar_adapter.GOOGLE_LIBS_AVAILABLE", True):
+            from services.mcp.consumer.google_calendar_adapter import GoogleCalendarMCPAdapter
+
+            # No user_id → defaults to "system"
+            adapter = GoogleCalendarMCPAdapter()
+
+            mock_keychain = MagicMock()
+            mock_keychain.get_api_key.return_value = None
+
+            with (
+                patch(
+                    "services.infrastructure.keychain_service.KeychainService",
+                    return_value=mock_keychain,
+                ),
+            ):
+                result = await adapter._authenticate_from_keychain()
+
+                assert result is False
+                # Should only try legacy key (skip user-scoped for "system")
+                mock_keychain.get_api_key.assert_called_once_with("google_calendar")

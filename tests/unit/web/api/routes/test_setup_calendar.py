@@ -260,20 +260,33 @@ class TestCalendarOAuthCallback:
 class TestCalendarSetupStatus:
     """Tests for Calendar status in setup wizard"""
 
+    def _mock_request_with_jwt(self, user_id="test_user"):
+        """Create a mock Request with auth cookie and mock JWTService."""
+        mock_request = MagicMock()
+        mock_request.cookies = {"auth_token": "fake_jwt"}
+        mock_claims = MagicMock()
+        mock_claims.sub = user_id
+        mock_jwt_service = MagicMock()
+        mock_jwt_service.validate_token.return_value = mock_claims
+        return mock_request, mock_jwt_service
+
     @pytest.mark.asyncio
     async def test_check_calendar_configured_with_token(self):
         """Should return configured=True when refresh token exists"""
         from web.api.routes.setup import get_calendar_status
 
-        # When: Calendar has refresh token in keychain
-        with patch("services.infrastructure.keychain_service.KeychainService") as MockKeychain:
+        mock_request, mock_jwt = self._mock_request_with_jwt()
+
+        with (
+            patch("services.infrastructure.keychain_service.KeychainService") as MockKeychain,
+            patch("services.auth.jwt_service.JWTService", return_value=mock_jwt),
+        ):
             mock_keychain = MagicMock()
             mock_keychain.get_api_key.return_value = "stored_refresh_token"
             MockKeychain.return_value = mock_keychain
 
-            response = await get_calendar_status()
+            response = await get_calendar_status(mock_request)
 
-        # Then: Status is configured
         assert response["configured"] is True
 
     @pytest.mark.asyncio
@@ -281,15 +294,18 @@ class TestCalendarSetupStatus:
         """Should return configured=False when no token"""
         from web.api.routes.setup import get_calendar_status
 
-        # When: No refresh token in keychain
-        with patch("services.infrastructure.keychain_service.KeychainService") as MockKeychain:
+        mock_request, mock_jwt = self._mock_request_with_jwt()
+
+        with (
+            patch("services.infrastructure.keychain_service.KeychainService") as MockKeychain,
+            patch("services.auth.jwt_service.JWTService", return_value=mock_jwt),
+        ):
             mock_keychain = MagicMock()
             mock_keychain.get_api_key.return_value = None
             MockKeychain.return_value = mock_keychain
 
-            response = await get_calendar_status()
+            response = await get_calendar_status(mock_request)
 
-        # Then: Status is not configured
         assert response["configured"] is False
 
     @pytest.mark.asyncio
@@ -297,13 +313,36 @@ class TestCalendarSetupStatus:
         """Should handle keychain errors gracefully"""
         from web.api.routes.setup import get_calendar_status
 
-        with patch("services.infrastructure.keychain_service.KeychainService") as MockKeychain:
+        mock_request, mock_jwt = self._mock_request_with_jwt()
+
+        with (
+            patch("services.infrastructure.keychain_service.KeychainService") as MockKeychain,
+            patch("services.auth.jwt_service.JWTService", return_value=mock_jwt),
+        ):
             mock_keychain = MagicMock()
             mock_keychain.get_api_key.side_effect = Exception("Keychain access denied")
             MockKeychain.return_value = mock_keychain
 
-            response = await get_calendar_status()
+            response = await get_calendar_status(mock_request)
 
-        # Then: Returns not configured with error message
         assert response["configured"] is False
         assert "failed" in response["message"].lower()
+
+    @pytest.mark.asyncio
+    async def test_status_uses_user_scoped_key(self):
+        """Issue #839: Should use user-scoped keychain key"""
+        from web.api.routes.setup import get_calendar_status
+
+        mock_request, mock_jwt = self._mock_request_with_jwt("alice_123")
+
+        with (
+            patch("services.infrastructure.keychain_service.KeychainService") as MockKeychain,
+            patch("services.auth.jwt_service.JWTService", return_value=mock_jwt),
+        ):
+            mock_keychain = MagicMock()
+            mock_keychain.get_api_key.return_value = None
+            MockKeychain.return_value = mock_keychain
+
+            await get_calendar_status(mock_request)
+
+            mock_keychain.get_api_key.assert_called_once_with("google_calendar_alice_123")

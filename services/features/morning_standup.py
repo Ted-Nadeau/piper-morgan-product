@@ -422,7 +422,8 @@ class MorningStandupWorkflow:
             )
 
             # Initialize calendar adapter
-            calendar_adapter = CalendarIntegrationRouter()
+            # Issue #843: Pass user_id for user-scoped calendar authentication
+            calendar_adapter = CalendarIntegrationRouter(user_id=user_id)
 
             # Get temporal summary including today's events and time blocks
             temporal_summary = await calendar_adapter.get_temporal_summary()
@@ -565,7 +566,8 @@ class MorningStandupWorkflow:
                     CalendarIntegrationRouter,
                 )
 
-                calendar_adapter = CalendarIntegrationRouter()
+                # Issue #843: Pass user_id for user-scoped calendar authentication
+                calendar_adapter = CalendarIntegrationRouter(user_id=user_id)
                 temporal_summary = await calendar_adapter.get_temporal_summary()
 
                 if temporal_summary.get("current_meeting"):

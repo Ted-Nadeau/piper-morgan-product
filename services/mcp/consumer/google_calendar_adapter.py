@@ -250,6 +250,8 @@ class GoogleCalendarMCPAdapter(BaseSpatialAdapter):
         This is the preferred method when user connected via web OAuth flow
         in the setup wizard.
 
+        Issue #843: Uses user-scoped keychain key for multi-tenancy isolation.
+
         Returns:
             bool: True if authentication successful, False otherwise
         """
@@ -258,7 +260,16 @@ class GoogleCalendarMCPAdapter(BaseSpatialAdapter):
             from services.integrations.calendar.oauth_handler import GoogleCalendarOAuthHandler
 
             keychain = KeychainService()
-            refresh_token = keychain.get_api_key("google_calendar")
+
+            # Issue #843: Use user-scoped key for multi-tenancy isolation
+            # Try user-scoped key first, fall back to legacy non-scoped key
+            refresh_token = None
+            if self._user_id and self._user_id != "system":
+                refresh_token = keychain.get_api_key(f"google_calendar_{self._user_id}")
+
+            if not refresh_token:
+                # Fallback to legacy non-scoped key for backward compatibility
+                refresh_token = keychain.get_api_key("google_calendar")
 
             if not refresh_token:
                 return False
@@ -283,7 +294,9 @@ class GoogleCalendarMCPAdapter(BaseSpatialAdapter):
 
             # Initialize Calendar service
             self._service = build("calendar", "v3", credentials=self._credentials)
-            logger.info("Google Calendar authenticated via keychain (Issue #529)")
+            logger.info(
+                "Google Calendar authenticated via keychain (Issue #529, user=%s)", self._user_id
+            )
             return True
 
         except ImportError:
