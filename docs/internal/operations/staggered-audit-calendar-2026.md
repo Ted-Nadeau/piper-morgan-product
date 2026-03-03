@@ -12,7 +12,7 @@
 |------------|---------|----------|-------|-------------|
 | Pattern Sweep | 6 weeks | ~1 day | Lead Dev + specialized agents | `dev/active/pattern-sweep-2.0-framework.md` |
 | Methodology Audit | 6-8 weeks | ~2 hours | CIO (xian acting) | TBD |
-| Documentation Audit | 4 weeks | ~1 hour | CoS / Doc Manager | `.github/workflows/weekly-docs-audit.yml` |
+| Documentation Audit | **Weekly** | ~1 hour | CoS / Doc Manager | `.github/workflows/weekly-docs-audit.yml` |
 | Workstream Review | Weekly | ~1 hour | CoS + PM | N/A (informal) |
 | Role Health Check | 4 weeks | ~30 min | HOSR | `docs/internal/operations/role-health-check-methodology.md` |
 
@@ -24,37 +24,37 @@
 
 | Week | Mon | Pattern Sweep | Methodology | Doc Audit | Role Health |
 |------|-----|---------------|-------------|-----------|-------------|
-| 1 | Jan 6 | | | | |
+| 1 | Jan 6 | | | ✓ | |
 | 2 | Jan 13 | | | ✓ | |
-| 3 | Jan 20 | | | | ✓ |
-| 4 | Jan 27 | | | | |
-| 5 | Feb 3 | ✓ | | | |
+| 3 | Jan 20 | | | ✓ | ✓ |
+| 4 | Jan 27 | | | ✓ | |
+| 5 | Feb 3 | ✓ | | ✓ | |
 | 6 | Feb 10 | | | ✓ | |
-| 7 | Feb 17 | | ✓ | | ✓ |
-| 8 | Feb 24 | | | | |
+| 7 | Feb 17 | | ✓ | ✓ | ✓ |
+| 8 | Feb 24 | | | ✓ | |
 | 9 | Mar 3 | | | ✓ | |
-| 10 | Mar 10 | | | | |
-| 11 | Mar 17 | ✓ | | | ✓ |
+| 10 | Mar 10 | | | ✓ | |
+| 11 | Mar 17 | ✓ | | ✓ | ✓ |
 | 12 | Mar 24 | | | ✓ | |
-| 13 | Mar 31 | | | | |
+| 13 | Mar 31 | | | ✓ | |
 
 ### Q2 2026
 
 | Week | Mon | Pattern Sweep | Methodology | Doc Audit | Role Health |
 |------|-----|---------------|-------------|-----------|-------------|
-| 14 | Apr 6 | | ✓ | | |
-| 15 | Apr 13 | | | | ✓ |
+| 14 | Apr 6 | | ✓ | ✓ | |
+| 15 | Apr 13 | | | ✓ | ✓ |
 | 16 | Apr 20 | | | ✓ | |
-| 17 | Apr 27 | ✓ | | | |
-| 18 | May 4 | | | | |
+| 17 | Apr 27 | ✓ | | ✓ | |
+| 18 | May 4 | | | ✓ | |
 | 19 | May 11 | | | ✓ | ✓ |
-| 20 | May 18 | | | | |
-| 21 | May 25 | | ✓ | | |
+| 20 | May 18 | | | ✓ | |
+| 21 | May 25 | | ✓ | ✓ | |
 | 22 | Jun 1 | | | ✓ | |
-| 23 | Jun 8 | ✓ | | | ✓ |
-| 24 | Jun 15 | | | | |
+| 23 | Jun 8 | ✓ | | ✓ | ✓ |
+| 24 | Jun 15 | | | ✓ | |
 | 25 | Jun 22 | | | ✓ | |
-| 26 | Jun 29 | | | | |
+| 26 | Jun 29 | | | ✓ | |
 
 ---
 
@@ -67,9 +67,10 @@
 - ~7-week intervals, offset 2 weeks from Pattern Sweep
 - Never same week as Pattern Sweep
 
-**Documentation Audit**: Weeks 2, 6, 9, 12, 16, 19, 22, 25...
-- 3-4 week intervals
-- Lighter lift, more frequent
+**Documentation Audit**: Every week (weekly)
+- Runs every Monday via `.github/workflows/weekly-docs-audit.yml`
+- ~1 hour per audit, lightweight but consistent
+- Critical for project knowledge currency and agent reliability
 
 **Role Health Check**: Weeks 3, 7, 11, 15, 19, 23...
 - 4-week intervals
@@ -80,11 +81,11 @@
 
 ## Maximum Audit Load Per Week
 
-**Design Principle**: No more than 2 audits in any given week.
+**Design Principle**: No more than 2 *heavy* audits in any given week. Doc Audit is weekly and doesn't count toward the heavy audit limit.
 
-**Worst Case**: Doc Audit + Role Health (both lightweight, ~1.5 hours total)
+**Worst Case**: Doc Audit + Pattern Sweep + Role Health (Week 11, 23 — ~3 hours total)
 
-**Best Case**: Most weeks have 0-1 audits
+**Typical Case**: Doc Audit alone (~1 hour), or Doc Audit + one other (~2 hours)
 
 ---
 
@@ -107,15 +108,12 @@ on:
 
 ### Documentation Audit Workflow
 ```yaml
-# .github/workflows/doc-audit-reminder.yml
-name: Documentation Audit Reminder
+# .github/workflows/weekly-docs-audit.yml
+name: Weekly Documentation Audit
 on:
   schedule:
-    # Every 3-4 weeks on Monday at 9am UTC
-    - cron: '0 9 13 1 *'  # Jan 13
-    - cron: '0 9 10 2 *'  # Feb 10
-    - cron: '0 9 3 3 *'   # Mar 3
-    # ... continue for year
+    # Every Monday at 9am UTC
+    - cron: '0 9 * * 1'
 ```
 
 ### Role Health Check Workflow
@@ -177,16 +175,39 @@ labels: documentation, audit
 **Owner**: Chief of Staff / Doc Manager
 
 ### Checklist
-- [ ] Broken links scan (target: <30)
+
+**🔗 Link Integrity (Priority)** - Added Feb 2026 per Ted Nadeau feedback
+- [ ] ADR link audit: Check all `docs/internal/architecture/current/adrs/adr-*.md` for broken internal refs
+- [ ] Pattern link audit: Check `pattern-*.md` for broken cross-references
+- [ ] Briefing link audit: Check `docs/briefing/*.md` and `knowledge/BRIEFING-*.md`
+- [ ] Document broken links found with file:line format
+- [ ] Fix or file issues for broken links
+
+**📊 Standard Checks**
 - [ ] Stale documents identified (>90 days unchanged)
 - [ ] README coverage verified (target: 100%)
 - [ ] Navigation docs current
 - [ ] Knowledge folder aligned with filesystem
 
 ### Metrics
-- Broken links: ___ (previous: ___)
+- Broken internal links: ___ (target: <10 in priority files)
 - Stale docs: ___
 - Coverage: ___%
+
+### Link Audit Notes
+Files with broken links discovered:
+- [ ] [file] line [N]: [broken link] → [resolution]
+
+### Completion Matrix (REQUIRED)
+| Section | Status | Evidence |
+|---------|--------|----------|
+| Link Integrity | ✅/⏸️/❌ | |
+| Stale Docs | ✅/⏸️/❌ | |
+| README Coverage | ✅/⏸️/❌ | |
+| Navigation Docs | ✅/⏸️/❌ | |
+| Knowledge Folder | ✅/⏸️/❌ | |
+
+**⚠️ Deferral requires PM approval comment link. No silent skipping.**
 ```
 
 ### Role Health Check Issue Template
@@ -225,9 +246,9 @@ CoS to maintain simple tracking:
 
 | Audit Type | Last Completed | Next Due | Status |
 |------------|----------------|----------|--------|
-| Pattern Sweep | Dec 27, 2025 | Feb 3, 2026 | ✅ On track |
+| Pattern Sweep | Feb 3, 2026 | Mar 17, 2026 | ✅ Complete |
 | Methodology | TBD | Feb 17, 2026 | ⏳ Schedule |
-| Documentation | Jan 26, 2026 | Feb 10, 2026 | ✅ On track |
+| Documentation | Mar 3, 2026 | Mar 23, 2026 | ✅ Complete (#877) |
 | Role Health | Jan 31, 2026 (informal) | Feb 17, 2026 | ✅ Methodology defined |
 
 **Note**: Role Health Check methodology formalized Jan 31, 2026. First formal audit Feb 17, 2026.
