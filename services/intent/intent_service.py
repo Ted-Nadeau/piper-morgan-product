@@ -74,6 +74,10 @@ class IntentProcessingResult:
     message: str
     intent_data: Dict[str, Any]
     workflow_id: Optional[str] = None
+    # Issue #878: Handlers that start real async/background work set this to True.
+    # The route layer strips workflow_id unless this is True, preventing the frontend
+    # from polling a workflow that will never progress. See ADR note in intent.py.
+    async_work_started: bool = False
     requires_clarification: bool = False
     clarification_type: Optional[str] = None
     error: Optional[str] = None
@@ -1783,6 +1787,7 @@ class IntentService:
                     "context": intent.context,
                 },
                 workflow_id=workflow_id,
+                async_work_started=True,
                 requires_clarification=False,
                 clarification_type=None,
                 # Add result data

@@ -426,7 +426,8 @@ class TestAPIDegradationIntegration:
             assert "project1" in data["message"]
             assert "project2" in data["message"]
             assert data["intent"]["action"] == "list_projects"
-            assert data["workflow_id"] == "workflow-123"
+            # Issue #878: workflow_id is stripped for sync handlers (async_work_started=False)
+            assert data["workflow_id"] is None
 
     def test_intent_business_error_returns_200_not_422(self, test_client):
         """Contract: IntentService business errors are conversational, not HTTP errors.

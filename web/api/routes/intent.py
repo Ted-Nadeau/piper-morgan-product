@@ -19,6 +19,12 @@ IntentService, including business-logic errors. Errors are conversational respon
 infrastructure failures the same way. Only use validation_error()/HTTP 4xx for
 actual malformed HTTP requests (missing body, bad JSON, etc).
 
+Issue #878: workflow_id is stripped from responses unless the handler sets
+async_work_started=True on IntentProcessingResult. Currently only _handle_generic_query
+uses the orchestration engine for real async work. All other handlers are synchronous —
+passing workflow_id through caused the frontend to poll for 60s then show timeout.
+Future async handlers: set async_work_started=True to preserve workflow_id.
+
 Issue #123: Phase 3 Route Organization (Part of INFR-MAINT-REFACTOR)
 Previously: Inline in web/app.py (lines 419-658)
 Now: Extracted to separate router module
@@ -339,10 +345,12 @@ async def process_intent(
             "auth_expired": getattr(request.state, "auth_expired", False),
         }
 
-        # Issue #878: Strip workflow_id from responses where no real async work started.
-        # Validation failures, errors, and clarification requests are immediate responses —
-        # if workflow_id leaks through, the frontend polls for 60s then shows timeout error.
-        if not result.success or result.error or result.requires_clarification:
+        # Issue #878: Strip workflow_id unless the handler actually started async work.
+        # Most handlers are synchronous — they return a result immediately, but the
+        # scaffolding passes workflow_id through, causing the frontend to poll for 60s
+        # then show a timeout error. Only handlers that set async_work_started=True
+        # (currently just _handle_generic_query) should trigger frontend polling.
+        if not result.async_work_started:
             response["workflow_id"] = None
 
         # Issue #875: Business-logic errors from IntentService are conversational
