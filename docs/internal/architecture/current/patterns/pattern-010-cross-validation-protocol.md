@@ -228,7 +228,7 @@ class QualityMetricsValidator:
 
 ## References
 
-- Systematic Excellence Framework: `docs/piper-education/frameworks/emergent/systematic-excellence.md`
+- Systematic Excellence Framework: `docs/internal/archive/piper-education-2025/frameworks/emergent/systematic-excellence.md` (archived Feb 2026)
 - Session log examples: `docs/development/session-logs/2025-09-15-0900-cursor-doc-links-log.md`
 - Multi-agent coordination: Pattern Catalog Consolidation project
 - Quality frameworks: Verification-First Pattern and Evidence-Based Development

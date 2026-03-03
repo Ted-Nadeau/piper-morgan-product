@@ -4,6 +4,12 @@
 
 **Emerging** | Proven in #745, #771
 
+## Product Relevance
+
+**Portable**
+
+This investigation methodology could become a user-facing capability. When Piper helps users track and manage issues, the cascade audit pattern could guide users to discover related problems — "You fixed this bug; would you like me to check for similar issues in this category?" This preserves the discipline's value while automating the systematic audit prompts.
+
 ## Context
 
 Bug fixing typically follows a reactive cycle: find bug, fix bug, move on. This leaves adjacent issues undiscovered until they surface independently — often at worse times. Development teams experience:

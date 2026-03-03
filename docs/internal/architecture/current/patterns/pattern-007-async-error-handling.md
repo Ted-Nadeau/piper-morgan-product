@@ -257,7 +257,7 @@ error_handling:
 ### Documentation
 
 - **Original source**: `docs/patterns/archive/PATTERN-INDEX-legacy.md#error-handling-pattern`
-- **Framework source**: `docs/piper-education/frameworks/emergent/error-handling-framework.md`
+- **Framework source**: `docs/internal/archive/piper-education-2025/frameworks/emergent/error-handling-framework.md` (archived Feb 2026)
 - **Related patterns**: Verification-First Pattern, Configuration Management Framework
 
 ### Usage Analysis

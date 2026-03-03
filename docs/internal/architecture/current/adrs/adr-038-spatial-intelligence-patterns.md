@@ -462,8 +462,8 @@ Pattern selection should be reviewed during:
 
 ### Documentation
 
-- [Spatial Intelligence Patterns Guide](../../../../architecture/spatial-intelligence-patterns.md) - Comprehensive pattern documentation
-- [Operational Guide](../../../../operations/operational-guide.md) - Feature flag usage and troubleshooting
+- [Spatial Intelligence Competitive Advantage](../spatial-intelligence-competitive-advantage.md) - Strategic overview
+- [Pattern-022: MCP Spatial Intelligence Integration](../patterns/pattern-022-mcp-spatial-intelligence-integration.md) - Integration pattern
 
 ### Source Code
 

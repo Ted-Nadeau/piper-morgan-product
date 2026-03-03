@@ -4,6 +4,14 @@
 
 **Template** | Proven | Emerging | Experimental | Deprecated
 
+## Product Relevance
+
+**Process-only** | Portable | Converged
+
+- **Process-only**: Useful for building Piper, not applicable to Piper's users
+- **Portable**: Methodology that could become user-facing capability
+- **Converged**: Pattern already implemented as product feature
+
 ## Context
 
 Brief description of the problem or situation that this pattern addresses. Include:
@@ -153,6 +161,7 @@ _If consolidating from existing documentation_
 ### Quality Checklist
 
 - [ ] Status is appropriate for pattern maturity
+- [ ] Product Relevance is classified (Process-only, Portable, or Converged)
 - [ ] Context clearly explains when/why to use
 - [ ] Implementation includes working code examples
 - [ ] Usage guidelines are explicit and actionable

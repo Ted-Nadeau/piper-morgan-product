@@ -182,7 +182,7 @@ _Consolidated from multiple sources_
 
 ### Documentation
 
-- **Original source**: `docs/piper-education/decision-patterns/emergent/verification-first-pattern.md`
+- **Original source**: `docs/internal/archive/piper-education-2025/decision-patterns/emergent/verification-first-pattern.md` (archived Feb 2026)
 - **Related patterns**: Human-AI Collaboration Referee, Session Log Pattern
 - **Methodology integration**: Excellence Flywheel methodology
 
