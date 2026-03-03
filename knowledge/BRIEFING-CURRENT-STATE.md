@@ -1,1 +1,0 @@
-../docs/briefing/BRIEFING-CURRENT-STATE.md
