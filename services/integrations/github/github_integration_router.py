@@ -208,13 +208,18 @@ class GitHubIntegrationRouter:
         return await self._get_integration("list_issues").list_issues(repository, **kwargs)
 
     async def create_issue(
-        self, repo_name: str, title: str, body: str, labels: Optional[List[str]] = None
+        self,
+        repo_name: str,
+        title: str,
+        body: str,
+        labels: Optional[List[str]] = None,
+        assignees: Optional[List[str]] = None,
     ) -> Dict[str, Any]:
         """
         Create GitHub issue.
         """
         return await self._get_integration("create_issue").create_issue(
-            repo_name, title, body, labels
+            repo_name, title, body, labels, assignees
         )
 
     async def update_issue(
