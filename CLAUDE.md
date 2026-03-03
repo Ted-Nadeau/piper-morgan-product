@@ -196,6 +196,9 @@ Report back: [evidence to provide]
 - **Task tool subagents** doing quick exploration/search that returns results directly → No session log, report back to you
 - **Programmer subagents** (`prog` role) doing substantive implementation work (writing code, fixing bugs, running tests) → SHOULD create their own session log unless the work is trivial enough to capture in a single entry in your log
 
+**Commit verification after subagent work**:
+After staging files for a commit that includes subagent output, run `git status` and verify that NO unstaged modified files remain in `services/`, `tests/`, or `web/`. Subagents may modify files the lead dev didn't expect. If unstaged code files exist, either stage them or explicitly document in the session log why they were excluded. This prevents orphaned changes that silently break tests.
+
 ---
 
 ## Multi-Agent Coordination Protocol
