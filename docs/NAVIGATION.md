@@ -4,7 +4,7 @@
 **Audience**: Agents, developers, architects, and internal contributors
 **Public Documentation**: See [README.md](README.md) for pmorgan.tech public site
 
-**Last Updated**: January 20, 2026
+**Last Updated**: February 23, 2026
 **Status**: ✅ **Complete Internal Navigation System** - Role-based access for development teams
 
 ---
@@ -17,12 +17,12 @@
 
 ### Essential Briefings (Start Here)
 
-- [Lead Developer](../knowledge/BRIEFING-ESSENTIAL-LEAD-DEV.md) - 2.5K tokens
-- [Chief Architect](../knowledge/BRIEFING-ESSENTIAL-ARCHITECT.md) - 2.5K tokens
-- [Chief of Staff](../knowledge/BRIEFING-ESSENTIAL-CHIEF-STAFF.md) - 2.5K tokens
-- [Communications](../knowledge/BRIEFING-ESSENTIAL-COMMS.md) - 2.5K tokens
-- [Coding Agent](../knowledge/BRIEFING-ESSENTIAL-AGENT.md) - 2K tokens
-- [LLM Support](../knowledge/BRIEFING-ESSENTIAL-LLM.md) - 1K tokens
+- [Lead Developer](briefing/BRIEFING-ESSENTIAL-LEAD-DEV.md) - 2.5K tokens
+- [Chief Architect](briefing/BRIEFING-ESSENTIAL-ARCHITECT.md) - 2.5K tokens
+- [Chief of Staff](briefing/BRIEFING-ESSENTIAL-CHIEF-STAFF.md) - 2.5K tokens
+- [Communications](briefing/BRIEFING-ESSENTIAL-COMMS.md) - 2.5K tokens
+- [Coding Agent](briefing/BRIEFING-ESSENTIAL-AGENT.md) - 2K tokens
+- [LLM Support](briefing/BRIEFING-ESSENTIAL-LLM.md) - 1K tokens
 
 ### Progressive Loading
 
@@ -43,8 +43,9 @@ Each essential briefing includes triggers for loading detailed documentation as 
 
 - **[Architecture Hub](internal/architecture/current/)** - Current architectural decisions
 - **[Domain Models](internal/architecture/current/models/)** - Hub-and-spoke model documentation
-- **[ADRs](internal/architecture/current/adrs/)** - Architectural Decision Records
-- **[Patterns](internal/architecture/current/patterns/)** - Established architectural patterns
+- **[ADRs](internal/architecture/current/adrs/)** - Architectural Decision Records (61)
+- **[Patterns](internal/architecture/current/patterns/)** - Established architectural patterns (61)
+- **[Pattern Families](internal/architecture/current/patterns/PATTERN-FAMILIES.md)** - 8 pattern families index
 - **[Technical Evolution](internal/architecture/evolution/)** - Architecture development history
 - **[Canonical Queries](internal/architecture/current/canonical-queries.md)** - Reference list of canonical query types (IDENTITY, TEMPORAL, STATUS, PRIORITY, GUIDANCE)
   - See also: [ADR-039 Investigation Appendix](internal/architecture/current/adrs/adr-039-appendix-investigation.md) for routing analysis
@@ -97,7 +98,7 @@ The MUX track establishes Piper's unified object model: **"Entities experience M
 ### 📚 Researchers & Historians
 
 - **[Session Logs Archive](../dev/2025/)** - Chronological development history (dev/2025/MM/DD/ structure)
-- **[Omnibus Logs](omnibus-logs/)** - Weekly/monthly session consolidations (100+ logs)
+- **[Omnibus Logs](omnibus-logs/)** - Daily session consolidations (261 logs through Feb 22, 2026)
 - **[Development Logs](internal/development/active/)** - Active development work and status files
 
 ### 👥 External Users
@@ -183,27 +184,32 @@ The MUX track establishes Piper's unified object model: **"Entities experience M
 │   ├── draft-issues/         # Issue development
 │   ├── editorial/            # Content planning
 │   └── integration/          # Integration planning
+├── conversational-glue/      # M0 sprint planning docs (NEW Feb 2026)
+│   ├── gap-analysis.md       # Gap analysis
+│   ├── design-spec.md        # Design specification
+│   └── implementation-guide.md # Implementation guide
+├── audits/                   # Planning audits (NEW Feb 2026)
+├── mobile-skunkworks/        # Mobile PoC planning
 ├── roadmap/                  # Long-term strategic planning
 └── historical/               # Previous planning cycles
 ```
 
 ### 📚 Knowledge Base (`knowledge/`)
 
-**Staging area for claude.ai project knowledge**
+**Files that exist in claude.ai project knowledge but have no other home in the repository**
 
-Files optimized for RAG search in the claude.ai project knowledge base:
+This folder contains files that are useful in the claude.ai web project knowledge base but don't belong elsewhere in the docs/ hierarchy. Examples:
+- Templates (gameplan-template.md, agent-prompt-template.md)
+- Glossaries and reference materials
+- Claude.ai-specific instructions (CLAUDE.ai-project-instructions-v5.0.md)
 
-- **BRIEFING-\*** files use prefix for context in flat namespace
-- **Symlinked canonical sources** from docs/briefing/ (zero duplication)
-- **Workflow**: Update files in docs/briefing/ → automatically syncs to knowledge/ → PM updates claude.ai
+**Note**: BRIEFING-* files now live canonically in `docs/briefing/` (not symlinked). The roadmap lives in `docs/internal/planning/roadmap/roadmap.md`.
 
 ```
 knowledge/
-├── BRIEFING-CURRENT-STATE.md        → Symlink to docs/briefing/
-├── BRIEFING-ESSENTIAL-LEAD-DEV.md   → Symlink to docs/briefing/
-├── BRIEFING-ESSENTIAL-ARCHITECT.md  → Symlink to docs/briefing/
-├── BRIEFING-ESSENTIAL-AGENT.md      → Symlink to docs/briefing/
-├── BRIEFING-ESSENTIAL-*.md          → Symlinks to docs/briefing/
+├── gameplan-template.md             # Gameplan template
+├── agent-prompt-template.md         # Agent prompt template
+├── piper-morgan-glossary-v1.1.md    # Project glossary
 ├── CLAUDE.md                        # Agent entry point
 ├── serena-briefing-queries.md       # Live system state queries
 └── README.md                        # Knowledge base workflow guide
@@ -233,8 +239,8 @@ Weekly/monthly session consolidations - 100+ consolidated logs for historical re
 
 #### ADRs & Decisions
 
-- **Active ADRs**: `docs/internal/architecture/current/adrs/` (48+ decisions)
-- **Patterns**: `docs/internal/architecture/current/patterns/` (33 patterns)
+- **Active ADRs**: `docs/internal/architecture/current/adrs/` (61 decisions)
+- **Patterns**: `docs/internal/architecture/current/patterns/` (61 patterns)
 
 ### 🎨 Assets (`assets/` and `docs/assets/`)
 
@@ -287,7 +293,7 @@ Weekly/monthly session consolidations - 100+ consolidated logs for historical re
 - **Code References**: `internal/architecture/current/models/`
 - **Processes**: `internal/development/methodology-core/`
 - **Images/Assets**: `assets/` with inventory in README
-- **ADRs**: `internal/architecture/current/adrs/` (48+ decisions)
+- **ADRs**: `internal/architecture/current/adrs/` (61 decisions)
 
 ---
 

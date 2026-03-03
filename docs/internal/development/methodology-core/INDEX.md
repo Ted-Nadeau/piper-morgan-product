@@ -9,7 +9,7 @@
 | **Quick Start**        | [METHODOLOGY.md](../../../briefing/METHODOLOGY.md)                     | Operational "How We Work" guide      |
 | **Deep Reference**     | This directory (methodology-core/)                                     | Comprehensive numbered methodologies |
 | **Implementation**     | [/methodology/](../../../../methodology/)                              | Python code and live implementation  |
-| **Learning/Training**  | [piper-education/methodologies/](../../../piper-education/methodologies/) | Educational examples and narratives  |
+| **Learning/Training**  | [case-studies/](../case-studies/) | Case studies and real project examples  |
 | **Testing Procedures** | [testing/](../testing/)                                                | Implementation and testing guides    |
 
 ## By Topic
@@ -61,9 +61,9 @@
 - **Get started quickly** → [METHODOLOGY.md](../../../briefing/METHODOLOGY.md)
 - **Coordinate multiple agents** → [methodology-02-AGENT-COORDINATION.md](methodology-02-AGENT-COORDINATION.md)
 - **Understand testing approach** → [methodology-15-TESTING-VALIDATION.md](methodology-15-TESTING-VALIDATION.md)
-- **See real examples** → [piper-education/methodologies/](../../../piper-education/methodologies/)
+- **See real examples** → [case-studies/](../case-studies/)
 - **Implement in code** → [/methodology/](../../../../methodology/)
-- **Learn from case studies** → [piper-education/emergent/](../../../piper-education/methodologies/emergent/)
+- **Learn from case studies** → [Pattern-061](../../architecture/current/patterns/pattern-061-human-ai-collaboration-referee.md)
 
 ## Complete Methodology Catalog
 

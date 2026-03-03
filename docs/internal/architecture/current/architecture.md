@@ -1575,7 +1575,7 @@ async def get_connection_stats(self):
 
 ### Case Study Reference
 
-**Complete Technical Documentation**: [MCP Connection Pool - 642x Performance Improvement](../piper-education/case-studies/mcp-connection-pool-642x.md)
+**Complete Technical Documentation**: [MCP Connection Pool - 642x Performance Improvement](../../development/case-studies/mcp-connection-pool-642x.md)
 
 **Comprehensive Analysis Including**:
 

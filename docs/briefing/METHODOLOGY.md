@@ -240,8 +240,7 @@ The goal is effective work, not perfect adherence to templates.
 ## Multi-Agent Coordination
 
 > **📋 Detailed Guide**: [methodology-02-AGENT-COORDINATION.md](../internal/development/methodology-core/methodology-02-AGENT-COORDINATION.md) - Comprehensive coordination methodology
-> **📚 Examples**: [multi-agent-patterns.md](../piper-education/methodologies/emergent/multi-agent-patterns.md) - Real project case studies
-> **🛠️ Templates**: [human-ai-collaboration-referee.md](../piper-education/methodologies/emergent/human-ai-collaboration-referee.md) - Implementation protocols
+> **📚 Examples**: [Pattern-061: Human-AI Collaboration Referee](../internal/architecture/current/patterns/pattern-061-human-ai-collaboration-referee.md) - Real project case studies and implementation protocols
 
 ### Agent Strengths
 

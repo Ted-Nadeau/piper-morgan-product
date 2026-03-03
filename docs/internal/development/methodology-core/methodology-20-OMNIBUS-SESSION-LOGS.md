@@ -1,17 +1,73 @@
 # Methodology 20: Omnibus Session Log Creation
-*Living document - Last updated: January 1, 2026*
+*Living document - Last updated: February 23, 2026*
 
 ## Purpose
-Omnibus logs synthesize multiple parallel session logs into a single **token-efficient chronological summary**, revealing the multi-agent "dance" of collaboration and the complete story of a day's work.
+Omnibus logs synthesize multiple parallel session logs into a single **unified chronological narrative**, revealing the multi-agent "dance" of collaboration and the complete story of a day's work.
 
-**Core Principle**: Source logs contain full details. Omnibus logs provide terse, scannable summaries for quick understanding and future reference.
+**Core Principle**: Source logs contain full details. Omnibus logs provide **accurate chronological synthesis** that shows how work flowed across agents and time.
 
-## Why This Matters
-- **Complete Picture**: Single sessions miss parallel work streams
-- **Coordination Visibility**: Shows handoffs, pivots, and collaborative problem-solving
-- **Pattern Recognition**: Reveals workflow patterns across agents
-- **Historical Record**: Creates searchable, comprehensive project history
-- **Token Efficiency**: Condensed format reduces reading time and AI context usage
+## Why This Work Matters (Read This First)
+
+**This is not documentation busy-work. This is institutional memory.**
+
+Omnibus logs serve critical functions that no other artifact provides:
+
+1. **Causality Preservation**: When the PM writes a blog post months later, they need to know "who noticed what first" and "what triggered the pivot." Only a unified timeline captures this — session summaries don't.
+
+2. **Pattern Discovery**: Methodology breakthroughs (like the Assembly Assumption) emerge from seeing how work actually flowed. "Chief Architect discovered X at 10:15 → Lead Dev pivoted at 10:30 → Code implemented by 11:45" tells a story that "Track 1 did architecture, Track 2 did coding" never will.
+
+3. **Learning That Compounds**: Future agents reading omnibus logs learn not just WHAT happened but HOW decisions unfolded. This is how the project gets smarter over time.
+
+4. **Correction of the Record**: When revising narratives, the PM frequently needs to correct sequence and attribution. A meticulous timeline makes this possible; a summary table makes it guesswork.
+
+**Expectation**: A 30-minute meticulous reconstruction is time well spent. Do not rush this work. Do not treat it as optional. The value compounds over months and years — you are building the project's memory.
+
+## Core Requirements
+
+### The Timeline Is Non-Negotiable
+
+Every omnibus log MUST include a **unified chronological timeline** showing when events happened across ALL agents, interleaved by time. This is the heart of the omnibus — everything else is supplementary.
+
+**What a Timeline IS** — events from all agents in time order:
+```markdown
+- 9:45 AM: **Chief Architect** discovers schema issue in Phase A gameplan
+- 9:52 AM: **Lead Developer** receives discovery, creates Issue #525
+- 10:05 AM: **Code** begins implementation based on new issue
+- 10:15 AM: **Comms** (parallel) drafts narrative outline for weekly ship
+- 10:30 AM: **Lead Developer** reviews Code progress, flags concern about edge case
+- 10:35 AM: **Code** adjusts approach based on Lead Dev feedback
+```
+
+**What a Timeline IS NOT** — a Sessions Overview table is supplementary metadata, NOT a timeline:
+```markdown
+| Time | Role | Duration | Work |
+|------|------|----------|------|
+| 9:45 AM | Chief Architect | 2 hrs | Schema review |
+| 10:05 AM | Lead Developer | 3 hrs | Implementation coordination |
+```
+
+This shows when sessions STARTED, not how work FLOWED. It's useful as header metadata but **never replaces the timeline**.
+
+### Why Interleaving Matters
+
+The value of multi-agent coordination is in the **dance**, not the isolated performances. When you write:
+
+> "Track 1: Lead Developer did implementation (10:00 AM - 2:00 PM)"
+> "Track 2: Chief Architect did planning (10:30 AM - 12:00 PM)"
+
+...you lose the story. When did the Architect's discovery change the Developer's approach? When did they hand off? Who noticed the problem first? These questions matter for learning.
+
+When you write:
+
+> "10:30 AM: **Chief Architect** discovers constraint violation in current approach"
+> "10:45 AM: **Lead Developer** receives Architect memo, pauses implementation"
+> "10:52 AM: **Lead Developer** pivots to alternative approach per Architect guidance"
+
+...you preserve the causality that makes retrospectives and narratives accurate.
+
+---
+
+## Format Selection: Standard vs High-Complexity Days
 
 ## Format Selection: Standard vs High-Complexity Days
 
@@ -275,6 +331,21 @@ Each agent has limited visibility. A comprehensive omnibus requires reading ALL 
 - If under 400 lines total, check if you've actually captured all parallel streams
 - The goal is not brevity but **accurate representation of complexity**
 
+### The Sessions Table Substitution ⚠️ (NEW - Feb 2026)
+**Scenario**: Agent creates a "Sessions Overview" table showing when each role's session started, then organizes content by role/track rather than time.
+
+**Why this is wrong**: A sessions table shows when work STARTED, not how it FLOWED. It loses:
+- When discoveries triggered pivots
+- Which agent noticed something first
+- How handoffs actually happened
+- The causality chain that makes retrospectives accurate
+
+**Detection**: If your omnibus has a table at the top and then "Track 1 / Track 2" sections or "Role: Work Done" sections, you've substituted a summary for a timeline.
+
+**Correct approach**: The unified timeline comes FIRST and shows interleaved events. Role-based sections or track summaries may follow as supplementary analysis, but they don't replace chronological synthesis.
+
+**Remember**: The PM uses omnibus logs to write blog posts and correct narratives. "Who noticed what first?" requires a real timeline. This work is not optional.
+
 ### HIGH-COMPLEXITY Day Red Flags ⚠️
 - **Compression <30%**: If your omnibus is <20% the size of source logs, you may be over-compressing
 - **Missing workstreams**: 4+ parallel streams mentioned in source logs but only 1-2 appear in timeline = incomplete capture
@@ -356,14 +427,21 @@ Intentional day off. No agents worked, no development sessions, no operations.
 
 ## Validation Checklist
 Before finalizing an omnibus log:
+
+### Timeline Requirements (NON-NEGOTIABLE)
+- [ ] **Unified chronological timeline EXISTS** (not just a Sessions Overview table)
+- [ ] Timeline shows events from ALL agents **interleaved by time** (not grouped by agent)
+- [ ] Coordination handoffs visible as distinct timestamped entries
+- [ ] Causality chains preserved: discoveries → decisions → implementations flow visibly
+- [ ] Timeline is strictly chronological (earlier times before later times)
+
+### Format & Quality
 - [ ] All parallel sessions identified and read completely
 - [ ] Format selection justified (Standard vs High-Complexity)
 - [ ] **LINE COUNT UNDER LIMIT** (300 for Standard, 600 for High-Complexity)
 - [ ] Timeline entries are 1-2 lines max (no paragraphs!)
 - [ ] Executive summary bullets are 1 line max
-- [ ] Timeline is strictly chronological
 - [ ] Actor names are consistent and bold
-- [ ] Handoffs and coordination points preserved
 - [ ] Executive summary captures themes not just events
 - [ ] Spot-check 5 random timestamps against source logs
 - [ ] Logging continuity verified (no unexplained 2+ hour gaps; if gaps exist, git forensics applied and documented)
@@ -463,8 +541,12 @@ Before finalizing an omnibus log:
 
 ---
 *Method developed: September 17, 2025*
-*Last updated: January 9, 2026*
-*Updates in this revision: Logging continuity gap detection and git forensics recovery (Phase 3 step 5, new pitfall section, validation checklist item)*
-*Previous revision (Jan 1): HIGH-COMPLEXITY day rigor enhancements (space allocation strategy, compression ratio awareness, detail preservation guidance, red flag detection)*
+*Last updated: February 23, 2026*
+
+**Update History**:
+- **Feb 23, 2026**: Timeline requirements clarification — added "Why This Work Matters" framing, explicit "Timeline IS / IS NOT" examples, Sessions Table Substitution anti-pattern, strengthened validation checklist with timeline-specific requirements. Addresses format drift where agents substituted session tables for unified timelines.
+- **Jan 9, 2026**: Logging continuity gap detection and git forensics recovery (Phase 3 step 5, new pitfall section, validation checklist item)
+- **Jan 1, 2026**: HIGH-COMPLEXITY day rigor enhancements (space allocation strategy, compression ratio awareness, detail preservation guidance, red flag detection)
+
 *Next review: After next weekly docs audit*
 *Owner: Documentation team with PM oversight*

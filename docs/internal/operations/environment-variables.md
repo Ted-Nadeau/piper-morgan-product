@@ -450,7 +450,7 @@ python -m uvicorn web.app:app --port 8001
 ## See Also
 
 - **Ethics Architecture**: `docs/internal/architecture/current/ethics-architecture.md`
-- **Configuration Management**: `docs/piper-education/frameworks/emergent/configuration-management-framework.md`
+- **Configuration Management**: `docs/internal/archive/piper-education-2025/frameworks/emergent/configuration-management-framework.md` (archived Feb 2026)
 - **Feature Flags**: `services/infrastructure/config/feature_flags.py`
 - **Integration Setup**: `config/PIPER.user.md`
 

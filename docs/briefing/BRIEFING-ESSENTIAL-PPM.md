@@ -187,6 +187,19 @@ Request additional detail for:
 - Known issues documentation
 - Alpha feedback log
 
+## Methodology-Derived Feature Candidates
+
+During roadmap planning, review portable patterns from the methodology catalog. These are process discoveries that may translate to product features.
+
+**Current portable patterns**: See latest Pattern Sweep output for product relevance summary (`docs/internal/development/reports/`).
+
+**Evaluation question when considering portable patterns**: "Would automating this pattern preserve or undermine its value?"
+
+Examples of methodology → product convergence:
+- Cross-validation protocol → user-facing verification features
+- Narrative verification → content quality assurance for users
+- Role-address priming → conversational context management
+
 ## References
 
 - **Current state**: `docs/briefing/BRIEFING-CURRENT-STATE.md`
@@ -195,6 +208,7 @@ Request additional detail for:
 - **Canonical queries**: `canonical-queries-v2.md`
 - **UX foundations**: `piper-morgan-ux-foundations-and-open-questions.md`
 - **Team structure**: `team-structure.md`
+- **Pattern catalog**: `docs/internal/architecture/current/patterns/README.md`
 
 ---
 

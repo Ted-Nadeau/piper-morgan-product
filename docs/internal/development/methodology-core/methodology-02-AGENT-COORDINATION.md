@@ -2,8 +2,7 @@
 
 > **Related Documentation**:
 > - **Quick Reference**: [METHODOLOGY.md](../../briefing/METHODOLOGY.md#multi-agent-coordination) - Operational overview
-> - **Educational Examples**: [multi-agent-patterns.md](../../piper-education/methodologies/emergent/multi-agent-patterns.md) - Real project narratives
-> - **Handoff Templates**: [human-ai-collaboration-referee.md](../../piper-education/methodologies/emergent/human-ai-collaboration-referee.md) - Implementation protocols
+> - **Pattern Reference**: [Pattern-061: Human-AI Collaboration Referee](../../architecture/current/patterns/pattern-061-human-ai-collaboration-referee.md) - Handoff protocols, validation gates, real project examples
 > - **Python Implementation**: [/methodology/coordination/](../../../methodology/coordination/) - Live code
 
 ## Overview
