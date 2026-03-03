@@ -67,7 +67,7 @@ jobs:
               - **roadmap.md**: \`docs/internal/planning/roadmap/roadmap.md\`
               - **Pattern catalog**: \`docs/internal/architecture/current/patterns/README.md\`
               - **ADRs**: \`docs/internal/architecture/current/adrs/\`
-              - **Session logs**: \`dev/2025/MM/DD/\` structure
+              - **Session logs**: \`dev/YYYY/MM/DD/\` structure (never delete, historical value)
               - **User config**: \`config/PIPER.md\` (generic), \`config/PIPER.user.md\` (user-specific)
 
               **Agent instructions**:
@@ -110,6 +110,41 @@ jobs:
               - [ ] Run: \`/agent Verify briefing documents completeness in docs/briefing/\`
               - [ ] Run: \`/agent Check omnibus logs structure in docs/omnibus-logs/\`
 
+              ### 🔗 Link Integrity Checking (NEW - Feb 2026)
+
+              **Purpose**: Prevent broken internal links (discovered via Ted Nadeau feedback on ADR-042).
+
+              **Priority files** (check these first - high-reference documents):
+              - [ ] ADRs: \`docs/internal/architecture/current/adrs/adr-*.md\`
+              - [ ] Patterns: \`docs/internal/architecture/current/patterns/pattern-*.md\`
+              - [ ] Briefings: \`docs/briefing/*.md\` and \`knowledge/BRIEFING-*.md\`
+
+              **Link types to verify**:
+              1. **Internal doc references** (\`../path/to/file.md\`) - Must exist at referenced location
+              2. **Code file references** (\`services/foo/bar.py\`) - Should exist OR be clearly marked as "proposed/planned"
+              3. **ADR/Pattern cross-refs** (\`adr-XXX\`, \`pattern-XXX\`) - Must resolve to actual files
+
+              **Quick audit command**:
+              \`\`\`bash
+              # Find all markdown links in ADRs and check if targets exist
+              grep -ohE '\\[.*\\]\\(\\.\\.?/[^)]+\\.md\\)' docs/internal/architecture/current/adrs/*.md | \\
+                sed 's/.*](//;s/)$//' | sort -u | while read link; do
+                  base="docs/internal/architecture/current/adrs"
+                  resolved=$(cd "$base" && realpath --relative-to=. "$link" 2>/dev/null || echo "BROKEN")
+                  if [ ! -f "$base/$resolved" ] && [ "$resolved" != "BROKEN" ]; then
+                    echo "BROKEN: $link (from ADRs)"
+                  fi
+                done
+              \`\`\`
+
+              **If broken links found**:
+              1. Document in findings (file, line number, broken link)
+              2. Categorize: file moved, file deleted, file never existed, or hallucinated
+              3. Fix obvious cases (moved files → update link)
+              4. Create issue for complex cases
+
+              **Target**: <10 broken internal links in priority files
+
               ### 🔧 Infrastructure & Pattern Verification
 
               - [ ] Check app.py line count: \`wc -l web/app.py\` (trigger refactor at 1000 lines, currently ~750)
@@ -122,7 +157,7 @@ jobs:
 
               ### 📁 Session Log Management & Omnibus Synthesis
 
-              - [ ] Check for completed session logs in \`dev/2025/MM/DD/\` structure
+              - [ ] Check for completed session logs in \`dev/YYYY/MM/DD/\` structure
               - [ ] **Synthesis Identification** (evolving process - handle carefully):
                 - [ ] Review recent session logs for synthesis candidates
                 - [ ] Check if any sessions qualify for omnibus consolidation
@@ -265,7 +300,7 @@ jobs:
               Before closing:
               1. Update checkboxes in this description (checked = done, unchecked = skipped/deferred)
               2. Add closing comment with evidence (findings doc path, issues created, metrics)
-              3. Note any deferred items and why
+              3. Complete the Completion Matrix below
               4. **Update the staggered audit calendar** (\`docs/internal/operations/staggered-audit-calendar-2026.md\`):
                  - Update "Tracking Dashboard" section with completion date
                  - Set "Last Completed" to today's date for Documentation Audit row
@@ -273,11 +308,48 @@ jobs:
 
               **Anti-pattern**: Adding a comment and closing without updating description checkboxes.
 
+              ### 📋 Completion Matrix (REQUIRED)
+
+              **All items must be marked. No silent skipping. (Pattern-046: 100% Completion Mandate)**
+
+              | Section | Status | Evidence/Notes |
+              |---------|--------|----------------|
+              | Claude Knowledge Updates | ✅/⏸️/❌ | [link or reason] |
+              | Link Integrity Check | ✅/⏸️/❌ | [link or reason] |
+              | Infrastructure Verification | ✅/⏸️/❌ | [link or reason] |
+              | Session Log Management | ✅/⏸️/❌ | [link or reason] |
+              | Sprint & Roadmap Alignment | ✅/⏸️/❌ | [link or reason] |
+              | GitHub Issues Sync | ✅/⏸️/❌ | [link or reason] |
+              | Pattern & Knowledge Capture | ✅/⏸️/❌ | [link or reason] |
+              | Quality Checks | ✅/⏸️/❌ | [link or reason] |
+
+              **Legend**:
+              - ✅ = Completed with evidence
+              - ⏸️ = Deferred WITH PM APPROVAL (requires approval comment link)
+              - ❌ = Blocked (requires blocker issue link)
+
+              ### ⚠️ Deferral Policy (Pattern-046 Enforcement)
+
+              **You may NOT defer any checklist item without explicit PM approval.**
+
+              To request a deferral:
+              1. **STOP** before marking anything as deferred
+              2. Comment on this issue explaining:
+                 - Which item(s) you want to defer
+                 - Why completion is not possible this audit
+                 - Proposed timeline for completion
+              3. **WAIT** for PM to respond with approval
+              4. Only after PM approval: mark as ⏸️ in Completion Matrix with link to approval comment
+
+              **Rationale**: The Feb 9, 2026 audit deferred "broken link check" without PM approval. This led to Ted Nadeau discovering broken ADR-042 links that should have been caught. Deferrals without oversight allow technical debt to accumulate invisibly.
+
+              **"Too complex" is not an excuse** - if a task is too complex, that's a planning problem. File an issue, get PM guidance, but don't silently skip.
+
               ### References
               - [CLAUDE.md Project Instructions](../CLAUDE.md)
               - [Architecture Documentation](../docs/architecture/architecture.md)
               - [Pattern Catalog](../docs/internal/architecture/current/patterns/README.md)
-              - [Session Archive Guidelines](../docs/session-logs/archive-guidelines.md)
+              - [dev/ Directory Structure](../dev/README.md) - Session log retention policy
               - [Navigation Hub](../docs/NAVIGATION.md) - **Check this FIRST for file locations**`,
               labels: ['documentation', 'maintenance', 'weekly-audit', 'fly-audit'],
               assignees: ['mediajunkie']
