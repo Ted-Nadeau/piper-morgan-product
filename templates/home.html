@@ -279,20 +279,6 @@
         padding: var(--space-lg);
         box-shadow: var(--shadow-sm);
       }
-      .header {
-        text-align: center;
-        margin-bottom: var(--space-lg);
-      }
-      .header h1 {
-        color: var(--color-text-primary);
-        margin: 0;
-        font-size: var(--font-size-3xl);
-      }
-      .header p {
-        color: var(--color-text-secondary);
-        font-size: var(--font-size-lg);
-        margin: 10px 0;
-      }
       .upload-section {
         margin-top: var(--space-md);
       }
@@ -686,146 +672,33 @@
         background: #E67E22;
       }
 
-      /* Issue #566: Clean Greeting Area (replaced purple hero) */
+      /* Issue #566/#871: Compact greeting line above chat */
       .greeting-area {
-        position: relative;
-        text-align: center;
-        padding: var(--space-md);
-        margin-bottom: var(--space-md);
+        text-align: left;
+        padding: var(--space-xs) 0;
+        margin-bottom: var(--space-sm);
       }
 
-      .greeting-header {
-        margin: 0 0 var(--space-xs) 0;
-        font-size: var(--font-size-2xl);
+      .greeting-line {
+        display: flex;
+        align-items: baseline;
+        gap: 0;
+        font-size: var(--font-size-sm);
+        color: var(--color-text-secondary);
+        margin: 0;
+      }
+
+      .greeting-line .greeting-name {
         font-weight: var(--font-weight-medium);
         color: var(--color-text-primary);
       }
 
-      .greeting-username {
-        font-weight: var(--font-weight-semibold);
-        color: var(--color-primary);
-      }
-
-      .greeting-time {
-        font-size: var(--font-size-sm);
-        color: var(--color-text-secondary);
-        margin: 0;
-      }
-
-      /* Issue #419: Trust-stage-aware subtext */
-      .greeting-subtext {
-        font-size: var(--font-size-base);
+      .greeting-line .greeting-separator {
+        margin: 0 var(--space-xs);
         color: var(--color-text-tertiary);
-        margin: var(--space-sm) 0 0 0;
-        font-style: italic;
       }
 
-      /* Trust stage visual indicators (subtle, not showing stage number per ADR-053) */
-      .greeting-area[data-trust-stage="3"] .greeting-subtext,
-      .greeting-area[data-trust-stage="4"] .greeting-subtext {
-        color: var(--color-primary-dark);
-        font-style: normal;
-      }
 
-      .help-trigger {
-        position: absolute;
-        right: var(--space-md);
-        top: 50%;
-        transform: translateY(-50%);
-        width: 28px;
-        height: 28px;
-        border-radius: 50%;
-        border: 1px solid var(--color-border-light);
-        background: var(--color-background-primary);
-        color: var(--color-text-secondary);
-        font-size: var(--font-size-sm);
-        font-weight: var(--font-weight-semibold);
-        cursor: pointer;
-        transition: all 0.2s;
-      }
-
-      .help-trigger:hover {
-        background: var(--color-primary);
-        border-color: var(--color-primary);
-        color: var(--color-neutral-white);
-      }
-
-      .help-trigger:focus {
-        outline: 2px solid var(--color-primary);
-        outline-offset: 2px;
-      }
-
-      /* Issue #566: Help Tooltip (replaces permanent example prompts) */
-      .help-tooltip {
-        display: none;
-        position: absolute;
-        right: var(--space-md);
-        top: 80px;
-        background: var(--color-background-primary);
-        border: 1px solid var(--color-border-light);
-        border-radius: var(--border-radius-md);
-        padding: var(--space-md);
-        box-shadow: var(--shadow-md);
-        z-index: 100;
-        max-width: 320px;
-        text-align: left;
-      }
-
-      .help-tooltip.visible {
-        display: block;
-      }
-
-      .help-tooltip h3 {
-        margin: 0 0 var(--space-sm) 0;
-        font-size: var(--font-size-sm);
-        color: var(--color-text-primary);
-      }
-
-      .example-prompts-list {
-        list-style: none;
-        margin: 0;
-        padding: 0;
-      }
-
-      .example-prompt {
-        padding: 10px var(--space-sm);
-        margin-bottom: var(--space-sm);
-        background: var(--color-background-tertiary);
-        border-left: 3px solid var(--color-primary);
-        border-radius: var(--border-radius-sm);
-        cursor: pointer;
-        font-size: var(--font-size-sm);
-        color: var(--color-text-primary);
-        transition: var(--transition-background);
-      }
-
-      .example-prompt:last-child {
-        margin-bottom: 0;
-      }
-
-      .example-prompt:hover {
-        background: var(--color-background-secondary);
-      }
-
-      @media (max-width: 768px) {
-        .greeting-area {
-          padding: var(--space-md);
-        }
-
-        .greeting-header {
-          font-size: var(--font-size-xl);
-        }
-
-        .help-trigger {
-          right: var(--space-md);
-        }
-
-        .help-tooltip {
-          right: var(--space-md);
-          left: var(--space-md);
-          max-width: none;
-        }
-      }
 
       /* Learn More Modal */
       .learn-more-modal {
@@ -1087,40 +960,15 @@
 
       <main class="main-content">
         <div class="container">
-          <div class="header">
-            <h1>
-              <img
-                src="/assets/pm-logo.png"
-                alt="Piper Morgan"
-                style="height: 60px; vertical-align: middle"
-              />
-              Piper Morgan
-            </h1>
-            <p>AI Product Management Assistant</p>
-            <p><em>I can create GitHub issues, analyze documents, and more!</em></p>
-          </div>
 
           <!-- Issue #566: Clean greeting area (replaced purple hero) -->
           <!-- Issue #419: Trust-gated home state (MUX-NAV-HOME) -->
           {% if user %}
+          <!-- Issue #871: Compact greeting line above chat -->
           <div class="greeting-area" data-trust-stage="{{ trust_stage|default(1) }}">
-            <h2 class="greeting-header" id="greeting-text">Good morning!</h2>
-            <p class="greeting-time" id="greeting-time"></p>
-            <!-- Issue #419: Trust-stage-aware subtext -->
-            <p class="greeting-subtext" id="greeting-subtext">
-              {% if trust_stage|default(1) == 1 %}
-              What can I help you with?
-              {% elif trust_stage|default(1) == 2 %}
-              I'm here to help.
-              {% elif trust_stage|default(1) == 3 %}
-              I noticed a few things while you were away.
-              {% elif trust_stage|default(1) >= 4 %}
-              I've been thinking about your priorities.
-              {% else %}
-              What can I help you with?
-              {% endif %}
+            <p class="greeting-line" id="greeting-line">
+              <span id="greeting-text"></span><span class="greeting-separator">&middot;</span><span id="greeting-time"></span>
             </p>
-            <button class="help-trigger" onclick="toggleHelpTooltip()" aria-label="Show example prompts" title="Example prompts">?</button>
           </div>
           {% endif %}
 
@@ -1168,21 +1016,6 @@
           <!-- Inline chat (always visible on home page) -->
           {% include 'components/chat-inline.html' %}
 
-          <!-- Issue #566: Help tooltip (replaces permanent example prompts) -->
-          <div class="help-tooltip" id="help-tooltip">
-            <h3>Try asking Piper:</h3>
-            <ul class="example-prompts-list">
-              <li class="example-prompt" onclick="setExample(this); toggleHelpTooltip();">
-                Users are complaining that the mobile app crashes when they upload large photos
-              </li>
-              <li class="example-prompt" onclick="setExample(this); toggleHelpTooltip();">
-                The login page is too slow and users are getting frustrated
-              </li>
-              <li class="example-prompt" onclick="setExample(this); toggleHelpTooltip();">
-                We need to add dark mode support to improve user experience
-              </li>
-            </ul>
-          </div>
         </div>
       </main>
     </div>
@@ -1196,7 +1029,7 @@
       const chatWindow = document.getElementById("chat-window");
       // Note: sessionId is managed by chat.js - use ChatWidget.getSessionId()/setSessionId()
 
-      // G50: Initialize startup greeting with time-based message
+      // G50/#871: Compact greeting line — "Good afternoon, Christian · Saturday, March 1, 4:00 PM"
       function initializeGreeting() {
         if (!window.currentUser) return;
 
@@ -1208,25 +1041,38 @@
           timeGreeting = "Good evening";
         }
 
-        const username = window.currentUser.username || "there";
-        const fullGreeting = `${timeGreeting}, <span class="greeting-username">${username}</span>`;
+        // Use display_name if available, fall back to username
+        const displayName = window.currentUser.display_name || window.currentUser.username || "there";
 
         const greetingElement = document.getElementById("greeting-text");
         if (greetingElement) {
-          greetingElement.innerHTML = fullGreeting;
+          greetingElement.innerHTML = `${timeGreeting}, <span class="greeting-name">${displayName}</span>`;
         }
 
-        // Update the time display (e.g., "Tuesday, 2:35 PM")
         const timeElement = document.getElementById("greeting-time");
         if (timeElement) {
           const now = new Date();
           const formattedTime = now.toLocaleDateString("en-US", {
             weekday: "long",
+            month: "long",
+            day: "numeric",
             hour: "numeric",
             minute: "2-digit",
-            meridiem: "short"
           });
-          timeElement.textContent = `It's ${formattedTime}`;
+          timeElement.textContent = formattedTime;
+        }
+
+        // Issue #871: Set trust-stage-aware placeholder on chat input
+        const chatInput = document.querySelector('.chat-input');
+        if (chatInput) {
+          const stage = window.trustStage || 1;
+          const placeholders = {
+            1: "What can I help you with?",
+            2: "What are you working on?",
+            3: "What should we look at?",
+            4: "What's on your mind?",
+          };
+          chatInput.placeholder = placeholders[stage] || placeholders[1];
         }
       }
 
@@ -1239,27 +1085,6 @@
         initializeGreeting();
       });
 
-      function setExample(element) {
-        document.querySelector(".chat-input").value =
-          element.textContent.trim();
-      }
-
-      // Issue #566: Toggle help tooltip visibility
-      function toggleHelpTooltip() {
-        const tooltip = document.getElementById('help-tooltip');
-        if (tooltip) {
-          tooltip.classList.toggle('visible');
-        }
-      }
-
-      // Close help tooltip when clicking outside
-      document.addEventListener('click', function(e) {
-        const tooltip = document.getElementById('help-tooltip');
-        const trigger = document.querySelector('.help-trigger');
-        if (tooltip && trigger && !tooltip.contains(e.target) && !trigger.contains(e.target)) {
-          tooltip.classList.remove('visible');
-        }
-      });
 
       // Configuration for file uploads
       const UPLOAD_CONFIG = {
