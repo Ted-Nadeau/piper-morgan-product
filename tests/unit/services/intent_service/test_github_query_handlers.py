@@ -434,7 +434,7 @@ class TestGitHubHandlerErrors:
             result = await intent_service._handle_shipped_this_week(intent, "workflow-id")
 
             assert result.success is False
-            assert "Unable to fetch shipped items" in result.message
+            assert "fetching what was shipped this week" in result.message
             assert result.error is not None
             assert result.error_type == "GitHubShippedQueryError"
 
@@ -459,7 +459,7 @@ class TestGitHubHandlerErrors:
             result = await intent_service._handle_stale_prs(intent, "workflow-id")
 
             assert result.success is False
-            assert "Unable to fetch stale PRs" in result.message
+            assert "checking for stale pull requests" in result.message
             assert result.error is not None
             assert result.error_type == "GitHubStalePRsQueryError"
 
@@ -904,7 +904,7 @@ class TestGitHubIssueHandlerErrors:
             result = await intent_service._handle_review_issue_query(intent, "workflow-id")
 
             assert result.success is False
-            assert "Unable to fetch issue details" in result.message
+            assert "reviewing that issue" in result.message
             assert result.error is not None
             assert result.error_type == "GitHubReviewIssueQueryError"
 
@@ -929,7 +929,7 @@ class TestGitHubIssueHandlerErrors:
             result = await intent_service._handle_close_issue_query(intent, "workflow-id")
 
             assert result.success is False
-            assert "Unable to close issue" in result.message
+            assert "closing that issue" in result.message
             assert result.error is not None
             assert result.error_type == "GitHubCloseIssueQueryError"
 

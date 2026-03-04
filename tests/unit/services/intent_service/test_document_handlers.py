@@ -450,6 +450,6 @@ class TestDocumentHandlerErrors:
             )
 
             assert result.success is False
-            assert "Unable to analyze" in result.message
+            assert "analyzing that document" in result.message
             assert result.error is not None
             assert result.error_type == "NotionAnalysisError"

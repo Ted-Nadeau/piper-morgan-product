@@ -355,7 +355,7 @@ class TestProductivityQueryHandler:
             )
 
             assert result.success is False
-            assert "Unable to fetch productivity metrics" in result.message
+            assert "analyzing productivity" in result.message
             assert result.error_type == "ProductivityQueryError"
 
     @pytest.mark.asyncio

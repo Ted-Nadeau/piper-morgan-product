@@ -59,6 +59,7 @@ from services.shared_types import IntentCategory, TrustStage
 from services.slot_filling.slot_filling_adapter import SlotFillingProcessAdapter
 from services.slot_filling.slot_template import MEETING_TEMPLATE
 from services.trust.trust_computation_service import TrustComputationService
+from services.ui_messages.user_friendly_errors import UserFriendlyErrorService
 
 
 @dataclass
@@ -159,6 +160,9 @@ class IntentService:
         self.kg_integration = ConversationKnowledgeGraphIntegration()  # Issue #99 CORE-KNOW
         self.todo_handlers = TodoIntentHandlers()  # Issue #285: Todo chat integration
         self.learning_handler = LearningHandler()  # Issue #300: Basic Auto-Learning
+        self._friendly_errors = (
+            UserFriendlyErrorService()
+        )  # Issue #876: Conversational error messages
         self.logger = structlog.get_logger()
 
     def _apply_soft_offer(
@@ -1795,19 +1799,11 @@ class IntentService:
             )
         except Exception as e:
             self.logger.error(f"QueryRouter error: {e}")
-            return IntentProcessingResult(
-                success=False,
-                message=f"Unable to process query: {intent.action}. Error: {str(e)}",
-                intent_data={
-                    "category": intent.category.value,
-                    "action": intent.action,
-                    "confidence": intent.confidence,
-                    "context": intent.context,
-                },
+            return self._make_error_result(
+                intent=intent,
                 workflow_id=workflow_id,
-                requires_clarification=False,
-                clarification_type=None,
-                error=str(e),
+                error=e,
+                context="processing your request",
                 error_type="QueryRouterError",
             )
 
@@ -2106,16 +2102,11 @@ class IntentService:
 
         except Exception as e:
             self.logger.error(f"Notion document analysis error: {e}")
-            return IntentProcessingResult(
-                success=False,
-                message=f"Unable to analyze document: {str(e)}",
-                intent_data={
-                    "category": intent.category.value,
-                    "action": intent.action,
-                    "confidence": intent.confidence,
-                },
+            return self._make_error_result(
+                intent=intent,
                 workflow_id=workflow_id,
-                error=str(e),
+                error=e,
+                context="analyzing that document",
                 error_type="NotionAnalysisError",
             )
 
@@ -2336,16 +2327,11 @@ class IntentService:
 
         except Exception as e:
             self.logger.error(f"Notion document update error: {e}")
-            return IntentProcessingResult(
-                success=False,
-                message=f"Unable to update document: {str(e)}",
-                intent_data={
-                    "category": intent.category.value,
-                    "action": intent.action,
-                    "confidence": intent.confidence,
-                },
+            return self._make_error_result(
+                intent=intent,
                 workflow_id=workflow_id,
-                error=str(e),
+                error=e,
+                context="updating that document",
                 error_type="NotionUpdateError",
             )
 
@@ -2517,16 +2503,11 @@ class IntentService:
 
         except Exception as e:
             self.logger.error(f"GitHub shipped query error: {e}")
-            return IntentProcessingResult(
-                success=False,
-                message=f"Unable to fetch shipped items: {str(e)}",
-                intent_data={
-                    "category": intent.category.value,
-                    "action": intent.action,
-                    "confidence": intent.confidence,
-                },
+            return self._make_error_result(
+                intent=intent,
                 workflow_id=workflow_id,
-                error=str(e),
+                error=e,
+                context="fetching what was shipped this week",
                 error_type="GitHubShippedQueryError",
             )
 
@@ -2633,16 +2614,11 @@ class IntentService:
 
         except Exception as e:
             self.logger.error(f"GitHub stale PRs query error: {e}")
-            return IntentProcessingResult(
-                success=False,
-                message=f"Unable to fetch stale PRs: {str(e)}",
-                intent_data={
-                    "category": intent.category.value,
-                    "action": intent.action,
-                    "confidence": intent.confidence,
-                },
+            return self._make_error_result(
+                intent=intent,
                 workflow_id=workflow_id,
-                error=str(e),
+                error=e,
+                context="checking for stale pull requests",
                 error_type="GitHubStalePRsQueryError",
             )
 
@@ -2768,16 +2744,11 @@ class IntentService:
 
         except Exception as e:
             self.logger.error(f"GitHub review issue query error: {e}")
-            return IntentProcessingResult(
-                success=False,
-                message=f"Unable to fetch issue details: {str(e)}",
-                intent_data={
-                    "category": intent.category.value,
-                    "action": intent.action,
-                    "confidence": intent.confidence,
-                },
+            return self._make_error_result(
+                intent=intent,
                 workflow_id=workflow_id,
-                error=str(e),
+                error=e,
+                context="reviewing that issue",
                 error_type="GitHubReviewIssueQueryError",
             )
 
@@ -2883,16 +2854,11 @@ class IntentService:
 
         except Exception as e:
             self.logger.error(f"GitHub close issue query error: {e}")
-            return IntentProcessingResult(
-                success=False,
-                message=f"Unable to close issue: {str(e)}",
-                intent_data={
-                    "category": intent.category.value,
-                    "action": intent.action,
-                    "confidence": intent.confidence,
-                },
+            return self._make_error_result(
+                intent=intent,
                 workflow_id=workflow_id,
-                error=str(e),
+                error=e,
+                context="closing that issue",
                 error_type="GitHubCloseIssueQueryError",
             )
 
@@ -3029,16 +2995,11 @@ class IntentService:
 
         except Exception as e:
             self.logger.error(f"GitHub comment issue query error: {e}")
-            return IntentProcessingResult(
-                success=False,
-                message=f"Unable to add comment to issue: {str(e)}",
-                intent_data={
-                    "category": intent.category.value,
-                    "action": intent.action,
-                    "confidence": intent.confidence,
-                },
+            return self._make_error_result(
+                intent=intent,
                 workflow_id=workflow_id,
-                error=str(e),
+                error=e,
+                context="adding a comment to that issue",
                 error_type="GitHubCommentIssueQueryError",
             )
 
@@ -3306,17 +3267,11 @@ class IntentService:
 
         except Exception as e:
             self.logger.error(f"Calendar meeting time query error: {e}")
-            return IntentProcessingResult(
-                success=False,
-                message=f"Unable to fetch meeting time: {str(e)}",
-                intent_data={
-                    "category": intent.category.value,
-                    "action": intent.action,
-                    "confidence": intent.confidence,
-                },
-                # Issue #588: Direct response - no workflow polling needed
-                workflow_id=None,
-                error=str(e),
+            return self._make_error_result(
+                intent=intent,
+                workflow_id=workflow_id,
+                error=e,
+                context="looking up meeting times",
                 error_type="CalendarMeetingTimeQueryError",
             )
 
@@ -3404,16 +3359,11 @@ class IntentService:
 
         except Exception as e:
             self.logger.error(f"Calendar recurring meetings query error: {e}")
-            return IntentProcessingResult(
-                success=False,
-                message=f"Unable to fetch recurring meetings: {str(e)}",
-                intent_data={
-                    "category": intent.category.value,
-                    "action": intent.action,
-                    "confidence": intent.confidence,
-                },
+            return self._make_error_result(
+                intent=intent,
                 workflow_id=workflow_id,
-                error=str(e),
+                error=e,
+                context="checking recurring meetings",
                 error_type="CalendarRecurringMeetingsQueryError",
             )
 
@@ -3537,16 +3487,11 @@ class IntentService:
 
         except Exception as e:
             self.logger.error(f"Calendar week query error: {e}")
-            return IntentProcessingResult(
-                success=False,
-                message=f"Unable to fetch week calendar: {str(e)}",
-                intent_data={
-                    "category": intent.category.value,
-                    "action": intent.action,
-                    "confidence": intent.confidence,
-                },
+            return self._make_error_result(
+                intent=intent,
                 workflow_id=workflow_id,
-                error=str(e),
+                error=e,
+                context="pulling up your week's calendar",
                 error_type="CalendarWeekQueryError",
             )
 
@@ -3672,16 +3617,11 @@ class IntentService:
 
         except Exception as e:
             self.logger.error(f"Productivity query error: {e}")
-            return IntentProcessingResult(
-                success=False,
-                message=f"Unable to fetch productivity metrics: {str(e)}",
-                intent_data={
-                    "category": intent.category.value,
-                    "action": intent.action,
-                    "confidence": intent.confidence,
-                },
+            return self._make_error_result(
+                intent=intent,
                 workflow_id=workflow_id,
-                error=str(e),
+                error=e,
+                context="analyzing productivity",
                 error_type="ProductivityQueryError",
             )
 
@@ -3904,16 +3844,11 @@ class IntentService:
 
         except Exception as e:
             self.logger.error(f"Changes query error: {e}")
-            return IntentProcessingResult(
-                success=False,
-                message=f"Unable to fetch activity changes: {str(e)}",
-                intent_data={
-                    "category": intent.category.value,
-                    "action": intent.action,
-                    "confidence": intent.confidence,
-                },
+            return self._make_error_result(
+                intent=intent,
                 workflow_id=workflow_id,
-                error=str(e),
+                error=e,
+                context="looking at recent changes",
                 error_type="ChangesQueryError",
             )
 
@@ -4170,16 +4105,11 @@ class IntentService:
 
         except Exception as e:
             self.logger.error(f"Attention query error: {e}")
-            return IntentProcessingResult(
-                success=False,
-                message=f"Unable to fetch attention items: {str(e)}",
-                intent_data={
-                    "category": intent.category.value,
-                    "action": intent.action,
-                    "confidence": intent.confidence,
-                },
+            return self._make_error_result(
+                intent=intent,
                 workflow_id=workflow_id,
-                error=str(e),
+                error=e,
+                context="finding items that need attention",
                 error_type="AttentionQueryError",
             )
 
@@ -4546,15 +4476,11 @@ class IntentService:
 
         except Exception as e:
             self.logger.error(f"Failed to create issue: {e}")
-            return IntentProcessingResult(
-                success=False,
-                message=f"Failed to create issue: {str(e)}",
-                intent_data={
-                    "category": intent.category.value,
-                    "action": intent.action,
-                },
+            return self._make_error_result(
+                intent=intent,
                 workflow_id=workflow_id,
-                error=str(e),
+                error=e,
+                context="creating a new issue",
                 error_type="GitHubError",
             )
 
@@ -4653,15 +4579,11 @@ class IntentService:
 
         except Exception as e:
             self.logger.error(f"Failed to update issue: {e}")
-            return IntentProcessingResult(
-                success=False,
-                message=f"Failed to update issue: {str(e)}",
-                intent_data={
-                    "category": intent.category.value,
-                    "action": intent.action,
-                },
+            return self._make_error_result(
+                intent=intent,
                 workflow_id=workflow_id,
-                error=str(e),
+                error=e,
+                context="updating that issue",
                 error_type="GitHubError",
             )
 
@@ -4711,16 +4633,11 @@ class IntentService:
                 )
             except Exception as e:
                 self.logger.error(f"Analysis handler error: {e}")
-                return IntentProcessingResult(
-                    success=False,
-                    message=f"Failed to analyze: {str(e)}",
-                    intent_data={
-                        "category": intent.category.value,
-                        "action": intent.action,
-                        "confidence": intent.confidence,
-                    },
+                return self._make_error_result(
+                    intent=intent,
                     workflow_id=workflow.id,
-                    error=str(e),
+                    error=e,
+                    context="analyzing data",
                     error_type="AnalysisError",
                 )
 
@@ -4809,15 +4726,11 @@ class IntentService:
 
         except Exception as e:
             self.logger.error(f"Failed to analyze commits: {e}", exc_info=True)
-            return IntentProcessingResult(
-                success=False,
-                message=f"Failed to analyze commits: {str(e)}",
-                intent_data={
-                    "category": intent.category.value,
-                    "action": intent.action,
-                },
+            return self._make_error_result(
+                intent=intent,
                 workflow_id=workflow_id,
-                error=str(e),
+                error=e,
+                context="analyzing commits",
                 error_type="AnalysisError",
             )
 
@@ -4901,15 +4814,11 @@ class IntentService:
 
         except Exception as e:
             self.logger.error(f"Failed to generate report: {e}", exc_info=True)
-            return IntentProcessingResult(
-                success=False,
-                message=f"Failed to generate report: {str(e)}",
-                intent_data={
-                    "category": intent.category.value,
-                    "action": intent.action,
-                },
+            return self._make_error_result(
+                intent=intent,
                 workflow_id=workflow_id,
-                error=str(e),
+                error=e,
+                context="generating that report",
                 error_type="ReportError",
             )
 
@@ -5041,15 +4950,11 @@ class IntentService:
 
         except Exception as e:
             self.logger.error(f"Failed to analyze data: {e}", exc_info=True)
-            return IntentProcessingResult(
-                success=False,
-                message=f"Failed to analyze data: {str(e)}",
-                intent_data={
-                    "category": intent.category.value,
-                    "action": intent.action,
-                },
+            return self._make_error_result(
+                intent=intent,
                 workflow_id=workflow_id,
-                error=str(e),
+                error=e,
+                context="analyzing data",
                 error_type="AnalysisError",
             )
 
@@ -5381,16 +5286,11 @@ class IntentService:
 
         except Exception as e:
             self.logger.error(f"Failed to generate content: {e}", exc_info=True)
-            return IntentProcessingResult(
-                success=False,
-                message=f"Content generation failed: {str(e)}",
-                intent_data={
-                    "category": intent.category.value,
-                    "action": intent.action,
-                    "content_type": intent.context.get("content_type"),
-                },
+            return self._make_error_result(
+                intent=intent,
                 workflow_id=workflow_id,
-                error=str(e),
+                error=e,
+                context="generating content",
                 error_type="SynthesisError",
             )
 
@@ -6679,18 +6579,11 @@ Add any additional information here.
 
             except ValueError as e:
                 # Parameter validation errors
-                return IntentProcessingResult(
-                    success=False,
-                    message=f"Validation error: {str(e)}",
-                    intent_data={
-                        "category": intent.category.value,
-                        "action": intent.action,
-                        "source_type": source_type,
-                    },
+                return self._make_error_result(
+                    intent=intent,
                     workflow_id=workflow_id,
-                    requires_clarification=True,
-                    clarification_type="parameter_validation",
-                    error=str(e),
+                    error=e,
+                    context="creating that summary",
                     error_type="ValidationError",
                 )
 
@@ -6741,15 +6634,11 @@ Add any additional information here.
 
         except Exception as e:
             self.logger.error(f"Failed to summarize: {e}", exc_info=True)
-            return IntentProcessingResult(
-                success=False,
-                message=f"Summarization failed: {str(e)}",
-                intent_data={
-                    "category": intent.category.value,
-                    "action": intent.action,
-                },
+            return self._make_error_result(
+                intent=intent,
                 workflow_id=workflow_id,
-                error=str(e),
+                error=e,
+                context="creating that summary",
                 error_type="SynthesisError",
             )
 
@@ -7348,15 +7237,11 @@ Content to summarize:
         except Exception as e:
             # 5. ERROR HANDLING
             self.logger.error(f"Failed to create strategic plan: {e}", exc_info=True)
-            return IntentProcessingResult(
-                success=False,
-                message=f"Failed to create strategic plan: {str(e)}",
-                intent_data={
-                    "category": intent.category.value,
-                    "action": intent.action,
-                },
+            return self._make_error_result(
+                intent=intent,
                 workflow_id=workflow_id,
-                error=str(e),
+                error=e,
+                context="working on strategic planning",
                 error_type="StrategyError",
             )
 
@@ -7837,15 +7722,11 @@ Content to summarize:
 
         except Exception as e:
             self.logger.error(f"Failed to prioritize: {e}", exc_info=True)
-            return IntentProcessingResult(
-                success=False,
-                message=f"Failed to prioritize: {str(e)}",
-                intent_data={
-                    "category": intent.category.value,
-                    "action": intent.action,
-                },
+            return self._make_error_result(
+                intent=intent,
                 workflow_id=workflow_id,
-                error=str(e),
+                error=e,
+                context="prioritizing items",
                 error_type="StrategyError",
             )
 
@@ -8525,15 +8406,11 @@ Content to summarize:
 
         except Exception as e:
             self.logger.error(f"Failed to learn pattern: {e}", exc_info=True)
-            return IntentProcessingResult(
-                success=False,
-                message=f"Failed to learn pattern: {str(e)}",
-                intent_data={
-                    "category": intent.category.value,
-                    "action": intent.action,
-                },
+            return self._make_error_result(
+                intent=intent,
                 workflow_id=workflow_id,
-                error=str(e),
+                error=e,
+                context="learning patterns",
                 error_type="LearningError",
             )
 
@@ -8951,3 +8828,33 @@ Content to summarize:
         except Exception as e:
             self.logger.error(f"Workflow creation error: {e}")
             raise
+
+    def _make_error_result(
+        self,
+        intent: "Intent",
+        workflow_id: str,
+        error: Exception,
+        context: str,
+        error_type: str = "InternalError",
+    ) -> IntentProcessingResult:
+        """Create conversational error result using UserFriendlyErrorService.
+
+        Issue #876: Raw exception text should never reach users. This method
+        converts technical errors into conversational messages while preserving
+        the raw error in the `error` field for logging/debugging.
+        """
+        conversational_message = self._friendly_errors.get_conversational_error(
+            error, context=context
+        )
+        return IntentProcessingResult(
+            success=False,
+            message=conversational_message,
+            intent_data={
+                "category": intent.category.value,
+                "action": intent.action,
+                "confidence": getattr(intent, "confidence", 0.0),
+            },
+            workflow_id=workflow_id,
+            error=str(error),
+            error_type=error_type,
+        )

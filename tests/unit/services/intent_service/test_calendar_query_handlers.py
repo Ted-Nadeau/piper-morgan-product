@@ -635,7 +635,7 @@ class TestCalendarHandlerErrors:
             result = await intent_service._handle_meeting_time_query(intent, "workflow-id")
 
             assert result.success is False
-            assert "Unable to fetch meeting time" in result.message
+            assert "looking up meeting times" in result.message
             assert result.error is not None
             assert result.error_type == "CalendarMeetingTimeQueryError"
 
@@ -659,7 +659,7 @@ class TestCalendarHandlerErrors:
             result = await intent_service._handle_recurring_meetings_query(intent, "workflow-id")
 
             assert result.success is False
-            assert "Unable to fetch recurring meetings" in result.message
+            assert "checking recurring meetings" in result.message
             assert result.error is not None
             assert result.error_type == "CalendarRecurringMeetingsQueryError"
 
@@ -686,7 +686,7 @@ class TestCalendarHandlerErrors:
             result = await intent_service._handle_week_calendar_query(intent, "workflow-id")
 
             assert result.success is False
-            assert "Unable to fetch week calendar" in result.message
+            assert "pulling up your week's calendar" in result.message
             assert result.error is not None
             assert result.error_type == "CalendarWeekQueryError"
 

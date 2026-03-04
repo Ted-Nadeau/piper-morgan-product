@@ -468,3 +468,38 @@ class TestAPIDegradationIntegration:
         # Error metadata is present for frontend to optionally use
         assert data.get("error") == "planning_type_not_specified"
         assert data.get("error_type") == "validation"
+
+    def test_make_error_result_produces_conversational_messages(self):
+        """Contract: Handler exceptions never leak raw error text to users.
+
+        Issue #876: All handler except blocks use _make_error_result()
+        which routes through UserFriendlyErrorService for conversational messages.
+        Raw exception text is preserved in the `error` field for debugging only.
+        """
+        from services.intent.intent_service import IntentProcessingResult, IntentService
+
+        service = IntentService()
+
+        # Simulate a raw exception that would be caught by a handler
+        class FakeIntent:
+            category = type("C", (), {"value": "query"})()
+            action = "list_issues"
+            confidence = 0.9
+
+        result = service._make_error_result(
+            intent=FakeIntent(),
+            workflow_id="test-wf-876",
+            error=ConnectionError("Connection refused"),
+            context="fetching GitHub issues",
+            error_type="GitHubError",
+        )
+
+        assert isinstance(result, IntentProcessingResult)
+        # Message should NOT contain raw exception text
+        assert "Connection refused" not in result.message
+        # Message SHOULD be conversational (not empty, not just a technical snippet)
+        assert len(result.message) > 20
+        # Raw error preserved for debugging in the error field
+        assert "Connection refused" in result.error
+        assert result.error_type == "GitHubError"
+        assert result.success is False
