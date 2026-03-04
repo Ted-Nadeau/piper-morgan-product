@@ -672,7 +672,9 @@
 
       async function loadCalendarStatus() {
         try {
-          const response = await fetch('/api/v1/settings/integrations/calendar');
+          const response = await fetch('/api/v1/settings/integrations/calendar', {
+            credentials: 'include'
+          });
           if (!response.ok) throw new Error('Failed to load status');
 
           const data = await response.json();
@@ -763,7 +765,8 @@
 
             try {
               const response = await fetch('/api/v1/settings/integrations/calendar/disconnect', {
-                method: 'POST'
+                method: 'POST',
+                credentials: 'include'
               });
 
               if (!response.ok) {
@@ -798,7 +801,9 @@
 
       async function loadAppCredentialsStatus() {
         try {
-          const response = await fetch('/api/v1/settings/integrations/calendar/app-credentials/status');
+          const response = await fetch('/api/v1/settings/integrations/calendar/app-credentials/status', {
+            credentials: 'include'
+          });
           if (!response.ok) {
             // If 401, user not logged in - show not configured
             updateAppConfigUI(false);
@@ -894,6 +899,7 @@
           const response = await fetch('/api/v1/settings/integrations/calendar/app-credentials', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
             body: JSON.stringify({
               client_id: clientId,
               client_secret: clientSecret
@@ -937,7 +943,9 @@
         calendarListEl.innerHTML = '<div class="calendar-list-loading"><span class="loading-spinner"></span> Loading calendars...</div>';
 
         try {
-          const response = await fetch('/api/v1/settings/integrations/calendar/calendars');
+          const response = await fetch('/api/v1/settings/integrations/calendar/calendars', {
+            credentials: 'include'
+          });
           if (!response.ok) {
             if (response.status === 401) {
               calendarListEl.innerHTML = '<div class="calendar-list-empty">Please connect your Google Calendar first.</div>';
@@ -1058,6 +1066,7 @@
           const response = await fetch('/api/v1/settings/integrations/calendar/preferences', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
             body: JSON.stringify({
               selected_calendars: selectedCalendars,
               primary_calendar: primaryCalendar

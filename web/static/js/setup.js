@@ -713,7 +713,9 @@
     // Check if Calendar app credentials are configured
     async function checkCalendarCredentialsStatus() {
         try {
-            const response = await fetch('/api/v1/settings/integrations/calendar/app-credentials/status');
+            const response = await fetch('/api/v1/settings/integrations/calendar/app-credentials/status', {
+                credentials: 'include'
+            });
             if (!response.ok) {
                 // If endpoint fails, show config form as fallback
                 showCalendarConfigNeeded();
@@ -776,6 +778,7 @@
             const response = await fetch('/api/v1/settings/integrations/calendar/app-credentials', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify({
                     client_id: clientId,
                     client_secret: clientSecret

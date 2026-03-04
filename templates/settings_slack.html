@@ -672,7 +672,9 @@
 
       async function loadSlackStatus() {
         try {
-          const response = await fetch('/api/v1/settings/integrations/slack');
+          const response = await fetch('/api/v1/settings/integrations/slack', {
+            credentials: 'include'
+          });
           if (!response.ok) throw new Error('Failed to load status');
 
           const data = await response.json();
@@ -738,7 +740,9 @@
         connectBtnEl.innerHTML = '<span class="loading-spinner"></span>Connecting...';
 
         try {
-          const response = await fetch('/api/v1/settings/integrations/slack/authorize');
+          const response = await fetch('/api/v1/settings/integrations/slack/authorize', {
+            credentials: 'include'
+          });
           if (!response.ok) {
             const error = await response.json();
             throw new Error(error.detail || 'Failed to get authorization URL');
@@ -779,7 +783,8 @@
 
         try {
           const response = await fetch('/api/v1/settings/integrations/slack/disconnect', {
-            method: 'POST'
+            method: 'POST',
+            credentials: 'include'
           });
 
           if (!response.ok) {
@@ -817,8 +822,8 @@
         try {
           // Fetch channels and preferences in parallel
           const [channelsRes, prefsRes] = await Promise.all([
-            fetch('/api/v1/settings/integrations/slack/channels'),
-            fetch('/api/v1/settings/integrations/slack/preferences')
+            fetch('/api/v1/settings/integrations/slack/channels', { credentials: 'include' }),
+            fetch('/api/v1/settings/integrations/slack/preferences', { credentials: 'include' })
           ]);
 
           if (!channelsRes.ok) {
@@ -957,6 +962,7 @@
           const response = await fetch('/api/v1/settings/integrations/slack/preferences', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
             body: JSON.stringify(prefs)
           });
 
@@ -1011,7 +1017,9 @@
 
       async function loadAppCredentialsStatus() {
         try {
-          const response = await fetch('/api/v1/settings/integrations/slack/app-credentials/status');
+          const response = await fetch('/api/v1/settings/integrations/slack/app-credentials/status', {
+            credentials: 'include'
+          });
           if (!response.ok) {
             // If 401, user not logged in - show not configured
             updateAppConfigUI(false);
@@ -1107,6 +1115,7 @@
           const response = await fetch('/api/v1/settings/integrations/slack/app-credentials', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
             body: JSON.stringify({
               client_id: clientId,
               client_secret: clientSecret
