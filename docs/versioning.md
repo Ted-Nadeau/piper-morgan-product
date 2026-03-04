@@ -1,6 +1,6 @@
 # Piper Morgan Versioning Strategy
 
-## Current Version: 0.8.5.3
+## Current Version: 0.8.6
 
 ## Versioning Scheme
 
@@ -86,6 +86,7 @@ During alpha testing, versions follow this pattern:
 
 | Version | Date       | Milestone | Notes                                          |
 | ------- | ---------- | --------- | ---------------------------------------------- |
+| 0.8.6   | Mar 2026   | M0 Sprint | M0 Conversational Glue, 27 issues resolved     |
 | 0.8.5.3 | Feb 2026   | Patch     | Windows compatibility, setup UX, 14 issues resolved |
 | 0.8.5.2 | Feb 2026   | Patch     | Chat persistence, date formatting, calendar fixes |
 | 0.8.5.1 | Jan 2026   | Patch     | 14 alpha testing bug fixes                     |
@@ -112,5 +113,5 @@ During alpha testing, versions follow this pattern:
 
 ---
 
-_Last updated: February 11, 2026_
-_Current version: 0.8.5.3_
+_Last updated: March 4, 2026_
+_Current version: 0.8.6_

@@ -6,9 +6,9 @@ This directory contains release notes for all Piper Morgan versions.
 
 ## Current Version
 
-**v0.8.5.3** (February 11, 2026) - [Release Notes](RELEASE-NOTES-v0.8.5.3.md)
+**v0.8.6** (March 4, 2026) - [Release Notes](RELEASE-NOTES-v0.8.6.md)
 
-Windows compatibility and setup experience improvements. 14 issues resolved from Ted Nadeau's Windows testing feedback: uvloop fix, missing migrations, CRLF handling, installation validator, and comprehensive documentation updates.
+M0 Conversational Glue sprint: 5 core features (lens tracking, multi-intent, slot filling, soft invocation, narrative system), repository management, conversation lifecycle, 7 post-gate bug fixes. 27 issues resolved, 402+ new tests.
 
 ---
 
@@ -16,6 +16,7 @@ Windows compatibility and setup experience improvements. 14 issues resolved from
 
 | Version | Date | Type | Highlights |
 |---------|------|------|------------|
+| [v0.8.6](RELEASE-NOTES-v0.8.6.md) | Mar 4, 2026 | Feature | M0 Conversational Glue, 27 issues resolved |
 | [v0.8.5.3](RELEASE-NOTES-v0.8.5.3.md) | Feb 11, 2026 | Patch | Windows compatibility, setup UX, 14 issues resolved |
 | [v0.8.5.2](RELEASE-NOTES-v0.8.5.2.md) | Feb 6, 2026 | Patch | Chat persistence, date formatting, calendar fixes |
 | [v0.8.5.1](RELEASE-NOTES-v0.8.5.1.md) | Jan 31, 2026 | Patch | 14 alpha testing bug fixes |
@@ -58,4 +59,4 @@ For current known issues and limitations, see [ALPHA_KNOWN_ISSUES.md](../ALPHA_K
 
 ---
 
-*Last updated: February 11, 2026*
+*Last updated: March 4, 2026*

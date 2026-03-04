@@ -1,6 +1,6 @@
 # Piper Morgan Alpha - Quick Start
 
-**Version**: 0.8.5.3
+**Version**: 0.8.6
 **Branch**: `production` (stable alpha releases)
 **For**: Experienced developers who want to dive in fast
 
@@ -29,21 +29,23 @@
 
 ---
 
-## What's New in 0.8.5.3
+## What's New in 0.8.6
 
-**Windows Compatibility & Setup UX** - 14 issues resolved from Ted Nadeau's Windows testing.
+**M0 Conversational Glue** - Piper now converses naturally. Workflows emerge from conversation; commands are shortcuts, not requirements.
 
-**Windows Installation (#795, #797)** - uvloop now skipped on Windows. CRLF line endings no longer break Docker.
+**Conversational Lens Tracking** - Follow-up queries resolve correctly based on context ("what about next week?").
 
-**Database Migrations (#796)** - Missing migrations for products, features, work_items tables created.
+**Multi-Intent Handling** - Compound queries handled coherently ("check my calendar and create an issue").
 
-**Installation Validator (#806)** - New `scripts/validate_install.py` verifies all components working.
+**Soft Workflow Invocation** - Piper offers workflows naturally ("Sounds like you might want to set up a meeting...").
 
-**Better Errors (#808)** - Error messages now include specific fix suggestions.
+**Repository Management** - Link GitHub repos to projects during setup or in Settings.
+
+**Bug Fixes** - 7 post-launch issues resolved (error messages, auth, workflow polling).
 
 **Database Migration Required**: Run `alembic upgrade head` after updating.
 
-See [Release Notes v0.8.5.3](releases/RELEASE-NOTES-v0.8.5.3.md) for full details.
+See [Release Notes v0.8.6](releases/RELEASE-NOTES-v0.8.6.md) for full details.
 
 ---
 
@@ -251,7 +253,7 @@ After logging in to http://localhost:8001:
 
 ---
 
-## Testing Focus for 0.8.5.3
+## Testing Focus for 0.8.6
 
 **What's Stable** (light testing recommended):
 - ✅ Setup wizard (GUI and CLI)
@@ -432,7 +434,7 @@ After `python main.py` starts the server at http://localhost:8001:
 
 ---
 
-## What's Working in 0.8.5.3
+## What's Working in 0.8.6
 
 ✅ **MUX-IMPLEMENT Complete** (0.8.5):
    - WCAG 2.1 AA accessibility compliance
@@ -490,15 +492,15 @@ See [ALPHA_KNOWN_ISSUES.md](ALPHA_KNOWN_ISSUES.md) for complete status and known
 - **Full Guide**: [ALPHA_TESTING_GUIDE.md](ALPHA_TESTING_GUIDE.md) (comprehensive setup)
 - **Known Issues**: [ALPHA_KNOWN_ISSUES.md](ALPHA_KNOWN_ISSUES.md) (bugs and status)
 - **Legal**: [ALPHA_AGREEMENT_v2.md](ALPHA_AGREEMENT_v2.md) (terms and conditions)
-- **Version Info**: [VERSION_NUMBERING.md](VERSION_NUMBERING.md) (what 0.8.5.3 means)
+- **Version Info**: [VERSION_NUMBERING.md](VERSION_NUMBERING.md) (what 0.8.6 means)
 
 ---
 
 ## Remember
 
-This is **alpha software** (0.8.5.3). Expect bugs. Don't use for production. You're responsible for API costs. See `ALPHA_AGREEMENT_v2.md` for details.
+This is **alpha software** (0.8.6). Expect bugs. Don't use for production. You're responsible for API costs. See `ALPHA_AGREEMENT_v2.md` for details.
 
-**Testing Focus**: Windows compatibility is now stable. Focus your testing on the installation validator, error messages, and lifecycle indicators.
+**Testing Focus**: Conversational naturalness is the focus. Does Piper feel like a colleague? Do follow-ups, compound queries, and soft offers work naturally?
 
 ---
 

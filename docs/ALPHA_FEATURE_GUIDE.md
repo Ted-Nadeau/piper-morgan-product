@@ -1,7 +1,7 @@
-# Alpha Feature Guide (v0.8.5.3)
+# Alpha Feature Guide (v0.8.6)
 
-**Version**: 0.8.5.3
-**Last Updated**: February 11, 2026
+**Version**: 0.8.6
+**Last Updated**: March 4, 2026
 
 A guide to what Piper Morgan can do in the current alpha release.
 
@@ -267,7 +267,7 @@ All sensitive operations are logged:
 For alpha testers who want to know what's under the hood:
 
 - **Database**: PostgreSQL (via Docker on port 5433)
-- **Test coverage**: 5,253 tests passing
+- **Test coverage**: 7,358 tests passing
 - **API**: FastAPI on port 8001
 - **Auth**: JWT tokens with bcrypt passwords
 
@@ -282,4 +282,4 @@ For alpha testers who want to know what's under the hood:
 
 ---
 
-_Last Updated: January 31, 2026_
+_Last Updated: March 4, 2026_

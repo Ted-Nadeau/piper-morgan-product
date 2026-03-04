@@ -1,7 +1,7 @@
 # Piper Morgan Alpha Testing Guide
 
-**Version**: 0.8.5.3
-**Last Updated**: February 11, 2026
+**Version**: 0.8.6
+**Last Updated**: March 4, 2026
 **For**: Alpha Testers
 
 ---
@@ -9,8 +9,8 @@
 ## Returning Tester? Start Here
 
 If you already have Piper set up and running, skip straight to what matters:
-- **[What's New in 0.8.5.3](#whats-new-in-0853)** - Windows compatibility, setup UX improvements
-- **[What to Test in 0.8.5.3](#what-to-test-in-0853)** - Priority testing areas for this release
+- **[What's New in 0.8.6](#whats-new-in-086)** - Conversational Glue — Piper now talks like a colleague
+- **[What to Test in 0.8.6](#what-to-test-in-086)** - Priority testing areas for this release
 - **[Troubleshooting](#chapter-3-troubleshooting)** - If something isn't working
 
 ---
@@ -76,7 +76,7 @@ This guide has three main sections:
 
 **⚠️ ALPHA SOFTWARE WARNING ⚠️**
 
-This is pre-release alpha software (version 0.8.5.3). By proceeding, you acknowledge:
+This is pre-release alpha software (version 0.8.6). By proceeding, you acknowledge:
 
 1. **Expected Issues**: Bugs, crashes, and incomplete features are normal
 2. **Data Loss Risk**: Your data may be lost at any time without warning
@@ -91,24 +91,27 @@ See `ALPHA_AGREEMENT_v2.md` for complete legal terms.
 
 ---
 
-## What's New in 0.8.5.3
+## What's New in 0.8.6
 
-**Windows Compatibility & Setup UX** - This release addresses 14 issues from Ted Nadeau's Windows testing:
+**M0 Conversational Glue** - Piper now converses naturally instead of waiting for commands:
 
-- **Windows Installation (#795)**: Fixed uvloop dependency blocking Windows installation with PEP 508 environment markers.
-- **Database Migrations (#796)**: Created missing migrations for `products`, `features`, and `work_items` tables.
-- **CRLF Handling (#797)**: Added .gitattributes rules to prevent Docker startup failures from Windows line endings.
-- **Installation Validator (#806)**: New `scripts/validate_install.py` script verifies all components are working.
-- **Actionable Errors (#808)**: Error messages now include specific fix suggestions.
-- **Documentation**: Realistic time estimates (20-50 min first setup), docker compose syntax, venv activation reminders, Windows localhost workaround.
+- **Conversational Lens Tracking (#763)**: Piper remembers what you're talking about. Follow-ups like "what about next week?" resolve correctly.
+- **Multi-Intent Handling (#764)**: Compound queries like "check my calendar and create an issue" handled coherently.
+- **Natural Slot Filling (#765)**: When Piper needs info, it asks naturally instead of interrogating.
+- **Soft Workflow Invocation (#767)**: Piper offers workflows conversationally ("Sounds like you might want to set up a meeting...") — no commands needed.
+- **Narrative System (#766)**: Tone adapts to your relationship stage. No more repeated "Is that your main project?" question.
+- **Repository Management**: Link GitHub repos to projects during onboarding or in Settings.
+- **Bug Fixes**: 7 post-launch bugs resolved (error messages, auth, workflow polling).
+- 7,358 automated tests passing (up from 5,253).
+
 **Database Migration Required**: Run `alembic upgrade head` after updating.
 
-See [Release Notes v0.8.5.3](releases/RELEASE-NOTES-v0.8.5.3.md) for full details.
+See [Release Notes v0.8.6](releases/RELEASE-NOTES-v0.8.6.md) for full details.
 
 <details>
-<summary><strong>Previous release (0.8.5.2)</strong></summary>
+<summary><strong>Previous release (0.8.5.3)</strong></summary>
 
-**Bug Fixes**: Chat persistence (#787), date formatting (#788), calendar false positive (#789).
+**Windows Compatibility & Setup UX** - 14 issues from Ted Nadeau's Windows testing: uvloop fix, missing migrations, CRLF handling, installation validator, actionable errors.
 
 </details>
 
@@ -120,7 +123,6 @@ See [Release Notes v0.8.5.3](releases/RELEASE-NOTES-v0.8.5.3.md) for full detail
 - Lifecycle State Persistence with visual indicators
 - New Views: Work Items and Project Detail
 - ProcessRegistry for guided processes (ADR-049)
-- 5253 automated tests passing
 
 </details>
 
@@ -398,19 +400,19 @@ Click the button to go to the login page and start using Piper Morgan.
 
 This chapter covers what to test and how. If you're already set up, **start here**.
 
-## What to Test in 0.8.5.3
+## What to Test in 0.8.6
 
-Windows compatibility and setup experience are the focus of this release. **Test the installation validator and new error handling.**
+Conversational naturalness is the focus of this release. **Does Piper feel like a colleague, not a chatbot?**
 
 ### Priority Testing Areas
 
-1. **Installation Validator** - Run `python scripts/validate_install.py` and verify all checks pass
-2. **Windows Setup** - If on Windows, verify fresh installation works without issues
-3. **Error Messages** - Trigger errors (e.g., stop Docker) and verify helpful fix suggestions appear
-4. **Lifecycle Indicators** - Do projects and todos show their lifecycle state?
-5. **Interactive Standup Assistant** - Try "let's write a standup" or "/standup" in chat
-6. **Integration Dashboard** - Settings → Integrations, test buttons, health status display
-7. **Workflow Management** - Lists, todos, projects (CRUD operations, sharing, permissions)
+1. **Natural Conversation** - Just chat with Piper. Do workflows emerge naturally without explicit commands?
+2. **Follow-ups** - Ask about your calendar, then say "what about next week?" — does Piper understand?
+3. **Compound Queries** - Try "check my calendar and create an issue about the API bug" in one message
+4. **Soft Offers** - When you mention a meeting topic, does Piper offer to create one naturally?
+5. **Onboarding** - Start fresh and go through portfolio setup — is the tone right?
+6. **Repository Linking** - Settings → Projects → link a GitHub repo to a project
+7. **Error Messages** - When things fail, are messages conversational (not raw Python errors)?
 
 ### Basic Functionality Tests
 
@@ -802,7 +804,7 @@ SELECT * FROM users;
 
 ## Questions?
 
-Remember: This is alpha software (version 0.8.5.3). The GUI setup wizard handles most complexity, but you're still testing early-stage software. Expect bugs and incomplete features.
+Remember: This is alpha software (version 0.8.6). The GUI setup wizard handles most complexity, but you're still testing early-stage software. Expect bugs and incomplete features.
 
 If guided setup seems overwhelming, a hosted version is planned for later in 2026.
 
@@ -819,5 +821,5 @@ Thank you for being an early adopter and helping us improve! 🚀
 
 ---
 
-_Last updated: February 11, 2026_
-_Software version: 0.8.5.3_
+_Last updated: March 4, 2026_
+_Software version: 0.8.6_

@@ -1,7 +1,7 @@
-# Alpha Known Issues (v0.8.5.3)
+# Alpha Known Issues (v0.8.6)
 
-**Version**: 0.8.5.3
-**Last Updated**: February 11, 2026
+**Version**: 0.8.6
+**Last Updated**: March 4, 2026
 
 This document helps alpha testers avoid wasting time on things we already know about.
 
@@ -17,11 +17,10 @@ _None currently. All P0 issues resolved._
 
 | Issue | Description | Workaround |
 |-------|-------------|------------|
-| [#766](https://github.com/mediajunkie/piper-morgan-product/issues/766) | "Is that your main project?" repeats | Piper may ask this question multiple times during onboarding |
 | [#696](https://github.com/mediajunkie/piper-morgan-product/issues/696) | Settings uses hardcoded user ID | Settings changes work but may not attribute to correct user in audit logs |
 | [#697](https://github.com/mediajunkie/piper-morgan-product/issues/697) | Intent service uses hardcoded user ID | Chat works but user context not fully preserved |
 
-**Impact**: #766 is cosmetic annoyance. Other issues affect audit trail accuracy and multi-user attribution. Single-user alpha testing is unaffected functionally.
+**Impact**: These issues affect audit trail accuracy and multi-user attribution. Single-user alpha testing is unaffected functionally.
 
 ### Cosmetic
 
@@ -68,7 +67,8 @@ For detailed feature documentation, see [ALPHA_FEATURE_GUIDE.md](ALPHA_FEATURE_G
 - **Core UI**: Lists, Todos, Projects, Files — all with CRUD and sharing
 - **Chat**: 19 of 25 canonical queries working (76%). See [Canonical Query Test Matrix](internal/testing/canonical-query-test-matrix.md) for details.
 - **Accessibility**: WCAG 2.1 AA compliant, keyboard nav, high contrast mode
-- **Quality**: 5,307 automated tests passing
+- **Conversational Glue**: Natural conversation, follow-ups, compound queries, soft workflow offers
+- **Quality**: 7,358 automated tests passing
 
 ---
 
@@ -136,4 +136,4 @@ ERROR MESSAGE: [if any]
 
 ---
 
-_Last Updated: February 11, 2026_
+_Last Updated: March 4, 2026_

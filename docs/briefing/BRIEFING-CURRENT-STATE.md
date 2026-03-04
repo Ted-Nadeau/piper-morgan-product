@@ -9,13 +9,13 @@
 
 ## STATUS BANNER
 
-**Current Position**: 4.4.1 - M0 Bug Resolution, B2 Gate Not Ready
-**Version**: v0.8.5.3 (pyproject.toml source of truth)
-**Last Updated**: March 3, 2026, 9:30 AM PT
+**Current Position**: 4.4.2 - M0 Complete, M1 Sprint Next
+**Version**: v0.8.6 (pyproject.toml source of truth)
+**Last Updated**: March 4, 2026, 8:00 AM PT
 
-**Current Focus**: M0 Bug Resolution → Re-test → Gate Closure
-**Active Tracks**: Error contract fixes (#875 closed), raw error humanization (#876 pending), 4 CXO bugs under repair
-**Next Phase**: Bug fixes → CXO re-test → M0 gate → M1 Sprint
+**Current Focus**: M1 Sprint Planning
+**Active Tracks**: M0 Conversational Glue shipped (v0.8.6), all gates passed, all bugs resolved
+**Next Phase**: M1 Sprint (MVP Foundation)
 
 ---
 
@@ -30,7 +30,7 @@
    4.2. ✅ A20 - Alpha Testing round 2 (v0.8.4.x) - COMPLETE Jan 18
    4.3. ✅ MUX: Modeled User Experience - COMPLETE Jan 27
    4.4. 🎯 MVP: Minimum Valuable Product (M0-M6) ← CURRENT
-        🔶 M0: Conversational Glue (90% — code complete, bug fixes in progress)
+        ✅ M0: Conversational Glue — COMPLETE (v0.8.6, shipped Mar 4)
         ○ M1: Foundation (47%)
 5. Beta testing on 0.9
 6. Launch 1.0
@@ -136,7 +136,7 @@ GUIDANCE, TRUST, MEMORY, PORTFOLIO, UNKNOWN
 
 | Milestone | Focus | Status |
 |-----------|-------|--------|
-| M0 | Conversational Glue | 🔶 90% — bug fixes, then re-test |
+| M0 | Conversational Glue | ✅ COMPLETE (v0.8.6) |
 | M1 | MVP Foundation | 47% cherry-picked |
 | M2 | MVP Activation | 4% |
 | M3-M6 | Advanced Features | Backlog |
@@ -160,19 +160,20 @@ GUIDANCE, TRUST, MEMORY, PORTFOLIO, UNKNOWN
 
 ---
 
-## Metrics Snapshot (March 3, 2026)
+## Metrics Snapshot (March 4, 2026)
 
 ### Quality
 - **Pattern Count**: 62 (001-061)
 - **ADR Count**: 61 (000-058)
 - **Skill Count**: 6 (Tier 1 complete)
-- **Test Suite**: 6,145 tests
+- **Test Suite**: 7,358 tests (up from 6,145)
 - **Total Docs**: 1,135 markdown files
 - **Omnibus Logs**: Through Mar 2 (continuous daily coverage)
 
 ### Version History (Recent)
 | Version | Date | Milestone |
 |---------|------|-----------|
+| v0.8.6 | Mar 4, 2026 | M0 Conversational Glue, 27 issues |
 | v0.8.5.3 | Feb 11, 2026 | Windows compat, setup UX, 14 issues |
 | v0.8.5.2 | Feb 6, 2026 | Alpha bug fixes, timezone alignment |
 | v0.8.5.1 | Feb 1, 2026 | Timezone cascade fixes |
@@ -212,5 +213,5 @@ GUIDANCE, TRUST, MEMORY, PORTFOLIO, UNKNOWN
 
 ---
 
-*Last Updated: March 3, 2026, 9:30 AM PT*
+*Last Updated: March 4, 2026, 8:00 AM PT*
 *Source: GitHub commit history, omnibus logs, Serena symbolic index*
