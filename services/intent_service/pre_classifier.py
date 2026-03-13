@@ -808,9 +808,7 @@ class PreClassifier:
 
         # Issue #901: Check feature/integration info queries BEFORE identity
         # "Tell me more about the GitHub integration" → QUERY, not IDENTITY
-        if PreClassifier._matches_patterns(
-            clean_for_matching, PreClassifier.FEATURE_INFO_PATTERNS
-        ):
+        if PreClassifier._matches_patterns(clean_for_matching, PreClassifier.FEATURE_INFO_PATTERNS):
             return Intent(
                 category=IntentCategory.QUERY,
                 action="get_feature_info",
@@ -1059,9 +1057,7 @@ class PreClassifier:
 
         # Issue #901: Check ANALYSIS before STATUS to catch blocker/risk queries
         # "What's blocking the milestone?" should be ANALYSIS, not STATUS
-        if PreClassifier._matches_patterns(
-            clean_for_matching, PreClassifier.ANALYSIS_PATTERNS
-        ):
+        if PreClassifier._matches_patterns(clean_for_matching, PreClassifier.ANALYSIS_PATTERNS):
             return Intent(
                 category=IntentCategory.ANALYSIS,
                 action="analyze_blockers",

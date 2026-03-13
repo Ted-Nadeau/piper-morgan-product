@@ -31,9 +31,7 @@ class TestKeywordDisambiguationQ27:
         assert result.category == IntentCategory.QUERY
 
     def test_calendar_feature_routes_to_query(self):
-        result = PreClassifier.pre_classify(
-            "Tell me more about the calendar integration"
-        )
+        result = PreClassifier.pre_classify("Tell me more about the calendar integration")
         assert result is not None
         assert result.category == IntentCategory.QUERY
 
