@@ -1,0 +1,192 @@
+name: Pattern Sweep Reminder (6-Weekly)
+
+on:
+  schedule:
+    # Runs every 6 weeks on Monday at 9:00 AM Pacific
+    # Cron doesn't support "every 6 weeks" directly, so we run weekly
+    # and check if it's been 6 weeks since the last sweep issue
+    - cron: "0 17 * * 1"  # 5:00 PM UTC = 9:00 AM PDT / 9:00 AM PST
+  workflow_dispatch: # Allows manual trigger
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  check-and-create-sweep:
+    runs-on: ubuntu-latest
+    name: Create Pattern Sweep Reminder
+
+    steps:
+      - name: Check for recent sweep issue
+        id: check-recent
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const sixWeeksAgo = new Date();
+            sixWeeksAgo.setDate(sixWeeksAgo.getDate() - 42); // 6 weeks = 42 days
+
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'all',
+              labels: 'patterns',
+              per_page: 10
+            });
+
+            const recentSweep = issues.data.find(issue => {
+              const issueDate = new Date(issue.created_at);
+              return issue.title.includes('PATTERN-SWEEP') && issueDate > sixWeeksAgo;
+            });
+
+            if (recentSweep) {
+              console.log(`Recent sweep exists: #${recentSweep.number} (${recentSweep.created_at})`);
+              console.log('Skipping creation - not yet 6 weeks since last sweep');
+              return { skip: true, issueNumber: recentSweep.number };
+            }
+
+            console.log('No recent sweep found - will create new issue');
+            return { skip: false };
+
+      - name: Calculate date range
+        if: fromJSON(steps.check-recent.outputs.result).skip == false
+        id: dates
+        run: |
+          END_DATE=$(date +%Y-%m-%d)
+          START_DATE=$(date -d "42 days ago" +%Y-%m-%d 2>/dev/null || date -v-42d +%Y-%m-%d)
+          echo "start_date=$START_DATE" >> $GITHUB_OUTPUT
+          echo "end_date=$END_DATE" >> $GITHUB_OUTPUT
+          echo "Date range: $START_DATE to $END_DATE"
+
+      - name: Create pattern sweep issue
+        if: fromJSON(steps.check-recent.outputs.result).skip == false
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const today = new Date().toISOString().split('T')[0];
+            const startDate = '${{ steps.dates.outputs.start_date }}';
+            const endDate = '${{ steps.dates.outputs.end_date }}';
+
+            const issue = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `PATTERN-SWEEP: ${startDate} to ${endDate}`,
+              labels: ['process', 'patterns'],
+              body: `# Pattern Sweep 2.0 - ${startDate} to ${endDate}
+
+Generated: ${today} (automated reminder)
+Lead: Lead Developer
+Framework: \`dev/active/pattern-sweep-2.0-framework.md\`
+
+---
+
+## Scope
+
+**Analysis Period**: ${startDate} - ${endDate}
+**Pattern Library**: \`docs/internal/architecture/current/patterns/\`
+
+---
+
+## Pre-Sweep Checklist
+
+- [ ] Pattern library index exists or needs regeneration
+- [ ] Data sources available for analysis period:
+  - [ ] \`docs/omnibus-logs/\` for the period
+  - [ ] \`dev/YYYY/MM/\` session logs
+  - [ ] Git history accessible
+
+---
+
+## Phase 1: Pattern Library Index (Agent A - Haiku)
+
+**Task**: Create/update \`dev/active/pattern-library-index.json\`
+
+**Acceptance Criteria**:
+- [ ] All patterns in catalog indexed
+- [ ] Each pattern has signature terms
+- [ ] Valid JSON output
+- [ ] Categories assigned
+
+---
+
+## Phase 2: Multi-Lens Analysis (Agents B-E in parallel)
+
+### Agent B: Usage Analyst (Haiku)
+- [ ] Create \`dev/active/pattern-usage-analysis.md\`
+- [ ] Frequency counts per pattern
+- [ ] Top 10 most-used identified
+- [ ] Unusual applications flagged
+
+### Agent C: Novelty Detector (Sonnet)
+- [ ] Create \`dev/active/pattern-novelty-candidates.md\`
+- [ ] Candidates verified against library
+- [ ] FALSE POSITIVE TEST passed
+- [ ] 5-tier classification applied
+
+### Agent D: Evolution Tracker (Sonnet)
+- [ ] Create \`dev/active/pattern-evolution-report.md\`
+- [ ] Variations documented
+- [ ] Anti-patterns identified
+- [ ] Lifecycle stages assigned
+
+### Agent E: Meta-Pattern Synthesizer (Opus)
+- [ ] Create \`dev/active/pattern-meta-synthesis.md\`
+- [ ] Meta-patterns identified
+- [ ] Pattern-045 connections explored
+- [ ] Process recommendations made
+
+---
+
+## Phase 3: Synthesis & Validation
+
+- [ ] Final report created in \`docs/internal/development/reports/\`
+- [ ] All validation test cases pass:
+  - [ ] Known patterns NOT flagged as new
+  - [ ] TRUE EMERGENCE has evidence trail
+- [ ] DRAFT-pattern files created for any TRUE EMERGENCE
+
+---
+
+## Classification Tiers
+
+1. **TRUE EMERGENCE** - Genuinely new pattern
+2. **PATTERN EVOLUTION** - Variation of existing
+3. **PATTERN COMBINATION** - Novel mixing of known patterns
+4. **PATTERN USAGE** - Standard application
+5. **ANTI-PATTERN** - Degradation or misuse
+
+---
+
+## Deliverables Checklist
+
+- [ ] \`dev/active/pattern-library-index.json\`
+- [ ] \`dev/active/pattern-usage-analysis.md\`
+- [ ] \`dev/active/pattern-novelty-candidates.md\`
+- [ ] \`dev/active/pattern-evolution-report.md\`
+- [ ] \`dev/active/pattern-meta-synthesis.md\`
+- [ ] \`docs/internal/development/reports/pattern-sweep-2.0-results-YYYY-MM-DD.md\`
+- [ ] DRAFT-pattern files (if TRUE EMERGENCE found)
+
+---
+
+## Success Criteria
+
+- [ ] FALSE POSITIVE TEST passed (known patterns not flagged as new)
+- [ ] All 5 agent deliverables complete
+- [ ] Final report in reports directory
+- [ ] GitHub issue updated with results
+- [ ] Session log completed
+
+---
+
+**Methodology**: Pattern Sweep 2.0
+**Next Sweep**: ~6 weeks from now (automated reminder)
+
+---
+
+🤖 Generated automatically by pattern-sweep-reminder workflow
+`
+            });
+
+            console.log(`Created sweep issue: #${issue.data.number}`);
+            return issue.data.number;

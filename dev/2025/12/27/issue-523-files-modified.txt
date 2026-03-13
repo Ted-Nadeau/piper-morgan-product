@@ -1,0 +1,22 @@
+Files Modified for Issue #523:
+
+1. services/intent_service/pre_classifier.py
+   - Added CALENDAR_QUERY_PATTERNS
+   - Added GITHUB_QUERY_PATTERNS
+   - Added PRODUCTIVITY_QUERY_PATTERNS
+   - Added TODO_QUERY_PATTERNS
+   - Added routing logic in pre_classify() method
+
+2. tests/unit/services/intent_service/test_calendar_query_handlers.py
+   - Added TestPreClassifierRoutingIntegration class (6 tests)
+
+3. tests/unit/services/intent_service/test_github_query_handlers.py
+   - Added TestPreClassifierRoutingIntegration class (4 tests)
+
+4. tests/unit/services/intent_service/test_productivity_query_handlers.py
+   - Added TestPreClassifierRoutingIntegration class (2 tests)
+
+5. tests/unit/services/intent_service/test_todo_query_handlers.py
+   - Added TestPreClassifierRoutingIntegration class (4 tests)
+
+Total: 5 files modified, 16 new tests added, 0 regressions

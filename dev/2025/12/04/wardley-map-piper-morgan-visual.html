@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Piper Morgan Wardley Map</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #1a1a2e;
+            color: #eee;
+            padding: 24px;
+            min-height: 100vh;
+        }
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #fff;
+        }
+        .subtitle {
+            font-size: 0.875rem;
+            color: #888;
+            margin-bottom: 24px;
+        }
+        .map-container {
+            position: relative;
+            width: 100%;
+            max-width: 900px;
+            height: 600px;
+            background: #0f0f1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            margin-bottom: 24px;
+        }
+        .axis-label {
+            position: absolute;
+            font-size: 0.75rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .axis-label.y {
+            left: -60px;
+            top: 50%;
+            transform: rotate(-90deg) translateX(-50%);
+            transform-origin: left center;
+        }
+        .axis-label.x {
+            bottom: -24px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        .evolution-zone {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            border-right: 1px dashed #333;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 8px;
+        }
+        .evolution-zone:last-child {
+            border-right: none;
+        }
+        .zone-label {
+            font-size: 0.625rem;
+            color: #555;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .zone-1 { left: 0; width: 25%; background: rgba(139, 92, 246, 0.05); }
+        .zone-2 { left: 25%; width: 25%; background: rgba(59, 130, 246, 0.05); }
+        .zone-3 { left: 50%; width: 25%; background: rgba(16, 185, 129, 0.05); }
+        .zone-4 { left: 75%; width: 25%; background: rgba(107, 114, 128, 0.05); }
+
+        .component {
+            position: absolute;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.75rem;
+            white-space: nowrap;
+        }
+        .component-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .genesis .component-dot { background: #8b5cf6; }
+        .custom .component-dot { background: #3b82f6; }
+        .product .component-dot { background: #10b981; }
+        .commodity .component-dot { background: #6b7280; }
+
+        .component-label {
+            background: rgba(0,0,0,0.6);
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+
+        .link {
+            position: absolute;
+            background: rgba(255,255,255,0.1);
+            height: 1px;
+            transform-origin: left center;
+        }
+
+        .legend {
+            display: flex;
+            gap: 24px;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.75rem;
+        }
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .insight-box {
+            background: #0f0f1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        .insight-box h3 {
+            font-size: 0.875rem;
+            color: #8b5cf6;
+            margin-bottom: 8px;
+        }
+        .insight-box p {
+            font-size: 0.8125rem;
+            color: #aaa;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <h1>Piper Morgan Wardley Map</h1>
+    <p class="subtitle">Strategic Component Positioning — December 2025</p>
+
+    <div class="legend">
+        <div class="legend-item">
+            <div class="legend-dot" style="background: #8b5cf6;"></div>
+            <span>Genesis (Novel)</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-dot" style="background: #3b82f6;"></div>
+            <span>Custom (Emerging)</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-dot" style="background: #10b981;"></div>
+            <span>Product (Good)</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-dot" style="background: #6b7280;"></div>
+            <span>Commodity (Best)</span>
+        </div>
+    </div>
+
+    <div class="map-container">
+        <!-- Evolution zones -->
+        <div class="evolution-zone zone-1"><span class="zone-label">Genesis</span></div>
+        <div class="evolution-zone zone-2"><span class="zone-label">Custom</span></div>
+        <div class="evolution-zone zone-3"><span class="zone-label">Product</span></div>
+        <div class="evolution-zone zone-4"><span class="zone-label">Commodity</span></div>
+
+        <!-- Genesis components (purple) -->
+        <div class="component genesis" style="left: 8%; top: 5%;">
+            <div class="component-dot"></div>
+            <span class="component-label">Strategic Leverage for PM Work</span>
+        </div>
+        <div class="component genesis" style="left: 10%; top: 15%;">
+            <div class="component-dot"></div>
+            <span class="component-label">Colleague Relationship</span>
+        </div>
+        <div class="component genesis" style="left: 6%; top: 35%;">
+            <div class="component-dot"></div>
+            <span class="component-label">Trust Architecture</span>
+        </div>
+        <div class="component genesis" style="left: 12%; top: 50%;">
+            <div class="component-dot"></div>
+            <span class="component-label">Dreaming / Memory</span>
+        </div>
+        <div class="component genesis" style="left: 8%; top: 65%;">
+            <div class="component-dot"></div>
+            <span class="component-label">8-Dimensional Spatial Intel</span>
+        </div>
+        <div class="component genesis" style="left: 5%; top: 80%;">
+            <div class="component-dot"></div>
+            <span class="component-label">Ethical Consensus</span>
+        </div>
+
+        <!-- Custom components (blue) -->
+        <div class="component custom" style="left: 30%; top: 25%;">
+            <div class="component-dot"></div>
+            <span class="component-label">Recognition Interface</span>
+        </div>
+        <div class="component custom" style="left: 35%; top: 40%;">
+            <div class="component-dot"></div>
+            <span class="component-label">Canonical Queries</span>
+        </div>
+        <div class="component custom" style="left: 28%; top: 55%;">
+            <div class="component-dot"></div>
+            <span class="component-label">Contextual Awareness</span>
+        </div>
+        <div class="component custom" style="left: 40%; top: 70%;">
+            <div class="component-dot"></div>
+            <span class="component-label">Object Model</span>
+        </div>
+
+        <!-- Product components (green) -->
+        <div class="component product" style="left: 55%; top: 45%;">
+            <div class="component-dot"></div>
+            <span class="component-label">Intent Classification</span>
+        </div>
+        <div class="component product" style="left: 58%; top: 60%;">
+            <div class="component-dot"></div>
+            <span class="component-label">MCP Federation</span>
+        </div>
+        <div class="component product" style="left: 52%; top: 75%;">
+            <div class="component-dot"></div>
+            <span class="component-label">Plugin Architecture</span>
+        </div>
+
+        <!-- Commodity components (gray) -->
+        <div class="component commodity" style="left: 78%; top: 30%;">
+            <div class="component-dot"></div>
+            <span class="component-label">Calendar Integration</span>
+        </div>
+        <div class="component commodity" style="left: 80%; top: 45%;">
+            <div class="component-dot"></div>
+            <span class="component-label">GitHub API</span>
+        </div>
+        <div class="component commodity" style="left: 82%; top: 60%;">
+            <div class="component-dot"></div>
+            <span class="component-label">Slack API</span>
+        </div>
+        <div class="component commodity" style="left: 78%; top: 75%;">
+            <div class="component-dot"></div>
+            <span class="component-label">LLM APIs</span>
+        </div>
+        <div class="component commodity" style="left: 85%; top: 90%;">
+            <div class="component-dot"></div>
+            <span class="component-label">PostgreSQL</span>
+        </div>
+    </div>
+
+    <div class="insight-box">
+        <h3>Strategic Insight: Invest Left, Commoditize Right</h3>
+        <p>Piper's competitive moat lives in Genesis/Custom (purple/blue). The colleague relationship, trust architecture, and dreaming capabilities require deep philosophical commitment that's hard to copy. The right side (green/gray) should be consumed efficiently—use best available, don't over-customize. The moat is <em>coherence</em>: these components work together as a system.</p>
+    </div>
+
+    <div class="insight-box">
+        <h3>Movement to Watch</h3>
+        <p>MCP Federation is moving rightward (Custom→Product) as it standardizes—good for us. LLM APIs continue commoditizing—reduces our costs. Recognition Interface could move right if others adopt the pattern—we should stay ahead. Intent Classification is stable at Product—use best available.</p>
+    </div>
+</body>
+</html>
