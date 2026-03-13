@@ -1,0 +1,30 @@
+Title	URL	Status
+CORE-LEARN-PHASE-3: Implement Roadmap Phase 3 Learning Infrastructure	https://github.com/mediajunkie/piper-morgan-product/issues/372	Product Backlog
+TEST-FIX: Fix test_response_handler_observability Complex Mocking	https://github.com/mediajunkie/piper-morgan-product/issues/739	Product Backlog
+TEST-INFRA: Enable Attention System Time Simulation Tests (3 tests)	https://github.com/mediajunkie/piper-morgan-product/issues/738	Product Backlog
+MUX-PRODUCT-MODELING: Define Product Concept and Relationships	https://github.com/mediajunkie/piper-morgan-product/issues/717	Product Backlog
+MUX-OBJECTS-VIEWS: Objects & Views Discovery Epic	https://github.com/mediajunkie/piper-morgan-product/issues/706	Product Backlog
+MUX-LIFECYCLE-UI-B: Feature.to_dict() lifecycle wiring	https://github.com/mediajunkie/piper-morgan-product/issues/705	Product Backlog
+ARCH: WebSocket Infrastructure for Real-Time Communication	https://github.com/mediajunkie/piper-morgan-product/issues/557	Product Backlog
+SEC: Implement actual token revocation on disconnect	https://github.com/mediajunkie/piper-morgan-product/issues/542	Product Backlog
+SEC-KMS-INTEGRATION: Migrate from environment variable to AWS KMS	https://github.com/mediajunkie/piper-morgan-product/issues/482	Product Backlog
+EPIC: Slack Integration TDD Gaps - OAuth and Spatial Methods	https://github.com/mediajunkie/piper-morgan-product/issues/472	Product Backlog
+EPIC: SEC-RBAC Phases 4-5 - Projects and Files Ownership	https://github.com/mediajunkie/piper-morgan-product/issues/470	Product Backlog
+QA: Manual testing for preference detection system	https://github.com/mediajunkie/piper-morgan-product/issues/375	Product Backlog
+BUG-TEST-ASYNC: AsyncSessionFactory causes event loop conflicts in performance tests	https://github.com/mediajunkie/piper-morgan-product/issues/247	Product Backlog
+TEST-SMOKE-E2E: Create core user journey smoke tests	https://github.com/mediajunkie/piper-morgan-product/issues/352	Product Backlog
+TEST-QUALITY: Test Reliability for Production Confidence	https://github.com/mediajunkie/piper-morgan-product/issues/190	Product Backlog
+CONV-MCP-MEASURE: Token Measurement & Baseline Infrastructure	https://github.com/mediajunkie/piper-morgan-product/issues/306	Done
+BUG-HEALTH-UTC: Health Endpoint Should Return UTC Timestamps with Timezone Marker	https://github.com/mediajunkie/piper-morgan-product/issues/245	Done
+BUG-TEST-CONFIG:  Fix test_error_handling_with_invalid_config	https://github.com/mediajunkie/piper-morgan-product/issues/239	Done
+UX-POLISH: Polish Sprint - Week 1 & 2 Implementation (7 Features)	https://github.com/mediajunkie/piper-morgan-product/issues/316	Done
+MVP-UX-QUICK: 5 Quick Wins	https://github.com/mediajunkie/piper-morgan-product/issues/301	Done
+TEST-SMOKE-BUG-BUS: Smoke test collection fails with ChromaDB/numpy Bus error on macOS	https://github.com/mediajunkie/piper-morgan-product/issues/275	Done
+INFR-DATA: Repository Pattern & Dependency Cleanup	https://github.com/mediajunkie/piper-morgan-product/issues/308	Done
+CORE-CONFIG-PIPER: PIPER.md Lightweight Configuration System	https://github.com/mediajunkie/piper-morgan-product/issues/305	Done
+CONV-UX-NAV: Global Navigation & Wayfinding	https://github.com/mediajunkie/piper-morgan-product/issues/307	Done
+UX-TRANCHE3 - Production-Ready Polish & Accessibility Infrastructure	https://github.com/mediajunkie/piper-morgan-product/issues/317	Done
+DOCUMENTATION-STORED-PROCS: Document Application-Layer Stored Procedures Pattern (ADR)	https://github.com/mediajunkie/piper-morgan-product/issues/332	Done
+INFR-MAINT-REFACTOR: Infrastructure maintenance refactor (as needed)	https://github.com/mediajunkie/piper-morgan-product/issues/385	Done
+BUG-AUTH: settings_integrations using hardcoded 'system' user_id	https://github.com/mediajunkie/piper-morgan-product/issues/696	Done
+BUG-AUTH: intent_service using hardcoded 'default' user_id	https://github.com/mediajunkie/piper-morgan-product/issues/697	Done
