@@ -56,8 +56,8 @@ __pycache__/
 # Archive directory for large files and historical assets
 docs/archive/
 
-# Development artifacts (session logs, working docs, experiments)
-dev/
+# Development artifacts — dev/ is NOW tracked (session logs, reports, test harnesses
+# are needed for team briefings and synthesized logs). Only archive/trash excluded.
 archive/
 trash/
 
@@ -91,7 +91,6 @@ advisors/*/outbox/*.tmp
 # Each agent gets an isolated worktree in .trees/<prompt-id>-<session>/
 .trees/
 external/ted-multichat/
-dev/
 .beads/
 
 # Agent mailboxes (local workflow tooling)
