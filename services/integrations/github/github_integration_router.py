@@ -146,9 +146,7 @@ class GitHubIntegrationRouter:
             # Configure MCP adapter with GitHub token (async operation)
             if self.mcp_adapter:
                 try:
-                    token = self.config_service.get_authentication_token(
-                        user_id or "system"
-                    )
+                    token = self.config_service.get_authentication_token(user_id or "system")
                 except (ValueError, Exception) as e:
                     logger.warning(f"GitHub token lookup failed: {e}")
                     token = None
