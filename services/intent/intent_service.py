@@ -53,7 +53,7 @@ from services.knowledge.conversation_integration import ConversationKnowledgeGra
 from services.learning.learning_handler import LearningHandler
 from services.orchestration.engine import OrchestrationEngine
 from services.personality.personality_profile import PersonalityProfile
-from services.process import ProcessCheckResult, get_process_registry
+from services.process import ProcessCheckResult, ProcessType, get_process_registry
 from services.repositories.user_trust_profile_repository import UserTrustProfileRepository
 from services.shared_types import IntentCategory, TrustStage
 from services.slot_filling.slot_filling_adapter import SlotFillingProcessAdapter
@@ -569,6 +569,17 @@ class IntentService:
                 )
                 if pending_offer_result:
                     return pending_offer_result
+
+            # Issue #889: Check for pending resume offer (SUSPENDED state).
+            # If user was offered to resume a suspended session, catch their response.
+            if user_id and session_id:
+                pending_resume_result = await self._check_pending_resume_offer(
+                    user_id=user_id,
+                    session_id=session_id,
+                    message=message,
+                )
+                if pending_resume_result:
+                    return pending_resume_result
 
             # Issue #585: Check for /standup command BEFORE classification
             # This routes the explicit command to the interactive handler
@@ -1290,6 +1301,279 @@ class IntentService:
             self.logger.warning(f"Could not check pending onboarding offer: {e}")
             return None
 
+    async def _check_pending_resume_offer(
+        self, user_id: str, session_id: str, message: str
+    ) -> Optional[IntentProcessingResult]:
+        """
+        Issue #889: Check if user is responding to a suspended session resume offer.
+
+        After _check_suspended_session_reentry() offers to resume a suspended
+        session, the user's next message may be accepting or declining.
+        This method catches those responses before normal classification.
+
+        Accept signals: "yes", "continue", "resume", "sure", "ok", "pick it up"
+        Decline signals: "no", "fresh", "start over", "new", "nah", "skip"
+        Anything else: Not a response to the offer, proceed with normal classification.
+
+        Returns IntentProcessingResult if the offer was handled, None otherwise.
+        """
+        try:
+            registry = get_process_registry()
+            suspended = await registry.check_suspended_processes(user_id)
+
+            if suspended is None:
+                return None
+
+            # Determine if user is responding to resume offer
+            msg_lower = message.strip().lower()
+
+            # Accept signals
+            accept_signals = frozenset(
+                {
+                    "yes",
+                    "yeah",
+                    "yep",
+                    "sure",
+                    "ok",
+                    "okay",
+                    "continue",
+                    "resume",
+                    "pick it up",
+                    "let's continue",
+                    "yes please",
+                    "y",
+                    "yea",
+                }
+            )
+            # Decline signals
+            decline_signals = frozenset(
+                {
+                    "no",
+                    "nah",
+                    "nope",
+                    "fresh",
+                    "start over",
+                    "start fresh",
+                    "new",
+                    "skip",
+                    "no thanks",
+                    "n",
+                }
+            )
+
+            if msg_lower in accept_signals:
+                # Resume the suspended session
+                self.logger.info(
+                    "User accepted resume offer",
+                    user_id=user_id,
+                    process_type=suspended.process_type.value,
+                )
+
+                if suspended.process_type == ProcessType.STANDUP:
+                    return await self._resume_suspended_standup(user_id, session_id)
+                elif suspended.process_type == ProcessType.ONBOARDING:
+                    return await self._resume_suspended_onboarding(user_id, session_id)
+
+            elif msg_lower in decline_signals:
+                # Abandon the suspended session
+                self.logger.info(
+                    "User declined resume offer",
+                    user_id=user_id,
+                    process_type=suspended.process_type.value,
+                )
+
+                if suspended.process_type == ProcessType.STANDUP:
+                    return await self._abandon_suspended_standup(user_id)
+                elif suspended.process_type == ProcessType.ONBOARDING:
+                    return await self._abandon_suspended_onboarding(user_id)
+
+            # Not a response to the resume offer — let normal classification handle it.
+            # The suspended session stays as-is for next greeting re-entry.
+            return None
+
+        except Exception as e:
+            self.logger.warning(f"Could not check pending resume offer: {e}")
+            return None
+
+    async def _resume_suspended_standup(
+        self, user_id: str, session_id: str
+    ) -> IntentProcessingResult:
+        """
+        Issue #889: Resume a suspended standup conversation.
+
+        Transitions SUSPENDED → INITIATED so the ProcessRegistry will route
+        subsequent messages to the standup handler.
+        """
+        from services.conversation.conversation_handler import _get_standup_components
+        from services.shared_types import StandupConversationState
+
+        manager, handler = _get_standup_components()
+
+        # Find the suspended conversation for this user
+        conv = manager.get_conversation_by_user(user_id, include_suspended=True)
+
+        if not conv or conv.state != StandupConversationState.SUSPENDED:
+            return IntentProcessingResult(
+                success=True,
+                message="I couldn't find the paused standup. Want to start a fresh one with /standup?",
+                intent_data={
+                    "category": "guidance",
+                    "action": "suspended_session_resume_failed",
+                    "confidence": 1.0,
+                    "context": {"user_id": user_id},
+                },
+                workflow_id=None,
+                requires_clarification=False,
+            )
+
+        # Transition back to INITIATED so the registry picks it up
+        manager.transition_state(conv.id, StandupConversationState.INITIATED)
+
+        # Update session_id to the current session so the adapter can find it
+        conv.session_id = session_id
+
+        # Generate a resume message
+        resume_msg = "Great, let's pick up where we left off! "
+        if conv.current_standup:
+            resume_msg += (
+                f"Here's what we had so far:\n\n{conv.current_standup}\n\n"
+                "Would you like to continue refining this, or start fresh?"
+            )
+        else:
+            resume_msg += "What would you like to include in your standup today?"
+
+        return IntentProcessingResult(
+            success=True,
+            message=resume_msg,
+            intent_data={
+                "category": "execution",
+                "action": "standup_conversation_resumed",
+                "confidence": 1.0,
+                "context": {
+                    "conversation_id": conv.id,
+                    "state": conv.state.value,
+                    "resumed": True,
+                    "guided_process": ProcessType.STANDUP.value,
+                },
+            },
+            workflow_id=None,
+            requires_clarification=False,
+        )
+
+    async def _abandon_suspended_standup(self, user_id: str) -> IntentProcessingResult:
+        """
+        Issue #889: Abandon a suspended standup conversation.
+
+        User declined to resume. Transition SUSPENDED → ABANDONED.
+        """
+        from services.conversation.conversation_handler import _get_standup_components
+        from services.shared_types import StandupConversationState
+
+        manager, _ = _get_standup_components()
+        conv = manager.get_conversation_by_user(user_id, include_suspended=True)
+
+        if conv and conv.state == StandupConversationState.SUSPENDED:
+            manager.transition_state(conv.id, StandupConversationState.ABANDONED)
+
+        return IntentProcessingResult(
+            success=True,
+            message="No problem! The paused standup has been cleared. Just say /standup when you're ready for a new one.",
+            intent_data={
+                "category": "guidance",
+                "action": "suspended_session_declined",
+                "confidence": 1.0,
+                "context": {
+                    "user_id": user_id,
+                    "process_type": ProcessType.STANDUP.value,
+                },
+            },
+            workflow_id=None,
+            requires_clarification=False,
+        )
+
+    async def _resume_suspended_onboarding(
+        self, user_id: str, session_id: str
+    ) -> IntentProcessingResult:
+        """
+        Issue #889: Resume a suspended onboarding session.
+
+        Transitions SUSPENDED → INITIATED so the ProcessRegistry will route
+        subsequent messages to the onboarding handler.
+        """
+        from services.conversation.conversation_handler import _get_onboarding_components
+        from services.shared_types import PortfolioOnboardingState
+
+        manager, handler = _get_onboarding_components()
+        session = manager.get_session_by_user(user_id)
+
+        if not session or session.state != PortfolioOnboardingState.SUSPENDED:
+            return IntentProcessingResult(
+                success=True,
+                message="I couldn't find the paused setup. Want to start fresh? Just say 'help me set up'.",
+                intent_data={
+                    "category": "guidance",
+                    "action": "suspended_session_resume_failed",
+                    "confidence": 1.0,
+                    "context": {"user_id": user_id},
+                },
+                workflow_id=None,
+                requires_clarification=False,
+            )
+
+        # Transition back to INITIATED
+        manager.transition_state(session.id, PortfolioOnboardingState.INITIATED)
+
+        resume_msg = "Great, let's continue setting up your workspace! Tell me about your projects."
+
+        return IntentProcessingResult(
+            success=True,
+            message=resume_msg,
+            intent_data={
+                "category": "guidance",
+                "action": "portfolio_onboarding_resumed",
+                "confidence": 1.0,
+                "context": {
+                    "onboarding_id": session.id,
+                    "state": session.state.value,
+                    "resumed": True,
+                    "guided_process": ProcessType.ONBOARDING.value,
+                },
+            },
+            workflow_id=None,
+            requires_clarification=False,
+        )
+
+    async def _abandon_suspended_onboarding(self, user_id: str) -> IntentProcessingResult:
+        """
+        Issue #889: Abandon a suspended onboarding session.
+
+        User declined to resume. Transition SUSPENDED → DECLINED.
+        """
+        from services.conversation.conversation_handler import _get_onboarding_components
+        from services.shared_types import PortfolioOnboardingState
+
+        manager, _ = _get_onboarding_components()
+        session = manager.get_session_by_user(user_id)
+
+        if session and session.state == PortfolioOnboardingState.SUSPENDED:
+            manager.transition_state(session.id, PortfolioOnboardingState.DECLINED)
+
+        return IntentProcessingResult(
+            success=True,
+            message="No problem! You can set up your workspace anytime by saying 'help me set up'.",
+            intent_data={
+                "category": "guidance",
+                "action": "suspended_session_declined",
+                "confidence": 1.0,
+                "context": {
+                    "user_id": user_id,
+                    "process_type": ProcessType.ONBOARDING.value,
+                },
+            },
+            workflow_id=None,
+            requires_clarification=False,
+        )
+
     async def _check_active_onboarding(
         self, user_id: str, session_id: str, message: str
     ) -> Optional[IntentProcessingResult]:
@@ -1319,31 +1603,17 @@ class IntentService:
             from services.conversation.conversation_handler import _get_onboarding_components
             from services.shared_types import IntentCategory, PortfolioOnboardingState
 
-            # Issue #490 INVESTIGATION: Trace execution
-            print(
-                f"[IntentService] _check_active_onboarding called, user_id={user_id}, session_id={session_id}"
-            )
-
             # Issue #490: Use the SAME singleton manager as conversation_handler
             # Creating a new PortfolioOnboardingManager() would lose session state!
             manager, handler = _get_onboarding_components()
-
-            # Issue #490 INVESTIGATION: Show manager state
-            print(
-                f"[IntentService] manager id={id(manager)}, sessions={list(manager._sessions.keys())}"
-            )
 
             # Issue #490: Check for active session by user_id (preferred) or session_id (fallback)
             # This ensures onboarding works even when user is not authenticated
             session = None
             if user_id:
                 session = manager.get_session_by_user(user_id)
-                print(f"[IntentService] Lookup by user_id={user_id}, found={session is not None}")
             if not session and session_id:
                 session = manager.get_session_by_session_id(session_id)
-                print(
-                    f"[IntentService] Lookup by session_id={session_id}, found={session is not None}"
-                )
 
             if not session:
                 return None
@@ -1396,65 +1666,39 @@ class IntentService:
         """
         Issue #585: Check for active standup conversation and route message directly.
 
-        Active conversational processes (like interactive standup) take priority over intent
-        classification. This prevents guided conversations from being derailed by
-        messages that happen to match other intent patterns.
+        DEPRECATED (Issue #889): This method is superseded by the ProcessRegistry
+        (ADR-049) which handles all guided process routing via
+        _check_active_guided_process(). Retained for backward compatibility with
+        tests in test_standup_routing_585.py that verify its existence.
 
-        Design principle: Once the user starts a standup conversation, Piper should
-        maintain control of the conversation until:
-        - The conversation completes successfully
-        - The user explicitly cancels
-        - The session times out or is abandoned
-
-        Args:
-            user_id: Authenticated user ID
-            session_id: Session identifier
-            message: User's message
-
-        Returns:
-            IntentProcessingResult if active standup handled the message,
-            None if no active standup (proceed with normal classification)
+        The ProcessRegistry + StandupProcessAdapter now handle:
+        - Active session detection (check_active)
+        - Message routing (handle_message)
+        - Escape command interception (#888)
+        - Timeout auto-suspend (#888)
         """
         try:
             from services.conversation.conversation_handler import _get_standup_components
             from services.shared_types import IntentCategory, StandupConversationState
 
-            # Issue #585 INVESTIGATION: Trace execution
-            print(
-                f"[IntentService] _check_active_standup called, user_id={user_id}, session_id={session_id}"
-            )
-
-            # Issue #585: Use the SAME singleton manager as conversation_handler
-            # Creating a new StandupConversationManager() would lose session state!
             manager, handler = _get_standup_components()
 
-            # Issue #585 INVESTIGATION: Show manager state
-            print(
-                f"[IntentService] standup manager id={id(manager)}, conversations={list(manager._conversations.keys())}"
-            )
-
-            # Issue #585: Check for active conversation by session_id
-            # The StandupConversationManager uses session_id for lookup
             conversation = None
             if session_id:
                 conversation = manager.get_conversation_by_session(session_id)
-                print(
-                    f"[IntentService] Lookup by session_id={session_id}, found={conversation is not None}"
-                )
 
             if not conversation:
                 return None
 
-            # Check if conversation is in a terminal state
             if conversation.state in (
                 StandupConversationState.COMPLETE,
                 StandupConversationState.ABANDONED,
+                StandupConversationState.SUSPENDED,
             ):
                 return None
 
-            # Active standup conversation exists - route message directly to handler
             self.logger.info(
-                "Routing to active standup conversation",
+                "Legacy _check_active_standup routing to active standup",
                 user_id=user_id,
                 conversation_id=conversation.id,
                 state=conversation.state.value,
@@ -1472,7 +1716,7 @@ class IntentService:
                     "context": {
                         "conversation_id": conversation.id,
                         "state": response.state.value,
-                        "bypassed_classification": True,  # Indicates we skipped intent classification
+                        "bypassed_classification": True,
                     },
                 },
                 workflow_id=None,
