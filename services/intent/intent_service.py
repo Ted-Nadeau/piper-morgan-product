@@ -4702,16 +4702,17 @@ class IntentService:
         else:
             # Issue #489: Graceful degradation for unhandled EXECUTION actions
             # Return user-friendly message instead of 422 error
+            # Issue #886: Contextual fallback copy (CXO guidance)
             self.logger.info(
                 f"Unhandled EXECUTION action: {mapped_action} (original: {intent.action}) - returning graceful fallback"
             )
+            fallback_message = self._get_contextual_fallback(
+                mapped_action=mapped_action,
+                original_message=intent.original_message,
+            )
             return IntentProcessingResult(
                 success=True,  # Changed from False to prevent 422
-                message=(
-                    "I don't have that capability yet, but I'm learning! "
-                    "Try asking 'What can you do?' to see what I can help with, "
-                    "or let me know if there's something else I can assist with."
-                ),
+                message=fallback_message,
                 intent_data={
                     "category": intent.category.value,
                     "action": intent.action,
@@ -4725,6 +4726,101 @@ class IntentService:
                 error=None,  # No error - graceful degradation
                 error_type=None,
             )
+
+    def _get_contextual_fallback(self, mapped_action: str, original_message: str) -> str:
+        """
+        Issue #886: Return contextual fallback copy for not-implemented capabilities.
+
+        Instead of a generic "I don't have that capability yet" message, return
+        a colleague-level response that acknowledges what the user asked, explains
+        the limitation, and suggests a concrete next step using existing capabilities.
+
+        Copy authored by CXO (memo-cxo-contextual-fallbacks-2026-03-13).
+        """
+        msg_lower = original_message.lower().strip() if original_message else ""
+
+        # Issue #886: Contextual fallback lookup.
+        # Match on keywords in the original message to select the right copy.
+        # Order: most specific patterns first, generic fallback last.
+
+        # Scheduling: "schedule a meeting", "set up a meeting"
+        if any(
+            kw in msg_lower for kw in ["schedule a meeting", "set up a meeting", "book a meeting"]
+        ):
+            return (
+                "I can't create calendar events yet — that's coming soon. "
+                "Want me to create a GitHub issue to track this meeting topic, "
+                "or draft an agenda you can paste into your calendar invite?"
+            )
+
+        # Reminders: "remind me"
+        if "remind me" in msg_lower or "set a reminder" in msg_lower:
+            return (
+                "I can't set reminders yet, but I can add a todo for that "
+                "so it shows up in your task list. Want me to do that?"
+            )
+
+        # Document creation: "create a doc", "create a document"
+        if any(kw in msg_lower for kw in ["create a doc", "create a document", "make a doc"]):
+            return (
+                "I can't create documents yet. If you'd like to capture something "
+                "from our conversation, I can summarize the key points so you can "
+                "copy them into a doc."
+            )
+
+        # Batch issue creation: "create issues from", "action items"
+        if any(
+            kw in msg_lower
+            for kw in [
+                "create issues from",
+                "action items",
+                "batch create",
+                "issues from this meeting",
+            ]
+        ):
+            return (
+                "I can't batch-create issues from a meeting yet, but I can create "
+                "them one at a time. Want to walk through the action items? "
+                "Just tell me the first one."
+            )
+
+        # Close issues: "close" + "issue"
+        if "close" in msg_lower and ("issue" in msg_lower or "completed" in msg_lower):
+            return (
+                "I can't close issues yet — that's on my roadmap. For now, you "
+                "can close them directly in GitHub. Want me to show you which "
+                "issues look ready to close?"
+            )
+
+        # Post to Slack: "post" + ("channel" or "slack" or "team")
+        if "post" in msg_lower and any(kw in msg_lower for kw in ["channel", "slack", "team"]):
+            return (
+                "I can't post to Slack channels yet. I can help you draft the "
+                "message though — then you can paste it into the channel. "
+                "Want me to format an update?"
+            )
+
+        # Complete todo: "complete" + "todo"
+        if "complete" in msg_lower and "todo" in msg_lower:
+            return (
+                "I can't mark todos complete yet — that's coming soon. "
+                "Want me to show your current todo list so you can track what's done?"
+            )
+
+        # Upload file: "upload" + ("file" or "knowledge")
+        if "upload" in msg_lower and any(kw in msg_lower for kw in ["file", "knowledge"]):
+            return (
+                "I can't accept file uploads yet. If you paste the content here, "
+                "I can analyze it — or you can add files directly to Notion and "
+                "I'll be able to search them."
+            )
+
+        # Generic fallback (Issue #489 original)
+        return (
+            "I don't have that capability yet, but I'm learning! "
+            "Try asking 'What can you do?' to see what I can help with, "
+            "or let me know if there's something else I can assist with."
+        )
 
     async def _handle_create_issue(
         self, intent: Intent, workflow_id: str, session_id: str

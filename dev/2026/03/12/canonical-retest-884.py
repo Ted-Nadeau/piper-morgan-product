@@ -47,7 +47,12 @@ OUTPUT_DIR = Path(__file__).parent
 CANONICAL_QUERIES = [
     # Identity (5) — expect IDENTITY
     (1, "What's your name?", "Identity", "identity"),
-    (2, "What can you help me with?", "Identity", "identity"),
+    (
+        2,
+        "What can you help me with?",
+        "Identity",
+        "discovery",
+    ),  # Issue #886: CXO reclassified — discovery is correct (shows capabilities)
     (3, "Are you working properly?", "Identity", "identity"),
     (4, "How do I get help?", "Identity", "identity"),
     (5, "What makes you different?", "Identity", "identity"),
