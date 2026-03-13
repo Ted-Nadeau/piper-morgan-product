@@ -180,13 +180,13 @@ class TestUIIntegration:
                 {"name": "Testing Framework", "status": "completed", "progress": 100},
                 {"name": "Enhanced Autonomy Phase 4", "status": "in_progress", "progress": 75},
             ],
-            "overall_progress": 94,
+            "overall_progress": 93.75,
             "estimated_completion": "2025-08-15 3:16 PM",
         }
 
         # Validate workflow structure
         assert len(workflow_data["phases"]) == 4
-        assert workflow_data["overall_progress"] == 94
+        assert workflow_data["overall_progress"] == 93.75
 
         # Validate phase statuses
         completed_phases = [p for p in workflow_data["phases"] if p["status"] == "completed"]
@@ -196,7 +196,7 @@ class TestUIIntegration:
         calculated_progress = sum(p["progress"] for p in workflow_data["phases"]) / len(
             workflow_data["phases"]
         )
-        assert calculated_progress == 94
+        assert calculated_progress == 93.75
 
     def test_ui_error_handling_and_fallback(self):
         """Test that UI properly handles errors and displays fallback information."""

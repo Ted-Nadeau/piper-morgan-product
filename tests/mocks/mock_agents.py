@@ -152,6 +152,67 @@ class MockAnalysisAgent(MockAgent):
         super().__init__(agent_type="analysis", agent_id="analysis_agent_001")
 
 
+class MockAgentCoordinator:
+    """Synchronous mock coordinator for UI integration testing.
+
+    Provides start_workflow, monitor_agent_health, handle_error_scenario,
+    and test_ui_integration methods used by tests/ui/test_ui_integration.py.
+    """
+
+    def __init__(self):
+        self.workflows: Dict[str, Any] = {}
+
+    def start_workflow(self, workflow_id: str, workflow_type: str) -> Dict[str, Any]:
+        """Start a mock workflow and return its status."""
+        self.workflows[workflow_id] = {
+            "id": workflow_id,
+            "type": workflow_type,
+            "status": "started",
+        }
+        return {"status": "started", "workflow_id": workflow_id}
+
+    def monitor_agent_health(
+        self, agent_health: List[Dict[str, Any]]
+    ) -> Dict[str, Any]:
+        """Evaluate agent health data and return an overall health summary."""
+        active = [a for a in agent_health if a.get("status") == "active"]
+        scores = [a.get("health", 0) for a in agent_health]
+        avg_score = sum(scores) / len(scores) if scores else 0
+
+        if avg_score >= 90:
+            overall = "excellent"
+        elif avg_score >= 70:
+            overall = "good"
+        else:
+            overall = "degraded"
+
+        return {
+            "overall_health": overall,
+            "active_agents": len(active),
+            "health_score": avg_score,
+        }
+
+    def handle_error_scenario(
+        self, scenario: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Handle a mock error scenario and return handled status."""
+        return {
+            "status": "handled",
+            "fallback_action": scenario.get("fallback_action", "none"),
+            "user_message": scenario.get("user_message", ""),
+        }
+
+    def test_ui_integration(
+        self, integration_config: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Test UI integration and return integration status."""
+        return {
+            "status": "integrated",
+            "data_flow": "operational",
+            "performance": "within_targets",
+        }
+
+
 def create_mock_agent(agent_type: str) -> MockAgent:
     """Create a mock agent of the specified type
 
