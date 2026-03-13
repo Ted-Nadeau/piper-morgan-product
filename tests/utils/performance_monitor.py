@@ -102,9 +102,7 @@ class PerformanceMonitor:
 
         return result, measurement
 
-    def validate_performance_targets(
-        self, performance_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def validate_performance_targets(self, performance_data: Dict[str, Any]) -> Dict[str, Any]:
         """Validate performance data against predefined targets.
 
         Args:

@@ -171,9 +171,7 @@ class MockAgentCoordinator:
         }
         return {"status": "started", "workflow_id": workflow_id}
 
-    def monitor_agent_health(
-        self, agent_health: List[Dict[str, Any]]
-    ) -> Dict[str, Any]:
+    def monitor_agent_health(self, agent_health: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Evaluate agent health data and return an overall health summary."""
         active = [a for a in agent_health if a.get("status") == "active"]
         scores = [a.get("health", 0) for a in agent_health]
@@ -192,9 +190,7 @@ class MockAgentCoordinator:
             "health_score": avg_score,
         }
 
-    def handle_error_scenario(
-        self, scenario: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def handle_error_scenario(self, scenario: Dict[str, Any]) -> Dict[str, Any]:
         """Handle a mock error scenario and return handled status."""
         return {
             "status": "handled",
@@ -202,9 +198,7 @@ class MockAgentCoordinator:
             "user_message": scenario.get("user_message", ""),
         }
 
-    def test_ui_integration(
-        self, integration_config: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def test_ui_integration(self, integration_config: Dict[str, Any]) -> Dict[str, Any]:
         """Test UI integration and return integration status."""
         return {
             "status": "integrated",
