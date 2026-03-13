@@ -1,0 +1,331 @@
+2025-10-16 13:19:55 [debug    ] Using user configuration       path=config/PIPER.user.md
+2025-10-16 13:19:55 [info     ] PiperConfigLoader initialized  config_path=config/PIPER.user.md
+2025-10-16 13:19:55 [debug    ] PortConfigurationService initialized environment=development
+2025-10-16 13:19:55 [info     ] ✅ IntentEnforcementMiddleware registered (GREAT-4B)
+INFO:     Started server process [99280]
+INFO:     Waiting for application startup.
+
+============================================================
+🔧 Phase 1.5: Initializing ServiceContainer (DDD pattern)
+============================================================
+2025-10-16 13:19:55 [info     ] Container not initialized, initializing now...
+2025-10-16 13:19:55 [info     ] Keychain service initialized   backend=Keyring service_name=piper-morgan
+2025-10-16 13:19:55 [debug    ] Selection config loaded: env=development, excluded=[], default=openai
+2025-10-16 13:19:55 [debug    ] Retrieved API key for openai from keychain
+2025-10-16 13:19:55 [debug    ] Retrieved openai key from keychain (secure)
+2025-10-16 13:19:55 [debug    ] Retrieved API key for anthropic from keychain
+2025-10-16 13:19:55 [debug    ] Retrieved anthropic key from keychain (secure)
+2025-10-16 13:19:55 [debug    ] Retrieved API key for gemini from keychain
+2025-10-16 13:19:55 [debug    ] Retrieved gemini key from keychain (secure)
+2025-10-16 13:19:55 [debug    ] Retrieved API key for perplexity from keychain
+2025-10-16 13:19:55 [debug    ] Retrieved perplexity key from keychain (secure)
+2025-10-16 13:19:55 [debug    ] Retrieved API key for anthropic from keychain
+2025-10-16 13:19:55 [debug    ] Retrieved anthropic key from keychain (secure)
+2025-10-16 13:19:55 [info     ] Anthropic client initialized
+2025-10-16 13:19:55 [debug    ] Retrieved API key for openai from keychain
+2025-10-16 13:19:55 [debug    ] Retrieved openai key from keychain (secure)
+2025-10-16 13:19:55 [info     ] OpenAI client initialized
+2025-10-16 13:19:55 [info     ] Initializing LLM domain service...
+2025-10-16 13:19:55 [info     ] Keychain service initialized   backend=Keyring service_name=piper-morgan
+2025-10-16 13:19:55 [debug    ] Selection config loaded: env=development, excluded=[], default=openai
+2025-10-16 13:19:55 [info     ] Validating LLM providers...
+2025-10-16 13:19:55 [debug    ] Retrieved API key for openai from keychain
+2025-10-16 13:19:55 [debug    ] Retrieved openai key from keychain (secure)
+2025-10-16 13:19:55 [debug    ] Retrieved API key for anthropic from keychain
+2025-10-16 13:19:55 [debug    ] Retrieved anthropic key from keychain (secure)
+2025-10-16 13:19:55 [debug    ] Retrieved API key for gemini from keychain
+2025-10-16 13:19:55 [debug    ] Retrieved gemini key from keychain (secure)
+2025-10-16 13:19:55 [debug    ] Retrieved API key for perplexity from keychain
+2025-10-16 13:19:55 [debug    ] Retrieved perplexity key from keychain (secure)
+2025-10-16 13:19:55 [debug    ] Retrieved API key for openai from keychain
+2025-10-16 13:19:55 [debug    ] Retrieved openai key from keychain (secure)
+2025-10-16 13:19:55 [debug    ] Retrieved API key for anthropic from keychain
+2025-10-16 13:19:55 [debug    ] Retrieved anthropic key from keychain (secure)
+2025-10-16 13:19:55 [debug    ] Retrieved API key for gemini from keychain
+2025-10-16 13:19:55 [debug    ] Retrieved gemini key from keychain (secure)
+2025-10-16 13:19:55 [debug    ] Retrieved API key for perplexity from keychain
+2025-10-16 13:19:55 [debug    ] Retrieved perplexity key from keychain (secure)
+2025-10-16 13:19:57 [info     ] ✅ openai: Valid
+2025-10-16 13:19:57 [info     ] ✅ anthropic: Valid
+2025-10-16 13:19:57 [info     ] ✅ gemini: Valid
+2025-10-16 13:19:57 [info     ] ✅ perplexity: Valid
+2025-10-16 13:19:57 [info     ] ✅ openai: Valid
+2025-10-16 13:19:57 [info     ] ✅ anthropic: Valid
+2025-10-16 13:19:57 [info     ] ✅ gemini: Valid
+2025-10-16 13:19:57 [info     ] ✅ perplexity: Valid
+2025-10-16 13:19:57 [info     ] LLM providers validated: 4/4
+2025-10-16 13:19:57 [info     ] LLM client initialized
+2025-10-16 13:19:57 [info     ] LLM domain service initialized successfully
+/Users/xian/Development/piper-morgan/venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+2025-10-16 13:19:58 [info     ] IntentCache integrated with classifier ttl_seconds=3600
+2025-10-16 13:19:58 [info     ] IntentCache integrated with classifier ttl_seconds=3600
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8081 (Press CTRL+C to quit)
+Validation error: Workflow ID required - {'field': 'workflow_id', 'issue': 'Cannot be empty'}
+✅ Phase 1.5: ServiceContainer initialized successfully
+   Services available: ['llm', 'orchestration', 'intent']
+
+============================================================
+🔍 CORE-GREAT-2D: Configuration Validation
+============================================================
+
+============================================================
+CONFIGURATION VALIDATION SUMMARY
+============================================================
+
+✅ GITHUB: valid
+   GitHub configuration valid
+
+❌ SLACK: missing
+   Slack configuration incomplete: SLACK_BOT_TOKEN, SLACK_APP_TOKEN, SLACK_SIGNING_SECRET not set
+
+   Recovery:
+   Set missing environment variables: SLACK_BOT_TOKEN, SLACK_APP_TOKEN, SLACK_SIGNING_SECRET. Get credentials from: https://api.slack.com/apps → Your App → OAuth & Permissions / Basic Information
+
+❌ NOTION: invalid
+   Notion API key appears invalid (should start with 'secret_')
+
+   Recovery:
+   Verify API key from https://www.notion.so/my-integrations
+
+✅ CALENDAR: valid
+   Google Calendar configuration valid
+
+============================================================
+Valid: 2 | Optional: 0 | Invalid: 2
+============================================================
+
+
+⚠️ WARNING: Some service configurations are invalid
+Services will operate in degraded mode
+
+
+🔧 Phase 1.5: Getting services from ServiceContainer...
+✅ IntentService retrieved from container
+✅ LLM service retrieved from container
+✅ OrchestrationEngine retrieved from container
+✅ Phase 1.5: All services retrieved from ServiceContainer
+
+
+🔌 Phase 3B: Initializing Plugin System...
+
+🔌 Initializing Plugin System...
+  📦 Loaded 4/4 plugin(s)
+    ✅ github
+    ✅ slack
+    ✅ notion
+    ✅ calendar
+  ✅ GitHub plugin initialized (spatial: True)
+  ⚠️  Slack plugin initialized but not configured
+  ✅ Notion plugin initialized (spatial: True)
+  ✅ Calendar plugin initialized (spatial: True)
+  ✅ Initialized 4/4 plugin(s)
+  ✅ Mounted 4 router(s)
+✅ Plugin system initialized
+
+🚀 Web server startup complete
+INFO:     127.0.0.1:59643 - "GET /api/v1/workflows/%20 HTTP/1.1" 422 Unprocessable Entity
+INFO:     127.0.0.1:59661 - "GET /api/v1/workflows/test-workflow-123 HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [99280]
+
+🔌 Shutting down Plugin System...
+✅ Plugin shutdown: 4/4 successful
+🛑 Plugin system shutdown complete
+
+🔧 Shutting down ServiceContainer...
+✅ ServiceContainer shutdown successful
+🛑 Web server shutdown complete
+2025-10-16 13:26:03 [debug    ] Using user configuration       path=config/PIPER.user.md
+2025-10-16 13:26:03 [info     ] PiperConfigLoader initialized  config_path=config/PIPER.user.md
+Traceback (most recent call last):
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/runpy.py", line 197, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/runpy.py", line 87, in _run_code
+    exec(code, run_globals)
+  File "/Users/xian/Development/piper-morgan/venv/lib/python3.9/site-packages/uvicorn/__main__.py", line 4, in <module>
+    uvicorn.main()
+  File "/Users/xian/Development/piper-morgan/venv/lib/python3.9/site-packages/click/core.py", line 1139, in __call__
+    return self.main(*args, **kwargs)
+  File "/Users/xian/Development/piper-morgan/venv/lib/python3.9/site-packages/click/core.py", line 1060, in main
+    rv = self.invoke(ctx)
+  File "/Users/xian/Development/piper-morgan/venv/lib/python3.9/site-packages/click/core.py", line 1421, in invoke
+    return ctx.invoke(self.callback, **ctx.params)
+  File "/Users/xian/Development/piper-morgan/venv/lib/python3.9/site-packages/click/core.py", line 766, in invoke
+    return __callback(*args, **kwargs)
+  File "/Users/xian/Development/piper-morgan/venv/lib/python3.9/site-packages/uvicorn/main.py", line 409, in main
+    run(
+  File "/Users/xian/Development/piper-morgan/venv/lib/python3.9/site-packages/uvicorn/main.py", line 577, in run
+    server.run()
+  File "/Users/xian/Development/piper-morgan/venv/lib/python3.9/site-packages/uvicorn/server.py", line 60, in run
+    return asyncio.run(self.serve(sockets=sockets))
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/asyncio/runners.py", line 44, in run
+    return loop.run_until_complete(main)
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/Users/xian/Development/piper-morgan/venv/lib/python3.9/site-packages/uvicorn/server.py", line 67, in serve
+    config.load()
+  File "/Users/xian/Development/piper-morgan/venv/lib/python3.9/site-packages/uvicorn/config.py", line 439, in load
+    self.loaded_app = import_from_string(self.app)
+  File "/Users/xian/Development/piper-morgan/venv/lib/python3.9/site-packages/uvicorn/importer.py", line 19, in import_from_string
+    module = importlib.import_module(module_str)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "<frozen importlib._bootstrap>", line 1030, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1007, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 986, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 680, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 850, in exec_module
+  File "<frozen importlib._bootstrap>", line 228, in _call_with_frames_removed
+  File "/Users/xian/Development/piper-morgan/web/app.py", line 37, in <module>
+    from web.utils.error_responses import (
+ImportError: cannot import name 'bad_gateway_error' from 'web.utils.error_responses' (/Users/xian/Development/piper-morgan/web/utils/error_responses.py)
+2025-10-16 13:28:21 [debug    ] Using user configuration       path=config/PIPER.user.md
+2025-10-16 13:28:21 [info     ] PiperConfigLoader initialized  config_path=config/PIPER.user.md
+2025-10-16 13:28:21 [debug    ] PortConfigurationService initialized environment=development
+2025-10-16 13:28:21 [info     ] ✅ IntentEnforcementMiddleware registered (GREAT-4B)
+INFO:     Started server process [8614]
+INFO:     Waiting for application startup.
+
+============================================================
+🔧 Phase 1.5: Initializing ServiceContainer (DDD pattern)
+============================================================
+2025-10-16 13:28:21 [info     ] Container not initialized, initializing now...
+2025-10-16 13:28:21 [info     ] Keychain service initialized   backend=Keyring service_name=piper-morgan
+2025-10-16 13:28:21 [debug    ] Selection config loaded: env=development, excluded=[], default=openai
+2025-10-16 13:28:21 [debug    ] Retrieved API key for openai from keychain
+2025-10-16 13:28:21 [debug    ] Retrieved openai key from keychain (secure)
+2025-10-16 13:28:21 [debug    ] Retrieved API key for anthropic from keychain
+2025-10-16 13:28:21 [debug    ] Retrieved anthropic key from keychain (secure)
+2025-10-16 13:28:21 [debug    ] Retrieved API key for gemini from keychain
+2025-10-16 13:28:21 [debug    ] Retrieved gemini key from keychain (secure)
+2025-10-16 13:28:21 [debug    ] Retrieved API key for perplexity from keychain
+2025-10-16 13:28:21 [debug    ] Retrieved perplexity key from keychain (secure)
+2025-10-16 13:28:21 [debug    ] Retrieved API key for anthropic from keychain
+2025-10-16 13:28:21 [debug    ] Retrieved anthropic key from keychain (secure)
+2025-10-16 13:28:21 [info     ] Anthropic client initialized
+2025-10-16 13:28:21 [debug    ] Retrieved API key for openai from keychain
+2025-10-16 13:28:21 [debug    ] Retrieved openai key from keychain (secure)
+2025-10-16 13:28:21 [info     ] OpenAI client initialized
+2025-10-16 13:28:21 [info     ] Initializing LLM domain service...
+2025-10-16 13:28:21 [info     ] Keychain service initialized   backend=Keyring service_name=piper-morgan
+2025-10-16 13:28:21 [debug    ] Selection config loaded: env=development, excluded=[], default=openai
+2025-10-16 13:28:21 [info     ] Validating LLM providers...
+2025-10-16 13:28:21 [debug    ] Retrieved API key for openai from keychain
+2025-10-16 13:28:21 [debug    ] Retrieved openai key from keychain (secure)
+2025-10-16 13:28:21 [debug    ] Retrieved API key for anthropic from keychain
+2025-10-16 13:28:21 [debug    ] Retrieved anthropic key from keychain (secure)
+2025-10-16 13:28:21 [debug    ] Retrieved API key for gemini from keychain
+2025-10-16 13:28:21 [debug    ] Retrieved gemini key from keychain (secure)
+2025-10-16 13:28:21 [debug    ] Retrieved API key for perplexity from keychain
+2025-10-16 13:28:21 [debug    ] Retrieved perplexity key from keychain (secure)
+2025-10-16 13:28:21 [debug    ] Retrieved API key for openai from keychain
+2025-10-16 13:28:21 [debug    ] Retrieved openai key from keychain (secure)
+2025-10-16 13:28:21 [debug    ] Retrieved API key for anthropic from keychain
+2025-10-16 13:28:21 [debug    ] Retrieved anthropic key from keychain (secure)
+2025-10-16 13:28:21 [debug    ] Retrieved API key for gemini from keychain
+2025-10-16 13:28:21 [debug    ] Retrieved gemini key from keychain (secure)
+2025-10-16 13:28:21 [debug    ] Retrieved API key for perplexity from keychain
+2025-10-16 13:28:21 [debug    ] Retrieved perplexity key from keychain (secure)
+2025-10-16 13:28:23 [info     ] ✅ openai: Valid
+2025-10-16 13:28:23 [info     ] ✅ anthropic: Valid
+2025-10-16 13:28:23 [info     ] ✅ gemini: Valid
+2025-10-16 13:28:23 [info     ] ✅ perplexity: Valid
+2025-10-16 13:28:23 [info     ] ✅ openai: Valid
+2025-10-16 13:28:23 [info     ] ✅ anthropic: Valid
+2025-10-16 13:28:23 [info     ] ✅ gemini: Valid
+2025-10-16 13:28:23 [info     ] ✅ perplexity: Valid
+2025-10-16 13:28:23 [info     ] LLM providers validated: 4/4
+2025-10-16 13:28:23 [info     ] LLM client initialized
+2025-10-16 13:28:23 [info     ] LLM domain service initialized successfully
+/Users/xian/Development/piper-morgan/venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+2025-10-16 13:28:24 [info     ] IntentCache integrated with classifier ttl_seconds=3600
+2025-10-16 13:28:24 [info     ] IntentCache integrated with classifier ttl_seconds=3600
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8081 (Press CTRL+C to quit)
+✅ Phase 1.5: ServiceContainer initialized successfully
+   Services available: ['llm', 'orchestration', 'intent']
+
+============================================================
+🔍 CORE-GREAT-2D: Configuration Validation
+============================================================
+
+============================================================
+CONFIGURATION VALIDATION SUMMARY
+============================================================
+
+✅ GITHUB: valid
+   GitHub configuration valid
+
+❌ SLACK: missing
+   Slack configuration incomplete: SLACK_BOT_TOKEN, SLACK_APP_TOKEN, SLACK_SIGNING_SECRET not set
+
+   Recovery:
+   Set missing environment variables: SLACK_BOT_TOKEN, SLACK_APP_TOKEN, SLACK_SIGNING_SECRET. Get credentials from: https://api.slack.com/apps → Your App → OAuth & Permissions / Basic Information
+
+❌ NOTION: invalid
+   Notion API key appears invalid (should start with 'secret_')
+
+   Recovery:
+   Verify API key from https://www.notion.so/my-integrations
+
+✅ CALENDAR: valid
+   Google Calendar configuration valid
+
+============================================================
+Valid: 2 | Optional: 0 | Invalid: 2
+============================================================
+
+
+⚠️ WARNING: Some service configurations are invalid
+Services will operate in degraded mode
+
+
+🔧 Phase 1.5: Getting services from ServiceContainer...
+✅ IntentService retrieved from container
+✅ LLM service retrieved from container
+✅ OrchestrationEngine retrieved from container
+✅ Phase 1.5: All services retrieved from ServiceContainer
+
+
+🔌 Phase 3B: Initializing Plugin System...
+
+🔌 Initializing Plugin System...
+  📦 Loaded 4/4 plugin(s)
+    ✅ github
+    ✅ slack
+    ✅ notion
+    ✅ calendar
+  ✅ GitHub plugin initialized (spatial: True)
+  ⚠️  Slack plugin initialized but not configured
+  ✅ Notion plugin initialized (spatial: True)
+  ✅ Calendar plugin initialized (spatial: True)
+  ✅ Initialized 4/4 plugin(s)
+  ✅ Mounted 4 router(s)
+✅ Plugin system initialized
+
+🚀 Web server startup complete
+INFO:     127.0.0.1:60455 - "GET /api/personality/profile/default HTTP/1.1" 200 OK
+Validation error: Content is required and must be a string - {'field': 'content', 'issue': 'Required field missing or invalid type'}
+INFO:     127.0.0.1:60537 - "POST /api/personality/enhance HTTP/1.1" 422 Unprocessable Entity
+{"event": "Standup proxy error: ", "logger": "web.app", "level": "error", "timestamp": "2025-10-16T20:29:53.781983Z", "exception": "Traceback (most recent call last):\n  File \"/Users/xian/Development/piper-morgan/venv/lib/python3.9/site-packages/httpx/_transports/default.py\", line 72, in map_httpcore_exceptions\n    yield\n  File \"/Users/xian/Development/piper-morgan/venv/lib/python3.9/site-packages/httpx/_transports/default.py\", line 377, in handle_async_request\n    resp = await self._pool.handle_async_request(req)\n  File \"/Users/xian/Development/piper-morgan/venv/lib/python3.9/site-packages/httpcore/_async/connection_pool.py\", line 242, in handle_async_request\n    raise exc from None\n  File \"/Users/xian/Development/piper-morgan/venv/lib/python3.9/site-packages/httpcore/_async/connection_pool.py\", line 224, in handle_async_request\n    response = await connection.handle_async_request(pool_request.request)\n  File \"/Users/xian/Development/piper-morgan/venv/lib/python3.9/site-packages/httpcore/_async/connection.py\", line 102, in handle_async_request\n    return await self._connection.handle_async_request(request)\n  File \"/Users/xian/Development/piper-morgan/venv/lib/python3.9/site-packages/httpcore/_async/http11.py\", line 130, in handle_async_request\n    raise exc\n  File \"/Users/xian/Development/piper-morgan/venv/lib/python3.9/site-packages/httpcore/_async/http11.py\", line 102, in handle_async_request\n    ) = await self._receive_response_headers(**kwargs)\n  File \"/Users/xian/Development/piper-morgan/venv/lib/python3.9/site-packages/httpcore/_async/http11.py\", line 171, in _receive_response_headers\n    event = await self._receive_event(timeout=timeout)\n  File \"/Users/xian/Development/piper-morgan/venv/lib/python3.9/site-packages/httpcore/_async/http11.py\", line 204, in _receive_event\n    data = await self._network_stream.read(self.READ_NUM_BYTES, timeout=timeout)\n  File \"/Users/xian/Development/piper-morgan/venv/lib/python3.9/site-packages/httpcore/_backends/anyio.py\", line 37, in read\n    return b\"\"\n  File \"/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/contextlib.py\", line 135, in __exit__\n    self.gen.throw(type, value, traceback)\n  File \"/Users/xian/Development/piper-morgan/venv/lib/python3.9/site-packages/httpcore/_exceptions.py\", line 14, in map_exceptions\n    raise to_exc(exc) from exc\nhttpcore.ReadTimeout\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/Users/xian/Development/piper-morgan/web/app.py\", line 460, in standup_proxy\n    response = await client.get(\n  File \"/Users/xian/Development/piper-morgan/venv/lib/python3.9/site-packages/httpx/_client.py\", line 1773, in get\n    return await self.request(\n  File \"/Users/xian/Development/piper-morgan/venv/lib/python3.9/site-packages/httpx/_client.py\", line 1550, in request\n    return await self.send(request, auth=auth, follow_redirects=follow_redirects)\n  File \"/Users/xian/Development/piper-morgan/venv/lib/python3.9/site-packages/httpx/_client.py\", line 1639, in send\n    response = await self._send_handling_auth(\n  File \"/Users/xian/Development/piper-morgan/venv/lib/python3.9/site-packages/httpx/_client.py\", line 1667, in _send_handling_auth\n    response = await self._send_handling_redirects(\n  File \"/Users/xian/Development/piper-morgan/venv/lib/python3.9/site-packages/httpx/_client.py\", line 1702, in _send_handling_redirects\n    response = await self._send_single_request(request)\n  File \"/Users/xian/Development/piper-morgan/venv/lib/python3.9/site-packages/httpx/_client.py\", line 1737, in _send_single_request\n    response = await transport.handle_async_request(request)\n  File \"/Users/xian/Development/piper-morgan/venv/lib/python3.9/site-packages/httpx/_transports/default.py\", line 377, in handle_async_request\n    resp = await self._pool.handle_async_request(req)\n  File \"/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/contextlib.py\", line 135, in __exit__\n    self.gen.throw(type, value, traceback)\n  File \"/Users/xian/Development/piper-morgan/venv/lib/python3.9/site-packages/httpx/_transports/default.py\", line 89, in map_httpcore_exceptions\n    raise mapped_exc(message) from exc\nhttpx.ReadTimeout"}
+Internal error: Failed to proxy standup request (error_id: 673b7a4f-38c7-4779-abf1-8c776b6e88d4)
+INFO:     127.0.0.1:60611 - "GET /api/standup HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:61089 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62083 - "GET /health/config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62900 - "GET /api/admin/intent-monitoring HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [8614]
+
+🔌 Shutting down Plugin System...
+✅ Plugin shutdown: 4/4 successful
+🛑 Plugin system shutdown complete
+
+🔧 Shutting down ServiceContainer...
+✅ ServiceContainer shutdown successful
+🛑 Web server shutdown complete

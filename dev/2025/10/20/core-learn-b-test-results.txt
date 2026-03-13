@@ -1,0 +1,89 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.9.6, pytest-8.4.1, pluggy-1.6.0 -- /Users/xian/Development/piper-morgan/venv/bin/python3
+cachedir: .pytest_cache
+rootdir: /Users/xian/Development/piper-morgan
+configfile: pytest.ini
+plugins: asyncio-1.1.0, anyio-3.7.1
+asyncio: mode=auto, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collecting ... collected 28 items
+
+tests/intent/test_learning_handlers.py::TestHandleLearnPattern::test_learn_pattern_handler_exists PASSED [  3%]
+tests/intent/test_learning_handlers.py::TestHandleLearnPattern::test_learn_pattern_not_placeholder PASSED [  7%]
+tests/intent/test_learning_handlers.py::TestHandleLearnPattern::test_learn_pattern_missing_type PASSED [ 10%]
+tests/intent/test_learning_handlers.py::TestHandleLearnPattern::test_learn_pattern_missing_source PASSED [ 14%]
+tests/intent/test_learning_handlers.py::TestHandleLearnPattern::test_learn_pattern_unknown_type PASSED [ 17%]
+tests/intent/test_learning_handlers.py::TestHandleLearnPattern::test_learn_pattern_issue_similarity_success PASSED [ 21%]
+tests/intent/test_learning_handlers.py::TestHandleLearnPattern::test_learn_pattern_with_examples PASSED [ 25%]
+tests/intent/test_learning_handlers.py::TestHandleLearnPattern::test_learn_pattern_no_data_graceful PASSED [ 28%]
+tests/integration/test_learning_system.py::TestLearningSystemIntegration::test_complete_pattern_learning_flow PASSED [ 32%]
+tests/integration/test_learning_system.py::TestLearningSystemIntegration::test_user_preferences_integration PASSED [ 35%]
+tests/integration/test_learning_system.py::TestLearningSystemIntegration::test_orchestration_engine_learning_integration PASSED [ 39%]
+tests/integration/test_learning_system.py::TestLearningSystemIntegration::test_pattern_retrieval_filtering PASSED [ 42%]
+tests/integration/test_learning_system.py::TestLearningSystemIntegration::test_analytics_and_statistics PASSED [ 46%]
+tests/integration/test_learning_system.py::TestLearningSystemIntegration::test_error_handling_invalid_pattern PASSED [ 50%]
+tests/integration/test_learning_system.py::TestLearningSystemIntegration::test_concurrent_pattern_learning SKIPPED [ 53%]
+tests/integration/test_learning_system.py::TestLearningSystemIntegration::test_preference_validation PASSED [ 57%]
+tests/integration/test_learning_system.py::TestLearningSystemIntegration::test_performance_bulk_patterns SKIPPED [ 60%]
+tests/services/orchestration/test_orchestration_engine.py::TestOrchestrationEngine::test_create_workflow_from_intent_success ERROR [ 64%]
+
+==================================== ERRORS ====================================
+_ ERROR at setup of TestOrchestrationEngine.test_create_workflow_from_intent_success _
+tests/services/orchestration/test_orchestration_engine.py:22: in engine
+    return OrchestrationEngine()
+services/orchestration/engine.py:76: in __init__
+    llm_client = container.get_service("llm")
+services/container/service_container.py:93: in get_service
+    raise ContainerNotInitializedError()
+E   services.container.exceptions.ContainerNotInitializedError: Container not initialized. Call container.initialize() first.
+=============================== warnings summary ===============================
+venv/lib/python3.9/site-packages/urllib3/__init__.py:35
+  /Users/xian/Development/piper-morgan/venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+    warnings.warn(
+
+venv/lib/python3.9/site-packages/PyPDF2/__init__.py:21
+  /Users/xian/Development/piper-morgan/venv/lib/python3.9/site-packages/PyPDF2/__init__.py:21: DeprecationWarning: PyPDF2 is deprecated. Please move to the pypdf library instead.
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+ERROR tests/services/orchestration/test_orchestration_engine.py::TestOrchestrationEngine::test_create_workflow_from_intent_success
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+============== 15 passed, 2 skipped, 2 warnings, 1 error in 4.65s ==============
+============================= test session starts ==============================
+platform darwin -- Python 3.9.6, pytest-8.4.1, pluggy-1.6.0 -- /Users/xian/Development/piper-morgan/venv/bin/python3
+cachedir: .pytest_cache
+rootdir: /Users/xian/Development/piper-morgan
+configfile: pytest.ini
+plugins: asyncio-1.1.0, anyio-3.7.1
+asyncio: mode=auto, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collecting ... collected 17 items
+
+tests/intent/test_learning_handlers.py::TestHandleLearnPattern::test_learn_pattern_handler_exists PASSED [  5%]
+tests/intent/test_learning_handlers.py::TestHandleLearnPattern::test_learn_pattern_not_placeholder PASSED [ 11%]
+tests/intent/test_learning_handlers.py::TestHandleLearnPattern::test_learn_pattern_missing_type PASSED [ 17%]
+tests/intent/test_learning_handlers.py::TestHandleLearnPattern::test_learn_pattern_missing_source PASSED [ 23%]
+tests/intent/test_learning_handlers.py::TestHandleLearnPattern::test_learn_pattern_unknown_type PASSED [ 29%]
+tests/intent/test_learning_handlers.py::TestHandleLearnPattern::test_learn_pattern_issue_similarity_success PASSED [ 35%]
+tests/intent/test_learning_handlers.py::TestHandleLearnPattern::test_learn_pattern_with_examples PASSED [ 41%]
+tests/intent/test_learning_handlers.py::TestHandleLearnPattern::test_learn_pattern_no_data_graceful PASSED [ 47%]
+tests/integration/test_learning_system.py::TestLearningSystemIntegration::test_complete_pattern_learning_flow PASSED [ 52%]
+tests/integration/test_learning_system.py::TestLearningSystemIntegration::test_user_preferences_integration PASSED [ 58%]
+tests/integration/test_learning_system.py::TestLearningSystemIntegration::test_orchestration_engine_learning_integration PASSED [ 64%]
+tests/integration/test_learning_system.py::TestLearningSystemIntegration::test_pattern_retrieval_filtering PASSED [ 70%]
+tests/integration/test_learning_system.py::TestLearningSystemIntegration::test_analytics_and_statistics PASSED [ 76%]
+tests/integration/test_learning_system.py::TestLearningSystemIntegration::test_error_handling_invalid_pattern PASSED [ 82%]
+tests/integration/test_learning_system.py::TestLearningSystemIntegration::test_concurrent_pattern_learning SKIPPED [ 88%]
+tests/integration/test_learning_system.py::TestLearningSystemIntegration::test_preference_validation PASSED [ 94%]
+tests/integration/test_learning_system.py::TestLearningSystemIntegration::test_performance_bulk_patterns SKIPPED [100%]
+
+=============================== warnings summary ===============================
+venv/lib/python3.9/site-packages/urllib3/__init__.py:35
+  /Users/xian/Development/piper-morgan/venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+    warnings.warn(
+
+venv/lib/python3.9/site-packages/PyPDF2/__init__.py:21
+  /Users/xian/Development/piper-morgan/venv/lib/python3.9/site-packages/PyPDF2/__init__.py:21: DeprecationWarning: PyPDF2 is deprecated. Please move to the pypdf library instead.
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================== 15 passed, 2 skipped, 2 warnings in 3.58s ===================

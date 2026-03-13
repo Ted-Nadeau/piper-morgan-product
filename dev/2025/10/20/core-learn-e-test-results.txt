@@ -1,0 +1,25 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.9.6, pytest-8.4.1, pluggy-1.6.0 -- /Users/xian/Development/piper-morgan/venv/bin/python3
+cachedir: .pytest_cache
+rootdir: /Users/xian/Development/piper-morgan
+configfile: pytest.ini
+plugins: asyncio-1.1.0, anyio-3.7.1
+asyncio: mode=auto, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collecting ... collected 14 items
+
+tests/integration/test_intelligent_automation.py::TestIntelligentAutomationIntegration::test_end_to_end_safe_automation PASSED [  7%]
+tests/integration/test_intelligent_automation.py::TestIntelligentAutomationIntegration::test_destructive_action_never_executes PASSED [ 14%]
+tests/integration/test_intelligent_automation.py::TestIntelligentAutomationIntegration::test_low_confidence_requires_approval PASSED [ 21%]
+tests/integration/test_intelligent_automation.py::TestIntelligentAutomationIntegration::test_emergency_stop_blocks_all_automation PASSED [ 28%]
+tests/integration/test_intelligent_automation.py::TestIntelligentAutomationIntegration::test_approval_workflow PASSED [ 35%]
+tests/integration/test_intelligent_automation.py::TestIntelligentAutomationIntegration::test_action_classification PASSED [ 42%]
+tests/integration/test_intelligent_automation.py::TestIntelligentAutomationIntegration::test_auto_execution_safety_threshold PASSED [ 50%]
+tests/integration/test_intelligent_automation.py::TestIntelligentAutomationIntegration::test_rollback_capability PASSED [ 57%]
+tests/integration/test_intelligent_automation.py::TestIntelligentAutomationIntegration::test_audit_trail_completeness PASSED [ 64%]
+tests/integration/test_intelligent_automation.py::TestIntelligentAutomationIntegration::test_prediction_integration PASSED [ 71%]
+tests/integration/test_intelligent_automation.py::TestIntelligentAutomationIntegration::test_concurrent_safety PASSED [ 78%]
+tests/integration/test_intelligent_automation.py::TestIntelligentAutomationIntegration::test_user_approval_preferences PASSED [ 85%]
+tests/integration/test_intelligent_automation.py::TestIntelligentAutomationIntegration::test_emergency_stop_recovery PASSED [ 92%]
+tests/integration/test_intelligent_automation.py::TestIntelligentAutomationIntegration::test_approval_statistics PASSED [100%]
+
+============================== 14 passed in 1.84s ==============================

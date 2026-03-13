@@ -1,0 +1,162 @@
+2025-10-19 17:30:46 [debug    ] Using user configuration       path=config/PIPER.user.md
+2025-10-19 17:30:46 [info     ] PiperConfigLoader initialized  config_path=config/PIPER.user.md
+2025-10-19 17:30:46 [debug    ] PortConfigurationService initialized environment=development
+2025-10-19 17:30:46 [info     ] ✅ IntentEnforcementMiddleware registered (GREAT-4B)
+INFO:     Started server process [4544]
+INFO:     Waiting for application startup.
+
+============================================================
+🔧 Phase 1.5: Initializing ServiceContainer (DDD pattern)
+============================================================
+2025-10-19 17:30:46 [info     ] Container not initialized, initializing now...
+2025-10-19 17:30:46 [info     ] Keychain service initialized   backend=Keyring service_name=piper-morgan
+2025-10-19 17:30:46 [debug    ] Selection config loaded: env=development, excluded=[], default=openai
+2025-10-19 17:30:46 [debug    ] Retrieved API key for openai from keychain
+2025-10-19 17:30:46 [debug    ] Retrieved openai key from keychain (secure)
+2025-10-19 17:30:46 [debug    ] Retrieved API key for anthropic from keychain
+2025-10-19 17:30:46 [debug    ] Retrieved anthropic key from keychain (secure)
+2025-10-19 17:30:46 [debug    ] Retrieved API key for gemini from keychain
+2025-10-19 17:30:46 [debug    ] Retrieved gemini key from keychain (secure)
+2025-10-19 17:30:46 [debug    ] Retrieved API key for perplexity from keychain
+2025-10-19 17:30:46 [debug    ] Retrieved perplexity key from keychain (secure)
+2025-10-19 17:30:46 [debug    ] Retrieved API key for anthropic from keychain
+2025-10-19 17:30:46 [debug    ] Retrieved anthropic key from keychain (secure)
+2025-10-19 17:30:46 [info     ] Anthropic client initialized
+2025-10-19 17:30:46 [debug    ] Retrieved API key for openai from keychain
+2025-10-19 17:30:46 [debug    ] Retrieved openai key from keychain (secure)
+2025-10-19 17:30:46 [info     ] OpenAI client initialized
+2025-10-19 17:30:46 [info     ] Initializing LLM domain service...
+2025-10-19 17:30:46 [info     ] Keychain service initialized   backend=Keyring service_name=piper-morgan
+2025-10-19 17:30:46 [debug    ] Selection config loaded: env=development, excluded=[], default=openai
+2025-10-19 17:30:46 [info     ] Validating LLM providers...
+2025-10-19 17:30:46 [debug    ] Retrieved API key for openai from keychain
+2025-10-19 17:30:46 [debug    ] Retrieved openai key from keychain (secure)
+2025-10-19 17:30:46 [debug    ] Retrieved API key for anthropic from keychain
+2025-10-19 17:30:46 [debug    ] Retrieved anthropic key from keychain (secure)
+2025-10-19 17:30:46 [debug    ] Retrieved API key for gemini from keychain
+2025-10-19 17:30:46 [debug    ] Retrieved gemini key from keychain (secure)
+2025-10-19 17:30:46 [debug    ] Retrieved API key for perplexity from keychain
+2025-10-19 17:30:46 [debug    ] Retrieved perplexity key from keychain (secure)
+2025-10-19 17:30:46 [debug    ] Retrieved API key for openai from keychain
+2025-10-19 17:30:46 [debug    ] Retrieved openai key from keychain (secure)
+2025-10-19 17:30:46 [debug    ] Retrieved API key for anthropic from keychain
+2025-10-19 17:30:46 [debug    ] Retrieved anthropic key from keychain (secure)
+2025-10-19 17:30:46 [debug    ] Retrieved API key for gemini from keychain
+2025-10-19 17:30:46 [debug    ] Retrieved gemini key from keychain (secure)
+2025-10-19 17:30:46 [debug    ] Retrieved API key for perplexity from keychain
+2025-10-19 17:30:46 [debug    ] Retrieved perplexity key from keychain (secure)
+2025-10-19 17:30:47 [info     ] ✅ openai: Valid
+2025-10-19 17:30:47 [info     ] ✅ anthropic: Valid
+2025-10-19 17:30:47 [info     ] ✅ gemini: Valid
+2025-10-19 17:30:47 [info     ] ✅ perplexity: Valid
+2025-10-19 17:30:47 [info     ] ✅ openai: Valid
+2025-10-19 17:30:47 [info     ] ✅ anthropic: Valid
+2025-10-19 17:30:47 [info     ] ✅ gemini: Valid
+2025-10-19 17:30:47 [info     ] ✅ perplexity: Valid
+2025-10-19 17:30:47 [info     ] LLM providers validated: 4/4
+2025-10-19 17:30:47 [info     ] LLM client initialized
+2025-10-19 17:30:47 [info     ] LLM domain service initialized successfully
+/Users/xian/Library/Python/3.9/lib/python/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+2025-10-19 17:30:48 [info     ] IntentCache integrated with classifier ttl_seconds=3600
+2025-10-19 17:30:48 [info     ] IntentCache integrated with classifier ttl_seconds=3600
+INFO:     Application startup complete.
+ERROR:    [Errno 48] error while attempting to bind on address ('127.0.0.1✅ Phase 1.5: ServiceContainer initialized successfully
+   Services available: ['llm', 'orchestration', 'intent']
+
+============================================================
+🔍 CORE-GREAT-2D: Configuration Validation
+============================================================
+
+============================================================
+CONFIGURATION VALIDATION SUMMARY
+============================================================
+
+✅ GITHUB: valid
+   GitHub configuration valid
+
+❌ SLACK: missing
+   Slack configuration incomplete: SLACK_BOT_TOKEN, SLACK_APP_TOKEN, SLACK_SIGNING_SECRET not set
+
+   Recovery:
+   Set missing environment variables: SLACK_BOT_TOKEN, SLACK_APP_TOKEN, SLACK_SIGNING_SECRET. Get credentials from: https://api.slack.com/apps → Your App → OAuth & Permissions / Basic Information
+
+❌ NOTION: invalid
+   Notion API key appears invalid (should start with 'secret_')
+
+   Recovery:
+   Verify API key from https://www.notion.so/my-integrations
+
+✅ CALENDAR: valid
+   Google Calendar configuration valid
+
+============================================================
+Valid: 2 | Optional: 0 | Invalid: 2
+============================================================
+
+
+⚠️ WARNING: Some service configurations are invalid
+Services will operate in degraded mode
+
+
+🔧 Phase 1.5: Getting services from ServiceContainer...
+✅ IntentService retrieved from container
+✅ LLM service retrieved from container
+✅ OrchestrationEngine retrieved from container
+✅ Phase 1.5: All services retrieved from ServiceContainer
+
+
+🔌 Phase 3B: Initializing Plugin System...
+
+🔌 Initializing Plugin System...
+  📦 Loaded 4/4 plugin(s)
+    ✅ github
+    ✅ slack
+    ✅ notion
+    ✅ calendar
+  ✅ GitHub plugin initialized (spatial: True)
+  ⚠️  Slack plugin initialized but not configured
+  ✅ Notion plugin initialized (spatial: True)
+  ✅ Calendar plugin initialized (spatial: True)
+  ✅ Initialized 4/4 plugin(s)
+  ✅ Mounted 4 router(s)
+✅ Plugin system initialized
+
+
+🎯 Mounting Standup API Router...
+✅ Standup API router mounted at /api/v1/standup
+   Endpoints:
+   - POST /api/v1/standup/generate
+   - GET /api/v1/standup/modes
+   - GET /api/v1/standup/formats
+   - GET /api/v1/standup/health
+🚀 Web server startup complete
+INFO:     127.0.0.1:53681 - "GET /api/v1/standup/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54202 - "POST /api/v1/standup/generate HTTP/1.1" 401 Unauthorized
+{"event": "JWT_SECRET_KEY not set, using development fallback", "logger": "services.auth.jwt_service", "level": "warning", "timestamp": "2025-10-20T00:37:36.256798Z"}
+{"error": "Not enough segments", "event": "Token validation failed: invalid", "logger": "services.auth.jwt_service", "level": "warning", "timestamp": "2025-10-20T00:37:36.257132Z"}
+INFO:     127.0.0.1:54204 - "POST /api/v1/standup/generate HTTP/1.1" 401 Unauthorized
+WARNING:  Invalid HTTP request received.
+WARNING:  Invalid HTTP request received.
+WARNING:  Invalid HTTP request received.
+WARNING:  Invalid HTTP request received.
+INFO:     127.0.0.1:54445 - "POST /api/v1/standup/generate HTTP/1.1" 401 Unauthorized
+{"event": "JWT_SECRET_KEY not set, using development fallback", "logger": "services.auth.jwt_service", "level": "warning", "timestamp": "2025-10-20T00:39:21.181377Z"}
+{"error": "Not enough segments", "event": "Token validation failed: invalid", "logger": "services.auth.jwt_service", "level": "warning", "timestamp": "2025-10-20T00:39:21.181566Z"}
+INFO:     127.0.0.1:54447 - "POST /api/v1/standup/generate HTTP/1.1" 401 Unauthorized
+WARNING:  Invalid HTTP request received.
+WARNING:  Invalid HTTP request received.
+WARNING:  Invalid HTTP request received.
+WARNING:  Invalid HTTP request received.
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [4472]
+
+🔌 Shutting down Plugin System...
+✅ Plugin shutdown: 4/4 successful
+🛑 Plugin system shutdown complete
+
+🔧 Shutting down ServiceContainer...
+✅ ServiceContainer shutdown successful
+🛑 Web server shutdown complete
