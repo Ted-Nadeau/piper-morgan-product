@@ -132,7 +132,9 @@ class TestResumeAcceptanceWiring:
 
         conv = manager.create_conversation("old-sess", "user-1")
         manager.transition_state(conv.id, StandupConversationState.GENERATING)
-        manager.set_standup_content(conv.id, "**Yesterday**: Worked on auth\n**Today**: Continue auth")
+        manager.set_standup_content(
+            conv.id, "**Yesterday**: Worked on auth\n**Today**: Continue auth"
+        )
         manager.transition_state(conv.id, StandupConversationState.SUSPENDED)
 
         with patch(

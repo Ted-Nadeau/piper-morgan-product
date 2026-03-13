@@ -1328,16 +1328,38 @@ class IntentService:
             msg_lower = message.strip().lower()
 
             # Accept signals
-            accept_signals = frozenset({
-                "yes", "yeah", "yep", "sure", "ok", "okay", "continue",
-                "resume", "pick it up", "let's continue", "yes please",
-                "y", "yea",
-            })
+            accept_signals = frozenset(
+                {
+                    "yes",
+                    "yeah",
+                    "yep",
+                    "sure",
+                    "ok",
+                    "okay",
+                    "continue",
+                    "resume",
+                    "pick it up",
+                    "let's continue",
+                    "yes please",
+                    "y",
+                    "yea",
+                }
+            )
             # Decline signals
-            decline_signals = frozenset({
-                "no", "nah", "nope", "fresh", "start over", "start fresh",
-                "new", "skip", "no thanks", "n",
-            })
+            decline_signals = frozenset(
+                {
+                    "no",
+                    "nah",
+                    "nope",
+                    "fresh",
+                    "start over",
+                    "start fresh",
+                    "new",
+                    "skip",
+                    "no thanks",
+                    "n",
+                }
+            )
 
             if msg_lower in accept_signals:
                 # Resume the suspended session
@@ -1348,13 +1370,9 @@ class IntentService:
                 )
 
                 if suspended.process_type == ProcessType.STANDUP:
-                    return await self._resume_suspended_standup(
-                        user_id, session_id
-                    )
+                    return await self._resume_suspended_standup(user_id, session_id)
                 elif suspended.process_type == ProcessType.ONBOARDING:
-                    return await self._resume_suspended_onboarding(
-                        user_id, session_id
-                    )
+                    return await self._resume_suspended_onboarding(user_id, session_id)
 
             elif msg_lower in decline_signals:
                 # Abandon the suspended session
@@ -1442,9 +1460,7 @@ class IntentService:
             requires_clarification=False,
         )
 
-    async def _abandon_suspended_standup(
-        self, user_id: str
-    ) -> IntentProcessingResult:
+    async def _abandon_suspended_standup(self, user_id: str) -> IntentProcessingResult:
         """
         Issue #889: Abandon a suspended standup conversation.
 
@@ -1527,9 +1543,7 @@ class IntentService:
             requires_clarification=False,
         )
 
-    async def _abandon_suspended_onboarding(
-        self, user_id: str
-    ) -> IntentProcessingResult:
+    async def _abandon_suspended_onboarding(self, user_id: str) -> IntentProcessingResult:
         """
         Issue #889: Abandon a suspended onboarding session.
 
