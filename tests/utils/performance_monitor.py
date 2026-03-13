@@ -102,6 +102,37 @@ class PerformanceMonitor:
 
         return result, measurement
 
+    def validate_performance_targets(self, performance_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Validate performance data against predefined targets.
+
+        Args:
+            performance_data: Dict with metric names as keys and latency values
+                (in ms) as values.
+
+        Returns:
+            Dict with 'status' ('passed'/'failed') and 'overall_score' (0-100).
+        """
+        targets = {
+            "coordination_latency": 50,
+            "workflow_parsing": 100,
+            "task_distribution": 75,
+            "progress_updates": 25,
+            "overall_workflow": 200,
+        }
+
+        met = 0
+        total = 0
+        for metric, target in targets.items():
+            if metric in performance_data:
+                total += 1
+                if performance_data[metric] <= target:
+                    met += 1
+
+        score = (met / total * 100) if total > 0 else 0
+        status = "passed" if met == total else "failed"
+
+        return {"status": status, "overall_score": score}
+
     def get_measurements(self) -> List[PerformanceMeasurement]:
         """Get all recorded measurements"""
         return self.measurements.copy()

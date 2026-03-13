@@ -168,14 +168,15 @@ class TestGetCalendarContextUserIdThreading:
 
         handlers = CanonicalHandlers.__new__(CanonicalHandlers)
 
+        # Issue #847 changed _get_calendar_context to use CalendarConfigService
+        # instead of get_plugin_registry, so we mock the config service path.
+        # CalendarConfigService is lazily imported, so patch at the source module.
         with patch(
-            "services.intent_service.canonical_handlers.get_plugin_registry"
-        ) as mock_registry_fn:
-            mock_registry = MagicMock()
-            mock_plugin = MagicMock()
-            mock_plugin.is_configured.return_value = True
-            mock_registry.get_plugin.return_value = mock_plugin
-            mock_registry_fn.return_value = mock_registry
+            "services.integrations.calendar.config_service.CalendarConfigService"
+        ) as MockConfigService:
+            mock_config_instance = MagicMock()
+            mock_config_instance.is_configured.return_value = True
+            MockConfigService.return_value = mock_config_instance
 
             # Patch at source module since CalendarIntegrationRouter is lazily imported
             with patch(
