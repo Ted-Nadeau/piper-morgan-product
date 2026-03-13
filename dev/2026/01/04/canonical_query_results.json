@@ -1,0 +1,264 @@
+{
+  "classification": [
+    {
+      "query_num": "1",
+      "query": "What's your name?",
+      "expected_category": "IDENTITY",
+      "actual_category": "identity",
+      "confidence": 1.0,
+      "status": "MISMATCH",
+      "error": null,
+      "response_preview": null
+    },
+    {
+      "query_num": "2",
+      "query": "What can you help me with?",
+      "expected_category": "IDENTITY",
+      "actual_category": "identity",
+      "confidence": 1.0,
+      "status": "MISMATCH",
+      "error": null,
+      "response_preview": null
+    },
+    {
+      "query_num": "3",
+      "query": "Are you working properly?",
+      "expected_category": "IDENTITY",
+      "actual_category": null,
+      "confidence": null,
+      "status": "ERROR",
+      "error": "API Error [INTENT_CLASSIFICATION_FAILED]",
+      "response_preview": null
+    },
+    {
+      "query_num": "4",
+      "query": "How do I get help?",
+      "expected_category": "IDENTITY",
+      "actual_category": null,
+      "confidence": null,
+      "status": "ERROR",
+      "error": "API Error [INTENT_CLASSIFICATION_FAILED]",
+      "response_preview": null
+    },
+    {
+      "query_num": "5",
+      "query": "What makes you different?",
+      "expected_category": "IDENTITY",
+      "actual_category": null,
+      "confidence": null,
+      "status": "ERROR",
+      "error": "API Error [INTENT_CLASSIFICATION_FAILED]",
+      "response_preview": null
+    },
+    {
+      "query_num": "6",
+      "query": "What day is it?",
+      "expected_category": "TEMPORAL",
+      "actual_category": "temporal",
+      "confidence": 1.0,
+      "status": "MISMATCH",
+      "error": null,
+      "response_preview": null
+    },
+    {
+      "query_num": "7",
+      "query": "What did we accomplish yesterday?",
+      "expected_category": "TEMPORAL",
+      "actual_category": "temporal",
+      "confidence": 1.0,
+      "status": "MISMATCH",
+      "error": null,
+      "response_preview": null
+    },
+    {
+      "query_num": "8",
+      "query": "What's on the agenda for today?",
+      "expected_category": "TEMPORAL",
+      "actual_category": "temporal",
+      "confidence": 1.0,
+      "status": "MISMATCH",
+      "error": null,
+      "response_preview": null
+    },
+    {
+      "query_num": "9",
+      "query": "When was the last time we worked on this?",
+      "expected_category": "TEMPORAL",
+      "actual_category": "temporal",
+      "confidence": 1.0,
+      "status": "MISMATCH",
+      "error": null,
+      "response_preview": null
+    },
+    {
+      "query_num": "10",
+      "query": "How long have we been working on this project?",
+      "expected_category": "TEMPORAL",
+      "actual_category": "temporal",
+      "confidence": 1.0,
+      "status": "MISMATCH",
+      "error": null,
+      "response_preview": null
+    },
+    {
+      "query_num": "11",
+      "query": "What projects are we working on?",
+      "expected_category": "STATUS",
+      "actual_category": "status",
+      "confidence": 1.0,
+      "status": "MISMATCH",
+      "error": null,
+      "response_preview": null
+    },
+    {
+      "query_num": "12",
+      "query": "Show me the project landscape",
+      "expected_category": "STATUS",
+      "actual_category": "status",
+      "confidence": 1.0,
+      "status": "MISMATCH",
+      "error": null,
+      "response_preview": null
+    },
+    {
+      "query_num": "13",
+      "query": "Which project should I focus on?",
+      "expected_category": "PRIORITY",
+      "actual_category": "priority",
+      "confidence": 1.0,
+      "status": "MISMATCH",
+      "error": null,
+      "response_preview": null
+    },
+    {
+      "query_num": "14",
+      "query": "What's the status of project X?",
+      "expected_category": "STATUS",
+      "actual_category": null,
+      "confidence": null,
+      "status": "ERROR",
+      "error": "API Error [INTENT_CLASSIFICATION_FAILED]",
+      "response_preview": null
+    },
+    {
+      "query_num": "15",
+      "query": "Where are we in the project lifecycle?",
+      "expected_category": "STATUS",
+      "actual_category": null,
+      "confidence": null,
+      "status": "ERROR",
+      "error": "API Error [INTENT_CLASSIFICATION_FAILED]",
+      "response_preview": null
+    },
+    {
+      "query_num": "16",
+      "query": "Create a GitHub issue about testing",
+      "expected_category": "EXECUTION",
+      "actual_category": null,
+      "confidence": null,
+      "status": "ERROR",
+      "error": "API Error [INTENT_CLASSIFICATION_FAILED]",
+      "response_preview": null
+    },
+    {
+      "query_num": "17",
+      "query": "Analyze this document",
+      "expected_category": "EXECUTION",
+      "actual_category": null,
+      "confidence": null,
+      "status": "ERROR",
+      "error": "API Error [INTENT_CLASSIFICATION_FAILED]",
+      "response_preview": null
+    },
+    {
+      "query_num": "18",
+      "query": "List all my projects",
+      "expected_category": "QUERY",
+      "actual_category": "status",
+      "confidence": 1.0,
+      "status": "MISMATCH",
+      "error": null,
+      "response_preview": null
+    },
+    {
+      "query_num": "19",
+      "query": "Generate a status report",
+      "expected_category": "QUERY",
+      "actual_category": "status",
+      "confidence": 1.0,
+      "status": "MISMATCH",
+      "error": null,
+      "response_preview": null
+    },
+    {
+      "query_num": "20",
+      "query": "Search for authentication in our documents",
+      "expected_category": "QUERY",
+      "actual_category": null,
+      "confidence": null,
+      "status": "ERROR",
+      "error": "API Error [INTENT_CLASSIFICATION_FAILED]",
+      "response_preview": null
+    },
+    {
+      "query_num": "21",
+      "query": "What should I focus on today?",
+      "expected_category": "PRIORITY",
+      "actual_category": "priority",
+      "confidence": 1.0,
+      "status": "MISMATCH",
+      "error": null,
+      "response_preview": null
+    },
+    {
+      "query_num": "22",
+      "query": "What patterns do you see?",
+      "expected_category": "LEARNING",
+      "actual_category": null,
+      "confidence": null,
+      "status": "ERROR",
+      "error": "API Error [INTENT_CLASSIFICATION_FAILED]",
+      "response_preview": null
+    },
+    {
+      "query_num": "23",
+      "query": "What risks should I be aware of?",
+      "expected_category": "ANALYSIS",
+      "actual_category": null,
+      "confidence": null,
+      "status": "ERROR",
+      "error": "API Error [INTENT_CLASSIFICATION_FAILED]",
+      "response_preview": null
+    },
+    {
+      "query_num": "24",
+      "query": "What opportunities should I pursue?",
+      "expected_category": "SYNTHESIS",
+      "actual_category": null,
+      "confidence": null,
+      "status": "ERROR",
+      "error": "API Error [INTENT_CLASSIFICATION_FAILED]",
+      "response_preview": null
+    },
+    {
+      "query_num": "25",
+      "query": "What's the next milestone?",
+      "expected_category": "PLANNING",
+      "actual_category": "priority",
+      "confidence": 1.0,
+      "status": "MISMATCH",
+      "error": null,
+      "response_preview": null
+    }
+  ],
+  "summary": {
+    "total": 25,
+    "pass": 0,
+    "partial": 0,
+    "mismatch": 14,
+    "error": 11,
+    "not_impl": 0,
+    "by_category": {}
+  },
+  "timestamp": "2026-01-04T13:21:38.775379"
+}

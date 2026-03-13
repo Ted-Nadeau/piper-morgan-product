@@ -1,0 +1,1847 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2822
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fnil\fcharset0 Menlo-Regular;\f1\fnil\fcharset0 Menlo-Bold;}
+{\colortbl;\red255\green255\blue255;\red0\green0\blue0;\red64\green11\blue217;\red47\green180\blue29;
+\red159\green160\blue28;\red153\green153\blue153;\red46\green174\blue187;\red200\green20\blue201;}
+{\*\expandedcolortbl;;\csgray\c0;\cssrgb\c32309\c18666\c88229;\cssrgb\c20241\c73898\c14950;
+\cssrgb\c68469\c68012\c14211;\csgenericrgb\c60000\c60000\c60000;\cssrgb\c20199\c73241\c78251;\cssrgb\c83397\c23074\c82666;}
+\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0\fs22 \cf2 \CocoaLigature0 alpha-one@faoilean ~ % mkdir alpha-mux\
+alpha-one@faoilean ~ % cd alpha-mux\
+alpha-one@faoilean alpha-mux % git clone --depth 1 -b production https://github.com/mediajunkie/piper-morgan-product.git\
+\
+Cloning into 'piper-morgan-product'...\
+remote: Enumerating objects: 3593, done.\
+remote: Counting objects: 100% (3593/3593), done.\
+remote: Compressing objects: 100% (3281/3281), done.\
+remote: Total 3593 (delta 238), reused 2933 (delta 174), pack-reused 0 (from 0)\
+Receiving objects: 100% (3593/3593), 51.90 MiB | 9.18 MiB/s, done.\
+Resolving deltas: 100% (238/238), done.\
+alpha-one@faoilean alpha-mux % cd piper-morgan-product\
+alpha-one@faoilean piper-morgan-product % ./scripts/alpha-setup.sh\
+\
+\\033[0;34m\uc0\u9556 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9559 \\033[0m\
+\\033[0;34m\uc0\u9553 \\033[0m     Piper Morgan Alpha Tester Setup Script             \\033[0;34m\u9553 \\033[0m\
+\\033[0;34m\uc0\u9562 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9565 \\033[0m\
+\
+\cf3 \uc0\u8594 \cf2  Checking requirements...\
+\cf4 \uc0\u10003 \cf2  Python 3.12 found\
+\cf4 \uc0\u10003 \cf2  Git found\
+\cf4 \uc0\u10003 \cf2  Docker found\
+\cf4 \uc0\u10003 \cf2  Repository already cloned\
+\cf3 \uc0\u8594 \cf2  Creating Python virtual environment...\
+\cf4 \uc0\u10003 \cf2  Virtual environment created\
+\cf3 \uc0\u8594 \cf2  Activating virtual environment...\
+\cf4 \uc0\u10003 \cf2  Virtual environment activated\
+\cf3 \uc0\u8594 \cf2  Installing Python dependencies...\
+\cf4 \uc0\u10003 \cf2  Dependencies installed\
+\cf3 \uc0\u8594 \cf2  Setting up environment configuration...\
+\cf4 \uc0\u10003 \cf2  .env created from template\
+\cf3 \uc0\u8594 \cf2  Generating secure JWT secret key...\
+\cf4 \uc0\u10003 \cf2  JWT secret added to .env\
+\cf3 \uc0\u8594 \cf2  Starting Docker containers...\
+\cf3 [+] Running 7/7\cf2 \
+ \cf4 \uc0\u10004 \cf2  Container piper-traefik        \cf4 Running\cf2                                                      \cf3 0.0s \cf2 \
+ \cf4 \uc0\u10004 \cf2  Container piper-postgres       \cf4 Healthy\cf2                                                      \cf3 1.8s \cf2 \
+ \cf4 \uc0\u10004 \cf2  Container piper-redis          \cf4 Healthy\cf2                                                     \cf3 11.8s \cf2 \
+ \cf4 \uc0\u10004 \cf2  Container piper-chromadb       \cf4 Started\cf2                                                      \cf3 1.3s \cf2 \
+ \cf4 \uc0\u10004 \cf2  Container piper-temporal       \cf4 Running\cf2                                                      \cf3 0.0s \cf2 \
+ \cf4 \uc0\u10004 \cf2  Container piper-orchestration  \cf4 Started\cf2                                                      \cf3 2.3s \cf2 \
+ \cf4 \uc0\u10004 \cf2  Container piper-app            \cf4 Started\cf2                                                     \cf3 11.3s \cf2 \
+\cf4 \uc0\u10003 \cf2  Docker containers started\
+
+\f1\b \cf5 \uc0\u9888
+\f0\b0 \cf2  Waiting 5 seconds for services to initialize...\
+\cf3 \uc0\u8594 \cf2  Launching Piper Morgan GUI setup wizard...\
+\
+\\033[0;32m\uc0\u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \\033[0m\
+\\033[0;32m  Piper Morgan is starting...\\033[0m\
+\\033[0;32m\uc0\u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \u9552 \\033[0m\
+\
+The setup wizard will open in your browser automatically.\
+If it doesn't, visit: \\033[0;34mhttp://localhost:8001/setup\\033[0m\
+\
+\cf3 \uc0\u8594 \cf2  Starting server (press Ctrl+C to stop)...\
+\
+\cf6 2026-01-28 16:43:53\cf2  [
+\f1\b \cf4 debug
+\f0\b0 \cf2 ]
+\f1\b migration_check_skipped
+\f0\b0  \cf7 reason\cf2 =\cf8 database not accessible\cf2 \
+Starting up... let me get everything ready.\
+   \uc0\u9203  Initializing services...\
+\cf6 2026-01-28 16:43:54\cf2  [
+\f1\b \cf4 debug
+\f0\b0 \cf2 ]
+\f1\b Using default configuration (no user config found)
+\f0\b0  \cf7 path\cf2 =\cf8 config/PIPER.md\cf2 \
+\cf6 2026-01-28 16:43:54\cf2  [
+\f1\b \cf4 info
+\f0\b0 \cf2 ]
+\f1\b PiperConfigLoader initialized
+\f0\b0  \cf7 config_path\cf2 =\cf8 config/PIPER.md\cf2 \
+\cf6 2026-01-28 16:43:54\cf2  [
+\f1\b \cf4 info
+\f0\b0 \cf2 ]
+\f1\b Keychain service initialized
+\f0\b0  \cf7 backend\cf2 =\cf8 Keyring\cf2  \cf7 service_name\cf2 =\cf8 piper-morgan\cf2 \
+\cf6 2026-01-28 16:43:54\cf2  [
+\f1\b \cf4 debug
+\f0\b0 \cf2 ]
+\f1\b Selection config loaded: env=development, excluded=[], default=openai
+\f0\b0 \
+\cf6 2026-01-28 16:43:54\cf2  [
+\f1\b \cf4 debug
+\f0\b0 \cf2 ]
+\f1\b No API key found for openai
+\f0\b0 \
+\cf6 2026-01-28 16:43:54\cf2  [
+\f1\b \cf4 debug
+\f0\b0 \cf2 ]
+\f1\b No API key found for anthropic
+\f0\b0 \
+\cf6 2026-01-28 16:43:54\cf2  [
+\f1\b \cf4 debug
+\f0\b0 \cf2 ]
+\f1\b No API key found for gemini
+\f0\b0 \
+\cf6 2026-01-28 16:43:54\cf2  [
+\f1\b \cf4 debug
+\f0\b0 \cf2 ]
+\f1\b No API key found for perplexity
+\f0\b0 \
+\cf6 2026-01-28 16:43:54\cf2  [
+\f1\b \cf5 warning
+\f0\b0 \cf2 ]
+\f1\b No ANTHROPIC_API_KEY configured
+\f0\b0 \
+\cf6 2026-01-28 16:43:54\cf2  [
+\f1\b \cf5 warning
+\f0\b0 \cf2 ]
+\f1\b No OPENAI_API_KEY configured
+\f0\b0 \
+/Users/alpha-one/alpha-mux/piper-morgan-product/services/llm/adapters/gemini_adapter.py:15: FutureWarning: \
+\
+All support for the `google.generativeai` package has ended. It will no longer be receiving \
+updates or bug fixes. Please switch to the `google.genai` package as soon as possible.\
+See README for more details:\
+\
+https://github.com/google-gemini/deprecated-generative-ai-python/blob/main/README.md\
+\
+  import google.generativeai as genai\
+\cf6 2026-01-28 16:43:58\cf2  [
+\f1\b \cf4 info
+\f0\b0 \cf2 ]
+\f1\b Initializing LLM domain service...
+\f0\b0 \
+\cf6 2026-01-28 16:43:58\cf2  [
+\f1\b \cf4 info
+\f0\b0 \cf2 ]
+\f1\b Keychain service initialized
+\f0\b0  \cf7 backend\cf2 =\cf8 Keyring\cf2  \cf7 service_name\cf2 =\cf8 piper-morgan\cf2 \
+\cf6 2026-01-28 16:43:58\cf2  [
+\f1\b \cf4 debug
+\f0\b0 \cf2 ]
+\f1\b Selection config loaded: env=development, excluded=[], default=openai
+\f0\b0 \
+\cf6 2026-01-28 16:43:58\cf2  [
+\f1\b \cf4 info
+\f0\b0 \cf2 ]
+\f1\b Validating LLM providers...
+\f0\b0 \
+\cf6 2026-01-28 16:43:58\cf2  [
+\f1\b \cf4 debug
+\f0\b0 \cf2 ]
+\f1\b No API key found for openai
+\f0\b0 \
+\cf6 2026-01-28 16:43:58\cf2  [
+\f1\b \cf4 debug
+\f0\b0 \cf2 ]
+\f1\b No API key found for anthropic
+\f0\b0 \
+\cf6 2026-01-28 16:43:58\cf2  [
+\f1\b \cf4 debug
+\f0\b0 \cf2 ]
+\f1\b No API key found for gemini
+\f0\b0 \
+\cf6 2026-01-28 16:43:58\cf2  [
+\f1\b \cf4 debug
+\f0\b0 \cf2 ]
+\f1\b No API key found for perplexity
+\f0\b0 \
+\cf6 2026-01-28 16:43:58\cf2  [
+\f1\b \cf5 warning
+\f0\b0 \cf2 ]
+\f1\b No LLM providers configured
+\f0\b0 \
+\cf6 2026-01-28 16:43:58\cf2  [
+\f1\b \cf4 info
+\f0\b0 \cf2 ]
+\f1\b LLM providers validated: 0/0
+\f0\b0 \
+\cf6 2026-01-28 16:43:58\cf2  [
+\f1\b \cf4 info
+\f0\b0 \cf2 ]
+\f1\b LLM client initialized
+\f0\b0 \
+\cf6 2026-01-28 16:43:58\cf2  [
+\f1\b \cf4 info
+\f0\b0 \cf2 ]
+\f1\b Initializing Pattern-012 LLM adapters...
+\f0\b0 \
+\cf6 2026-01-28 16:43:58\cf2  [
+\f1\b \cf4 debug
+\f0\b0 \cf2 ]
+\f1\b No API key found for openai
+\f0\b0 \
+\cf6 2026-01-28 16:43:58\cf2  [
+\f1\b \cf4 debug
+\f0\b0 \cf2 ]
+\f1\b No API key found for anthropic
+\f0\b0 \
+\cf6 2026-01-28 16:43:58\cf2  [
+\f1\b \cf4 debug
+\f0\b0 \cf2 ]
+\f1\b No API key found for gemini
+\f0\b0 \
+\cf6 2026-01-28 16:43:58\cf2  [
+\f1\b \cf4 debug
+\f0\b0 \cf2 ]
+\f1\b No API key found for perplexity
+\f0\b0 \
+\cf6 2026-01-28 16:43:58\cf2  [
+\f1\b \cf4 info
+\f0\b0 \cf2 ]
+\f1\b Pattern-012 adapters initialized: 0/0
+\f0\b0 \
+\cf6 2026-01-28 16:43:58\cf2  [
+\f1\b \cf4 info
+\f0\b0 \cf2 ]
+\f1\b LLM domain service initialized successfully
+\f0\b0 \
+\cf6 2026-01-28 16:43:58\cf2  [
+\f1\b \cf4 info
+\f0\b0 \cf2 ]
+\f1\b Adapters available: []
+\f0\b0 \
+   All 3 services initialized - I'm ready to help.\
+\
+============================================================\
+I'm up and running! You can find me at http://localhost:8001\
+============================================================\
+\
+   Web Interface:     http://localhost:8001\
+   API Documentation: http://localhost:8001/docs\
+   Health Check:      http://localhost:8001/health\
+\
+Press Ctrl+C to stop the server\
+============================================================\
+\
+   \uc0\u9203  Opening browser...\
+\{"module": "web.api.routes.documents", "error": "Please provide an OpenAI API key. You can get one at https://platform.openai.com/account/api-keys", "event": "\\u26a0\\ufe0f Failed to mount Documents API router", "logger": "web.router_initializer", "level": "error", "timestamp": "2026-01-29T00:44:04.875967Z"\}\
+\
+============================================================\
+\uc0\u55357 \u56615  Phase 1.5: Initializing ServiceContainer (DDD pattern)\
+============================================================\
+\{"event": "No LLM providers configured", "logger": "services.config.llm_config_service", "level": "warning", "timestamp": "2026-01-29T00:44:05.064880Z"\}\
+\{"process_type": "onboarding", "event": "Replacing existing handler for process type", "logger": "services.process.registry", "level": "warning", "timestamp": "2026-01-29T00:44:05.067223Z"\}\
+\{"process_type": "standup", "event": "Replacing existing handler for process type", "logger": "services.process.registry", "level": "warning", "timestamp": "2026-01-29T00:44:05.067295Z"\}\
+\uc0\u9989  Phase 1.5: ServiceContainer initialized successfully\
+   Services available: ['llm', 'orchestration', 'intent']\
+\
+============================================================\
+\uc0\u55357 \u56589  CORE-GREAT-2D: Configuration Validation\
+============================================================\
+\
+============================================================\
+CONFIGURATION VALIDATION SUMMARY\
+============================================================\
+\
+\uc0\u10060  GITHUB: missing\
+   GitHub token not configured\
+\
+   Recovery:\
+   Set GITHUB_TOKEN environment variable with a valid GitHub personal access token. Create token at: https://github.com/settings/tokens\
+\
+\uc0\u10060  SLACK: missing\
+   Slack configuration incomplete: SLACK_BOT_TOKEN, SLACK_APP_TOKEN, SLACK_SIGNING_SECRET not set\
+\
+   Recovery:\
+   Set missing environment variables: SLACK_BOT_TOKEN, SLACK_APP_TOKEN, SLACK_SIGNING_SECRET. Get credentials from: https://api.slack.com/apps \uc0\u8594  Your App \u8594  OAuth & Permissions / Basic Information\
+\
+\uc0\u9989  NOTION: valid\
+   Notion configuration valid\
+\
+\uc0\u10060  CALENDAR: missing\
+   Google Calendar credentials file not found: credentials.json\
+\
+   Recovery:\
+   1. Create Google Cloud project at: https://console.cloud.google.com\
+   2. Enable Google Calendar API\
+   3. Create OAuth 2.0 credentials (Desktop app)\
+   4. Download credentials and save as: credentials.json\
+   5. Set GOOGLE_CLIENT_SECRETS_FILE=credentials.json if not using default\
+\
+============================================================\
+Valid: 1 | Optional: 0 | Invalid: 3\
+============================================================\
+\
+\
+\uc0\u9888 \u65039  WARNING: Some service configurations are invalid\
+Services will operate in degraded mode\
+\
+\
+============================================================\
+\uc0\u55357 \u56589  Issue #484: Database Schema Validation\
+============================================================\
+2026-01-28 16:44:05,101 INFO sqlalchemy.engine.Engine select pg_catalog.version()\
+select pg_catalog.version()\
+2026-01-28 16:44:05,101 INFO sqlalchemy.engine.Engine [raw sql] ()\
+[raw sql] ()\
+2026-01-28 16:44:05,103 INFO sqlalchemy.engine.Engine select current_schema()\
+select current_schema()\
+2026-01-28 16:44:05,103 INFO sqlalchemy.engine.Engine [raw sql] ()\
+[raw sql] ()\
+2026-01-28 16:44:05,105 INFO sqlalchemy.engine.Engine show standard_conforming_strings\
+show standard_conforming_strings\
+2026-01-28 16:44:05,105 INFO sqlalchemy.engine.Engine [raw sql] ()\
+[raw sql] ()\
+2026-01-28 16:44:05,106 INFO sqlalchemy.engine.Engine BEGIN (implicit)\
+BEGIN (implicit)\
+2026-01-28 16:44:05,107 INFO sqlalchemy.engine.Engine \
+                SELECT\
+                    column_name,\
+                    data_type,\
+                    udt_name,\
+                    is_nullable,\
+                    column_default\
+                FROM information_schema.columns\
+                WHERE table_schema = 'public'\
+                AND table_name = $1\
+            \
+\
+                SELECT\
+                    column_name,\
+                    data_type,\
+                    udt_name,\
+                    is_nullable,\
+                    column_default\
+                FROM information_schema.columns\
+                WHERE table_schema = 'public'\
+                AND table_name = $1\
+            \
+2026-01-28 16:44:05,107 INFO sqlalchemy.engine.Engine [generated in 0.00008s] ('users',)\
+[generated in 0.00008s] ('users',)\
+2026-01-28 16:44:05,120 INFO sqlalchemy.engine.Engine \
+                SELECT\
+                    column_name,\
+                    data_type,\
+                    udt_name,\
+                    is_nullable,\
+                    column_default\
+                FROM information_schema.columns\
+                WHERE table_schema = 'public'\
+                AND table_name = $1\
+            \
+\
+                SELECT\
+                    column_name,\
+                    data_type,\
+                    udt_name,\
+                    is_nullable,\
+                    column_default\
+                FROM information_schema.columns\
+                WHERE table_schema = 'public'\
+                AND table_name = $1\
+            \
+2026-01-28 16:44:05,121 INFO sqlalchemy.engine.Engine [cached since 0.01384s ago] ('user_api_keys',)\
+[cached since 0.01384s ago] ('user_api_keys',)\
+2026-01-28 16:44:05,124 INFO sqlalchemy.engine.Engine \
+                SELECT\
+                    column_name,\
+                    data_type,\
+                    udt_name,\
+                    is_nullable,\
+                    column_default\
+                FROM information_schema.columns\
+                WHERE table_schema = 'public'\
+                AND table_name = $1\
+            \
+\
+                SELECT\
+                    column_name,\
+                    data_type,\
+                    udt_name,\
+                    is_nullable,\
+                    column_default\
+                FROM information_schema.columns\
+                WHERE table_schema = 'public'\
+                AND table_name = $1\
+            \
+2026-01-28 16:44:05,124 INFO sqlalchemy.engine.Engine [cached since 0.01757s ago] ('audit_logs',)\
+[cached since 0.01757s ago] ('audit_logs',)\
+2026-01-28 16:44:05,126 INFO sqlalchemy.engine.Engine \
+                SELECT\
+                    column_name,\
+                    data_type,\
+                    udt_name,\
+                    is_nullable,\
+                    column_default\
+                FROM information_schema.columns\
+                WHERE table_schema = 'public'\
+                AND table_name = $1\
+            \
+\
+                SELECT\
+                    column_name,\
+                    data_type,\
+                    udt_name,\
+                    is_nullable,\
+                    column_default\
+                FROM information_schema.columns\
+                WHERE table_schema = 'public'\
+                AND table_name = $1\
+            \
+2026-01-28 16:44:05,127 INFO sqlalchemy.engine.Engine [cached since 0.01988s ago] ('products',)\
+[cached since 0.01988s ago] ('products',)\
+2026-01-28 16:44:05,128 INFO sqlalchemy.engine.Engine \
+                SELECT\
+                    column_name,\
+                    data_type,\
+                    udt_name,\
+                    is_nullable,\
+                    column_default\
+                FROM information_schema.columns\
+                WHERE table_schema = 'public'\
+                AND table_name = $1\
+            \
+\
+                SELECT\
+                    column_name,\
+                    data_type,\
+                    udt_name,\
+                    is_nullable,\
+                    column_default\
+                FROM information_schema.columns\
+                WHERE table_schema = 'public'\
+                AND table_name = $1\
+            \
+2026-01-28 16:44:05,128 INFO sqlalchemy.engine.Engine [cached since 0.02158s ago] ('features',)\
+[cached since 0.02158s ago] ('features',)\
+2026-01-28 16:44:05,130 INFO sqlalchemy.engine.Engine \
+                SELECT\
+                    column_name,\
+                    data_type,\
+                    udt_name,\
+                    is_nullable,\
+                    column_default\
+                FROM information_schema.columns\
+                WHERE table_schema = 'public'\
+                AND table_name = $1\
+            \
+\
+                SELECT\
+                    column_name,\
+                    data_type,\
+                    udt_name,\
+                    is_nullable,\
+                    column_default\
+                FROM information_schema.columns\
+                WHERE table_schema = 'public'\
+                AND table_name = $1\
+            \
+2026-01-28 16:44:05,130 INFO sqlalchemy.engine.Engine [cached since 0.02334s ago] ('work_items',)\
+[cached since 0.02334s ago] ('work_items',)\
+2026-01-28 16:44:05,132 INFO sqlalchemy.engine.Engine \
+                SELECT\
+                    column_name,\
+                    data_type,\
+                    udt_name,\
+                    is_nullable,\
+                    column_default\
+                FROM information_schema.columns\
+                WHERE table_schema = 'public'\
+                AND table_name = $1\
+            \
+\
+                SELECT\
+                    column_name,\
+                    data_type,\
+                    udt_name,\
+                    is_nullable,\
+                    column_default\
+                FROM information_schema.columns\
+                WHERE table_schema = 'public'\
+                AND table_name = $1\
+            \
+2026-01-28 16:44:05,132 INFO sqlalchemy.engine.Engine [cached since 0.02502s ago] ('intents',)\
+[cached since 0.02502s ago] ('intents',)\
+2026-01-28 16:44:05,132 INFO sqlalchemy.engine.Engine \
+                SELECT\
+                    column_name,\
+                    data_type,\
+                    udt_name,\
+                    is_nullable,\
+                    column_default\
+                FROM information_schema.columns\
+                WHERE table_schema = 'public'\
+                AND table_name = $1\
+            \
+\
+                SELECT\
+                    column_name,\
+                    data_type,\
+                    udt_name,\
+                    is_nullable,\
+                    column_default\
+                FROM information_schema.columns\
+                WHERE table_schema = 'public'\
+                AND table_name = $1\
+            \
+2026-01-28 16:44:05,132 INFO sqlalchemy.engine.Engine [cached since 0.02568s ago] ('workflows',)\
+[cached since 0.02568s ago] ('workflows',)\
+2026-01-28 16:44:05,133 INFO sqlalchemy.engine.Engine \
+                SELECT\
+                    column_name,\
+                    data_type,\
+                    udt_name,\
+                    is_nullable,\
+                    column_default\
+                FROM information_schema.columns\
+                WHERE table_schema = 'public'\
+                AND table_name = $1\
+            \
+\
+                SELECT\
+                    column_name,\
+                    data_type,\
+                    udt_name,\
+                    is_nullable,\
+                    column_default\
+                FROM information_schema.columns\
+                WHERE table_schema = 'public'\
+                AND table_name = $1\
+            \
+2026-01-28 16:44:05,133 INFO sqlalchemy.engine.Engine [cached since 0.02617s ago] ('tasks',)\
+[cached since 0.02617s ago] ('tasks',)\
+2026-01-28 16:44:05,133 INFO sqlalchemy.engine.Engine \
+                SELECT\
+                    column_name,\
+                    data_type,\
+                    udt_name,\
+                    is_nullable,\
+                    column_default\
+                FROM information_schema.columns\
+                WHERE table_schema = 'public'\
+                AND table_name = $1\
+            \
+\
+                SELECT\
+                    column_name,\
+                    data_type,\
+                    udt_name,\
+                    is_nullable,\
+                    column_default\
+                FROM information_schema.columns\
+                WHERE table_schema = 'public'\
+                AND table_name = $1\
+            \
+2026-01-28 16:44:05,133 INFO sqlalchemy.engine.Engine [cached since 0.02668s ago] ('stakeholders',)\
+[cached since 0.02668s ago] ('stakeholders',)\
+2026-01-28 16:44:05,134 INFO sqlalchemy.engine.Engine \
+                SELECT\
+                    column_name,\
+                    data_type,\
+                    udt_name,\
+                    is_nullable,\
+                    column_default\
+                FROM information_schema.columns\
+                WHERE table_schema = 'public'\
+                AND table_name = $1\
+            \
+\
+                SELECT\
+                    column_name,\
+                    data_type,\
+                    udt_name,\
+                    is_nullable,\
+                    column_default\
+                FROM information_schema.columns\
+                WHERE table_schema = 'public'\
+                AND table_name = $1\
+            \
+2026-01-28 16:44:05,134 INFO sqlalchemy.engine.Engine [cached since 0.02714s ago] ('projects',)\
+[cached since 0.02714s ago] ('projects',)\
+2026-01-28 16:44:05,135 INFO sqlalchemy.engine.Engine \
+                SELECT\
+                    column_name,\
+                    data_type,\
+                    udt_name,\
+                    is_nullable,\
+                    column_default\
+                FROM information_schema.columns\
+                WHERE table_schema = 'public'\
+                AND table_name = $1\
+            \
+\
+                SELECT\
+                    column_name,\
+                    data_type,\
+                    udt_name,\
+                    is_nullable,\
+                    column_default\
+                FROM information_schema.columns\
+                WHERE table_schema = 'public'\
+                AND table_name = $1\
+            \
+2026-01-28 16:44:05,135 INFO sqlalchemy.engine.Engine [cached since 0.02813s ago] ('project_integrations',)\
+[cached since 0.02813s ago] ('project_integrations',)\
+2026-01-28 16:44:05,135 INFO sqlalchemy.engine.Engine \
+                SELECT\
+                    column_name,\
+                    data_type,\
+                    udt_name,\
+                    is_nullable,\
+                    column_default\
+                FROM information_schema.columns\
+                WHERE table_schema = 'public'\
+                AND table_name = $1\
+            \
+\
+                SELECT\
+                    column_name,\
+                    data_type,\
+                    udt_name,\
+                    is_nullable,\
+                    column_default\
+                FROM information_schema.columns\
+                WHERE table_schema = 'public'\
+                AND table_name = $1\
+            \
+2026-01-28 16:44:05,135 INFO sqlalchemy.engine.Engine [cached since 0.02857s ago] ('uploaded_files',)\
+[cached since 0.02857s ago] ('uploaded_files',)\
+2026-01-28 16:44:05,137 INFO sqlalchemy.engine.Engine \
+                SELECT\
+                    column_name,\
+                    data_type,\
+                    udt_name,\
+                    is_nullable,\
+                    column_default\
+                FROM information_schema.columns\
+                WHERE table_schema = 'public'\
+                AND table_name = $1\
+            \
+\
+                SELECT\
+                    column_name,\
+                    data_type,\
+                    udt_name,\
+                    is_nullable,\
+                    column_default\
+                FROM information_schema.columns\
+                WHERE table_schema = 'public'\
+                AND table_name = $1\
+            \
+2026-01-28 16:44:05,137 INFO sqlalchemy.engine.Engine [cached since 0.03014s ago] ('conversations',)\
+[cached since 0.03014s ago] ('conversations',)\
+2026-01-28 16:44:05,138 INFO sqlalchemy.engine.Engine \
+                SELECT\
+                    column_name,\
+                    data_type,\
+                    udt_name,\
+                    is_nullable,\
+                    column_default\
+                FROM information_schema.columns\
+                WHERE table_schema = 'public'\
+                AND table_name = $1\
+            \
+\
+                SELECT\
+                    column_name,\
+                    data_type,\
+                    udt_name,\
+                    is_nullable,\
+                    column_default\
+                FROM information_schema.columns\
+                WHERE table_schema = 'public'\
+                AND table_name = $1\
+            \
+2026-01-28 16:44:05,138 INFO sqlalchemy.engine.Engine [cached since 0.03126s ago] ('conversation_turns',)\
+[cached since 0.03126s ago] ('conversation_turns',)\
+2026-01-28 16:44:05,139 INFO sqlalchemy.engine.Engine \
+                SELECT\
+                    column_name,\
+                    data_type,\
+                    udt_name,\
+                    is_nullable,\
+                    column_default\
+                FROM information_schema.columns\
+                WHERE table_schema = 'public'\
+                AND table_name = $1\
+            \
+\
+                SELECT\
+                    column_name,\
+                    data_type,\
+                    udt_name,\
+                    is_nullable,\
+                    column_default\
+                FROM information_schema.columns\
+                WHERE table_schema = 'public'\
+                AND table_name = $1\
+            \
+2026-01-28 16:44:05,139 INFO sqlalchemy.engine.Engine [cached since 0.0325s ago] ('knowledge_nodes',)\
+[cached since 0.0325s ago] ('knowledge_nodes',)\
+2026-01-28 16:44:05,140 INFO sqlalchemy.engine.Engine \
+                SELECT\
+                    column_name,\
+                    data_type,\
+                    udt_name,\
+                    is_nullable,\
+                    column_default\
+                FROM information_schema.columns\
+                WHERE table_schema = 'public'\
+                AND table_name = $1\
+            \
+\
+                SELECT\
+                    column_name,\
+                    data_type,\
+                    udt_name,\
+                    is_nullable,\
+                    column_default\
+                FROM information_schema.columns\
+                WHERE table_schema = 'public'\
+                AND table_name = $1\
+            \
+2026-01-28 16:44:05,140 INFO sqlalchemy.engine.Engine [cached since 0.03316s ago] ('knowledge_edges',)\
+[cached since 0.03316s ago] ('knowledge_edges',)\
+2026-01-28 16:44:05,140 INFO sqlalchemy.engine.Engine \
+                SELECT\
+                    column_name,\
+                    data_type,\
+                    udt_name,\
+                    is_nullable,\
+                    column_default\
+                FROM information_schema.columns\
+                WHERE table_schema = 'public'\
+                AND table_name = $1\
+            \
+\
+                SELECT\
+                    column_name,\
+                    data_type,\
+                    udt_name,\
+                    is_nullable,\
+                    column_default\
+                FROM information_schema.columns\
+                WHERE table_schema = 'public'\
+                AND table_name = $1\
+            \
+2026-01-28 16:44:05,140 INFO sqlalchemy.engine.Engine [cached since 0.03369s ago] ('todo_lists',)\
+[cached since 0.03369s ago] ('todo_lists',)\
+2026-01-28 16:44:05,141 INFO sqlalchemy.engine.Engine \
+                SELECT\
+                    column_name,\
+                    data_type,\
+                    udt_name,\
+                    is_nullable,\
+                    column_default\
+                FROM information_schema.columns\
+                WHERE table_schema = 'public'\
+                AND table_name = $1\
+            \
+\
+                SELECT\
+                    column_name,\
+                    data_type,\
+                    udt_name,\
+                    is_nullable,\
+                    column_default\
+                FROM information_schema.columns\
+                WHERE table_schema = 'public'\
+                AND table_name = $1\
+            \
+2026-01-28 16:44:05,141 INFO sqlalchemy.engine.Engine [cached since 0.03417s ago] ('list_memberships',)\
+[cached since 0.03417s ago] ('list_memberships',)\
+2026-01-28 16:44:05,142 INFO sqlalchemy.engine.Engine \
+                SELECT\
+                    column_name,\
+                    data_type,\
+                    udt_name,\
+                    is_nullable,\
+                    column_default\
+                FROM information_schema.columns\
+                WHERE table_schema = 'public'\
+                AND table_name = $1\
+            \
+\
+                SELECT\
+                    column_name,\
+                    data_type,\
+                    udt_name,\
+                    is_nullable,\
+                    column_default\
+                FROM information_schema.columns\
+                WHERE table_schema = 'public'\
+                AND table_name = $1\
+            \
+2026-01-28 16:44:05,142 INFO sqlalchemy.engine.Engine [cached since 0.035s ago] ('lists',)\
+[cached since 0.035s ago] ('lists',)\
+2026-01-28 16:44:05,143 INFO sqlalchemy.engine.Engine \
+                SELECT\
+                    column_name,\
+                    data_type,\
+                    udt_name,\
+                    is_nullable,\
+                    column_default\
+                FROM information_schema.columns\
+                WHERE table_schema = 'public'\
+                AND table_name = $1\
+            \
+\
+                SELECT\
+                    column_name,\
+                    data_type,\
+                    udt_name,\
+                    is_nullable,\
+                    column_default\
+                FROM information_schema.columns\
+                WHERE table_schema = 'public'\
+                AND table_name = $1\
+            \
+2026-01-28 16:44:05,143 INFO sqlalchemy.engine.Engine [cached since 0.03598s ago] ('list_items',)\
+[cached since 0.03598s ago] ('list_items',)\
+2026-01-28 16:44:05,143 INFO sqlalchemy.engine.Engine \
+                SELECT\
+                    column_name,\
+                    data_type,\
+                    udt_name,\
+                    is_nullable,\
+                    column_default\
+                FROM information_schema.columns\
+                WHERE table_schema = 'public'\
+                AND table_name = $1\
+            \
+\
+                SELECT\
+                    column_name,\
+                    data_type,\
+                    udt_name,\
+                    is_nullable,\
+                    column_default\
+                FROM information_schema.columns\
+                WHERE table_schema = 'public'\
+                AND table_name = $1\
+            \
+2026-01-28 16:44:05,143 INFO sqlalchemy.engine.Engine [cached since 0.03662s ago] ('feedback',)\
+[cached since 0.03662s ago] ('feedback',)\
+2026-01-28 16:44:05,144 INFO sqlalchemy.engine.Engine \
+                SELECT\
+                    column_name,\
+                    data_type,\
+                    udt_name,\
+                    is_nullable,\
+                    column_default\
+                FROM information_schema.columns\
+                WHERE table_schema = 'public'\
+                AND table_name = $1\
+            \
+\
+                SELECT\
+                    column_name,\
+                    data_type,\
+                    udt_name,\
+                    is_nullable,\
+                    column_default\
+                FROM information_schema.columns\
+                WHERE table_schema = 'public'\
+                AND table_name = $1\
+            \
+2026-01-28 16:44:05,144 INFO sqlalchemy.engine.Engine [cached since 0.03725s ago] ('personality_profiles',)\
+[cached since 0.03725s ago] ('personality_profiles',)\
+2026-01-28 16:44:05,145 INFO sqlalchemy.engine.Engine \
+                SELECT\
+                    column_name,\
+                    data_type,\
+                    udt_name,\
+                    is_nullable,\
+                    column_default\
+                FROM information_schema.columns\
+                WHERE table_schema = 'public'\
+                AND table_name = $1\
+            \
+\
+                SELECT\
+                    column_name,\
+                    data_type,\
+                    udt_name,\
+                    is_nullable,\
+                    column_default\
+                FROM information_schema.columns\
+                WHERE table_schema = 'public'\
+                AND table_name = $1\
+            \
+2026-01-28 16:44:05,145 INFO sqlalchemy.engine.Engine [cached since 0.03792s ago] ('token_blacklist',)\
+[cached since 0.03792s ago] ('token_blacklist',)\
+2026-01-28 16:44:05,145 INFO sqlalchemy.engine.Engine \
+                SELECT\
+                    column_name,\
+                    data_type,\
+                    udt_name,\
+                    is_nullable,\
+                    column_default\
+                FROM information_schema.columns\
+                WHERE table_schema = 'public'\
+                AND table_name = $1\
+            \
+\
+                SELECT\
+                    column_name,\
+                    data_type,\
+                    udt_name,\
+                    is_nullable,\
+                    column_default\
+                FROM information_schema.columns\
+                WHERE table_schema = 'public'\
+                AND table_name = $1\
+            \
+2026-01-28 16:44:05,145 INFO sqlalchemy.engine.Engine [cached since 0.03847s ago] ('items',)\
+[cached since 0.03847s ago] ('items',)\
+2026-01-28 16:44:05,146 INFO sqlalchemy.engine.Engine \
+                SELECT\
+                    column_name,\
+                    data_type,\
+                    udt_name,\
+                    is_nullable,\
+                    column_default\
+                FROM information_schema.columns\
+                WHERE table_schema = 'public'\
+                AND table_name = $1\
+            \
+\
+                SELECT\
+                    column_name,\
+                    data_type,\
+                    udt_name,\
+                    is_nullable,\
+                    column_default\
+                FROM information_schema.columns\
+                WHERE table_schema = 'public'\
+                AND table_name = $1\
+            \
+2026-01-28 16:44:05,146 INFO sqlalchemy.engine.Engine [cached since 0.03906s ago] ('todo_items',)\
+[cached since 0.03906s ago] ('todo_items',)\
+2026-01-28 16:44:05,146 INFO sqlalchemy.engine.Engine \
+                SELECT\
+                    column_name,\
+                    data_type,\
+                    udt_name,\
+                    is_nullable,\
+                    column_default\
+                FROM information_schema.columns\
+                WHERE table_schema = 'public'\
+                AND table_name = $1\
+            \
+\
+                SELECT\
+                    column_name,\
+                    data_type,\
+                    udt_name,\
+                    is_nullable,\
+                    column_default\
+                FROM information_schema.columns\
+                WHERE table_schema = 'public'\
+                AND table_name = $1\
+            \
+2026-01-28 16:44:05,147 INFO sqlalchemy.engine.Engine [cached since 0.03984s ago] ('learned_patterns',)\
+[cached since 0.03984s ago] ('learned_patterns',)\
+2026-01-28 16:44:05,147 INFO sqlalchemy.engine.Engine \
+                SELECT\
+                    column_name,\
+                    data_type,\
+                    udt_name,\
+                    is_nullable,\
+                    column_default\
+                FROM information_schema.columns\
+                WHERE table_schema = 'public'\
+                AND table_name = $1\
+            \
+\
+                SELECT\
+                    column_name,\
+                    data_type,\
+                    udt_name,\
+                    is_nullable,\
+                    column_default\
+                FROM information_schema.columns\
+                WHERE table_schema = 'public'\
+                AND table_name = $1\
+            \
+2026-01-28 16:44:05,147 INFO sqlalchemy.engine.Engine [cached since 0.0405s ago] ('learning_settings',)\
+[cached since 0.0405s ago] ('learning_settings',)\
+2026-01-28 16:44:05,148 INFO sqlalchemy.engine.Engine \
+                SELECT\
+                    column_name,\
+                    data_type,\
+                    udt_name,\
+                    is_nullable,\
+                    column_default\
+                FROM information_schema.columns\
+                WHERE table_schema = 'public'\
+                AND table_name = $1\
+            \
+\
+                SELECT\
+                    column_name,\
+                    data_type,\
+                    udt_name,\
+                    is_nullable,\
+                    column_default\
+                FROM information_schema.columns\
+                WHERE table_schema = 'public'\
+                AND table_name = $1\
+            \
+2026-01-28 16:44:05,148 INFO sqlalchemy.engine.Engine [cached since 0.041s ago] ('user_trust_profiles',)\
+[cached since 0.041s ago] ('user_trust_profiles',)\
+2026-01-28 16:44:05,148 INFO sqlalchemy.engine.Engine \
+                SELECT\
+                    column_name,\
+                    data_type,\
+                    udt_name,\
+                    is_nullable,\
+                    column_default\
+                FROM information_schema.columns\
+                WHERE table_schema = 'public'\
+                AND table_name = $1\
+            \
+\
+                SELECT\
+                    column_name,\
+                    data_type,\
+                    udt_name,\
+                    is_nullable,\
+                    column_default\
+                FROM information_schema.columns\
+                WHERE table_schema = 'public'\
+                AND table_name = $1\
+            \
+2026-01-28 16:44:05,148 INFO sqlalchemy.engine.Engine [cached since 0.04141s ago] ('conversational_memory_entries',)\
+[cached since 0.04141s ago] ('conversational_memory_entries',)\
+2026-01-28 16:44:05,149 INFO sqlalchemy.engine.Engine ROLLBACK\
+ROLLBACK\
+============================================================\
+Schema Validation Report (Issue #484)\
+============================================================\
+Tables checked: 30\
+Columns checked: 233\
+Mismatches found: 4\
+\
+\uc0\u10060  Schema drift detected:\
+\
+  projects.lifecycle_state:\
+    Model: String\
+    Database: (missing)\
+    Reason: Column 'lifecycle_state' in model but not in database\
+\
+  knowledge_nodes.embedding_vector:\
+    Model: JSON\
+    Database: _float8\
+    Reason: Type mismatch: model uses JSON, database uses _float8\
+\
+  todo_lists.*:\
+    Model: (table)\
+    Database: (missing)\
+    Reason: Critical table 'todo_lists' not found in database\
+\
+  lists.project_ids:\
+    Model: JSONB\
+    Database: (missing)\
+    Reason: Column 'project_ids' in model but not in database\
+\
+\
+\uc0\u9888 \u65039  WARNING: Schema drift detected!\
+Database may not match models. Check logs for details.\
+This could cause runtime errors.\
+\
+\
+\uc0\u55357 \u56615  Phase 1.5: Getting services from ServiceContainer...\
+\uc0\u9989  IntentService retrieved from container\
+\uc0\u9989  LLM service retrieved from container\
+\uc0\u9989  OrchestrationEngine retrieved from container\
+\uc0\u9989  Phase 1.5: All services retrieved from ServiceContainer\
+\
+\
+============================================================\
+\uc0\u55356 \u57256  Phase 4: Initializing Web Components\
+============================================================\
+\uc0\u9989  Jinja2Templates initialized\
+\uc0\u9989  PiperConfigParser initialized\
+\uc0\u9989  PersonalityResponseEnhancer initialized\
+\uc0\u9989  Port configuration loaded\
+\uc0\u9989  Phase 4: Web Components initialized successfully\
+\
+\
+\uc0\u55357 \u56588  Phase 3B: Initializing Plugin System...\
+Config file not found: config/PIPER.user.md\
+  \uc0\u55357 \u56550  Loaded 5/5 plugin(s)\
+    \uc0\u9989  demo\
+    \uc0\u9989  calendar\
+    \uc0\u9989  notion\
+    \uc0\u9989  github\
+    \uc0\u9989  slack\
+  \uc0\u9888 \u65039   Calendar plugin initialized but not configured\
+  \uc0\u9989  Notion plugin initialized (spatial: True)\
+  \uc0\u9888 \u65039   GitHub plugin initialized but not configured\
+  \uc0\u9888 \u65039   Slack plugin initialized but not configured\
+  \uc0\u9989  Initialized 5/5 plugin(s)\
+  \uc0\u9989  Mounted 5 router(s)\
+\uc0\u9989  Plugin system initialized\
+\
+/Users/alpha-one/alpha-mux/piper-morgan-product/venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:200: UserWarning: Field name "validate" in "StoreKeyRequest" shadows an attribute in parent "BaseModel"\
+  warnings.warn(\
+/Users/alpha-one/alpha-mux/piper-morgan-product/venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:200: UserWarning: Field name "validate" in "RotateKeyRequest" shadows an attribute in parent "BaseModel"\
+  warnings.warn(\
+\
+\uc0\u55358 \u56825  Starting Background Cleanup Job...\
+\uc0\u9989  Blacklist cleanup job started (runs every 24 hours)\
+\
+\uc0\u9201 \u65039  Starting Attention Decay Job...\
+\uc0\u9989  Attention decay job started (runs every 5 minutes)\
+\uc0\u55357 \u56960  Web server startup complete\
+   \uc0\u55356 \u57104  Browser opened\
+\{"path": "/", "event": "No authentication token provided", "logger": "services.auth.auth_middleware", "level": "warning", "timestamp": "2026-01-29T00:44:35.026368Z"\}\
+\{"path": "/apple-touch-icon-precomposed.png", "event": "No authentication token provided", "logger": "services.auth.auth_middleware", "level": "warning", "timestamp": "2026-01-29T00:44:35.263896Z"\}\
+\{"path": "/apple-touch-icon.png", "event": "No authentication token provided", "logger": "services.auth.auth_middleware", "level": "warning", "timestamp": "2026-01-29T00:44:35.857817Z"\}\
+\{"path": "/api/v1/settings/integrations/slack/app-credentials/status", "event": "No authentication token provided", "logger": "services.auth.auth_middleware", "level": "warning", "timestamp": "2026-01-29T00:44:55.217332Z"\}\
+\{"path": "/api/v1/settings/integrations/calendar/app-credentials/status", "event": "No authentication token provided", "logger": "services.auth.auth_middleware", "level": "warning", "timestamp": "2026-01-29T00:44:55.218892Z"\}\
+\{"event": "Error fetching user setup status: (sqlalchemy.dialects.postgresql.asyncpg.ProgrammingError) <class 'asyncpg.exceptions.UndefinedTableError'>: relation \\"user_trust_profiles\\" does not exist\\n[SQL: SELECT user_trust_profiles.id, user_trust_profiles.user_id, user_trust_profiles.current_stage, user_trust_profiles.highest_stage_achieved, user_trust_profiles.successful_count, user_trust_profiles.neutral_count, user_trust_profiles.negative_count, user_trust_profiles.consecutive_negative, user_trust_profiles.recent_events, user_trust_profiles.stage_history, user_trust_profiles.last_interaction_at, user_trust_profiles.last_stage_change_at, user_trust_profiles.created_at, user_trust_profiles.updated_at \\nFROM user_trust_profiles \\nWHERE user_trust_profiles.user_id = $1::UUID]\\n[parameters: (UUID('97b37261-6ee0-4479-9b1a-b8cc21f4d5bd'),)]\\n(Background on this error at: https://sqlalche.me/e/20/f405), skipping orientation modal", "logger": "web.api.routes.ui", "level": "warning", "timestamp": "2026-01-29T00:45:49.742517Z"\}\
+2026-01-28 16:45:50,092 INFO sqlalchemy.engine.Engine BEGIN (implicit)\
+BEGIN (implicit)\
+2026-01-28 16:45:50,093 INFO sqlalchemy.engine.Engine SELECT token_blacklist.id, token_blacklist.token_id, token_blacklist.user_id, token_blacklist.reason, token_blacklist.expires_at, token_blacklist.created_at \
+FROM token_blacklist \
+WHERE token_blacklist.token_id = $1::VARCHAR AND token_blacklist.expires_at > $2::TIMESTAMP WITHOUT TIME ZONE\
+SELECT token_blacklist.id, token_blacklist.token_id, token_blacklist.user_id, token_blacklist.reason, token_blacklist.expires_at, token_blacklist.created_at \
+FROM token_blacklist \
+WHERE token_blacklist.token_id = $1::VARCHAR AND token_blacklist.expires_at > $2::TIMESTAMP WITHOUT TIME ZONE\
+2026-01-28 16:45:50,093 INFO sqlalchemy.engine.Engine [generated in 0.00009s] ('4187b958-f9df-41d7-997a-d0c90a6312d4', datetime.datetime(2026, 1, 29, 0, 45, 50, 92317))\
+[generated in 0.00009s] ('4187b958-f9df-41d7-997a-d0c90a6312d4', datetime.datetime(2026, 1, 29, 0, 45, 50, 92317))\
+2026-01-28 16:45:50,103 INFO sqlalchemy.engine.Engine ROLLBACK\
+ROLLBACK\
+\{"path": "/apple-touch-icon-precomposed.png", "event": "No authentication token provided", "logger": "services.auth.auth_middleware", "level": "warning", "timestamp": "2026-01-29T00:45:50.108181Z"\}\
+\{"path": "/apple-touch-icon.png", "event": "No authentication token provided", "logger": "services.auth.auth_middleware", "level": "warning", "timestamp": "2026-01-29T00:45:50.110559Z"\}\
+\{"path": "/favicon.ico", "event": "No authentication token provided", "logger": "services.auth.auth_middleware", "level": "warning", "timestamp": "2026-01-29T00:45:50.110973Z"\}\
+\{"event": "Error fetching user setup status: (sqlalchemy.dialects.postgresql.asyncpg.ProgrammingError) <class 'asyncpg.exceptions.UndefinedTableError'>: relation \\"user_trust_profiles\\" does not exist\\n[SQL: SELECT user_trust_profiles.id, user_trust_profiles.user_id, user_trust_profiles.current_stage, user_trust_profiles.highest_stage_achieved, user_trust_profiles.successful_count, user_trust_profiles.neutral_count, user_trust_profiles.negative_count, user_trust_profiles.consecutive_negative, user_trust_profiles.recent_events, user_trust_profiles.stage_history, user_trust_profiles.last_interaction_at, user_trust_profiles.last_stage_change_at, user_trust_profiles.created_at, user_trust_profiles.updated_at \\nFROM user_trust_profiles \\nWHERE user_trust_profiles.user_id = $1::UUID]\\n[parameters: (UUID('97b37261-6ee0-4479-9b1a-b8cc21f4d5bd'),)]\\n(Background on this error at: https://sqlalche.me/e/20/f405), skipping orientation modal", "logger": "web.api.routes.ui", "level": "warning", "timestamp": "2026-01-29T01:00:05.065662Z"\}\
+2026-01-28 17:00:05,198 INFO sqlalchemy.engine.Engine BEGIN (implicit)\
+BEGIN (implicit)\
+2026-01-28 17:00:05,199 INFO sqlalchemy.engine.Engine SELECT token_blacklist.id, token_blacklist.token_id, token_blacklist.user_id, token_blacklist.reason, token_blacklist.expires_at, token_blacklist.created_at \
+FROM token_blacklist \
+WHERE token_blacklist.token_id = $1::VARCHAR AND token_blacklist.expires_at > $2::TIMESTAMP WITHOUT TIME ZONE\
+SELECT token_blacklist.id, token_blacklist.token_id, token_blacklist.user_id, token_blacklist.reason, token_blacklist.expires_at, token_blacklist.created_at \
+FROM token_blacklist \
+WHERE token_blacklist.token_id = $1::VARCHAR AND token_blacklist.expires_at > $2::TIMESTAMP WITHOUT TIME ZONE\
+2026-01-28 17:00:05,199 INFO sqlalchemy.engine.Engine [cached since 855.1s ago] ('4187b958-f9df-41d7-997a-d0c90a6312d4', datetime.datetime(2026, 1, 29, 1, 0, 5, 198162))\
+[cached since 855.1s ago] ('4187b958-f9df-41d7-997a-d0c90a6312d4', datetime.datetime(2026, 1, 29, 1, 0, 5, 198162))\
+2026-01-28 17:00:05,214 INFO sqlalchemy.engine.Engine ROLLBACK\
+ROLLBACK\
+2026-01-28 17:00:12,877 INFO sqlalchemy.engine.Engine BEGIN (implicit)\
+BEGIN (implicit)\
+2026-01-28 17:00:12,878 INFO sqlalchemy.engine.Engine SELECT token_blacklist.id, token_blacklist.token_id, token_blacklist.user_id, token_blacklist.reason, token_blacklist.expires_at, token_blacklist.created_at \
+FROM token_blacklist \
+WHERE token_blacklist.token_id = $1::VARCHAR AND token_blacklist.expires_at > $2::TIMESTAMP WITHOUT TIME ZONE\
+SELECT token_blacklist.id, token_blacklist.token_id, token_blacklist.user_id, token_blacklist.reason, token_blacklist.expires_at, token_blacklist.created_at \
+FROM token_blacklist \
+WHERE token_blacklist.token_id = $1::VARCHAR AND token_blacklist.expires_at > $2::TIMESTAMP WITHOUT TIME ZONE\
+2026-01-28 17:00:12,878 INFO sqlalchemy.engine.Engine [cached since 862.8s ago] ('4187b958-f9df-41d7-997a-d0c90a6312d4', datetime.datetime(2026, 1, 29, 1, 0, 12, 877535))\
+[cached since 862.8s ago] ('4187b958-f9df-41d7-997a-d0c90a6312d4', datetime.datetime(2026, 1, 29, 1, 0, 12, 877535))\
+2026-01-28 17:00:12,881 INFO sqlalchemy.engine.Engine ROLLBACK\
+ROLLBACK\
+2026-01-28 17:00:12,884 INFO sqlalchemy.engine.Engine BEGIN (implicit)\
+BEGIN (implicit)\
+2026-01-28 17:00:12,886 INFO sqlalchemy.engine.Engine INSERT INTO token_blacklist (token_id, user_id, reason, expires_at, created_at) VALUES ($1::VARCHAR, $2::UUID, $3::VARCHAR, $4::TIMESTAMP WITHOUT TIME ZONE, $5::TIMESTAMP WITHOUT TIME ZONE) RETURNING token_blacklist.id\
+INSERT INTO token_blacklist (token_id, user_id, reason, expires_at, created_at) VALUES ($1::VARCHAR, $2::UUID, $3::VARCHAR, $4::TIMESTAMP WITHOUT TIME ZONE, $5::TIMESTAMP WITHOUT TIME ZONE) RETURNING token_blacklist.id\
+2026-01-28 17:00:12,886 INFO sqlalchemy.engine.Engine [generated in 0.00030s] ('4187b958-f9df-41d7-997a-d0c90a6312d4', '97b37261-6ee0-4479-9b1a-b8cc21f4d5bd', 'logout', datetime.datetime(2026, 1, 29, 1, 15, 49), datetime.datetime(2026, 1, 29, 1, 0, 12, 883384))\
+[generated in 0.00030s] ('4187b958-f9df-41d7-997a-d0c90a6312d4', '97b37261-6ee0-4479-9b1a-b8cc21f4d5bd', 'logout', datetime.datetime(2026, 1, 29, 1, 15, 49), datetime.datetime(2026, 1, 29, 1, 0, 12, 883384))\
+2026-01-28 17:00:12,895 INFO sqlalchemy.engine.Engine COMMIT\
+COMMIT\
+\{"event": "Error fetching user setup status: (sqlalchemy.dialects.postgresql.asyncpg.ProgrammingError) <class 'asyncpg.exceptions.UndefinedTableError'>: relation \\"user_trust_profiles\\" does not exist\\n[SQL: SELECT user_trust_profiles.id, user_trust_profiles.user_id, user_trust_profiles.current_stage, user_trust_profiles.highest_stage_achieved, user_trust_profiles.successful_count, user_trust_profiles.neutral_count, user_trust_profiles.negative_count, user_trust_profiles.consecutive_negative, user_trust_profiles.recent_events, user_trust_profiles.stage_history, user_trust_profiles.last_interaction_at, user_trust_profiles.last_stage_change_at, user_trust_profiles.created_at, user_trust_profiles.updated_at \\nFROM user_trust_profiles \\nWHERE user_trust_profiles.user_id = $1::UUID]\\n[parameters: (UUID('97b37261-6ee0-4479-9b1a-b8cc21f4d5bd'),)]\\n(Background on this error at: https://sqlalche.me/e/20/f405), skipping orientation modal", "logger": "web.api.routes.ui", "level": "warning", "timestamp": "2026-01-29T01:00:13.011616Z"\}\
+2026-01-28 17:00:13,022 INFO sqlalchemy.engine.Engine BEGIN (implicit)\
+BEGIN (implicit)\
+2026-01-28 17:00:13,022 INFO sqlalchemy.engine.Engine SELECT token_blacklist.id, token_blacklist.token_id, token_blacklist.user_id, token_blacklist.reason, token_blacklist.expires_at, token_blacklist.created_at \
+FROM token_blacklist \
+WHERE token_blacklist.token_id = $1::VARCHAR AND token_blacklist.expires_at > $2::TIMESTAMP WITHOUT TIME ZONE\
+SELECT token_blacklist.id, token_blacklist.token_id, token_blacklist.user_id, token_blacklist.reason, token_blacklist.expires_at, token_blacklist.created_at \
+FROM token_blacklist \
+WHERE token_blacklist.token_id = $1::VARCHAR AND token_blacklist.expires_at > $2::TIMESTAMP WITHOUT TIME ZONE\
+2026-01-28 17:00:13,022 INFO sqlalchemy.engine.Engine [cached since 862.9s ago] ('4187b958-f9df-41d7-997a-d0c90a6312d4', datetime.datetime(2026, 1, 29, 1, 0, 13, 22291))\
+[cached since 862.9s ago] ('4187b958-f9df-41d7-997a-d0c90a6312d4', datetime.datetime(2026, 1, 29, 1, 0, 13, 22291))\
+2026-01-28 17:00:13,025 INFO sqlalchemy.engine.Engine ROLLBACK\
+ROLLBACK\
+\{"jti": "4187b958-f9df-41d7-997a-d0c90a6312d4", "user_id": "97b37261-6ee0-4479-9b1a-b8cc21f4d5bd", "event": "Token validation failed: revoked", "logger": "services.auth.jwt_service", "level": "warning", "timestamp": "2026-01-29T01:00:13.027203Z"\}\
+\{"error_code": "TOKEN_REVOKED", "status_code": 401, "details": \{"detail": "Token has been revoked"\}, "path": "/api/v1/conversations", "method": "GET", "event": "api_error", "logger": "web.app", "level": "error", "timestamp": "2026-01-29T01:00:13.027636Z"\}\
+2026-01-28 17:00:16,254 INFO sqlalchemy.engine.Engine BEGIN (implicit)\
+BEGIN (implicit)\
+2026-01-28 17:00:16,254 INFO sqlalchemy.engine.Engine SELECT token_blacklist.id, token_blacklist.token_id, token_blacklist.user_id, token_blacklist.reason, token_blacklist.expires_at, token_blacklist.created_at \
+FROM token_blacklist \
+WHERE token_blacklist.token_id = $1::VARCHAR AND token_blacklist.expires_at > $2::TIMESTAMP WITHOUT TIME ZONE\
+SELECT token_blacklist.id, token_blacklist.token_id, token_blacklist.user_id, token_blacklist.reason, token_blacklist.expires_at, token_blacklist.created_at \
+FROM token_blacklist \
+WHERE token_blacklist.token_id = $1::VARCHAR AND token_blacklist.expires_at > $2::TIMESTAMP WITHOUT TIME ZONE\
+2026-01-28 17:00:16,254 INFO sqlalchemy.engine.Engine [cached since 866.2s ago] ('4187b958-f9df-41d7-997a-d0c90a6312d4', datetime.datetime(2026, 1, 29, 1, 0, 16, 253717))\
+[cached since 866.2s ago] ('4187b958-f9df-41d7-997a-d0c90a6312d4', datetime.datetime(2026, 1, 29, 1, 0, 16, 253717))\
+2026-01-28 17:00:16,259 INFO sqlalchemy.engine.Engine ROLLBACK\
+ROLLBACK\
+\{"jti": "4187b958-f9df-41d7-997a-d0c90a6312d4", "user_id": "97b37261-6ee0-4479-9b1a-b8cc21f4d5bd", "event": "Token validation failed: revoked", "logger": "services.auth.jwt_service", "level": "warning", "timestamp": "2026-01-29T01:00:16.264400Z"\}\
+\{"error_code": "TOKEN_REVOKED", "status_code": 401, "details": \{"detail": "Token has been revoked"\}, "path": "/api/v1/conversations", "method": "GET", "event": "api_error", "logger": "web.app", "level": "error", "timestamp": "2026-01-29T01:00:16.265001Z"\}\
+2026-01-28 17:00:18,147 INFO sqlalchemy.engine.Engine BEGIN (implicit)\
+BEGIN (implicit)\
+2026-01-28 17:00:18,148 INFO sqlalchemy.engine.Engine SELECT token_blacklist.id, token_blacklist.token_id, token_blacklist.user_id, token_blacklist.reason, token_blacklist.expires_at, token_blacklist.created_at \
+FROM token_blacklist \
+WHERE token_blacklist.token_id = $1::VARCHAR AND token_blacklist.expires_at > $2::TIMESTAMP WITHOUT TIME ZONE\
+SELECT token_blacklist.id, token_blacklist.token_id, token_blacklist.user_id, token_blacklist.reason, token_blacklist.expires_at, token_blacklist.created_at \
+FROM token_blacklist \
+WHERE token_blacklist.token_id = $1::VARCHAR AND token_blacklist.expires_at > $2::TIMESTAMP WITHOUT TIME ZONE\
+2026-01-28 17:00:18,148 INFO sqlalchemy.engine.Engine [cached since 868.1s ago] ('4187b958-f9df-41d7-997a-d0c90a6312d4', datetime.datetime(2026, 1, 29, 1, 0, 18, 147429))\
+[cached since 868.1s ago] ('4187b958-f9df-41d7-997a-d0c90a6312d4', datetime.datetime(2026, 1, 29, 1, 0, 18, 147429))\
+2026-01-28 17:00:18,154 INFO sqlalchemy.engine.Engine ROLLBACK\
+ROLLBACK\
+\{"jti": "4187b958-f9df-41d7-997a-d0c90a6312d4", "user_id": "97b37261-6ee0-4479-9b1a-b8cc21f4d5bd", "event": "Token validation failed: revoked", "logger": "services.auth.jwt_service", "level": "warning", "timestamp": "2026-01-29T01:00:18.156792Z"\}\
+2026-01-28 17:00:18,158 INFO sqlalchemy.engine.Engine BEGIN (implicit)\
+BEGIN (implicit)\
+2026-01-28 17:00:18,159 INFO sqlalchemy.engine.Engine INSERT INTO token_blacklist (token_id, user_id, reason, expires_at, created_at) VALUES ($1::VARCHAR, $2::UUID, $3::VARCHAR, $4::TIMESTAMP WITHOUT TIME ZONE, $5::TIMESTAMP WITHOUT TIME ZONE) RETURNING token_blacklist.id\
+INSERT INTO token_blacklist (token_id, user_id, reason, expires_at, created_at) VALUES ($1::VARCHAR, $2::UUID, $3::VARCHAR, $4::TIMESTAMP WITHOUT TIME ZONE, $5::TIMESTAMP WITHOUT TIME ZONE) RETURNING token_blacklist.id\
+2026-01-28 17:00:18,159 INFO sqlalchemy.engine.Engine [cached since 5.273s ago] ('4187b958-f9df-41d7-997a-d0c90a6312d4', '97b37261-6ee0-4479-9b1a-b8cc21f4d5bd', 'logout', datetime.datetime(2026, 1, 29, 1, 15, 49), datetime.datetime(2026, 1, 29, 1, 0, 18, 158280))\
+[cached since 5.273s ago] ('4187b958-f9df-41d7-997a-d0c90a6312d4', '97b37261-6ee0-4479-9b1a-b8cc21f4d5bd', 'logout', datetime.datetime(2026, 1, 29, 1, 15, 49), datetime.datetime(2026, 1, 29, 1, 0, 18, 158280))\
+2026-01-28 17:00:18,163 INFO sqlalchemy.engine.Engine ROLLBACK\
+ROLLBACK\
+\{"token_id": "4187b958-f9df-41d7-997a-d0c90a6312d4", "error": "(sqlalchemy.dialects.postgresql.asyncpg.IntegrityError) <class 'asyncpg.exceptions.UniqueViolationError'>: duplicate key value violates unique constraint \\"idx_token_blacklist_token_id\\"\\nDETAIL:  Key (token_id)=(4187b958-f9df-41d7-997a-d0c90a6312d4) already exists.\\n[SQL: INSERT INTO token_blacklist (token_id, user_id, reason, expires_at, created_at) VALUES ($1::VARCHAR, $2::UUID, $3::VARCHAR, $4::TIMESTAMP WITHOUT TIME ZONE, $5::TIMESTAMP WITHOUT TIME ZONE) RETURNING token_blacklist.id]\\n[parameters: ('4187b958-f9df-41d7-997a-d0c90a6312d4', '97b37261-6ee0-4479-9b1a-b8cc21f4d5bd', 'logout', datetime.datetime(2026, 1, 29, 1, 15, 49), datetime.datetime(2026, 1, 29, 1, 0, 18, 158280))]\\n(Background on this error at: https://sqlalche.me/e/20/gkpj)", "event": "Database blacklist failed", "logger": "services.auth.token_blacklist", "level": "error", "timestamp": "2026-01-29T01:00:18.164869Z"\}\
+\{"jti": "4187b958-f9df-41d7-997a-d0c90a6312d4", "event": "Failed to add token to blacklist", "logger": "services.auth.jwt_service", "level": "error", "timestamp": "2026-01-29T01:00:18.165097Z"\}\
+\{"event": "Error fetching user setup status: (sqlalchemy.dialects.postgresql.asyncpg.ProgrammingError) <class 'asyncpg.exceptions.UndefinedTableError'>: relation \\"user_trust_profiles\\" does not exist\\n[SQL: SELECT user_trust_profiles.id, user_trust_profiles.user_id, user_trust_profiles.current_stage, user_trust_profiles.highest_stage_achieved, user_trust_profiles.successful_count, user_trust_profiles.neutral_count, user_trust_profiles.negative_count, user_trust_profiles.consecutive_negative, user_trust_profiles.recent_events, user_trust_profiles.stage_history, user_trust_profiles.last_interaction_at, user_trust_profiles.last_stage_change_at, user_trust_profiles.created_at, user_trust_profiles.updated_at \\nFROM user_trust_profiles \\nWHERE user_trust_profiles.user_id = $1::UUID]\\n[parameters: (UUID('97b37261-6ee0-4479-9b1a-b8cc21f4d5bd'),)]\\n(Background on this error at: https://sqlalche.me/e/20/f405), skipping orientation modal", "logger": "web.api.routes.ui", "level": "warning", "timestamp": "2026-01-29T01:00:18.227373Z"\}\
+2026-01-28 17:00:18,240 INFO sqlalchemy.engine.Engine BEGIN (implicit)\
+BEGIN (implicit)\
+2026-01-28 17:00:18,240 INFO sqlalchemy.engine.Engine SELECT token_blacklist.id, token_blacklist.token_id, token_blacklist.user_id, token_blacklist.reason, token_blacklist.expires_at, token_blacklist.created_at \
+FROM token_blacklist \
+WHERE token_blacklist.token_id = $1::VARCHAR AND token_blacklist.expires_at > $2::TIMESTAMP WITHOUT TIME ZONE\
+SELECT token_blacklist.id, token_blacklist.token_id, token_blacklist.user_id, token_blacklist.reason, token_blacklist.expires_at, token_blacklist.created_at \
+FROM token_blacklist \
+WHERE token_blacklist.token_id = $1::VARCHAR AND token_blacklist.expires_at > $2::TIMESTAMP WITHOUT TIME ZONE\
+2026-01-28 17:00:18,240 INFO sqlalchemy.engine.Engine [cached since 868.2s ago] ('4187b958-f9df-41d7-997a-d0c90a6312d4', datetime.datetime(2026, 1, 29, 1, 0, 18, 239916))\
+[cached since 868.2s ago] ('4187b958-f9df-41d7-997a-d0c90a6312d4', datetime.datetime(2026, 1, 29, 1, 0, 18, 239916))\
+2026-01-28 17:00:18,243 INFO sqlalchemy.engine.Engine ROLLBACK\
+ROLLBACK\
+\{"jti": "4187b958-f9df-41d7-997a-d0c90a6312d4", "user_id": "97b37261-6ee0-4479-9b1a-b8cc21f4d5bd", "event": "Token validation failed: revoked", "logger": "services.auth.jwt_service", "level": "warning", "timestamp": "2026-01-29T01:00:18.244154Z"\}\
+\{"error_code": "TOKEN_REVOKED", "status_code": 401, "details": \{"detail": "Token has been revoked"\}, "path": "/api/v1/conversations", "method": "GET", "event": "api_error", "logger": "web.app", "level": "error", "timestamp": "2026-01-29T01:00:18.244534Z"\}\
+2026-01-28 17:00:21,877 INFO sqlalchemy.engine.Engine BEGIN (implicit)\
+BEGIN (implicit)\
+2026-01-28 17:00:21,877 INFO sqlalchemy.engine.Engine SELECT token_blacklist.id, token_blacklist.token_id, token_blacklist.user_id, token_blacklist.reason, token_blacklist.expires_at, token_blacklist.created_at \
+FROM token_blacklist \
+WHERE token_blacklist.token_id = $1::VARCHAR AND token_blacklist.expires_at > $2::TIMESTAMP WITHOUT TIME ZONE\
+SELECT token_blacklist.id, token_blacklist.token_id, token_blacklist.user_id, token_blacklist.reason, token_blacklist.expires_at, token_blacklist.created_at \
+FROM token_blacklist \
+WHERE token_blacklist.token_id = $1::VARCHAR AND token_blacklist.expires_at > $2::TIMESTAMP WITHOUT TIME ZONE\
+2026-01-28 17:00:21,878 INFO sqlalchemy.engine.Engine [cached since 871.8s ago] ('4187b958-f9df-41d7-997a-d0c90a6312d4', datetime.datetime(2026, 1, 29, 1, 0, 21, 874785))\
+[cached since 871.8s ago] ('4187b958-f9df-41d7-997a-d0c90a6312d4', datetime.datetime(2026, 1, 29, 1, 0, 21, 874785))\
+2026-01-28 17:00:21,881 INFO sqlalchemy.engine.Engine ROLLBACK\
+ROLLBACK\
+\{"jti": "4187b958-f9df-41d7-997a-d0c90a6312d4", "user_id": "97b37261-6ee0-4479-9b1a-b8cc21f4d5bd", "event": "Token validation failed: revoked", "logger": "services.auth.jwt_service", "level": "warning", "timestamp": "2026-01-29T01:00:21.883244Z"\}\
+2026-01-28 17:00:21,885 INFO sqlalchemy.engine.Engine BEGIN (implicit)\
+BEGIN (implicit)\
+2026-01-28 17:00:21,886 INFO sqlalchemy.engine.Engine INSERT INTO token_blacklist (token_id, user_id, reason, expires_at, created_at) VALUES ($1::VARCHAR, $2::UUID, $3::VARCHAR, $4::TIMESTAMP WITHOUT TIME ZONE, $5::TIMESTAMP WITHOUT TIME ZONE) RETURNING token_blacklist.id\
+INSERT INTO token_blacklist (token_id, user_id, reason, expires_at, created_at) VALUES ($1::VARCHAR, $2::UUID, $3::VARCHAR, $4::TIMESTAMP WITHOUT TIME ZONE, $5::TIMESTAMP WITHOUT TIME ZONE) RETURNING token_blacklist.id\
+2026-01-28 17:00:21,886 INFO sqlalchemy.engine.Engine [cached since 9s ago] ('4187b958-f9df-41d7-997a-d0c90a6312d4', '97b37261-6ee0-4479-9b1a-b8cc21f4d5bd', 'logout', datetime.datetime(2026, 1, 29, 1, 15, 49), datetime.datetime(2026, 1, 29, 1, 0, 21, 884959))\
+[cached since 9s ago] ('4187b958-f9df-41d7-997a-d0c90a6312d4', '97b37261-6ee0-4479-9b1a-b8cc21f4d5bd', 'logout', datetime.datetime(2026, 1, 29, 1, 15, 49), datetime.datetime(2026, 1, 29, 1, 0, 21, 884959))\
+2026-01-28 17:00:21,889 INFO sqlalchemy.engine.Engine ROLLBACK\
+ROLLBACK\
+\{"token_id": "4187b958-f9df-41d7-997a-d0c90a6312d4", "error": "(sqlalchemy.dialects.postgresql.asyncpg.IntegrityError) <class 'asyncpg.exceptions.UniqueViolationError'>: duplicate key value violates unique constraint \\"idx_token_blacklist_token_id\\"\\nDETAIL:  Key (token_id)=(4187b958-f9df-41d7-997a-d0c90a6312d4) already exists.\\n[SQL: INSERT INTO token_blacklist (token_id, user_id, reason, expires_at, created_at) VALUES ($1::VARCHAR, $2::UUID, $3::VARCHAR, $4::TIMESTAMP WITHOUT TIME ZONE, $5::TIMESTAMP WITHOUT TIME ZONE) RETURNING token_blacklist.id]\\n[parameters: ('4187b958-f9df-41d7-997a-d0c90a6312d4', '97b37261-6ee0-4479-9b1a-b8cc21f4d5bd', 'logout', datetime.datetime(2026, 1, 29, 1, 15, 49), datetime.datetime(2026, 1, 29, 1, 0, 21, 884959))]\\n(Background on this error at: https://sqlalche.me/e/20/gkpj)", "event": "Database blacklist failed", "logger": "services.auth.token_blacklist", "level": "error", "timestamp": "2026-01-29T01:00:21.890798Z"\}\
+\{"jti": "4187b958-f9df-41d7-997a-d0c90a6312d4", "event": "Failed to add token to blacklist", "logger": "services.auth.jwt_service", "level": "error", "timestamp": "2026-01-29T01:00:21.891291Z"\}\
+\{"event": "Error fetching user setup status: (sqlalchemy.dialects.postgresql.asyncpg.ProgrammingError) <class 'asyncpg.exceptions.UndefinedTableError'>: relation \\"user_trust_profiles\\" does not exist\\n[SQL: SELECT user_trust_profiles.id, user_trust_profiles.user_id, user_trust_profiles.current_stage, user_trust_profiles.highest_stage_achieved, user_trust_profiles.successful_count, user_trust_profiles.neutral_count, user_trust_profiles.negative_count, user_trust_profiles.consecutive_negative, user_trust_profiles.recent_events, user_trust_profiles.stage_history, user_trust_profiles.last_interaction_at, user_trust_profiles.last_stage_change_at, user_trust_profiles.created_at, user_trust_profiles.updated_at \\nFROM user_trust_profiles \\nWHERE user_trust_profiles.user_id = $1::UUID]\\n[parameters: (UUID('97b37261-6ee0-4479-9b1a-b8cc21f4d5bd'),)]\\n(Background on this error at: https://sqlalche.me/e/20/f405), skipping orientation modal", "logger": "web.api.routes.ui", "level": "warning", "timestamp": "2026-01-29T01:00:21.942779Z"\}\
+2026-01-28 17:00:21,955 INFO sqlalchemy.engine.Engine BEGIN (implicit)\
+BEGIN (implicit)\
+2026-01-28 17:00:21,955 INFO sqlalchemy.engine.Engine SELECT token_blacklist.id, token_blacklist.token_id, token_blacklist.user_id, token_blacklist.reason, token_blacklist.expires_at, token_blacklist.created_at \
+FROM token_blacklist \
+WHERE token_blacklist.token_id = $1::VARCHAR AND token_blacklist.expires_at > $2::TIMESTAMP WITHOUT TIME ZONE\
+SELECT token_blacklist.id, token_blacklist.token_id, token_blacklist.user_id, token_blacklist.reason, token_blacklist.expires_at, token_blacklist.created_at \
+FROM token_blacklist \
+WHERE token_blacklist.token_id = $1::VARCHAR AND token_blacklist.expires_at > $2::TIMESTAMP WITHOUT TIME ZONE\
+2026-01-28 17:00:21,955 INFO sqlalchemy.engine.Engine [cached since 871.9s ago] ('4187b958-f9df-41d7-997a-d0c90a6312d4', datetime.datetime(2026, 1, 29, 1, 0, 21, 955202))\
+[cached since 871.9s ago] ('4187b958-f9df-41d7-997a-d0c90a6312d4', datetime.datetime(2026, 1, 29, 1, 0, 21, 955202))\
+2026-01-28 17:00:21,957 INFO sqlalchemy.engine.Engine ROLLBACK\
+ROLLBACK\
+\{"jti": "4187b958-f9df-41d7-997a-d0c90a6312d4", "user_id": "97b37261-6ee0-4479-9b1a-b8cc21f4d5bd", "event": "Token validation failed: revoked", "logger": "services.auth.jwt_service", "level": "warning", "timestamp": "2026-01-29T01:00:21.958648Z"\}\
+\{"error_code": "TOKEN_REVOKED", "status_code": 401, "details": \{"detail": "Token has been revoked"\}, "path": "/api/v1/conversations", "method": "GET", "event": "api_error", "logger": "web.app", "level": "error", "timestamp": "2026-01-29T01:00:21.958771Z"\}\
+\{"event": "Error fetching user setup status: (sqlalchemy.dialects.postgresql.asyncpg.ProgrammingError) <class 'asyncpg.exceptions.UndefinedTableError'>: relation \\"user_trust_profiles\\" does not exist\\n[SQL: SELECT user_trust_profiles.id, user_trust_profiles.user_id, user_trust_profiles.current_stage, user_trust_profiles.highest_stage_achieved, user_trust_profiles.successful_count, user_trust_profiles.neutral_count, user_trust_profiles.negative_count, user_trust_profiles.consecutive_negative, user_trust_profiles.recent_events, user_trust_profiles.stage_history, user_trust_profiles.last_interaction_at, user_trust_profiles.last_stage_change_at, user_trust_profiles.created_at, user_trust_profiles.updated_at \\nFROM user_trust_profiles \\nWHERE user_trust_profiles.user_id = $1::UUID]\\n[parameters: (UUID('97b37261-6ee0-4479-9b1a-b8cc21f4d5bd'),)]\\n(Background on this error at: https://sqlalche.me/e/20/f405), skipping orientation modal", "logger": "web.api.routes.ui", "level": "warning", "timestamp": "2026-01-29T01:00:29.258088Z"\}\
+2026-01-28 17:00:29,282 INFO sqlalchemy.engine.Engine BEGIN (implicit)\
+BEGIN (implicit)\
+2026-01-28 17:00:29,283 INFO sqlalchemy.engine.Engine SELECT token_blacklist.id, token_blacklist.token_id, token_blacklist.user_id, token_blacklist.reason, token_blacklist.expires_at, token_blacklist.created_at \
+FROM token_blacklist \
+WHERE token_blacklist.token_id = $1::VARCHAR AND token_blacklist.expires_at > $2::TIMESTAMP WITHOUT TIME ZONE\
+SELECT token_blacklist.id, token_blacklist.token_id, token_blacklist.user_id, token_blacklist.reason, token_blacklist.expires_at, token_blacklist.created_at \
+FROM token_blacklist \
+WHERE token_blacklist.token_id = $1::VARCHAR AND token_blacklist.expires_at > $2::TIMESTAMP WITHOUT TIME ZONE\
+2026-01-28 17:00:29,283 INFO sqlalchemy.engine.Engine [cached since 879.2s ago] ('4187b958-f9df-41d7-997a-d0c90a6312d4', datetime.datetime(2026, 1, 29, 1, 0, 29, 281652))\
+[cached since 879.2s ago] ('4187b958-f9df-41d7-997a-d0c90a6312d4', datetime.datetime(2026, 1, 29, 1, 0, 29, 281652))\
+2026-01-28 17:00:29,292 INFO sqlalchemy.engine.Engine ROLLBACK\
+ROLLBACK\
+\{"jti": "4187b958-f9df-41d7-997a-d0c90a6312d4", "user_id": "97b37261-6ee0-4479-9b1a-b8cc21f4d5bd", "event": "Token validation failed: revoked", "logger": "services.auth.jwt_service", "level": "warning", "timestamp": "2026-01-29T01:00:29.302939Z"\}\
+\{"error_code": "TOKEN_REVOKED", "status_code": 401, "details": \{"detail": "Token has been revoked"\}, "path": "/api/v1/conversations", "method": "GET", "event": "api_error", "logger": "web.app", "level": "error", "timestamp": "2026-01-29T01:00:29.311790Z"\}\
+\{"event": "Error fetching user setup status: (sqlalchemy.dialects.postgresql.asyncpg.ProgrammingError) <class 'asyncpg.exceptions.UndefinedTableError'>: relation \\"user_trust_profiles\\" does not exist\\n[SQL: SELECT user_trust_profiles.id, user_trust_profiles.user_id, user_trust_profiles.current_stage, user_trust_profiles.highest_stage_achieved, user_trust_profiles.successful_count, user_trust_profiles.neutral_count, user_trust_profiles.negative_count, user_trust_profiles.consecutive_negative, user_trust_profiles.recent_events, user_trust_profiles.stage_history, user_trust_profiles.last_interaction_at, user_trust_profiles.last_stage_change_at, user_trust_profiles.created_at, user_trust_profiles.updated_at \\nFROM user_trust_profiles \\nWHERE user_trust_profiles.user_id = $1::UUID]\\n[parameters: (UUID('97b37261-6ee0-4479-9b1a-b8cc21f4d5bd'),)]\\n(Background on this error at: https://sqlalche.me/e/20/f405), skipping orientation modal", "logger": "web.api.routes.ui", "level": "warning", "timestamp": "2026-01-29T01:00:35.130082Z"\}\
+2026-01-28 17:00:35,169 INFO sqlalchemy.engine.Engine BEGIN (implicit)\
+BEGIN (implicit)\
+2026-01-28 17:00:35,169 INFO sqlalchemy.engine.Engine SELECT token_blacklist.id, token_blacklist.token_id, token_blacklist.user_id, token_blacklist.reason, token_blacklist.expires_at, token_blacklist.created_at \
+FROM token_blacklist \
+WHERE token_blacklist.token_id = $1::VARCHAR AND token_blacklist.expires_at > $2::TIMESTAMP WITHOUT TIME ZONE\
+SELECT token_blacklist.id, token_blacklist.token_id, token_blacklist.user_id, token_blacklist.reason, token_blacklist.expires_at, token_blacklist.created_at \
+FROM token_blacklist \
+WHERE token_blacklist.token_id = $1::VARCHAR AND token_blacklist.expires_at > $2::TIMESTAMP WITHOUT TIME ZONE\
+2026-01-28 17:00:35,169 INFO sqlalchemy.engine.Engine [cached since 885.1s ago] ('4187b958-f9df-41d7-997a-d0c90a6312d4', datetime.datetime(2026, 1, 29, 1, 0, 35, 168664))\
+[cached since 885.1s ago] ('4187b958-f9df-41d7-997a-d0c90a6312d4', datetime.datetime(2026, 1, 29, 1, 0, 35, 168664))\
+2026-01-28 17:00:35,181 INFO sqlalchemy.engine.Engine ROLLBACK\
+ROLLBACK\
+\{"jti": "4187b958-f9df-41d7-997a-d0c90a6312d4", "user_id": "97b37261-6ee0-4479-9b1a-b8cc21f4d5bd", "event": "Token validation failed: revoked", "logger": "services.auth.jwt_service", "level": "warning", "timestamp": "2026-01-29T01:00:35.183326Z"\}\
+\{"error_code": "TOKEN_REVOKED", "status_code": 401, "details": \{"detail": "Token has been revoked"\}, "path": "/api/v1/conversations", "method": "GET", "event": "api_error", "logger": "web.app", "level": "error", "timestamp": "2026-01-29T01:00:35.183471Z"\}\
+DEBUG #490: Attempting JWT verification, token present=True, token_length=545\
+DEBUG #490: JWT verified successfully, user_id=97b37261-6ee0-4479-9b1a-b8cc21f4d5bd\
+DEBUG #490: intent route - has_current_user=True, user_id=97b37261-6ee0-4479-9b1a-b8cc21f4d5bd, has_auth_cookie=True\
+[ConversationHandler] Singleton CREATED: manager id=6098143664\
+[PortfolioManager] get_session_by_user called with user_id=97b37261-6ee0-4479-9b1a-b8cc21f4d5bd\
+[PortfolioManager] Current sessions: []\
+[PortfolioManager] No active session found for user 97b37261-6ee0-4479-9b1a-b8cc21f4d5bd\
+[ConversationHandler] Standup singleton CREATED: manager id=6098141408\
+2026-01-28 17:01:01,751 INFO sqlalchemy.engine.Engine BEGIN (implicit)\
+BEGIN (implicit)\
+2026-01-28 17:01:01,753 INFO sqlalchemy.engine.Engine SELECT users.id \
+FROM users \
+WHERE users.id = $1::UUID\
+SELECT users.id \
+FROM users \
+WHERE users.id = $1::UUID\
+2026-01-28 17:01:01,754 INFO sqlalchemy.engine.Engine [generated in 0.00019s] ('97b37261-6ee0-4479-9b1a-b8cc21f4d5bd',)\
+[generated in 0.00019s] ('97b37261-6ee0-4479-9b1a-b8cc21f4d5bd',)\
+2026-01-28 17:01:01,763 INFO sqlalchemy.engine.Engine SELECT learned_patterns.id, learned_patterns.user_id, learned_patterns.pattern_type, learned_patterns.pattern_data, learned_patterns.confidence, learned_patterns.usage_count, learned_patterns.success_count, learned_patterns.failure_count, learned_patterns.enabled, learned_patterns.last_used_at, learned_patterns.created_at, learned_patterns.updated_at \
+FROM learned_patterns \
+WHERE learned_patterns.user_id = $1::UUID AND CAST(learned_patterns.pattern_data -> $2::VARCHAR AS VARCHAR) = $3::VARCHAR AND learned_patterns.enabled = true ORDER BY learned_patterns.last_used_at DESC \
+ LIMIT $4::INTEGER\
+SELECT learned_patterns.id, learned_patterns.user_id, learned_patterns.pattern_type, learned_patterns.pattern_data, learned_patterns.confidence, learned_patterns.usage_count, learned_patterns.success_count, learned_patterns.failure_count, learned_patterns.enabled, learned_patterns.last_used_at, learned_patterns.created_at, learned_patterns.updated_at \
+FROM learned_patterns \
+WHERE learned_patterns.user_id = $1::UUID AND CAST(learned_patterns.pattern_data -> $2::VARCHAR AS VARCHAR) = $3::VARCHAR AND learned_patterns.enabled = true ORDER BY learned_patterns.last_used_at DESC \
+ LIMIT $4::INTEGER\
+2026-01-28 17:01:01,763 INFO sqlalchemy.engine.Engine [generated in 0.00017s] (UUID('97b37261-6ee0-4479-9b1a-b8cc21f4d5bd'), 'action_type', 'conversation', 1)\
+[generated in 0.00017s] (UUID('97b37261-6ee0-4479-9b1a-b8cc21f4d5bd'), 'action_type', 'conversation', 1)\
+2026-01-28 17:01:01,799 INFO sqlalchemy.engine.Engine INSERT INTO learned_patterns (id, user_id, pattern_type, pattern_data, confidence, usage_count, success_count, failure_count, enabled, last_used_at, created_at, updated_at) VALUES ($1::UUID, $2::UUID, $3::patterntype, $4::JSON, $5::FLOAT, $6::INTEGER, $7::INTEGER, $8::INTEGER, $9::BOOLEAN, $10::TIMESTAMP WITHOUT TIME ZONE, $11::TIMESTAMP WITHOUT TIME ZONE, $12::TIMESTAMP WITHOUT TIME ZONE)\
+INSERT INTO learned_patterns (id, user_id, pattern_type, pattern_data, confidence, usage_count, success_count, failure_count, enabled, last_used_at, created_at, updated_at) VALUES ($1::UUID, $2::UUID, $3::patterntype, $4::JSON, $5::FLOAT, $6::INTEGER, $7::INTEGER, $8::INTEGER, $9::BOOLEAN, $10::TIMESTAMP WITHOUT TIME ZONE, $11::TIMESTAMP WITHOUT TIME ZONE, $12::TIMESTAMP WITHOUT TIME ZONE)\
+2026-01-28 17:01:01,800 INFO sqlalchemy.engine.Engine [generated in 0.00021s] (UUID('e9f9d0e8-167f-4c66-beb9-f296e6c04c2a'), UUID('97b37261-6ee0-4479-9b1a-b8cc21f4d5bd'), 'PREFERENCE', '\{"action_type": "conversation", "context": \{"intent": "greeting", "message": "Hello I am new here"\}, "timestamp": "2026-01-29T01:01:01.761428"\}', 0.5, 1, 0, 0, True, datetime.datetime(2026, 1, 29, 1, 1, 1, 761428), datetime.datetime(2026, 1, 29, 1, 1, 1, 799906), datetime.datetime(2026, 1, 29, 1, 1, 1, 799911))\
+[generated in 0.00021s] (UUID('e9f9d0e8-167f-4c66-beb9-f296e6c04c2a'), UUID('97b37261-6ee0-4479-9b1a-b8cc21f4d5bd'), 'PREFERENCE', '\{"action_type": "conversation", "context": \{"intent": "greeting", "message": "Hello I am new here"\}, "timestamp": "2026-01-29T01:01:01.761428"\}', 0.5, 1, 0, 0, True, datetime.datetime(2026, 1, 29, 1, 1, 1, 761428), datetime.datetime(2026, 1, 29, 1, 1, 1, 799906), datetime.datetime(2026, 1, 29, 1, 1, 1, 799911))\
+2026-01-28 17:01:01,802 INFO sqlalchemy.engine.Engine COMMIT\
+COMMIT\
+2026-01-28 17:01:01,803 INFO sqlalchemy.engine.Engine BEGIN (implicit)\
+BEGIN (implicit)\
+2026-01-28 17:01:01,804 INFO sqlalchemy.engine.Engine SELECT learned_patterns.id, learned_patterns.user_id, learned_patterns.pattern_type, learned_patterns.pattern_data, learned_patterns.confidence, learned_patterns.usage_count, learned_patterns.success_count, learned_patterns.failure_count, learned_patterns.enabled, learned_patterns.last_used_at, learned_patterns.created_at, learned_patterns.updated_at \
+FROM learned_patterns \
+WHERE learned_patterns.user_id = $1::UUID AND learned_patterns.confidence >= $2::FLOAT AND learned_patterns.enabled = true ORDER BY learned_patterns.confidence DESC \
+ LIMIT $3::INTEGER\
+SELECT learned_patterns.id, learned_patterns.user_id, learned_patterns.pattern_type, learned_patterns.pattern_data, learned_patterns.confidence, learned_patterns.usage_count, learned_patterns.success_count, learned_patterns.failure_count, learned_patterns.enabled, learned_patterns.last_used_at, learned_patterns.created_at, learned_patterns.updated_at \
+FROM learned_patterns \
+WHERE learned_patterns.user_id = $1::UUID AND learned_patterns.confidence >= $2::FLOAT AND learned_patterns.enabled = true ORDER BY learned_patterns.confidence DESC \
+ LIMIT $3::INTEGER\
+2026-01-28 17:01:01,804 INFO sqlalchemy.engine.Engine [generated in 0.00013s] (UUID('97b37261-6ee0-4479-9b1a-b8cc21f4d5bd'), 0.7, 5)\
+[generated in 0.00013s] (UUID('97b37261-6ee0-4479-9b1a-b8cc21f4d5bd'), 0.7, 5)\
+2026-01-28 17:01:01,805 INFO sqlalchemy.engine.Engine ROLLBACK\
+ROLLBACK\
+2026-01-28 17:01:01,806 INFO sqlalchemy.engine.Engine BEGIN (implicit)\
+BEGIN (implicit)\
+2026-01-28 17:01:01,806 INFO sqlalchemy.engine.Engine SELECT learned_patterns.id, learned_patterns.user_id, learned_patterns.pattern_type, learned_patterns.pattern_data, learned_patterns.confidence, learned_patterns.usage_count, learned_patterns.success_count, learned_patterns.failure_count, learned_patterns.enabled, learned_patterns.last_used_at, learned_patterns.created_at, learned_patterns.updated_at \
+FROM learned_patterns \
+WHERE learned_patterns.user_id = $1::UUID AND learned_patterns.confidence >= $2::FLOAT AND learned_patterns.enabled = true ORDER BY learned_patterns.confidence DESC \
+ LIMIT $3::INTEGER\
+SELECT learned_patterns.id, learned_patterns.user_id, learned_patterns.pattern_type, learned_patterns.pattern_data, learned_patterns.confidence, learned_patterns.usage_count, learned_patterns.success_count, learned_patterns.failure_count, learned_patterns.enabled, learned_patterns.last_used_at, learned_patterns.created_at, learned_patterns.updated_at \
+FROM learned_patterns \
+WHERE learned_patterns.user_id = $1::UUID AND learned_patterns.confidence >= $2::FLOAT AND learned_patterns.enabled = true ORDER BY learned_patterns.confidence DESC \
+ LIMIT $3::INTEGER\
+2026-01-28 17:01:01,807 INFO sqlalchemy.engine.Engine [cached since 0.003031s ago] (UUID('97b37261-6ee0-4479-9b1a-b8cc21f4d5bd'), 0.9, 3)\
+[cached since 0.003031s ago] (UUID('97b37261-6ee0-4479-9b1a-b8cc21f4d5bd'), 0.9, 3)\
+2026-01-28 17:01:01,807 INFO sqlalchemy.engine.Engine ROLLBACK\
+ROLLBACK\
+[PortfolioManager] get_session_by_user called with user_id=97b37261-6ee0-4479-9b1a-b8cc21f4d5bd\
+[PortfolioManager] Current sessions: []\
+[PortfolioManager] No active session found for user 97b37261-6ee0-4479-9b1a-b8cc21f4d5bd\
+2026-01-28 17:01:01,808 INFO sqlalchemy.engine.Engine BEGIN (implicit)\
+BEGIN (implicit)\
+2026-01-28 17:01:01,809 INFO sqlalchemy.engine.Engine SELECT count(projects.id) AS count_1 \
+FROM projects \
+WHERE projects.is_archived = false AND projects.owner_id = $1::UUID\
+SELECT count(projects.id) AS count_1 \
+FROM projects \
+WHERE projects.is_archived = false AND projects.owner_id = $1::UUID\
+2026-01-28 17:01:01,809 INFO sqlalchemy.engine.Engine [generated in 0.00006s] ('97b37261-6ee0-4479-9b1a-b8cc21f4d5bd',)\
+[generated in 0.00006s] ('97b37261-6ee0-4479-9b1a-b8cc21f4d5bd',)\
+[PortfolioManager] Session CREATED: id=4a2143df-72d1-4644-9c35-207cfd115809, user_id=97b37261-6ee0-4479-9b1a-b8cc21f4d5bd, session_id=fdca9726-4088-4f1e-96a5-bab3183b8e5c\
+[PortfolioManager] Manager id=6098143664, total sessions=1\
+2026-01-28 17:01:01,813 INFO sqlalchemy.engine.Engine ROLLBACK\
+ROLLBACK\
+2026-01-28 17:01:01,814 INFO sqlalchemy.engine.Engine BEGIN (implicit)\
+BEGIN (implicit)\
+2026-01-28 17:01:01,814 INFO sqlalchemy.engine.Engine SELECT max(conversation_turns.turn_number) AS max_1 \
+FROM conversation_turns \
+WHERE conversation_turns.conversation_id = $1::VARCHAR\
+SELECT max(conversation_turns.turn_number) AS max_1 \
+FROM conversation_turns \
+WHERE conversation_turns.conversation_id = $1::VARCHAR\
+2026-01-28 17:01:01,814 INFO sqlalchemy.engine.Engine [generated in 0.00006s] ('fdca9726-4088-4f1e-96a5-bab3183b8e5c',)\
+[generated in 0.00006s] ('fdca9726-4088-4f1e-96a5-bab3183b8e5c',)\
+2026-01-28 17:01:01,821 INFO sqlalchemy.engine.Engine ROLLBACK\
+ROLLBACK\
+2026-01-28 17:01:01,821 INFO sqlalchemy.engine.Engine BEGIN (implicit)\
+BEGIN (implicit)\
+2026-01-28 17:01:01,822 INFO sqlalchemy.engine.Engine SELECT conversations.id AS conversations_id, conversations.user_id AS conversations_user_id, conversations.session_id AS conversations_session_id, conversations.title AS conversations_title, conversations.context AS conversations_context, conversations.is_active AS conversations_is_active, conversations.created_at AS conversations_created_at, conversations.updated_at AS conversations_updated_at, conversations.last_activity_at AS conversations_last_activity_at \
+FROM conversations \
+WHERE conversations.id = $1::VARCHAR\
+SELECT conversations.id AS conversations_id, conversations.user_id AS conversations_user_id, conversations.session_id AS conversations_session_id, conversations.title AS conversations_title, conversations.context AS conversations_context, conversations.is_active AS conversations_is_active, conversations.created_at AS conversations_created_at, conversations.updated_at AS conversations_updated_at, conversations.last_activity_at AS conversations_last_activity_at \
+FROM conversations \
+WHERE conversations.id = $1::VARCHAR\
+2026-01-28 17:01:01,825 INFO sqlalchemy.engine.Engine [generated in 0.00235s] ('fdca9726-4088-4f1e-96a5-bab3183b8e5c',)\
+[generated in 0.00235s] ('fdca9726-4088-4f1e-96a5-bab3183b8e5c',)\
+2026-01-28 17:01:01,827 INFO sqlalchemy.engine.Engine INSERT INTO conversations (id, user_id, session_id, title, context, is_active, last_activity_at) VALUES ($1::VARCHAR, $2::VARCHAR, $3::VARCHAR, $4::VARCHAR, $5::JSONB, $6::BOOLEAN, $7::TIMESTAMP WITHOUT TIME ZONE) RETURNING conversations.created_at, conversations.updated_at\
+INSERT INTO conversations (id, user_id, session_id, title, context, is_active, last_activity_at) VALUES ($1::VARCHAR, $2::VARCHAR, $3::VARCHAR, $4::VARCHAR, $5::JSONB, $6::BOOLEAN, $7::TIMESTAMP WITHOUT TIME ZONE) RETURNING conversations.created_at, conversations.updated_at\
+2026-01-28 17:01:01,827 INFO sqlalchemy.engine.Engine [generated in 0.00015s] ('fdca9726-4088-4f1e-96a5-bab3183b8e5c', '97b37261-6ee0-4479-9b1a-b8cc21f4d5bd', 'fdca9726-4088-4f1e-96a5-bab3183b8e5c', 'Conversation', '\{\}', True, None)\
+[generated in 0.00015s] ('fdca9726-4088-4f1e-96a5-bab3183b8e5c', '97b37261-6ee0-4479-9b1a-b8cc21f4d5bd', 'fdca9726-4088-4f1e-96a5-bab3183b8e5c', 'Conversation', '\{\}', True, None)\
+2026-01-28 17:01:01,829 INFO sqlalchemy.engine.Engine COMMIT\
+COMMIT\
+2026-01-28 17:01:01,830 INFO sqlalchemy.engine.Engine BEGIN (implicit)\
+BEGIN (implicit)\
+2026-01-28 17:01:01,831 INFO sqlalchemy.engine.Engine SELECT conversation_turns.id AS conversation_turns_id, conversation_turns.conversation_id AS conversation_turns_conversation_id, conversation_turns.turn_number AS conversation_turns_turn_number, conversation_turns.user_message AS conversation_turns_user_message, conversation_turns.assistant_response AS conversation_turns_assistant_response, conversation_turns.intent AS conversation_turns_intent, conversation_turns.entities AS conversation_turns_entities, conversation_turns."references" AS conversation_turns_references, conversation_turns.context_used AS conversation_turns_context_used, conversation_turns.metadata AS conversation_turns_metadata, conversation_turns.processing_time AS conversation_turns_processing_time, conversation_turns.created_at AS conversation_turns_created_at, conversation_turns.completed_at AS conversation_turns_completed_at \
+FROM conversation_turns \
+WHERE conversation_turns.id = $1::VARCHAR\
+SELECT conversation_turns.id AS conversation_turns_id, conversation_turns.conversation_id AS conversation_turns_conversation_id, conversation_turns.turn_number AS conversation_turns_turn_number, conversation_turns.user_message AS conversation_turns_user_message, conversation_turns.assistant_response AS conversation_turns_assistant_response, conversation_turns.intent AS conversation_turns_intent, conversation_turns.entities AS conversation_turns_entities, conversation_turns."references" AS conversation_turns_references, conversation_turns.context_used AS conversation_turns_context_used, conversation_turns.metadata AS conversation_turns_metadata, conversation_turns.processing_time AS conversation_turns_processing_time, conversation_turns.created_at AS conversation_turns_created_at, conversation_turns.completed_at AS conversation_turns_completed_at \
+FROM conversation_turns \
+WHERE conversation_turns.id = $1::VARCHAR\
+2026-01-28 17:01:01,831 INFO sqlalchemy.engine.Engine [generated in 0.00011s] ('f458c78b-4de3-46be-8360-5e4e1340382e',)\
+[generated in 0.00011s] ('f458c78b-4de3-46be-8360-5e4e1340382e',)\
+2026-01-28 17:01:01,832 INFO sqlalchemy.engine.Engine INSERT INTO conversation_turns (id, conversation_id, turn_number, user_message, assistant_response, intent, entities, "references", context_used, metadata, processing_time, created_at, completed_at) VALUES ($1::VARCHAR, $2::VARCHAR, $3::INTEGER, $4::VARCHAR, $5::VARCHAR, $6::VARCHAR, $7::JSONB, $8::JSONB, $9::JSONB, $10::JSONB, $11::FLOAT, $12::TIMESTAMP WITHOUT TIME ZONE, $13::TIMESTAMP WITHOUT TIME ZONE)\
+INSERT INTO conversation_turns (id, conversation_id, turn_number, user_message, assistant_response, intent, entities, "references", context_used, metadata, processing_time, created_at, completed_at) VALUES ($1::VARCHAR, $2::VARCHAR, $3::INTEGER, $4::VARCHAR, $5::VARCHAR, $6::VARCHAR, $7::JSONB, $8::JSONB, $9::JSONB, $10::JSONB, $11::FLOAT, $12::TIMESTAMP WITHOUT TIME ZONE, $13::TIMESTAMP WITHOUT TIME ZONE)\
+2026-01-28 17:01:01,833 INFO sqlalchemy.engine.Engine [generated in 0.00011s] ('f458c78b-4de3-46be-8360-5e4e1340382e', 'fdca9726-4088-4f1e-96a5-bab3183b8e5c', 1, 'Hello I am new here', "Hello! I'm Piper Morgan, your PM assistant. I notice we haven't set up your project portfolio yet. Would you like to tell me about the projects you're working on?", None, '[]', '\{\}', '\{\}', '\{\}', None, datetime.datetime(2026, 1, 28, 17, 1, 1, 821471), None)\
+[generated in 0.00011s] ('f458c78b-4de3-46be-8360-5e4e1340382e', 'fdca9726-4088-4f1e-96a5-bab3183b8e5c', 1, 'Hello I am new here', "Hello! I'm Piper Morgan, your PM assistant. I notice we haven't set up your project portfolio yet. Would you like to tell me about the projects you're working on?", None, '[]', '\{\}', '\{\}', '\{\}', None, datetime.datetime(2026, 1, 28, 17, 1, 1, 821471), None)\
+2026-01-28 17:01:01,835 INFO sqlalchemy.engine.Engine SELECT conversations.id AS conversations_id, conversations.user_id AS conversations_user_id, conversations.session_id AS conversations_session_id, conversations.title AS conversations_title, conversations.context AS conversations_context, conversations.is_active AS conversations_is_active, conversations.created_at AS conversations_created_at, conversations.updated_at AS conversations_updated_at, conversations.last_activity_at AS conversations_last_activity_at \
+FROM conversations \
+WHERE conversations.id = $1::VARCHAR\
+SELECT conversations.id AS conversations_id, conversations.user_id AS conversations_user_id, conversations.session_id AS conversations_session_id, conversations.title AS conversations_title, conversations.context AS conversations_context, conversations.is_active AS conversations_is_active, conversations.created_at AS conversations_created_at, conversations.updated_at AS conversations_updated_at, conversations.last_activity_at AS conversations_last_activity_at \
+FROM conversations \
+WHERE conversations.id = $1::VARCHAR\
+2026-01-28 17:01:01,835 INFO sqlalchemy.engine.Engine [cached since 0.01263s ago] ('fdca9726-4088-4f1e-96a5-bab3183b8e5c',)\
+[cached since 0.01263s ago] ('fdca9726-4088-4f1e-96a5-bab3183b8e5c',)\
+2026-01-28 17:01:01,835 INFO sqlalchemy.engine.Engine COMMIT\
+COMMIT\
+DEBUG #490: Attempting JWT verification, token present=True, token_length=545\
+DEBUG #490: JWT verified successfully, user_id=97b37261-6ee0-4479-9b1a-b8cc21f4d5bd\
+DEBUG #490: intent route - has_current_user=True, user_id=97b37261-6ee0-4479-9b1a-b8cc21f4d5bd, has_auth_cookie=True\
+[PortfolioManager] get_session_by_user called with user_id=97b37261-6ee0-4479-9b1a-b8cc21f4d5bd\
+[PortfolioManager] Current sessions: [('4a2143df-72d1-4644-9c35-207cfd115809', '97b37261-6ee0-4479-9b1a-b8cc21f4d5bd', 'initiated')]\
+[PortfolioManager] Found session 4a2143df-72d1-4644-9c35-207cfd115809 for user 97b37261-6ee0-4479-9b1a-b8cc21f4d5bd\
+[PortfolioManager] get_session_by_user called with user_id=97b37261-6ee0-4479-9b1a-b8cc21f4d5bd\
+[PortfolioManager] Current sessions: [('4a2143df-72d1-4644-9c35-207cfd115809', '97b37261-6ee0-4479-9b1a-b8cc21f4d5bd', 'initiated')]\
+[PortfolioManager] Found session 4a2143df-72d1-4644-9c35-207cfd115809 for user 97b37261-6ee0-4479-9b1a-b8cc21f4d5bd\
+2026-01-28 17:01:33,354 INFO sqlalchemy.engine.Engine BEGIN (implicit)\
+BEGIN (implicit)\
+2026-01-28 17:01:33,357 INFO sqlalchemy.engine.Engine SELECT max(conversation_turns.turn_number) AS max_1 \
+FROM conversation_turns \
+WHERE conversation_turns.conversation_id = $1::VARCHAR\
+SELECT max(conversation_turns.turn_number) AS max_1 \
+FROM conversation_turns \
+WHERE conversation_turns.conversation_id = $1::VARCHAR\
+2026-01-28 17:01:33,357 INFO sqlalchemy.engine.Engine [cached since 31.54s ago] ('fdca9726-4088-4f1e-96a5-bab3183b8e5c',)\
+[cached since 31.54s ago] ('fdca9726-4088-4f1e-96a5-bab3183b8e5c',)\
+2026-01-28 17:01:33,364 INFO sqlalchemy.engine.Engine ROLLBACK\
+ROLLBACK\
+2026-01-28 17:01:33,367 INFO sqlalchemy.engine.Engine BEGIN (implicit)\
+BEGIN (implicit)\
+2026-01-28 17:01:33,367 INFO sqlalchemy.engine.Engine SELECT conversations.id AS conversations_id, conversations.user_id AS conversations_user_id, conversations.session_id AS conversations_session_id, conversations.title AS conversations_title, conversations.context AS conversations_context, conversations.is_active AS conversations_is_active, conversations.created_at AS conversations_created_at, conversations.updated_at AS conversations_updated_at, conversations.last_activity_at AS conversations_last_activity_at \
+FROM conversations \
+WHERE conversations.id = $1::VARCHAR\
+SELECT conversations.id AS conversations_id, conversations.user_id AS conversations_user_id, conversations.session_id AS conversations_session_id, conversations.title AS conversations_title, conversations.context AS conversations_context, conversations.is_active AS conversations_is_active, conversations.created_at AS conversations_created_at, conversations.updated_at AS conversations_updated_at, conversations.last_activity_at AS conversations_last_activity_at \
+FROM conversations \
+WHERE conversations.id = $1::VARCHAR\
+2026-01-28 17:01:33,367 INFO sqlalchemy.engine.Engine [cached since 31.55s ago] ('fdca9726-4088-4f1e-96a5-bab3183b8e5c',)\
+[cached since 31.55s ago] ('fdca9726-4088-4f1e-96a5-bab3183b8e5c',)\
+2026-01-28 17:01:33,371 INFO sqlalchemy.engine.Engine SELECT conversation_turns.id AS conversation_turns_id, conversation_turns.conversation_id AS conversation_turns_conversation_id, conversation_turns.turn_number AS conversation_turns_turn_number, conversation_turns.user_message AS conversation_turns_user_message, conversation_turns.assistant_response AS conversation_turns_assistant_response, conversation_turns.intent AS conversation_turns_intent, conversation_turns.entities AS conversation_turns_entities, conversation_turns."references" AS conversation_turns_references, conversation_turns.context_used AS conversation_turns_context_used, conversation_turns.metadata AS conversation_turns_metadata, conversation_turns.processing_time AS conversation_turns_processing_time, conversation_turns.created_at AS conversation_turns_created_at, conversation_turns.completed_at AS conversation_turns_completed_at \
+FROM conversation_turns \
+WHERE conversation_turns.id = $1::VARCHAR\
+SELECT conversation_turns.id AS conversation_turns_id, conversation_turns.conversation_id AS conversation_turns_conversation_id, conversation_turns.turn_number AS conversation_turns_turn_number, conversation_turns.user_message AS conversation_turns_user_message, conversation_turns.assistant_response AS conversation_turns_assistant_response, conversation_turns.intent AS conversation_turns_intent, conversation_turns.entities AS conversation_turns_entities, conversation_turns."references" AS conversation_turns_references, conversation_turns.context_used AS conversation_turns_context_used, conversation_turns.metadata AS conversation_turns_metadata, conversation_turns.processing_time AS conversation_turns_processing_time, conversation_turns.created_at AS conversation_turns_created_at, conversation_turns.completed_at AS conversation_turns_completed_at \
+FROM conversation_turns \
+WHERE conversation_turns.id = $1::VARCHAR\
+2026-01-28 17:01:33,371 INFO sqlalchemy.engine.Engine [cached since 31.54s ago] ('01923367-982e-42a0-9935-df2173540605',)\
+[cached since 31.54s ago] ('01923367-982e-42a0-9935-df2173540605',)\
+2026-01-28 17:01:33,380 INFO sqlalchemy.engine.Engine INSERT INTO conversation_turns (id, conversation_id, turn_number, user_message, assistant_response, intent, entities, "references", context_used, metadata, processing_time, created_at, completed_at) VALUES ($1::VARCHAR, $2::VARCHAR, $3::INTEGER, $4::VARCHAR, $5::VARCHAR, $6::VARCHAR, $7::JSONB, $8::JSONB, $9::JSONB, $10::JSONB, $11::FLOAT, $12::TIMESTAMP WITHOUT TIME ZONE, $13::TIMESTAMP WITHOUT TIME ZONE)\
+INSERT INTO conversation_turns (id, conversation_id, turn_number, user_message, assistant_response, intent, entities, "references", context_used, metadata, processing_time, created_at, completed_at) VALUES ($1::VARCHAR, $2::VARCHAR, $3::INTEGER, $4::VARCHAR, $5::VARCHAR, $6::VARCHAR, $7::JSONB, $8::JSONB, $9::JSONB, $10::JSONB, $11::FLOAT, $12::TIMESTAMP WITHOUT TIME ZONE, $13::TIMESTAMP WITHOUT TIME ZONE)\
+2026-01-28 17:01:33,380 INFO sqlalchemy.engine.Engine [cached since 31.55s ago] ('01923367-982e-42a0-9935-df2173540605', 'fdca9726-4088-4f1e-96a5-bab3183b8e5c', 2, 'Yes!', "Great! What's the main project you're focused on right now?", None, '[]', '\{\}', '\{\}', '\{\}', None, datetime.datetime(2026, 1, 28, 17, 1, 33, 366067), None)\
+[cached since 31.55s ago] ('01923367-982e-42a0-9935-df2173540605', 'fdca9726-4088-4f1e-96a5-bab3183b8e5c', 2, 'Yes!', "Great! What's the main project you're focused on right now?", None, '[]', '\{\}', '\{\}', '\{\}', None, datetime.datetime(2026, 1, 28, 17, 1, 33, 366067), None)\
+2026-01-28 17:01:33,382 INFO sqlalchemy.engine.Engine COMMIT\
+COMMIT\
+DEBUG #490: Attempting JWT verification, token present=True, token_length=545\
+DEBUG #490: JWT verified successfully, user_id=97b37261-6ee0-4479-9b1a-b8cc21f4d5bd\
+DEBUG #490: intent route - has_current_user=True, user_id=97b37261-6ee0-4479-9b1a-b8cc21f4d5bd, has_auth_cookie=True\
+[PortfolioManager] get_session_by_user called with user_id=97b37261-6ee0-4479-9b1a-b8cc21f4d5bd\
+[PortfolioManager] Current sessions: [('4a2143df-72d1-4644-9c35-207cfd115809', '97b37261-6ee0-4479-9b1a-b8cc21f4d5bd', 'gathering_projects')]\
+[PortfolioManager] Found session 4a2143df-72d1-4644-9c35-207cfd115809 for user 97b37261-6ee0-4479-9b1a-b8cc21f4d5bd\
+[PortfolioManager] get_session_by_user called with user_id=97b37261-6ee0-4479-9b1a-b8cc21f4d5bd\
+[PortfolioManager] Current sessions: [('4a2143df-72d1-4644-9c35-207cfd115809', '97b37261-6ee0-4479-9b1a-b8cc21f4d5bd', 'gathering_projects')]\
+[PortfolioManager] Found session 4a2143df-72d1-4644-9c35-207cfd115809 for user 97b37261-6ee0-4479-9b1a-b8cc21f4d5bd\
+2026-01-28 17:01:41,669 INFO sqlalchemy.engine.Engine BEGIN (implicit)\
+BEGIN (implicit)\
+2026-01-28 17:01:41,670 INFO sqlalchemy.engine.Engine SELECT max(conversation_turns.turn_number) AS max_1 \
+FROM conversation_turns \
+WHERE conversation_turns.conversation_id = $1::VARCHAR\
+SELECT max(conversation_turns.turn_number) AS max_1 \
+FROM conversation_turns \
+WHERE conversation_turns.conversation_id = $1::VARCHAR\
+2026-01-28 17:01:41,670 INFO sqlalchemy.engine.Engine [cached since 39.86s ago] ('fdca9726-4088-4f1e-96a5-bab3183b8e5c',)\
+[cached since 39.86s ago] ('fdca9726-4088-4f1e-96a5-bab3183b8e5c',)\
+2026-01-28 17:01:41,674 INFO sqlalchemy.engine.Engine ROLLBACK\
+ROLLBACK\
+2026-01-28 17:01:41,676 INFO sqlalchemy.engine.Engine BEGIN (implicit)\
+BEGIN (implicit)\
+2026-01-28 17:01:41,677 INFO sqlalchemy.engine.Engine SELECT conversations.id AS conversations_id, conversations.user_id AS conversations_user_id, conversations.session_id AS conversations_session_id, conversations.title AS conversations_title, conversations.context AS conversations_context, conversations.is_active AS conversations_is_active, conversations.created_at AS conversations_created_at, conversations.updated_at AS conversations_updated_at, conversations.last_activity_at AS conversations_last_activity_at \
+FROM conversations \
+WHERE conversations.id = $1::VARCHAR\
+SELECT conversations.id AS conversations_id, conversations.user_id AS conversations_user_id, conversations.session_id AS conversations_session_id, conversations.title AS conversations_title, conversations.context AS conversations_context, conversations.is_active AS conversations_is_active, conversations.created_at AS conversations_created_at, conversations.updated_at AS conversations_updated_at, conversations.last_activity_at AS conversations_last_activity_at \
+FROM conversations \
+WHERE conversations.id = $1::VARCHAR\
+2026-01-28 17:01:41,677 INFO sqlalchemy.engine.Engine [cached since 39.86s ago] ('fdca9726-4088-4f1e-96a5-bab3183b8e5c',)\
+[cached since 39.86s ago] ('fdca9726-4088-4f1e-96a5-bab3183b8e5c',)\
+2026-01-28 17:01:41,681 INFO sqlalchemy.engine.Engine SELECT conversation_turns.id AS conversation_turns_id, conversation_turns.conversation_id AS conversation_turns_conversation_id, conversation_turns.turn_number AS conversation_turns_turn_number, conversation_turns.user_message AS conversation_turns_user_message, conversation_turns.assistant_response AS conversation_turns_assistant_response, conversation_turns.intent AS conversation_turns_intent, conversation_turns.entities AS conversation_turns_entities, conversation_turns."references" AS conversation_turns_references, conversation_turns.context_used AS conversation_turns_context_used, conversation_turns.metadata AS conversation_turns_metadata, conversation_turns.processing_time AS conversation_turns_processing_time, conversation_turns.created_at AS conversation_turns_created_at, conversation_turns.completed_at AS conversation_turns_completed_at \
+FROM conversation_turns \
+WHERE conversation_turns.id = $1::VARCHAR\
+SELECT conversation_turns.id AS conversation_turns_id, conversation_turns.conversation_id AS conversation_turns_conversation_id, conversation_turns.turn_number AS conversation_turns_turn_number, conversation_turns.user_message AS conversation_turns_user_message, conversation_turns.assistant_response AS conversation_turns_assistant_response, conversation_turns.intent AS conversation_turns_intent, conversation_turns.entities AS conversation_turns_entities, conversation_turns."references" AS conversation_turns_references, conversation_turns.context_used AS conversation_turns_context_used, conversation_turns.metadata AS conversation_turns_metadata, conversation_turns.processing_time AS conversation_turns_processing_time, conversation_turns.created_at AS conversation_turns_created_at, conversation_turns.completed_at AS conversation_turns_completed_at \
+FROM conversation_turns \
+WHERE conversation_turns.id = $1::VARCHAR\
+2026-01-28 17:01:41,681 INFO sqlalchemy.engine.Engine [cached since 39.85s ago] ('105f3365-f7d5-496e-993a-e7770874e8dd',)\
+[cached since 39.85s ago] ('105f3365-f7d5-496e-993a-e7770874e8dd',)\
+2026-01-28 17:01:41,684 INFO sqlalchemy.engine.Engine INSERT INTO conversation_turns (id, conversation_id, turn_number, user_message, assistant_response, intent, entities, "references", context_used, metadata, processing_time, created_at, completed_at) VALUES ($1::VARCHAR, $2::VARCHAR, $3::INTEGER, $4::VARCHAR, $5::VARCHAR, $6::VARCHAR, $7::JSONB, $8::JSONB, $9::JSONB, $10::JSONB, $11::FLOAT, $12::TIMESTAMP WITHOUT TIME ZONE, $13::TIMESTAMP WITHOUT TIME ZONE)\
+INSERT INTO conversation_turns (id, conversation_id, turn_number, user_message, assistant_response, intent, entities, "references", context_used, metadata, processing_time, created_at, completed_at) VALUES ($1::VARCHAR, $2::VARCHAR, $3::INTEGER, $4::VARCHAR, $5::VARCHAR, $6::VARCHAR, $7::JSONB, $8::JSONB, $9::JSONB, $10::JSONB, $11::FLOAT, $12::TIMESTAMP WITHOUT TIME ZONE, $13::TIMESTAMP WITHOUT TIME ZONE)\
+2026-01-28 17:01:41,684 INFO sqlalchemy.engine.Engine [cached since 39.85s ago] ('105f3365-f7d5-496e-993a-e7770874e8dd', 'fdca9726-4088-4f1e-96a5-bab3183b8e5c', 3, 'Decision Reviews', "Got it - Decision Reviews. Are there any other projects you'd like me to know about, or is that your main focus?", None, '[]', '\{\}', '\{\}', '\{\}', None, datetime.datetime(2026, 1, 28, 17, 1, 41, 676241), None)\
+[cached since 39.85s ago] ('105f3365-f7d5-496e-993a-e7770874e8dd', 'fdca9726-4088-4f1e-96a5-bab3183b8e5c', 3, 'Decision Reviews', "Got it - Decision Reviews. Are there any other projects you'd like me to know about, or is that your main focus?", None, '[]', '\{\}', '\{\}', '\{\}', None, datetime.datetime(2026, 1, 28, 17, 1, 41, 676241), None)\
+2026-01-28 17:01:41,686 INFO sqlalchemy.engine.Engine COMMIT\
+COMMIT\
+DEBUG #490: Attempting JWT verification, token present=True, token_length=545\
+DEBUG #490: JWT verified successfully, user_id=97b37261-6ee0-4479-9b1a-b8cc21f4d5bd\
+DEBUG #490: intent route - has_current_user=True, user_id=97b37261-6ee0-4479-9b1a-b8cc21f4d5bd, has_auth_cookie=True\
+[PortfolioManager] get_session_by_user called with user_id=97b37261-6ee0-4479-9b1a-b8cc21f4d5bd\
+[PortfolioManager] Current sessions: [('4a2143df-72d1-4644-9c35-207cfd115809', '97b37261-6ee0-4479-9b1a-b8cc21f4d5bd', 'gathering_projects')]\
+[PortfolioManager] Found session 4a2143df-72d1-4644-9c35-207cfd115809 for user 97b37261-6ee0-4479-9b1a-b8cc21f4d5bd\
+[PortfolioManager] get_session_by_user called with user_id=97b37261-6ee0-4479-9b1a-b8cc21f4d5bd\
+[PortfolioManager] Current sessions: [('4a2143df-72d1-4644-9c35-207cfd115809', '97b37261-6ee0-4479-9b1a-b8cc21f4d5bd', 'gathering_projects')]\
+[PortfolioManager] Found session 4a2143df-72d1-4644-9c35-207cfd115809 for user 97b37261-6ee0-4479-9b1a-b8cc21f4d5bd\
+2026-01-28 17:01:51,779 INFO sqlalchemy.engine.Engine BEGIN (implicit)\
+BEGIN (implicit)\
+2026-01-28 17:01:51,783 INFO sqlalchemy.engine.Engine SELECT max(conversation_turns.turn_number) AS max_1 \
+FROM conversation_turns \
+WHERE conversation_turns.conversation_id = $1::VARCHAR\
+SELECT max(conversation_turns.turn_number) AS max_1 \
+FROM conversation_turns \
+WHERE conversation_turns.conversation_id = $1::VARCHAR\
+2026-01-28 17:01:51,783 INFO sqlalchemy.engine.Engine [cached since 49.97s ago] ('fdca9726-4088-4f1e-96a5-bab3183b8e5c',)\
+[cached since 49.97s ago] ('fdca9726-4088-4f1e-96a5-bab3183b8e5c',)\
+2026-01-28 17:01:51,787 INFO sqlalchemy.engine.Engine ROLLBACK\
+ROLLBACK\
+2026-01-28 17:01:51,789 INFO sqlalchemy.engine.Engine BEGIN (implicit)\
+BEGIN (implicit)\
+2026-01-28 17:01:51,790 INFO sqlalchemy.engine.Engine SELECT conversations.id AS conversations_id, conversations.user_id AS conversations_user_id, conversations.session_id AS conversations_session_id, conversations.title AS conversations_title, conversations.context AS conversations_context, conversations.is_active AS conversations_is_active, conversations.created_at AS conversations_created_at, conversations.updated_at AS conversations_updated_at, conversations.last_activity_at AS conversations_last_activity_at \
+FROM conversations \
+WHERE conversations.id = $1::VARCHAR\
+SELECT conversations.id AS conversations_id, conversations.user_id AS conversations_user_id, conversations.session_id AS conversations_session_id, conversations.title AS conversations_title, conversations.context AS conversations_context, conversations.is_active AS conversations_is_active, conversations.created_at AS conversations_created_at, conversations.updated_at AS conversations_updated_at, conversations.last_activity_at AS conversations_last_activity_at \
+FROM conversations \
+WHERE conversations.id = $1::VARCHAR\
+2026-01-28 17:01:51,790 INFO sqlalchemy.engine.Engine [cached since 49.97s ago] ('fdca9726-4088-4f1e-96a5-bab3183b8e5c',)\
+[cached since 49.97s ago] ('fdca9726-4088-4f1e-96a5-bab3183b8e5c',)\
+2026-01-28 17:01:51,793 INFO sqlalchemy.engine.Engine SELECT conversation_turns.id AS conversation_turns_id, conversation_turns.conversation_id AS conversation_turns_conversation_id, conversation_turns.turn_number AS conversation_turns_turn_number, conversation_turns.user_message AS conversation_turns_user_message, conversation_turns.assistant_response AS conversation_turns_assistant_response, conversation_turns.intent AS conversation_turns_intent, conversation_turns.entities AS conversation_turns_entities, conversation_turns."references" AS conversation_turns_references, conversation_turns.context_used AS conversation_turns_context_used, conversation_turns.metadata AS conversation_turns_metadata, conversation_turns.processing_time AS conversation_turns_processing_time, conversation_turns.created_at AS conversation_turns_created_at, conversation_turns.completed_at AS conversation_turns_completed_at \
+FROM conversation_turns \
+WHERE conversation_turns.id = $1::VARCHAR\
+SELECT conversation_turns.id AS conversation_turns_id, conversation_turns.conversation_id AS conversation_turns_conversation_id, conversation_turns.turn_number AS conversation_turns_turn_number, conversation_turns.user_message AS conversation_turns_user_message, conversation_turns.assistant_response AS conversation_turns_assistant_response, conversation_turns.intent AS conversation_turns_intent, conversation_turns.entities AS conversation_turns_entities, conversation_turns."references" AS conversation_turns_references, conversation_turns.context_used AS conversation_turns_context_used, conversation_turns.metadata AS conversation_turns_metadata, conversation_turns.processing_time AS conversation_turns_processing_time, conversation_turns.created_at AS conversation_turns_created_at, conversation_turns.completed_at AS conversation_turns_completed_at \
+FROM conversation_turns \
+WHERE conversation_turns.id = $1::VARCHAR\
+2026-01-28 17:01:51,793 INFO sqlalchemy.engine.Engine [cached since 49.96s ago] ('32257820-2a75-4116-8270-a1dc94525c62',)\
+[cached since 49.96s ago] ('32257820-2a75-4116-8270-a1dc94525c62',)\
+2026-01-28 17:01:51,796 INFO sqlalchemy.engine.Engine INSERT INTO conversation_turns (id, conversation_id, turn_number, user_message, assistant_response, intent, entities, "references", context_used, metadata, processing_time, created_at, completed_at) VALUES ($1::VARCHAR, $2::VARCHAR, $3::INTEGER, $4::VARCHAR, $5::VARCHAR, $6::VARCHAR, $7::JSONB, $8::JSONB, $9::JSONB, $10::JSONB, $11::FLOAT, $12::TIMESTAMP WITHOUT TIME ZONE, $13::TIMESTAMP WITHOUT TIME ZONE)\
+INSERT INTO conversation_turns (id, conversation_id, turn_number, user_message, assistant_response, intent, entities, "references", context_used, metadata, processing_time, created_at, completed_at) VALUES ($1::VARCHAR, $2::VARCHAR, $3::INTEGER, $4::VARCHAR, $5::VARCHAR, $6::VARCHAR, $7::JSONB, $8::JSONB, $9::JSONB, $10::JSONB, $11::FLOAT, $12::TIMESTAMP WITHOUT TIME ZONE, $13::TIMESTAMP WITHOUT TIME ZONE)\
+2026-01-28 17:01:51,796 INFO sqlalchemy.engine.Engine [cached since 49.97s ago] ('32257820-2a75-4116-8270-a1dc94525c62', 'fdca9726-4088-4f1e-96a5-bab3183b8e5c', 4, 'I have others, too.', "Got it - I have others, too. Are there any other projects you'd like me to know about, or is that your main focus?", None, '[]', '\{\}', '\{\}', '\{\}', None, datetime.datetime(2026, 1, 28, 17, 1, 51, 789273), None)\
+[cached since 49.97s ago] ('32257820-2a75-4116-8270-a1dc94525c62', 'fdca9726-4088-4f1e-96a5-bab3183b8e5c', 4, 'I have others, too.', "Got it - I have others, too. Are there any other projects you'd like me to know about, or is that your main focus?", None, '[]', '\{\}', '\{\}', '\{\}', None, datetime.datetime(2026, 1, 28, 17, 1, 51, 789273), None)\
+2026-01-28 17:01:51,800 INFO sqlalchemy.engine.Engine COMMIT\
+COMMIT\
+DEBUG #490: Attempting JWT verification, token present=True, token_length=545\
+DEBUG #490: JWT verified successfully, user_id=97b37261-6ee0-4479-9b1a-b8cc21f4d5bd\
+DEBUG #490: intent route - has_current_user=True, user_id=97b37261-6ee0-4479-9b1a-b8cc21f4d5bd, has_auth_cookie=True\
+[PortfolioManager] get_session_by_user called with user_id=97b37261-6ee0-4479-9b1a-b8cc21f4d5bd\
+[PortfolioManager] Current sessions: [('4a2143df-72d1-4644-9c35-207cfd115809', '97b37261-6ee0-4479-9b1a-b8cc21f4d5bd', 'gathering_projects')]\
+[PortfolioManager] Found session 4a2143df-72d1-4644-9c35-207cfd115809 for user 97b37261-6ee0-4479-9b1a-b8cc21f4d5bd\
+[PortfolioManager] get_session_by_user called with user_id=97b37261-6ee0-4479-9b1a-b8cc21f4d5bd\
+[PortfolioManager] Current sessions: [('4a2143df-72d1-4644-9c35-207cfd115809', '97b37261-6ee0-4479-9b1a-b8cc21f4d5bd', 'gathering_projects')]\
+[PortfolioManager] Found session 4a2143df-72d1-4644-9c35-207cfd115809 for user 97b37261-6ee0-4479-9b1a-b8cc21f4d5bd\
+2026-01-28 17:02:03,000 INFO sqlalchemy.engine.Engine BEGIN (implicit)\
+BEGIN (implicit)\
+2026-01-28 17:02:03,130 INFO sqlalchemy.engine.Engine SELECT max(conversation_turns.turn_number) AS max_1 \
+FROM conversation_turns \
+WHERE conversation_turns.conversation_id = $1::VARCHAR\
+SELECT max(conversation_turns.turn_number) AS max_1 \
+FROM conversation_turns \
+WHERE conversation_turns.conversation_id = $1::VARCHAR\
+2026-01-28 17:02:03,130 INFO sqlalchemy.engine.Engine [cached since 61.32s ago] ('fdca9726-4088-4f1e-96a5-bab3183b8e5c',)\
+[cached since 61.32s ago] ('fdca9726-4088-4f1e-96a5-bab3183b8e5c',)\
+2026-01-28 17:02:03,140 INFO sqlalchemy.engine.Engine ROLLBACK\
+ROLLBACK\
+2026-01-28 17:02:03,143 INFO sqlalchemy.engine.Engine BEGIN (implicit)\
+BEGIN (implicit)\
+2026-01-28 17:02:03,143 INFO sqlalchemy.engine.Engine SELECT conversations.id AS conversations_id, conversations.user_id AS conversations_user_id, conversations.session_id AS conversations_session_id, conversations.title AS conversations_title, conversations.context AS conversations_context, conversations.is_active AS conversations_is_active, conversations.created_at AS conversations_created_at, conversations.updated_at AS conversations_updated_at, conversations.last_activity_at AS conversations_last_activity_at \
+FROM conversations \
+WHERE conversations.id = $1::VARCHAR\
+SELECT conversations.id AS conversations_id, conversations.user_id AS conversations_user_id, conversations.session_id AS conversations_session_id, conversations.title AS conversations_title, conversations.context AS conversations_context, conversations.is_active AS conversations_is_active, conversations.created_at AS conversations_created_at, conversations.updated_at AS conversations_updated_at, conversations.last_activity_at AS conversations_last_activity_at \
+FROM conversations \
+WHERE conversations.id = $1::VARCHAR\
+2026-01-28 17:02:03,192 INFO sqlalchemy.engine.Engine [cached since 61.37s ago] ('fdca9726-4088-4f1e-96a5-bab3183b8e5c',)\
+[cached since 61.37s ago] ('fdca9726-4088-4f1e-96a5-bab3183b8e5c',)\
+2026-01-28 17:02:03,200 INFO sqlalchemy.engine.Engine SELECT conversation_turns.id AS conversation_turns_id, conversation_turns.conversation_id AS conversation_turns_conversation_id, conversation_turns.turn_number AS conversation_turns_turn_number, conversation_turns.user_message AS conversation_turns_user_message, conversation_turns.assistant_response AS conversation_turns_assistant_response, conversation_turns.intent AS conversation_turns_intent, conversation_turns.entities AS conversation_turns_entities, conversation_turns."references" AS conversation_turns_references, conversation_turns.context_used AS conversation_turns_context_used, conversation_turns.metadata AS conversation_turns_metadata, conversation_turns.processing_time AS conversation_turns_processing_time, conversation_turns.created_at AS conversation_turns_created_at, conversation_turns.completed_at AS conversation_turns_completed_at \
+FROM conversation_turns \
+WHERE conversation_turns.id = $1::VARCHAR\
+SELECT conversation_turns.id AS conversation_turns_id, conversation_turns.conversation_id AS conversation_turns_conversation_id, conversation_turns.turn_number AS conversation_turns_turn_number, conversation_turns.user_message AS conversation_turns_user_message, conversation_turns.assistant_response AS conversation_turns_assistant_response, conversation_turns.intent AS conversation_turns_intent, conversation_turns.entities AS conversation_turns_entities, conversation_turns."references" AS conversation_turns_references, conversation_turns.context_used AS conversation_turns_context_used, conversation_turns.metadata AS conversation_turns_metadata, conversation_turns.processing_time AS conversation_turns_processing_time, conversation_turns.created_at AS conversation_turns_created_at, conversation_turns.completed_at AS conversation_turns_completed_at \
+FROM conversation_turns \
+WHERE conversation_turns.id = $1::VARCHAR\
+2026-01-28 17:02:03,214 INFO sqlalchemy.engine.Engine [cached since 61.38s ago] ('03423e4d-8199-4193-9d20-965c6ada6236',)\
+[cached since 61.38s ago] ('03423e4d-8199-4193-9d20-965c6ada6236',)\
+2026-01-28 17:02:03,219 INFO sqlalchemy.engine.Engine INSERT INTO conversation_turns (id, conversation_id, turn_number, user_message, assistant_response, intent, entities, "references", context_used, metadata, processing_time, created_at, completed_at) VALUES ($1::VARCHAR, $2::VARCHAR, $3::INTEGER, $4::VARCHAR, $5::VARCHAR, $6::VARCHAR, $7::JSONB, $8::JSONB, $9::JSONB, $10::JSONB, $11::FLOAT, $12::TIMESTAMP WITHOUT TIME ZONE, $13::TIMESTAMP WITHOUT TIME ZONE)\
+INSERT INTO conversation_turns (id, conversation_id, turn_number, user_message, assistant_response, intent, entities, "references", context_used, metadata, processing_time, created_at, completed_at) VALUES ($1::VARCHAR, $2::VARCHAR, $3::INTEGER, $4::VARCHAR, $5::VARCHAR, $6::VARCHAR, $7::JSONB, $8::JSONB, $9::JSONB, $10::JSONB, $11::FLOAT, $12::TIMESTAMP WITHOUT TIME ZONE, $13::TIMESTAMP WITHOUT TIME ZONE)\
+2026-01-28 17:02:03,232 INFO sqlalchemy.engine.Engine [cached since 61.4s ago] ('03423e4d-8199-4193-9d20-965c6ada6236', 'fdca9726-4088-4f1e-96a5-bab3183b8e5c', 5, 'Piper Morgan', "Got it - Piper Morgan. Are there any other projects you'd like me to know about, or is that your main focus?", None, '[]', '\{\}', '\{\}', '\{\}', None, datetime.datetime(2026, 1, 28, 17, 2, 3, 142399), None)\
+[cached since 61.4s ago] ('03423e4d-8199-4193-9d20-965c6ada6236', 'fdca9726-4088-4f1e-96a5-bab3183b8e5c', 5, 'Piper Morgan', "Got it - Piper Morgan. Are there any other projects you'd like me to know about, or is that your main focus?", None, '[]', '\{\}', '\{\}', '\{\}', None, datetime.datetime(2026, 1, 28, 17, 2, 3, 142399), None)\
+2026-01-28 17:02:03,239 INFO sqlalchemy.engine.Engine COMMIT\
+COMMIT\
+DEBUG #490: Attempting JWT verification, token present=True, token_length=545\
+DEBUG #490: JWT verified successfully, user_id=97b37261-6ee0-4479-9b1a-b8cc21f4d5bd\
+DEBUG #490: intent route - has_current_user=True, user_id=97b37261-6ee0-4479-9b1a-b8cc21f4d5bd, has_auth_cookie=True\
+[PortfolioManager] get_session_by_user called with user_id=97b37261-6ee0-4479-9b1a-b8cc21f4d5bd\
+[PortfolioManager] Current sessions: [('4a2143df-72d1-4644-9c35-207cfd115809', '97b37261-6ee0-4479-9b1a-b8cc21f4d5bd', 'gathering_projects')]\
+[PortfolioManager] Found session 4a2143df-72d1-4644-9c35-207cfd115809 for user 97b37261-6ee0-4479-9b1a-b8cc21f4d5bd\
+[PortfolioManager] get_session_by_user called with user_id=97b37261-6ee0-4479-9b1a-b8cc21f4d5bd\
+[PortfolioManager] Current sessions: [('4a2143df-72d1-4644-9c35-207cfd115809', '97b37261-6ee0-4479-9b1a-b8cc21f4d5bd', 'gathering_projects')]\
+[PortfolioManager] Found session 4a2143df-72d1-4644-9c35-207cfd115809 for user 97b37261-6ee0-4479-9b1a-b8cc21f4d5bd\
+2026-01-28 17:02:13,037 INFO sqlalchemy.engine.Engine BEGIN (implicit)\
+BEGIN (implicit)\
+2026-01-28 17:02:13,038 INFO sqlalchemy.engine.Engine SELECT max(conversation_turns.turn_number) AS max_1 \
+FROM conversation_turns \
+WHERE conversation_turns.conversation_id = $1::VARCHAR\
+SELECT max(conversation_turns.turn_number) AS max_1 \
+FROM conversation_turns \
+WHERE conversation_turns.conversation_id = $1::VARCHAR\
+2026-01-28 17:02:13,039 INFO sqlalchemy.engine.Engine [cached since 71.23s ago] ('fdca9726-4088-4f1e-96a5-bab3183b8e5c',)\
+[cached since 71.23s ago] ('fdca9726-4088-4f1e-96a5-bab3183b8e5c',)\
+2026-01-28 17:02:13,042 INFO sqlalchemy.engine.Engine ROLLBACK\
+ROLLBACK\
+2026-01-28 17:02:13,044 INFO sqlalchemy.engine.Engine BEGIN (implicit)\
+BEGIN (implicit)\
+2026-01-28 17:02:13,044 INFO sqlalchemy.engine.Engine SELECT conversations.id AS conversations_id, conversations.user_id AS conversations_user_id, conversations.session_id AS conversations_session_id, conversations.title AS conversations_title, conversations.context AS conversations_context, conversations.is_active AS conversations_is_active, conversations.created_at AS conversations_created_at, conversations.updated_at AS conversations_updated_at, conversations.last_activity_at AS conversations_last_activity_at \
+FROM conversations \
+WHERE conversations.id = $1::VARCHAR\
+SELECT conversations.id AS conversations_id, conversations.user_id AS conversations_user_id, conversations.session_id AS conversations_session_id, conversations.title AS conversations_title, conversations.context AS conversations_context, conversations.is_active AS conversations_is_active, conversations.created_at AS conversations_created_at, conversations.updated_at AS conversations_updated_at, conversations.last_activity_at AS conversations_last_activity_at \
+FROM conversations \
+WHERE conversations.id = $1::VARCHAR\
+2026-01-28 17:02:13,044 INFO sqlalchemy.engine.Engine [cached since 71.22s ago] ('fdca9726-4088-4f1e-96a5-bab3183b8e5c',)\
+[cached since 71.22s ago] ('fdca9726-4088-4f1e-96a5-bab3183b8e5c',)\
+2026-01-28 17:02:13,046 INFO sqlalchemy.engine.Engine SELECT conversation_turns.id AS conversation_turns_id, conversation_turns.conversation_id AS conversation_turns_conversation_id, conversation_turns.turn_number AS conversation_turns_turn_number, conversation_turns.user_message AS conversation_turns_user_message, conversation_turns.assistant_response AS conversation_turns_assistant_response, conversation_turns.intent AS conversation_turns_intent, conversation_turns.entities AS conversation_turns_entities, conversation_turns."references" AS conversation_turns_references, conversation_turns.context_used AS conversation_turns_context_used, conversation_turns.metadata AS conversation_turns_metadata, conversation_turns.processing_time AS conversation_turns_processing_time, conversation_turns.created_at AS conversation_turns_created_at, conversation_turns.completed_at AS conversation_turns_completed_at \
+FROM conversation_turns \
+WHERE conversation_turns.id = $1::VARCHAR\
+SELECT conversation_turns.id AS conversation_turns_id, conversation_turns.conversation_id AS conversation_turns_conversation_id, conversation_turns.turn_number AS conversation_turns_turn_number, conversation_turns.user_message AS conversation_turns_user_message, conversation_turns.assistant_response AS conversation_turns_assistant_response, conversation_turns.intent AS conversation_turns_intent, conversation_turns.entities AS conversation_turns_entities, conversation_turns."references" AS conversation_turns_references, conversation_turns.context_used AS conversation_turns_context_used, conversation_turns.metadata AS conversation_turns_metadata, conversation_turns.processing_time AS conversation_turns_processing_time, conversation_turns.created_at AS conversation_turns_created_at, conversation_turns.completed_at AS conversation_turns_completed_at \
+FROM conversation_turns \
+WHERE conversation_turns.id = $1::VARCHAR\
+2026-01-28 17:02:13,046 INFO sqlalchemy.engine.Engine [cached since 71.22s ago] ('8aff3e2b-917e-42bb-ac63-105febb01261',)\
+[cached since 71.22s ago] ('8aff3e2b-917e-42bb-ac63-105febb01261',)\
+2026-01-28 17:02:13,048 INFO sqlalchemy.engine.Engine INSERT INTO conversation_turns (id, conversation_id, turn_number, user_message, assistant_response, intent, entities, "references", context_used, metadata, processing_time, created_at, completed_at) VALUES ($1::VARCHAR, $2::VARCHAR, $3::INTEGER, $4::VARCHAR, $5::VARCHAR, $6::VARCHAR, $7::JSONB, $8::JSONB, $9::JSONB, $10::JSONB, $11::FLOAT, $12::TIMESTAMP WITHOUT TIME ZONE, $13::TIMESTAMP WITHOUT TIME ZONE)\
+INSERT INTO conversation_turns (id, conversation_id, turn_number, user_message, assistant_response, intent, entities, "references", context_used, metadata, processing_time, created_at, completed_at) VALUES ($1::VARCHAR, $2::VARCHAR, $3::INTEGER, $4::VARCHAR, $5::VARCHAR, $6::VARCHAR, $7::JSONB, $8::JSONB, $9::JSONB, $10::JSONB, $11::FLOAT, $12::TIMESTAMP WITHOUT TIME ZONE, $13::TIMESTAMP WITHOUT TIME ZONE)\
+2026-01-28 17:02:13,049 INFO sqlalchemy.engine.Engine [cached since 71.22s ago] ('8aff3e2b-917e-42bb-ac63-105febb01261', 'fdca9726-4088-4f1e-96a5-bab3183b8e5c', 6, 'OneJob', "Got it - OneJob. Are there any other projects you'd like me to know about, or is that your main focus?", None, '[]', '\{\}', '\{\}', '\{\}', None, datetime.datetime(2026, 1, 28, 17, 2, 13, 43622), None)\
+[cached since 71.22s ago] ('8aff3e2b-917e-42bb-ac63-105febb01261', 'fdca9726-4088-4f1e-96a5-bab3183b8e5c', 6, 'OneJob', "Got it - OneJob. Are there any other projects you'd like me to know about, or is that your main focus?", None, '[]', '\{\}', '\{\}', '\{\}', None, datetime.datetime(2026, 1, 28, 17, 2, 13, 43622), None)\
+2026-01-28 17:02:13,050 INFO sqlalchemy.engine.Engine COMMIT\
+COMMIT\
+DEBUG #490: Attempting JWT verification, token present=True, token_length=545\
+DEBUG #490: JWT verified successfully, user_id=97b37261-6ee0-4479-9b1a-b8cc21f4d5bd\
+DEBUG #490: intent route - has_current_user=True, user_id=97b37261-6ee0-4479-9b1a-b8cc21f4d5bd, has_auth_cookie=True\
+[PortfolioManager] get_session_by_user called with user_id=97b37261-6ee0-4479-9b1a-b8cc21f4d5bd\
+[PortfolioManager] Current sessions: [('4a2143df-72d1-4644-9c35-207cfd115809', '97b37261-6ee0-4479-9b1a-b8cc21f4d5bd', 'gathering_projects')]\
+[PortfolioManager] Found session 4a2143df-72d1-4644-9c35-207cfd115809 for user 97b37261-6ee0-4479-9b1a-b8cc21f4d5bd\
+[PortfolioManager] get_session_by_user called with user_id=97b37261-6ee0-4479-9b1a-b8cc21f4d5bd\
+[PortfolioManager] Current sessions: [('4a2143df-72d1-4644-9c35-207cfd115809', '97b37261-6ee0-4479-9b1a-b8cc21f4d5bd', 'gathering_projects')]\
+[PortfolioManager] Found session 4a2143df-72d1-4644-9c35-207cfd115809 for user 97b37261-6ee0-4479-9b1a-b8cc21f4d5bd\
+2026-01-28 17:02:16,993 INFO sqlalchemy.engine.Engine BEGIN (implicit)\
+BEGIN (implicit)\
+2026-01-28 17:02:17,001 INFO sqlalchemy.engine.Engine SELECT max(conversation_turns.turn_number) AS max_1 \
+FROM conversation_turns \
+WHERE conversation_turns.conversation_id = $1::VARCHAR\
+SELECT max(conversation_turns.turn_number) AS max_1 \
+FROM conversation_turns \
+WHERE conversation_turns.conversation_id = $1::VARCHAR\
+2026-01-28 17:02:17,001 INFO sqlalchemy.engine.Engine [cached since 75.19s ago] ('fdca9726-4088-4f1e-96a5-bab3183b8e5c',)\
+[cached since 75.19s ago] ('fdca9726-4088-4f1e-96a5-bab3183b8e5c',)\
+2026-01-28 17:02:17,013 INFO sqlalchemy.engine.Engine ROLLBACK\
+ROLLBACK\
+2026-01-28 17:02:17,017 INFO sqlalchemy.engine.Engine BEGIN (implicit)\
+BEGIN (implicit)\
+2026-01-28 17:02:17,018 INFO sqlalchemy.engine.Engine SELECT conversations.id AS conversations_id, conversations.user_id AS conversations_user_id, conversations.session_id AS conversations_session_id, conversations.title AS conversations_title, conversations.context AS conversations_context, conversations.is_active AS conversations_is_active, conversations.created_at AS conversations_created_at, conversations.updated_at AS conversations_updated_at, conversations.last_activity_at AS conversations_last_activity_at \
+FROM conversations \
+WHERE conversations.id = $1::VARCHAR\
+SELECT conversations.id AS conversations_id, conversations.user_id AS conversations_user_id, conversations.session_id AS conversations_session_id, conversations.title AS conversations_title, conversations.context AS conversations_context, conversations.is_active AS conversations_is_active, conversations.created_at AS conversations_created_at, conversations.updated_at AS conversations_updated_at, conversations.last_activity_at AS conversations_last_activity_at \
+FROM conversations \
+WHERE conversations.id = $1::VARCHAR\
+2026-01-28 17:02:17,022 INFO sqlalchemy.engine.Engine [cached since 75.2s ago] ('fdca9726-4088-4f1e-96a5-bab3183b8e5c',)\
+[cached since 75.2s ago] ('fdca9726-4088-4f1e-96a5-bab3183b8e5c',)\
+2026-01-28 17:02:17,027 INFO sqlalchemy.engine.Engine SELECT conversation_turns.id AS conversation_turns_id, conversation_turns.conversation_id AS conversation_turns_conversation_id, conversation_turns.turn_number AS conversation_turns_turn_number, conversation_turns.user_message AS conversation_turns_user_message, conversation_turns.assistant_response AS conversation_turns_assistant_response, conversation_turns.intent AS conversation_turns_intent, conversation_turns.entities AS conversation_turns_entities, conversation_turns."references" AS conversation_turns_references, conversation_turns.context_used AS conversation_turns_context_used, conversation_turns.metadata AS conversation_turns_metadata, conversation_turns.processing_time AS conversation_turns_processing_time, conversation_turns.created_at AS conversation_turns_created_at, conversation_turns.completed_at AS conversation_turns_completed_at \
+FROM conversation_turns \
+WHERE conversation_turns.id = $1::VARCHAR\
+SELECT conversation_turns.id AS conversation_turns_id, conversation_turns.conversation_id AS conversation_turns_conversation_id, conversation_turns.turn_number AS conversation_turns_turn_number, conversation_turns.user_message AS conversation_turns_user_message, conversation_turns.assistant_response AS conversation_turns_assistant_response, conversation_turns.intent AS conversation_turns_intent, conversation_turns.entities AS conversation_turns_entities, conversation_turns."references" AS conversation_turns_references, conversation_turns.context_used AS conversation_turns_context_used, conversation_turns.metadata AS conversation_turns_metadata, conversation_turns.processing_time AS conversation_turns_processing_time, conversation_turns.created_at AS conversation_turns_created_at, conversation_turns.completed_at AS conversation_turns_completed_at \
+FROM conversation_turns \
+WHERE conversation_turns.id = $1::VARCHAR\
+2026-01-28 17:02:17,030 INFO sqlalchemy.engine.Engine [cached since 75.2s ago] ('64452025-4575-4d16-9172-a18112651db7',)\
+[cached since 75.2s ago] ('64452025-4575-4d16-9172-a18112651db7',)\
+2026-01-28 17:02:17,033 INFO sqlalchemy.engine.Engine INSERT INTO conversation_turns (id, conversation_id, turn_number, user_message, assistant_response, intent, entities, "references", context_used, metadata, processing_time, created_at, completed_at) VALUES ($1::VARCHAR, $2::VARCHAR, $3::INTEGER, $4::VARCHAR, $5::VARCHAR, $6::VARCHAR, $7::JSONB, $8::JSONB, $9::JSONB, $10::JSONB, $11::FLOAT, $12::TIMESTAMP WITHOUT TIME ZONE, $13::TIMESTAMP WITHOUT TIME ZONE)\
+INSERT INTO conversation_turns (id, conversation_id, turn_number, user_message, assistant_response, intent, entities, "references", context_used, metadata, processing_time, created_at, completed_at) VALUES ($1::VARCHAR, $2::VARCHAR, $3::INTEGER, $4::VARCHAR, $5::VARCHAR, $6::VARCHAR, $7::JSONB, $8::JSONB, $9::JSONB, $10::JSONB, $11::FLOAT, $12::TIMESTAMP WITHOUT TIME ZONE, $13::TIMESTAMP WITHOUT TIME ZONE)\
+2026-01-28 17:02:17,034 INFO sqlalchemy.engine.Engine [cached since 75.2s ago] ('64452025-4575-4d16-9172-a18112651db7', 'fdca9726-4088-4f1e-96a5-bab3183b8e5c', 7, "that's it", 'Perfect. I have Decision Reviews, I have others, too, Piper Morgan and OneJob noted. Should I save these to your portfolio?', None, '[]', '\{\}', '\{\}', '\{\}', None, datetime.datetime(2026, 1, 28, 17, 2, 17, 16682), None)\
+[cached since 75.2s ago] ('64452025-4575-4d16-9172-a18112651db7', 'fdca9726-4088-4f1e-96a5-bab3183b8e5c', 7, "that's it", 'Perfect. I have Decision Reviews, I have others, too, Piper Morgan and OneJob noted. Should I save these to your portfolio?', None, '[]', '\{\}', '\{\}', '\{\}', None, datetime.datetime(2026, 1, 28, 17, 2, 17, 16682), None)\
+2026-01-28 17:02:17,037 INFO sqlalchemy.engine.Engine COMMIT\
+COMMIT\
+DEBUG #490: Attempting JWT verification, token present=True, token_length=545\
+DEBUG #490: JWT verified successfully, user_id=97b37261-6ee0-4479-9b1a-b8cc21f4d5bd\
+DEBUG #490: intent route - has_current_user=True, user_id=97b37261-6ee0-4479-9b1a-b8cc21f4d5bd, has_auth_cookie=True\
+[PortfolioManager] get_session_by_user called with user_id=97b37261-6ee0-4479-9b1a-b8cc21f4d5bd\
+[PortfolioManager] Current sessions: [('4a2143df-72d1-4644-9c35-207cfd115809', '97b37261-6ee0-4479-9b1a-b8cc21f4d5bd', 'confirming')]\
+[PortfolioManager] Found session 4a2143df-72d1-4644-9c35-207cfd115809 for user 97b37261-6ee0-4479-9b1a-b8cc21f4d5bd\
+[PortfolioManager] get_session_by_user called with user_id=97b37261-6ee0-4479-9b1a-b8cc21f4d5bd\
+[PortfolioManager] Current sessions: [('4a2143df-72d1-4644-9c35-207cfd115809', '97b37261-6ee0-4479-9b1a-b8cc21f4d5bd', 'confirming')]\
+[PortfolioManager] Found session 4a2143df-72d1-4644-9c35-207cfd115809 for user 97b37261-6ee0-4479-9b1a-b8cc21f4d5bd\
+2026-01-28 17:02:20,786 INFO sqlalchemy.engine.Engine BEGIN (implicit)\
+BEGIN (implicit)\
+2026-01-28 17:02:20,800 INFO sqlalchemy.engine.Engine SELECT max(conversation_turns.turn_number) AS max_1 \
+FROM conversation_turns \
+WHERE conversation_turns.conversation_id = $1::VARCHAR\
+SELECT max(conversation_turns.turn_number) AS max_1 \
+FROM conversation_turns \
+WHERE conversation_turns.conversation_id = $1::VARCHAR\
+2026-01-28 17:02:20,800 INFO sqlalchemy.engine.Engine [cached since 78.99s ago] ('fdca9726-4088-4f1e-96a5-bab3183b8e5c',)\
+[cached since 78.99s ago] ('fdca9726-4088-4f1e-96a5-bab3183b8e5c',)\
+2026-01-28 17:02:20,803 INFO sqlalchemy.engine.Engine ROLLBACK\
+ROLLBACK\
+2026-01-28 17:02:20,805 INFO sqlalchemy.engine.Engine BEGIN (implicit)\
+BEGIN (implicit)\
+2026-01-28 17:02:20,806 INFO sqlalchemy.engine.Engine SELECT conversations.id AS conversations_id, conversations.user_id AS conversations_user_id, conversations.session_id AS conversations_session_id, conversations.title AS conversations_title, conversations.context AS conversations_context, conversations.is_active AS conversations_is_active, conversations.created_at AS conversations_created_at, conversations.updated_at AS conversations_updated_at, conversations.last_activity_at AS conversations_last_activity_at \
+FROM conversations \
+WHERE conversations.id = $1::VARCHAR\
+SELECT conversations.id AS conversations_id, conversations.user_id AS conversations_user_id, conversations.session_id AS conversations_session_id, conversations.title AS conversations_title, conversations.context AS conversations_context, conversations.is_active AS conversations_is_active, conversations.created_at AS conversations_created_at, conversations.updated_at AS conversations_updated_at, conversations.last_activity_at AS conversations_last_activity_at \
+FROM conversations \
+WHERE conversations.id = $1::VARCHAR\
+2026-01-28 17:02:20,806 INFO sqlalchemy.engine.Engine [cached since 78.99s ago] ('fdca9726-4088-4f1e-96a5-bab3183b8e5c',)\
+[cached since 78.99s ago] ('fdca9726-4088-4f1e-96a5-bab3183b8e5c',)\
+2026-01-28 17:02:20,809 INFO sqlalchemy.engine.Engine SELECT conversation_turns.id AS conversation_turns_id, conversation_turns.conversation_id AS conversation_turns_conversation_id, conversation_turns.turn_number AS conversation_turns_turn_number, conversation_turns.user_message AS conversation_turns_user_message, conversation_turns.assistant_response AS conversation_turns_assistant_response, conversation_turns.intent AS conversation_turns_intent, conversation_turns.entities AS conversation_turns_entities, conversation_turns."references" AS conversation_turns_references, conversation_turns.context_used AS conversation_turns_context_used, conversation_turns.metadata AS conversation_turns_metadata, conversation_turns.processing_time AS conversation_turns_processing_time, conversation_turns.created_at AS conversation_turns_created_at, conversation_turns.completed_at AS conversation_turns_completed_at \
+FROM conversation_turns \
+WHERE conversation_turns.id = $1::VARCHAR\
+SELECT conversation_turns.id AS conversation_turns_id, conversation_turns.conversation_id AS conversation_turns_conversation_id, conversation_turns.turn_number AS conversation_turns_turn_number, conversation_turns.user_message AS conversation_turns_user_message, conversation_turns.assistant_response AS conversation_turns_assistant_response, conversation_turns.intent AS conversation_turns_intent, conversation_turns.entities AS conversation_turns_entities, conversation_turns."references" AS conversation_turns_references, conversation_turns.context_used AS conversation_turns_context_used, conversation_turns.metadata AS conversation_turns_metadata, conversation_turns.processing_time AS conversation_turns_processing_time, conversation_turns.created_at AS conversation_turns_created_at, conversation_turns.completed_at AS conversation_turns_completed_at \
+FROM conversation_turns \
+WHERE conversation_turns.id = $1::VARCHAR\
+2026-01-28 17:02:20,810 INFO sqlalchemy.engine.Engine [cached since 78.98s ago] ('2fec9466-efe9-4154-bea9-16825f6ab619',)\
+[cached since 78.98s ago] ('2fec9466-efe9-4154-bea9-16825f6ab619',)\
+2026-01-28 17:02:20,813 INFO sqlalchemy.engine.Engine INSERT INTO conversation_turns (id, conversation_id, turn_number, user_message, assistant_response, intent, entities, "references", context_used, metadata, processing_time, created_at, completed_at) VALUES ($1::VARCHAR, $2::VARCHAR, $3::INTEGER, $4::VARCHAR, $5::VARCHAR, $6::VARCHAR, $7::JSONB, $8::JSONB, $9::JSONB, $10::JSONB, $11::FLOAT, $12::TIMESTAMP WITHOUT TIME ZONE, $13::TIMESTAMP WITHOUT TIME ZONE)\
+INSERT INTO conversation_turns (id, conversation_id, turn_number, user_message, assistant_response, intent, entities, "references", context_used, metadata, processing_time, created_at, completed_at) VALUES ($1::VARCHAR, $2::VARCHAR, $3::INTEGER, $4::VARCHAR, $5::VARCHAR, $6::VARCHAR, $7::JSONB, $8::JSONB, $9::JSONB, $10::JSONB, $11::FLOAT, $12::TIMESTAMP WITHOUT TIME ZONE, $13::TIMESTAMP WITHOUT TIME ZONE)\
+2026-01-28 17:02:20,813 INFO sqlalchemy.engine.Engine [cached since 78.98s ago] ('2fec9466-efe9-4154-bea9-16825f6ab619', 'fdca9726-4088-4f1e-96a5-bab3183b8e5c', 8, 'yes', "All set! I've added Decision Reviews, I have others, too, Piper Morgan, OneJob to your portfolio. I'll help you stay on track with development coordination, issue tracking, and planning. What would you like to focus on today?", None, '[]', '\{\}', '\{\}', '\{\}', None, datetime.datetime(2026, 1, 28, 17, 2, 20, 805213), None)\
+[cached since 78.98s ago] ('2fec9466-efe9-4154-bea9-16825f6ab619', 'fdca9726-4088-4f1e-96a5-bab3183b8e5c', 8, 'yes', "All set! I've added Decision Reviews, I have others, too, Piper Morgan, OneJob to your portfolio. I'll help you stay on track with development coordination, issue tracking, and planning. What would you like to focus on today?", None, '[]', '\{\}', '\{\}', '\{\}', None, datetime.datetime(2026, 1, 28, 17, 2, 20, 805213), None)\
+2026-01-28 17:02:20,820 INFO sqlalchemy.engine.Engine COMMIT\
+COMMIT\
+DEBUG #490: Attempting JWT verification, token present=True, token_length=545\
+DEBUG #490: JWT verified successfully, user_id=97b37261-6ee0-4479-9b1a-b8cc21f4d5bd\
+DEBUG #490: intent route - has_current_user=True, user_id=97b37261-6ee0-4479-9b1a-b8cc21f4d5bd, has_auth_cookie=True\
+[PortfolioManager] get_session_by_user called with user_id=97b37261-6ee0-4479-9b1a-b8cc21f4d5bd\
+[PortfolioManager] Current sessions: [('4a2143df-72d1-4644-9c35-207cfd115809', '97b37261-6ee0-4479-9b1a-b8cc21f4d5bd', 'complete')]\
+[PortfolioManager] No active session found for user 97b37261-6ee0-4479-9b1a-b8cc21f4d5bd\
+\{"event": "Primary provider anthropic failed: Anthropic client not initialized", "logger": "services.llm.clients", "level": "warning", "timestamp": "2026-01-29T01:02:31.056012Z"\}\
+\{"event": "Fallback provider openai also failed: OpenAI client not initialized", "logger": "services.llm.clients", "level": "error", "timestamp": "2026-01-29T01:02:31.056755Z"\}\
+\{"task_type": "intent_classification", "error": "Both LLM providers failed. Primary: Anthropic client not initialized, Fallback: OpenAI client not initialized", "event": "LLM completion failed", "logger": "services.domain.llm_domain_service", "level": "error", "timestamp": "2026-01-29T01:02:31.056867Z"\}\
+\{"event": "Classification failed: Both LLM providers failed. Primary: Anthropic client not initialized, Fallback: OpenAI client not initialized", "logger": "services.intent_service.classifier", "level": "error", "timestamp": "2026-01-29T01:02:31.057013Z", "exception": "Traceback (most recent call last):\\n  File \\"/Users/alpha-one/alpha-mux/piper-morgan-product/services/llm/clients.py\\", line 91, in complete\\n    return await self._anthropic_complete(\\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\"/Users/alpha-one/alpha-mux/piper-morgan-product/services/llm/clients.py\\", line 145, in _anthropic_complete\\n    raise RuntimeError(\\"Anthropic client not initialized\\")\\nRuntimeError: Anthropic client not initialized\\n\\nDuring handling of the above exception, another exception occurred:\\n\\nTraceback (most recent call last):\\n  File \\"/Users/alpha-one/alpha-mux/piper-morgan-product/services/llm/clients.py\\", line 124, in complete\\n    return await self._openai_complete(\\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\"/Users/alpha-one/alpha-mux/piper-morgan-product/services/llm/clients.py\\", line 199, in _openai_complete\\n    raise RuntimeError(\\"OpenAI client not initialized\\")\\nRuntimeError: OpenAI client not initialized\\n\\nDuring handling of the above exception, another exception occurred:\\n\\nTraceback (most recent call last):\\n  File \\"/Users/alpha-one/alpha-mux/piper-morgan-product/services/intent_service/classifier.py\\", line 272, in classify\\n    intent, reasoning = await self._classify_with_reasoning(\\n                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\"/Users/alpha-one/alpha-mux/piper-morgan-product/services/intent_service/classifier.py\\", line 766, in _classify_with_reasoning\\n    response = await self.llm.complete(\\n               ^^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\"/Users/alpha-one/alpha-mux/piper-morgan-product/services/domain/llm_domain_service.py\\", line 162, in complete\\n    response = await self._llm_client.complete(\\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\"/Users/alpha-one/alpha-mux/piper-morgan-product/services/llm/clients.py\\", line 131, in complete\\n    raise RuntimeError(\\nRuntimeError: Both LLM providers failed. Primary: Anthropic client not initialized, Fallback: OpenAI client not initialized"\}\
+\{"event": "Multi-intent classification failed: API Error [INTENT_CLASSIFICATION_FAILED]", "logger": "services.intent_service.classifier", "level": "error", "timestamp": "2026-01-29T01:02:31.068582Z", "exception": "Traceback (most recent call last):\\n  File \\"/Users/alpha-one/alpha-mux/piper-morgan-product/services/llm/clients.py\\", line 91, in complete\\n    return await self._anthropic_complete(\\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\"/Users/alpha-one/alpha-mux/piper-morgan-product/services/llm/clients.py\\", line 145, in _anthropic_complete\\n    raise RuntimeError(\\"Anthropic client not initialized\\")\\nRuntimeError: Anthropic client not initialized\\n\\nDuring handling of the above exception, another exception occurred:\\n\\nTraceback (most recent call last):\\n  File \\"/Users/alpha-one/alpha-mux/piper-morgan-product/services/llm/clients.py\\", line 124, in complete\\n    return await self._openai_complete(\\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\"/Users/alpha-one/alpha-mux/piper-morgan-product/services/llm/clients.py\\", line 199, in _openai_complete\\n    raise RuntimeError(\\"OpenAI client not initialized\\")\\nRuntimeError: OpenAI client not initialized\\n\\nDuring handling of the above exception, another exception occurred:\\n\\nTraceback (most recent call last):\\n  File \\"/Users/alpha-one/alpha-mux/piper-morgan-product/services/intent_service/classifier.py\\", line 272, in classify\\n    intent, reasoning = await self._classify_with_reasoning(\\n                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\"/Users/alpha-one/alpha-mux/piper-morgan-product/services/intent_service/classifier.py\\", line 766, in _classify_with_reasoning\\n    response = await self.llm.complete(\\n               ^^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\"/Users/alpha-one/alpha-mux/piper-morgan-product/services/domain/llm_domain_service.py\\", line 162, in complete\\n    response = await self._llm_client.complete(\\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\"/Users/alpha-one/alpha-mux/piper-morgan-product/services/llm/clients.py\\", line 131, in complete\\n    raise RuntimeError(\\nRuntimeError: Both LLM providers failed. Primary: Anthropic client not initialized, Fallback: OpenAI client not initialized\\n\\nDuring handling of the above exception, another exception occurred:\\n\\nTraceback (most recent call last):\\n  File \\"/Users/alpha-one/alpha-mux/piper-morgan-product/services/intent_service/classifier.py\\", line 718, in classify_multiple\\n    single_intent = await self.classify(\\n                    ^^^^^^^^^^^^^^^^^^^^\\n  File \\"/Users/alpha-one/alpha-mux/piper-morgan-product/services/intent_service/classifier.py\\", line 391, in classify\\n    raise IntentClassificationFailedError(details=\{\\"original_error\\": str(e)\})\\nservices.api.errors.IntentClassificationFailedError: API Error [INTENT_CLASSIFICATION_FAILED]"\}\
+\{"event": "Primary provider anthropic failed: Anthropic client not initialized", "logger": "services.llm.clients", "level": "warning", "timestamp": "2026-01-29T01:02:31.072135Z"\}\
+\{"event": "Fallback provider openai also failed: OpenAI client not initialized", "logger": "services.llm.clients", "level": "error", "timestamp": "2026-01-29T01:02:31.072198Z"\}\
+\{"task_type": "intent_classification", "error": "Both LLM providers failed. Primary: Anthropic client not initialized, Fallback: OpenAI client not initialized", "event": "LLM completion failed", "logger": "services.domain.llm_domain_service", "level": "error", "timestamp": "2026-01-29T01:02:31.072239Z"\}\
+\{"event": "Classification failed: Both LLM providers failed. Primary: Anthropic client not initialized, Fallback: OpenAI client not initialized", "logger": "services.intent_service.classifier", "level": "error", "timestamp": "2026-01-29T01:02:31.072272Z", "exception": "Traceback (most recent call last):\\n  File \\"/Users/alpha-one/alpha-mux/piper-morgan-product/services/llm/clients.py\\", line 91, in complete\\n    return await self._anthropic_complete(\\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\"/Users/alpha-one/alpha-mux/piper-morgan-product/services/llm/clients.py\\", line 145, in _anthropic_complete\\n    raise RuntimeError(\\"Anthropic client not initialized\\")\\nRuntimeError: Anthropic client not initialized\\n\\nDuring handling of the above exception, another exception occurred:\\n\\nTraceback (most recent call last):\\n  File \\"/Users/alpha-one/alpha-mux/piper-morgan-product/services/llm/clients.py\\", line 124, in complete\\n    return await self._openai_complete(\\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\"/Users/alpha-one/alpha-mux/piper-morgan-product/services/llm/clients.py\\", line 199, in _openai_complete\\n    raise RuntimeError(\\"OpenAI client not initialized\\")\\nRuntimeError: OpenAI client not initialized\\n\\nDuring handling of the above exception, another exception occurred:\\n\\nTraceback (most recent call last):\\n  File \\"/Users/alpha-one/alpha-mux/piper-morgan-product/services/intent_service/classifier.py\\", line 272, in classify\\n    intent, reasoning = await self._classify_with_reasoning(\\n                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\"/Users/alpha-one/alpha-mux/piper-morgan-product/services/intent_service/classifier.py\\", line 766, in _classify_with_reasoning\\n    response = await self.llm.complete(\\n               ^^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\"/Users/alpha-one/alpha-mux/piper-morgan-product/services/domain/llm_domain_service.py\\", line 162, in complete\\n    response = await self._llm_client.complete(\\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\"/Users/alpha-one/alpha-mux/piper-morgan-product/services/llm/clients.py\\", line 131, in complete\\n    raise RuntimeError(\\nRuntimeError: Both LLM providers failed. Primary: Anthropic client not initialized, Fallback: OpenAI client not initialized"\}\
+\{"event": "Intent processing error: API Error [INTENT_CLASSIFICATION_FAILED]", "logger": "services.intent.intent_service", "level": "error", "timestamp": "2026-01-29T01:02:31.072728Z"\}\
+\{"event": "Intent route error: Intent processing failed: API Error [INTENT_CLASSIFICATION_FAILED]", "logger": "web.api.routes.intent", "level": "error", "timestamp": "2026-01-29T01:02:31.072799Z", "exception": "Traceback (most recent call last):\\n  File \\"/Users/alpha-one/alpha-mux/piper-morgan-product/services/llm/clients.py\\", line 91, in complete\\n    return await self._anthropic_complete(\\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\"/Users/alpha-one/alpha-mux/piper-morgan-product/services/llm/clients.py\\", line 145, in _anthropic_complete\\n    raise RuntimeError(\\"Anthropic client not initialized\\")\\nRuntimeError: Anthropic client not initialized\\n\\nDuring handling of the above exception, another exception occurred:\\n\\nTraceback (most recent call last):\\n  File \\"/Users/alpha-one/alpha-mux/piper-morgan-product/services/llm/clients.py\\", line 124, in complete\\n    return await self._openai_complete(\\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\"/Users/alpha-one/alpha-mux/piper-morgan-product/services/llm/clients.py\\", line 199, in _openai_complete\\n    raise RuntimeError(\\"OpenAI client not initialized\\")\\nRuntimeError: OpenAI client not initialized\\n\\nDuring handling of the above exception, another exception occurred:\\n\\nTraceback (most recent call last):\\n  File \\"/Users/alpha-one/alpha-mux/piper-morgan-product/services/intent_service/classifier.py\\", line 272, in classify\\n    intent, reasoning = await self._classify_with_reasoning(\\n                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\"/Users/alpha-one/alpha-mux/piper-morgan-product/services/intent_service/classifier.py\\", line 766, in _classify_with_reasoning\\n    response = await self.llm.complete(\\n               ^^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\"/Users/alpha-one/alpha-mux/piper-morgan-product/services/domain/llm_domain_service.py\\", line 162, in complete\\n    response = await self._llm_client.complete(\\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\"/Users/alpha-one/alpha-mux/piper-morgan-product/services/llm/clients.py\\", line 131, in complete\\n    raise RuntimeError(\\nRuntimeError: Both LLM providers failed. Primary: Anthropic client not initialized, Fallback: OpenAI client not initialized\\n\\nDuring handling of the above exception, another exception occurred:\\n\\nTraceback (most recent call last):\\n  File \\"/Users/alpha-one/alpha-mux/piper-morgan-product/services/intent/intent_service.py\\", line 390, in _process_intent_internal\\n    intent = await self.intent_classifier.classify(message)\\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\"/Users/alpha-one/alpha-mux/piper-morgan-product/services/intent_service/classifier.py\\", line 391, in classify\\n    raise IntentClassificationFailedError(details=\{\\"original_error\\": str(e)\})\\nservices.api.errors.IntentClassificationFailedError: API Error [INTENT_CLASSIFICATION_FAILED]\\n\\nDuring handling of the above exception, another exception occurred:\\n\\nTraceback (most recent call last):\\n  File \\"/Users/alpha-one/alpha-mux/piper-morgan-product/web/api/routes/intent.py\\", line 274, in process_intent\\n    result = await intent_service.process_intent(\\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\"/Users/alpha-one/alpha-mux/piper-morgan-product/services/intent/intent_service.py\\", line 203, in process_intent\\n    result = await self._process_intent_internal(\\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\"/Users/alpha-one/alpha-mux/piper-morgan-product/services/intent/intent_service.py\\", line 683, in _process_intent_internal\\n    raise IntentProcessingError(f\\"Intent processing failed: \{str(e)\}\\")\\nservices.intent.intent_service.IntentProcessingError: Intent processing failed: API Error [INTENT_CLASSIFICATION_FAILED]"\}\
+2026-01-28 17:02:50,137 INFO sqlalchemy.engine.Engine BEGIN (implicit)\
+BEGIN (implicit)\
+2026-01-28 17:02:50,138 INFO sqlalchemy.engine.Engine SELECT token_blacklist.id, token_blacklist.token_id, token_blacklist.user_id, token_blacklist.reason, token_blacklist.expires_at, token_blacklist.created_at \
+FROM token_blacklist \
+WHERE token_blacklist.token_id = $1::VARCHAR AND token_blacklist.expires_at > $2::TIMESTAMP WITHOUT TIME ZONE\
+SELECT token_blacklist.id, token_blacklist.token_id, token_blacklist.user_id, token_blacklist.reason, token_blacklist.expires_at, token_blacklist.created_at \
+FROM token_blacklist \
+WHERE token_blacklist.token_id = $1::VARCHAR AND token_blacklist.expires_at > $2::TIMESTAMP WITHOUT TIME ZONE\
+2026-01-28 17:02:50,138 INFO sqlalchemy.engine.Engine [cached since 1020s ago] ('4187b958-f9df-41d7-997a-d0c90a6312d4', datetime.datetime(2026, 1, 29, 1, 2, 50, 135689))\
+[cached since 1020s ago] ('4187b958-f9df-41d7-997a-d0c90a6312d4', datetime.datetime(2026, 1, 29, 1, 2, 50, 135689))\
+2026-01-28 17:02:50,144 INFO sqlalchemy.engine.Engine ROLLBACK\
+ROLLBACK\
+\{"jti": "4187b958-f9df-41d7-997a-d0c90a6312d4", "user_id": "97b37261-6ee0-4479-9b1a-b8cc21f4d5bd", "event": "Token validation failed: revoked", "logger": "services.auth.jwt_service", "level": "warning", "timestamp": "2026-01-29T01:02:50.169337Z"\}\
+\{"error_code": "TOKEN_REVOKED", "status_code": 401, "details": \{"detail": "Token has been revoked"\}, "path": "/api/v1/projects", "method": "GET", "event": "api_error", "logger": "web.app", "level": "error", "timestamp": "2026-01-29T01:02:50.169761Z"\}\
+2026-01-28 17:03:10,675 INFO sqlalchemy.engine.Engine BEGIN (implicit)\
+BEGIN (implicit)\
+2026-01-28 17:03:10,676 INFO sqlalchemy.engine.Engine SELECT token_blacklist.id, token_blacklist.token_id, token_blacklist.user_id, token_blacklist.reason, token_blacklist.expires_at, token_blacklist.created_at \
+FROM token_blacklist \
+WHERE token_blacklist.token_id = $1::VARCHAR AND token_blacklist.expires_at > $2::TIMESTAMP WITHOUT TIME ZONE\
+SELECT token_blacklist.id, token_blacklist.token_id, token_blacklist.user_id, token_blacklist.reason, token_blacklist.expires_at, token_blacklist.created_at \
+FROM token_blacklist \
+WHERE token_blacklist.token_id = $1::VARCHAR AND token_blacklist.expires_at > $2::TIMESTAMP WITHOUT TIME ZONE\
+2026-01-28 17:03:10,677 INFO sqlalchemy.engine.Engine [cached since 1041s ago] ('4187b958-f9df-41d7-997a-d0c90a6312d4', datetime.datetime(2026, 1, 29, 1, 3, 10, 673096))\
+[cached since 1041s ago] ('4187b958-f9df-41d7-997a-d0c90a6312d4', datetime.datetime(2026, 1, 29, 1, 3, 10, 673096))\
+2026-01-28 17:03:10,691 INFO sqlalchemy.engine.Engine ROLLBACK\
+ROLLBACK\
+\{"jti": "4187b958-f9df-41d7-997a-d0c90a6312d4", "user_id": "97b37261-6ee0-4479-9b1a-b8cc21f4d5bd", "event": "Token validation failed: revoked", "logger": "services.auth.jwt_service", "level": "warning", "timestamp": "2026-01-29T01:03:10.693971Z"\}\
+\{"error_code": "TOKEN_REVOKED", "status_code": 401, "details": \{"detail": "Token has been revoked"\}, "path": "/api/v1/projects", "method": "GET", "event": "api_error", "logger": "web.app", "level": "error", "timestamp": "2026-01-29T01:03:10.694616Z"\}\
+2026-01-28 17:03:32,946 INFO sqlalchemy.engine.Engine BEGIN (implicit)\
+BEGIN (implicit)\
+2026-01-28 17:03:32,947 INFO sqlalchemy.engine.Engine SELECT token_blacklist.id, token_blacklist.token_id, token_blacklist.user_id, token_blacklist.reason, token_blacklist.expires_at, token_blacklist.created_at \
+FROM token_blacklist \
+WHERE token_blacklist.token_id = $1::VARCHAR AND token_blacklist.expires_at > $2::TIMESTAMP WITHOUT TIME ZONE\
+SELECT token_blacklist.id, token_blacklist.token_id, token_blacklist.user_id, token_blacklist.reason, token_blacklist.expires_at, token_blacklist.created_at \
+FROM token_blacklist \
+WHERE token_blacklist.token_id = $1::VARCHAR AND token_blacklist.expires_at > $2::TIMESTAMP WITHOUT TIME ZONE\
+2026-01-28 17:03:32,948 INFO sqlalchemy.engine.Engine [cached since 1063s ago] ('4187b958-f9df-41d7-997a-d0c90a6312d4', datetime.datetime(2026, 1, 29, 1, 3, 32, 945003))\
+[cached since 1063s ago] ('4187b958-f9df-41d7-997a-d0c90a6312d4', datetime.datetime(2026, 1, 29, 1, 3, 32, 945003))\
+2026-01-28 17:03:32,953 INFO sqlalchemy.engine.Engine ROLLBACK\
+ROLLBACK\
+\{"jti": "4187b958-f9df-41d7-997a-d0c90a6312d4", "user_id": "97b37261-6ee0-4479-9b1a-b8cc21f4d5bd", "event": "Token validation failed: revoked", "logger": "services.auth.jwt_service", "level": "warning", "timestamp": "2026-01-29T01:03:32.955756Z"\}\
+\{"error_code": "TOKEN_REVOKED", "status_code": 401, "details": \{"detail": "Token has been revoked"\}, "path": "/api/v1/todos", "method": "GET", "event": "api_error", "logger": "web.app", "level": "error", "timestamp": "2026-01-29T01:03:32.956252Z"\}\
+2026-01-28 17:03:35,233 INFO sqlalchemy.engine.Engine BEGIN (implicit)\
+BEGIN (implicit)\
+2026-01-28 17:03:35,234 INFO sqlalchemy.engine.Engine SELECT token_blacklist.id, token_blacklist.token_id, token_blacklist.user_id, token_blacklist.reason, token_blacklist.expires_at, token_blacklist.created_at \
+FROM token_blacklist \
+WHERE token_blacklist.token_id = $1::VARCHAR AND token_blacklist.expires_at > $2::TIMESTAMP WITHOUT TIME ZONE\
+SELECT token_blacklist.id, token_blacklist.token_id, token_blacklist.user_id, token_blacklist.reason, token_blacklist.expires_at, token_blacklist.created_at \
+FROM token_blacklist \
+WHERE token_blacklist.token_id = $1::VARCHAR AND token_blacklist.expires_at > $2::TIMESTAMP WITHOUT TIME ZONE\
+2026-01-28 17:03:35,234 INFO sqlalchemy.engine.Engine [cached since 1065s ago] ('4187b958-f9df-41d7-997a-d0c90a6312d4', datetime.datetime(2026, 1, 29, 1, 3, 35, 233490))\
+[cached since 1065s ago] ('4187b958-f9df-41d7-997a-d0c90a6312d4', datetime.datetime(2026, 1, 29, 1, 3, 35, 233490))\
+2026-01-28 17:03:35,237 INFO sqlalchemy.engine.Engine ROLLBACK\
+ROLLBACK\
+\{"jti": "4187b958-f9df-41d7-997a-d0c90a6312d4", "user_id": "97b37261-6ee0-4479-9b1a-b8cc21f4d5bd", "event": "Token validation failed: revoked", "logger": "services.auth.jwt_service", "level": "warning", "timestamp": "2026-01-29T01:03:35.239446Z"\}\
+\{"error_code": "TOKEN_REVOKED", "status_code": 401, "details": \{"detail": "Token has been revoked"\}, "path": "/api/v1/work-items", "method": "GET", "event": "api_error", "logger": "web.app", "level": "error", "timestamp": "2026-01-29T01:03:35.239814Z"\}\
+2026-01-28 17:03:36,512 INFO sqlalchemy.engine.Engine BEGIN (implicit)\
+BEGIN (implicit)\
+2026-01-28 17:03:36,516 INFO sqlalchemy.engine.Engine SELECT learning_settings.id, learning_settings.user_id, learning_settings.learning_enabled, learning_settings.suggestion_threshold, learning_settings.automation_threshold, learning_settings.auto_apply_enabled, learning_settings.notification_enabled, learning_settings.created_at, learning_settings.updated_at \
+FROM learning_settings \
+WHERE learning_settings.user_id = $1::UUID\
+SELECT learning_settings.id, learning_settings.user_id, learning_settings.learning_enabled, learning_settings.suggestion_threshold, learning_settings.automation_threshold, learning_settings.auto_apply_enabled, learning_settings.notification_enabled, learning_settings.created_at, learning_settings.updated_at \
+FROM learning_settings \
+WHERE learning_settings.user_id = $1::UUID\
+2026-01-28 17:03:36,516 INFO sqlalchemy.engine.Engine [generated in 0.00035s] (UUID('3f4593ae-5bc9-468d-b08d-8c4c02a5b963'),)\
+[generated in 0.00035s] (UUID('3f4593ae-5bc9-468d-b08d-8c4c02a5b963'),)\
+2026-01-28 17:03:36,555 INFO sqlalchemy.engine.Engine ROLLBACK\
+ROLLBACK\
+2026-01-28 17:03:36,578 INFO sqlalchemy.engine.Engine BEGIN (implicit)\
+BEGIN (implicit)\
+2026-01-28 17:03:36,579 INFO sqlalchemy.engine.Engine SELECT learned_patterns.id, learned_patterns.user_id, learned_patterns.pattern_type, learned_patterns.pattern_data, learned_patterns.confidence, learned_patterns.usage_count, learned_patterns.success_count, learned_patterns.failure_count, learned_patterns.enabled, learned_patterns.last_used_at, learned_patterns.created_at, learned_patterns.updated_at \
+FROM learned_patterns \
+WHERE learned_patterns.user_id = $1::UUID ORDER BY learned_patterns.last_used_at DESC\
+SELECT learned_patterns.id, learned_patterns.user_id, learned_patterns.pattern_type, learned_patterns.pattern_data, learned_patterns.confidence, learned_patterns.usage_count, learned_patterns.success_count, learned_patterns.failure_count, learned_patterns.enabled, learned_patterns.last_used_at, learned_patterns.created_at, learned_patterns.updated_at \
+FROM learned_patterns \
+WHERE learned_patterns.user_id = $1::UUID ORDER BY learned_patterns.last_used_at DESC\
+2026-01-28 17:03:36,579 INFO sqlalchemy.engine.Engine [generated in 0.00010s] (UUID('3f4593ae-5bc9-468d-b08d-8c4c02a5b963'),)\
+[generated in 0.00010s] (UUID('3f4593ae-5bc9-468d-b08d-8c4c02a5b963'),)\
+2026-01-28 17:03:36,596 INFO sqlalchemy.engine.Engine ROLLBACK\
+ROLLBACK\
+\
+}
