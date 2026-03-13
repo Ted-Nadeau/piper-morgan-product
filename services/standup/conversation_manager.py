@@ -129,32 +129,51 @@ class StandupConversationManager:
         """Retrieve a conversation by ID."""
         return self._conversations.get(conversation_id)
 
-    def get_conversation_by_session(self, session_id: str) -> Optional[StandupConversation]:
+    def get_conversation_by_session(
+        self, session_id: str, include_suspended: bool = False
+    ) -> Optional[StandupConversation]:
         """
         Retrieve active conversation for a session.
 
         Returns the most recent non-terminal conversation for the session.
+
+        Issue #889: SUSPENDED is excluded by default (it's non-active from the
+        registry's perspective). Pass include_suspended=True when you need to
+        find a suspended conversation for resume offers.
         """
+        terminal_states = [
+            StandupConversationState.COMPLETE,
+            StandupConversationState.ABANDONED,
+        ]
+        if not include_suspended:
+            terminal_states.append(StandupConversationState.SUSPENDED)
+
         for conv in reversed(list(self._conversations.values())):
-            if conv.session_id == session_id and conv.state not in [
-                StandupConversationState.COMPLETE,
-                StandupConversationState.ABANDONED,
-            ]:
+            if conv.session_id == session_id and conv.state not in terminal_states:
                 return conv
         return None
 
-    def get_conversation_by_user(self, user_id: str) -> Optional[StandupConversation]:
+    def get_conversation_by_user(
+        self, user_id: str, include_suspended: bool = False
+    ) -> Optional[StandupConversation]:
         """
         Retrieve active conversation for a user.
 
         Issue #734: Primary lookup method for multi-tenancy isolation.
         Returns the most recent non-terminal conversation for the user.
+
+        Issue #889: SUSPENDED is excluded by default. Pass include_suspended=True
+        when you need to find a suspended conversation for resume offers.
         """
+        terminal_states = [
+            StandupConversationState.COMPLETE,
+            StandupConversationState.ABANDONED,
+        ]
+        if not include_suspended:
+            terminal_states.append(StandupConversationState.SUSPENDED)
+
         for conv in reversed(list(self._conversations.values())):
-            if conv.user_id == user_id and conv.state not in [
-                StandupConversationState.COMPLETE,
-                StandupConversationState.ABANDONED,
-            ]:
+            if conv.user_id == user_id and conv.state not in terminal_states:
                 return conv
         return None
 
