@@ -1574,7 +1574,10 @@ async def get_github_settings():
         from services.integrations.github.config_service import GitHubConfigService
 
         config_service = GitHubConfigService()
-        token = config_service.get_authentication_token()
+        # Issue #891: get_authentication_token requires user_id since #734.
+        # This is an unauthenticated status-check endpoint, so use "system"
+        # to check env var tokens without user-scoped keychain lookup.
+        token = config_service.get_authentication_token(user_id="system")
 
         if token:
             # Validate the token by testing connection

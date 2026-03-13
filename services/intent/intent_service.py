@@ -2430,12 +2430,13 @@ class IntentService:
                 GitHubIntegrationRouter,
             )
 
-            # Initialize router
+            # Initialize router (Issue #891: pass user_id for token lookup)
             github_router = GitHubIntegrationRouter()
-            await github_router.initialize()
+            _user_id = intent.context.get("user_id") if intent.context else None
+            await github_router.initialize(user_id=_user_id)
 
             # Check if GitHub is configured
-            if not github_router.config_service.is_configured():
+            if not github_router.config_service.is_configured(_user_id or "system"):
                 return IntentProcessingResult(
                     success=True,
                     message=(
@@ -2533,12 +2534,13 @@ class IntentService:
                 GitHubIntegrationRouter,
             )
 
-            # Initialize router
+            # Initialize router (Issue #891: pass user_id for token lookup)
             github_router = GitHubIntegrationRouter()
-            await github_router.initialize()
+            _user_id = intent.context.get("user_id") if intent.context else None
+            await github_router.initialize(user_id=_user_id)
 
             # Check if GitHub is configured
-            if not github_router.config_service.is_configured():
+            if not github_router.config_service.is_configured(_user_id or "system"):
                 return IntentProcessingResult(
                     success=True,
                     message=(
@@ -2646,12 +2648,13 @@ class IntentService:
                 GitHubIntegrationRouter,
             )
 
-            # Initialize router
+            # Initialize router (Issue #891: pass user_id for token lookup)
             github_router = GitHubIntegrationRouter()
-            await github_router.initialize()
+            _user_id = intent.context.get("user_id") if intent.context else None
+            await github_router.initialize(user_id=_user_id)
 
             # Check if GitHub is configured
-            if not github_router.config_service.is_configured():
+            if not github_router.config_service.is_configured(_user_id or "system"):
                 return IntentProcessingResult(
                     success=True,
                     message=(
@@ -2776,12 +2779,13 @@ class IntentService:
                 GitHubIntegrationRouter,
             )
 
-            # Initialize router
+            # Initialize router (Issue #891: pass user_id for token lookup)
             github_router = GitHubIntegrationRouter()
-            await github_router.initialize()
+            _user_id = intent.context.get("user_id") if intent.context else None
+            await github_router.initialize(user_id=_user_id)
 
             # Check if GitHub is configured
-            if not github_router.config_service.is_configured():
+            if not github_router.config_service.is_configured(_user_id or "system"):
                 return IntentProcessingResult(
                     success=True,
                     message=(
@@ -2886,12 +2890,13 @@ class IntentService:
                 GitHubIntegrationRouter,
             )
 
-            # Initialize router
+            # Initialize router (Issue #891: pass user_id for token lookup)
             github_router = GitHubIntegrationRouter()
-            await github_router.initialize()
+            _user_id = intent.context.get("user_id") if intent.context else None
+            await github_router.initialize(user_id=_user_id)
 
             # Check if GitHub is configured
-            if not github_router.config_service.is_configured():
+            if not github_router.config_service.is_configured(_user_id or "system"):
                 return IntentProcessingResult(
                     success=True,
                     message=(
@@ -3088,7 +3093,7 @@ class IntentService:
             await github_router.initialize()
 
             # Check if GitHub is configured
-            if not github_router.config_service.is_configured():
+            if not github_router.config_service.is_configured(_user_id or "system"):
                 return IntentProcessingResult(
                     success=True,
                     message=(
@@ -3531,10 +3536,12 @@ class IntentService:
                     GitHubIntegrationRouter,
                 )
 
+                # Issue #891: pass user_id for token lookup
                 github_router = GitHubIntegrationRouter()
-                await github_router.initialize()
+                _user_id = intent.context.get("user_id") if intent.context else None
+                await github_router.initialize(user_id=_user_id)
 
-                if github_router.config_service.is_configured():
+                if github_router.config_service.is_configured(_user_id or "system"):
                     # Get closed issues from past 7 days
                     closed_items = await github_router.get_closed_issues(limit=100)
 

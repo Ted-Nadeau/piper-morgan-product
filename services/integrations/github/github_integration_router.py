@@ -117,11 +117,15 @@ class GitHubIntegrationRouter:
                 raise RuntimeError("No GitHub integration available") from e
             logger.warning(f"GitHubSpatialIntelligence failed, using MCP adapter only: {e}")
 
-    async def initialize(self):
+    async def initialize(self, user_id: Optional[str] = None):
         """
         Initialize the GitHub integration asynchronously.
 
         Idempotent - safe to call multiple times (uses initialization lock).
+
+        Args:
+            user_id: Optional user ID for scoped credential lookup (Issue #891).
+                     If None, falls back to environment variable tokens only.
         """
         # Skip if already initialized
         if self._initialized:
@@ -141,7 +145,13 @@ class GitHubIntegrationRouter:
 
             # Configure MCP adapter with GitHub token (async operation)
             if self.mcp_adapter:
-                token = self.config_service.get_authentication_token()
+                try:
+                    token = self.config_service.get_authentication_token(
+                        user_id or "system"
+                    )
+                except (ValueError, Exception) as e:
+                    logger.warning(f"GitHub token lookup failed: {e}")
+                    token = None
                 if token:
                     await self.mcp_adapter.configure_github_api(token)
                     logger.info("GitHubMCPSpatialAdapter configured with authentication token")

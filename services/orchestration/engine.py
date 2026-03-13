@@ -218,6 +218,38 @@ class OrchestrationEngine:
                 "error": str(e),
             }
 
+    async def handle_analysis_intent(self, intent: Intent) -> Dict[str, Any]:
+        """
+        Handle ANALYSIS intents routed from IntentService generic fallback.
+
+        Issue #890: This method was referenced by IntentService._handle_analysis_intent()
+        but never implemented, causing AttributeError for generic analysis queries.
+
+        For specific analysis actions (analyze_document, analyze_commits, etc.),
+        IntentService routes directly to dedicated handlers. This method handles
+        the generic/unmatched analysis actions.
+        """
+        self.logger.info(f"Processing generic ANALYSIS intent: {intent.action}")
+
+        try:
+            # Generic analysis actions get a graceful "not yet supported" response
+            # rather than crashing with AttributeError
+            return {
+                "message": f"Analysis action '{intent.action}' is not yet fully implemented. "
+                "I can help with document analysis, commit analysis, and report generation. "
+                "Try asking me to 'analyze this document' or 'analyze recent commits'.",
+                "data": {},
+                "intent_handled": False,
+            }
+        except Exception as e:
+            self.logger.error(f"Analysis intent error: {e}")
+            return {
+                "message": f"Failed to process analysis: {str(e)}",
+                "data": {},
+                "intent_handled": False,
+                "error": str(e),
+            }
+
     async def create_workflow_from_intent(self, intent: Intent) -> Optional[Workflow]:
         """
         Create appropriate workflow based on intent with database persistence

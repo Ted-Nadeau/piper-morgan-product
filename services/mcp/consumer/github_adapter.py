@@ -128,6 +128,32 @@ class GitHubMCPSpatialAdapter(BaseSpatialAdapter):
             logger.error(f"Error calling GitHub API: {e}")
             return None
 
+    async def create_issue(
+        self,
+        repo_name: str,
+        title: str,
+        body: str,
+        labels: Optional[List[str]] = None,
+        assignees: Optional[List[str]] = None,
+    ) -> Dict[str, Any]:
+        """
+        Create a GitHub issue via the REST API.
+
+        Issue #892: This method was missing from GitHubMCPSpatialAdapter,
+        causing AttributeError when GitHubIntegrationRouter._get_integration()
+        returned the MCP adapter for create_issue operations.
+        """
+        endpoint = f"repos/mediajunkie/{repo_name}/issues"
+        data: Dict[str, Any] = {"title": title, "body": body}
+        if labels:
+            data["labels"] = labels
+        if assignees:
+            data["assignees"] = assignees
+        result = await self._post_github_api(endpoint, data)
+        if result is None:
+            raise RuntimeError("Failed to create GitHub issue — API returned no response")
+        return result
+
     async def add_comment(
         self, repo_name: str, issue_number: int, body: str
     ) -> Optional[Dict[str, Any]]:

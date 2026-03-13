@@ -3370,7 +3370,9 @@ What would you like to set up first?"""
             )
 
             github = GitHubIntegrationRouter()
-            await github.initialize()
+            # Issue #891: pass user_id for token lookup
+            _user_id = intent.context.get("user_id") if intent.context else None
+            await github.initialize(user_id=_user_id)
 
             # Get recent activity (last 30 days)
             activity = await github.get_recent_activity(days=30)
