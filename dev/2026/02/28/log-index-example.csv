@@ -1,0 +1,11 @@
+Agent role,Sun Feb 1,Mon Feb 2,Tue Feb 3,Wed Feb 4,Thu Feb 5
+Comms Chief,,,,,2026-02-05-1018-comms-opus-log
+Chief of Staff,2026-02-01-0823-exec-opus-log,2026-02-02-1130-exec-opus-log,2026-02-03-1645-exec-opus-log,2026-02-04-2122-exec-opus-log,2026-02-05-1858-exec-opus-log
+CXO,2026-02-01-1727-cxo-opus-log,,,,
+CIO,,,,2026-02-04-2118-cio-opus-log,2026-02-05-1320-cio-opus-log
+HoSR,,,2026-02-03-1655-hosr-opus-log,,
+Chief Architect,2026-02-01-1731-arch-opus-log,,2026-02-03-1652-arch-opus-log,,
+PPM,2026-02-01-0851-ppm-opus-log,,,,
+Docs mgr,2026-02-01-0821-docs-code-opus-log,2026-02-02-1055-docs-code-opus-log,2026-02-03-1123-docs-code-opus-log,2026-02-04-1725-docs-code-opus-log,2026-02-05-1012-docs-code-opus-log
+Lead Dev,2026-02-01-0656-lead-code-opus-log,2026-02-02-1119-lead-code-opus-log,2026-02-03-1202-lead-code-opus-log,,2026-02-05-2121-lead-code-opus-log
+Special Assignments,2026-02-01-1242-spec-code-opus-log,,,,
