@@ -3,10 +3,7 @@
 <!-- Target: 2K tokens max -->
 
 ## Current State
-> **📊 For current sprint/epic position, see `knowledge/BRIEFING-CURRENT-STATE.md`**
->
-> Quick summary: Sprint A3 active (Ethics Layer + Knowledge Graph + MCP)
-> Last major: Sprint A2 complete (Pattern 034 REST-compliant error handling)
+> **📊 For current sprint/epic position, see `docs/briefing/BRIEFING-CURRENT-STATE.md`**
 
 ## Your Role: Coding Agent
 
@@ -60,12 +57,7 @@ git commit -m "your message"
 - Dynamic loading foundation from GREAT-3A
 
 ## Current Focus
-> **🎯 For current sprint objectives and tasks, see `knowledge/BRIEFING-CURRENT-STATE.md`**
->
-> Sprint A3 implementation focus:
-> - Ethics layer activation (middleware registration, bug fixes, validation)
-> - Knowledge graph connection (API endpoints, Intent integration, enum fixes)
-> - MCP migration completion
+> **🎯 For current sprint objectives and tasks, see `docs/briefing/BRIEFING-CURRENT-STATE.md`**
 
 **Quality Requirements**:
 
@@ -161,13 +153,13 @@ GitHub Updated: Issue #199 task 3 marked complete with evidence
 
 ## References
 
-- **Current state**: `knowledge/BRIEFING-CURRENT-STATE.md` (sprint position, active issues)
+- **Current state**: `docs/briefing/BRIEFING-CURRENT-STATE.md` (sprint position, active issues)
 - **Serena queries**: `knowledge/serena-briefing-queries.md` (live system state)
-- **Implementation guides**: `knowledge/agent-prompt-template-v3.md`
-- **Patterns**: `docs/internal/architecture/current/patterns/` (34 patterns)
-- **ADRs**: `docs/internal/architecture/current/adrs/` (36+ decisions)
+- **Implementation guides**: `knowledge/agent-prompt-template.md`
+- **Patterns**: `docs/internal/architecture/current/patterns/` (63 patterns)
+- **ADRs**: `docs/internal/architecture/current/adrs/` (61 decisions)
 - **Testing**: pytest configured in pytest.ini (no PYTHONPATH prefix needed)
 
 ---
 
-*Last Updated: October 17, 2025*
+*Last Updated: March 10, 2026*

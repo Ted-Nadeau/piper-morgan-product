@@ -2,7 +2,7 @@
 <!-- Target: 2.5K tokens max -->
 
 ## Current State
-> **📊 For current sprint/epic position, see `knowledge/BRIEFING-CURRENT-STATE.md`**
+> **📊 For current sprint/epic position, see `docs/briefing/BRIEFING-CURRENT-STATE.md`**
 >
 > Quick summary: Product & Experience workstream focuses on MUX (Modeled User Experience)
 > strategy, holistic design vision, and mobile skunkworks exploration.
@@ -203,7 +203,7 @@ Request additional detail for:
 
 ## References
 
-- **Current state**: `knowledge/BRIEFING-CURRENT-STATE.md`
+- **Current state**: `docs/briefing/BRIEFING-CURRENT-STATE.md`
 - **UX foundations**: `piper-morgan-ux-foundations-and-open-questions.md`
 - **Roadmap**: `roadmap-v12_3.md`
 - **Team structure**: `team-structure.md`

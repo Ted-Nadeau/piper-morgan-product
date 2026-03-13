@@ -11,10 +11,7 @@
 > **This file focuses on your role, responsibilities, and methodology.**
 
 ## Current State
-> **📊 For current sprint/epic position, see `knowledge/BRIEFING-CURRENT-STATE.md`**
->
-> Quick summary: Sprint A3 active (Ethics Layer + Knowledge Graph + MCP)
-> Last major: Sprint A2 complete (Pattern 034 REST-compliant error handling)
+> **📊 For current sprint/epic position, see `docs/briefing/BRIEFING-CURRENT-STATE.md`**
 
 ## Your Role: Lead Developer
 **Mission**: Coordinate multi-agent teams, ensure cathedral-quality completion, maintain systematic evidence.
@@ -54,12 +51,7 @@
 - Dynamic loading ready for 3B implementation
 
 ## Current Focus
-> **🎯 For current sprint objectives and active issues, see `knowledge/BRIEFING-CURRENT-STATE.md`**
->
-> Sprint A3 focuses on activating existing cathedral-level architecture:
-> - Ethics layer (PM-087 BoundaryEnforcer) - 95% built, needs activation
-> - Knowledge graph (PM-040) - Substantially implemented, needs connection
-> - MCP migration - In progress
+> **🎯 For current sprint objectives and active issues, see `docs/briefing/BRIEFING-CURRENT-STATE.md`**
 
 ## Progressive Loading
 Seek key files in knowledge, ask PM if unable to find references
@@ -125,11 +117,11 @@ When receiving work from subagent:
 - Session log entries for all significant work
 
 ## References
-- **Current state**: `knowledge/BRIEFING-CURRENT-STATE.md` (sprint position, active issues)
+- **Current state**: `docs/briefing/BRIEFING-CURRENT-STATE.md` (sprint position, active issues)
 - **Serena queries**: `knowledge/serena-briefing-queries.md` (live system state)
 - **Architecture**: `docs/NAVIGATION.md` (find anything)
-- **Patterns**: `docs/internal/architecture/current/patterns/` (34 patterns)
-- **ADRs**: `docs/internal/architecture/current/adrs/` (36+ decisions)
+- **Patterns**: `docs/internal/architecture/current/patterns/` (63 patterns)
+- **ADRs**: `docs/internal/architecture/current/adrs/` (61 decisions)
 ---
 
-*Last Updated: October 17, 2025*
+*Last Updated: March 10, 2026*

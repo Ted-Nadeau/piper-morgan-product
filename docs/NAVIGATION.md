@@ -4,7 +4,7 @@
 **Audience**: Agents, developers, architects, and internal contributors
 **Public Documentation**: See [README.md](README.md) for pmorgan.tech public site
 
-**Last Updated**: February 23, 2026
+**Last Updated**: March 9, 2026
 **Status**: ✅ **Complete Internal Navigation System** - Role-based access for development teams
 
 ---
@@ -50,6 +50,12 @@ Each essential briefing includes triggers for loading detailed documentation as 
 - **[Canonical Queries](internal/architecture/current/canonical-queries.md)** - Reference list of canonical query types (IDENTITY, TEMPORAL, STATUS, PRIORITY, GUIDANCE)
   - See also: [ADR-039 Investigation Appendix](internal/architecture/current/adrs/adr-039-appendix-investigation.md) for routing analysis
   - Test matrix: To be created (validation coverage for all 25 canonical query patterns)
+- **Product Design Records (PDRs)** (`internal/product/pdr/`):
+  - [PDR-001: FTUX as First Recognition](internal/product/pdr/PDR-001-ftux-as-first-recognition-v3.md)
+  - [PDR-002: Conversational Glue](internal/product/pdr/PDR-002-conversational-glue.md)
+  - [PDR-002 Appendix: Layer 2 Vision](internal/product/pdr/PDR-002-appendix-layer-2-vision.md)
+  - [PDR-003: Entity Concept Model](internal/product/pdr/PDR-003-entity-concept-model.md) — Product, Project, Repository relationships (APPROVED Mar 8, 2026)
+  - [PDR-101: Multi-Entity Conversation](internal/product/pdr/PDR-101-multi-entity-conversation.md)
 
 ### 🧠 MUX Object Model (Grammar & Consciousness)
 
@@ -86,6 +92,7 @@ The MUX track establishes Piper's unified object model: **"Entities experience M
 - **[Methodology](internal/development/methodology-core/)** - Development methodologies (20 core patterns)
 - **[Methodology Index](internal/development/methodology-core/INDEX.md)** - Comprehensive methodology navigation
 - **[Gameplan Template](internal/development/methodology-core/gameplan-template.md)** - Issue implementation gameplan template (v9.3)
+- **[Sprint Gate Template](internal/development/sprint-gate-template-v1.md)** - Sprint completion gate checklist template (v1)
 - **[Testing Procedures](internal/development/testing/)** - E2E bug protocol, testing guides, and procedures
 - **[Session Templates](internal/development/tools/session-log-templates/)** - Session documentation
 
@@ -114,6 +121,7 @@ The MUX track establishes Piper's unified object model: **"Entities experience M
 - **[Alpha Known Issues](ALPHA_KNOWN_ISSUES.md)** - Current bugs and feature status
 - **[Alpha Agreement](ALPHA_AGREEMENT_v2.md)** - Legal terms and conditions
 - **[Email Templates](operations/alpha-onboarding/email-template.md)** - Internal onboarding communications
+- **[Collaborator Profile Template](operations/alpha-onboarding/human-collaborator-profile-template.md)** - Template for creating new collaborator profiles
 - **[Setup Screenshots](assets/images/alpha-onboarding/)** - GUI setup wizard screenshots (5 images for documentation)
 
 ---
@@ -240,7 +248,8 @@ Weekly/monthly session consolidations - 100+ consolidated logs for historical re
 #### ADRs & Decisions
 
 - **Active ADRs**: `docs/internal/architecture/current/adrs/` (61 decisions)
-- **Patterns**: `docs/internal/architecture/current/patterns/` (61 patterns)
+- **Patterns**: `docs/internal/architecture/current/patterns/` (62 patterns)
+- **PDRs**: `docs/internal/product/pdr/` (5 product design records)
 
 ### 🎨 Assets (`assets/` and `docs/assets/`)
 

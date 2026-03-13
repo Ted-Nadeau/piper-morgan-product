@@ -11,11 +11,9 @@
 
 **Current Position**: 4.4.2 - M0 Complete, M1 Sprint Next
 **Version**: v0.8.6 (pyproject.toml source of truth)
-**Last Updated**: March 4, 2026, 8:00 AM PT
-
-**Current Focus**: M1 Sprint Planning
-**Active Tracks**: M0 Conversational Glue shipped (v0.8.6), all gates passed, all bugs resolved
-**Next Phase**: M1 Sprint (MVP Foundation)
+**Last Updated**: March 10, 2026
+**Current Focus**: M1 Sprint Planning (deliberate pace after M0 push)
+**Next Phase**: M1 Sprint — MVP Foundation (security + testing)
 
 ---
 
@@ -38,31 +36,20 @@
 
 ---
 
-## Recent Progress (Feb 23 - Mar 2, 2026)
+## Recent Progress
 
-### Week Summary (Feb 23 - Mar 2)
-| Day | Rating | Key Theme |
-|-----|--------|-----------|
-| Feb 23 | MAINTENANCE | Docs audit #842, methodology drift fix |
-| Feb 25 | HIGH-VELOCITY | SEC-KEYCHAIN #849, Ship #031 published, Claude Hooks shipped |
-| Feb 26 | CONVERGENCE | PDR-003 entity model consensus, 7 issues closed |
-| Feb 28 | COORDINATION | #858 conversation lifecycle spec research + CXO/PPM memos |
-| Mar 1 | LEADERSHIP | #858 approved (4 reviewers), #715 lifecycle implemented, CXO 4 bugs |
-| Mar 2 | BUG-RESOLUTION | #875 error contract verified, #878 workflow polling fixed | |
+### Mar 3-9 (Post-M0 Consolidation)
+- **Mar 4**: M0 gate #779 + GLUE epic #762 closed. v0.8.6 released to production (56-commit merge)
+- **Mar 5-7**: Recovery period. HOSR processed Ted/Cindy transcripts, Chief of Staff synthesized post-M0 state
+- **Mar 8**: Workstream review. Ship #033 collection begins (6 reports), PDR-003 approved, async workflow Option A recommended, branch protection enabled on main
+- **Mar 9**: Ship #033 "The Cathedral Ships" drafted. GitHub wiki published (14 pages). dev/active/ cleaned (55→8 files). GitHub issue #881 created
 
-**Key outcomes**:
-- #858 Conversation Lifecycle Spec approved same-day by CXO, PPM, Architect, Lead Dev
-- #715 full lifecycle implementation (enum → domain → DB → repo → API → frontend, 27 tests)
-- Error contract regression (#875) fixed — Nov 2025 refactor broke 200→422 contract
-- #878 audit cascade: 75 code paths (not 2), 4-point fix applied
-- 5 issues closed Mar 2 (#872-875, #878), 3 new filed (#879, #880)
-- Ship #032 workstream reviews from all 6 leadership roles
-- IA Conference talk outline complete (Apr 17, Philadelphia)
-- Test suite: 6,145 (up from 6,088)
-
-### Previous Weeks
-- **Feb 16-22**: M0 sprint completed in 3 days, CXO B2 "Not Ready" (2/5 pass)
-- **Feb 9-15**: ~17 issues closed, Ship #030 draft, website deployed
+### Feb 23 - Mar 2 (M0 Closure Sprint)
+- #858 Conversation Lifecycle Spec approved same-day (4 reviewers)
+- #715 full lifecycle implementation (27 tests)
+- Error contract regression (#875) fixed, #878 audit cascade (75 code paths)
+- v0.8.6 release prep: 27 issues total (5 planned + 22 discovered)
+- Test suite: 6,088 → 7,358
 
 ---
 
@@ -70,7 +57,7 @@
 
 > **Use Serena for live state**: `mcp__serena__find_symbol`, `mcp__serena__list_dir`
 
-### Current Capabilities (February 2026)
+### Current Capabilities (March 2026)
 
 **Intent Classification**: 19 categories
 ```python
@@ -89,7 +76,7 @@ GUIDANCE, TRUST, MEMORY, PORTFOLIO, UNKNOWN
 - Spatial (spatial intelligence)
 - Demo (reference implementation)
 
-**Pattern Catalog**: 62 patterns (001-061) across 8 families
+**Pattern Catalog**: 63 patterns (001-062) across 8 families
 - Completion Theater (045-049) - quality discipline
 - Investigation & Root Cause (006, 041-043, 060) - debugging methodology
 - Grammar Application (050-058) - consciousness, ownership, warmth
@@ -107,30 +94,10 @@ GUIDANCE, TRUST, MEMORY, PORTFOLIO, UNKNOWN
 
 ---
 
-## What's Next: M0 Gate Closure + M1 Sprint
+## What's Next: M1 Sprint
 
-### M0 Sprint (90% Complete — Bug Fixes In Progress)
-**Status**: Code complete, bug fixes applied, awaiting CXO re-test
-
-**Core accomplishments**:
-- 23+ issues total (5 planned + 17 discovered via Assembly Assumption + follow-on bugs)
-- Sprint executed in 3 days (Feb 17-19) vs 13-22 day estimate
-- #715 Conversation Lifecycle implemented end-to-end (Mar 1)
-- #875 Error contract regression fixed (Mar 2)
-- #878 Workflow polling fixed — 75 code paths audited (Mar 2)
-
-**B2 Quality Gate Status** (CXO Mar 1 re-test):
-| Feature | Result | Notes |
-|---------|--------|-------|
-| #766 GLUE-MAINPROJ | ✅ Pass | Main project question asked once |
-| #764 GLUE-MULTIINTENT | ✅ Pass | Both intents addressed coherently |
-| #767 GLUE-SOFTINVOKE | ⚠️ Partial | Detection works, response is raw error (Action Humanizer gap) |
-| #763 GLUE-FOLLOWUP | ⏸️ Blocked | Calendar credential 401 (#880) |
-| #765 GLUE-SLOTFILL | ⏸️ Not tested | — |
-
-**B2 Verdict**: **Not Ready** — Waiting on bug fixes (#876 raw errors, #879, #880), then CXO re-test
-
-**Planning Docs**: `docs/internal/planning/conversational-glue/`
+### M0 — COMPLETE (v0.8.6, shipped Mar 4)
+27 issues total (5 planned + 22 discovered via Assembly Assumption). Sprint executed in 3 days (Feb 17-19) vs 13-22 day estimate. All gates passed, all bugs resolved.
 
 ### MVP Milestones Overview
 
@@ -147,12 +114,12 @@ GUIDANCE, TRUST, MEMORY, PORTFOLIO, UNKNOWN
 ## Open Items by Priority
 
 ### Ready for Implementation
-- M0 Sprint issues (conversational glue)
-- #696, #697: Auth bugs (M1)
+- M1 Sprint issues (security + testing foundation)
 
 ### Planning/Strategy
-- IA Conference talk (April) - groundwork complete
-- pipermorgan.ai website implementation
+- IA Conference talk (April 17, Philadelphia)
+- M0 retrospective (planned with CXO, PPM, Chief Architect)
+- Ship #033 publication pending PM review
 
 ### Deferred
 - #704 MUX-LIFECYCLE-UI-A (blocked on architecture)
@@ -160,15 +127,15 @@ GUIDANCE, TRUST, MEMORY, PORTFOLIO, UNKNOWN
 
 ---
 
-## Metrics Snapshot (March 4, 2026)
+## Metrics Snapshot (March 10, 2026)
 
 ### Quality
-- **Pattern Count**: 62 (001-061)
+- **Pattern Count**: 63 (001-062)
 - **ADR Count**: 61 (000-058)
 - **Skill Count**: 6 (Tier 1 complete)
-- **Test Suite**: 7,358 tests (up from 6,145)
-- **Total Docs**: 1,135 markdown files
-- **Omnibus Logs**: Through Mar 2 (continuous daily coverage)
+- **Test Suite**: 7,358 tests
+- **Total Docs**: 1,151 markdown files
+- **Omnibus Logs**: Through Mar 9 (continuous daily coverage)
 
 ### Version History (Recent)
 | Version | Date | Milestone |
@@ -204,14 +171,15 @@ GUIDANCE, TRUST, MEMORY, PORTFOLIO, UNKNOWN
 
 **Roadmap**: `docs/internal/planning/roadmap/roadmap.md` (v14.2)
 **M0 Planning**: `docs/internal/planning/conversational-glue/`
-**Patterns**: `docs/internal/architecture/current/patterns/` (62 patterns)
+**Patterns**: `docs/internal/architecture/current/patterns/` (63 patterns)
 **ADRs**: `docs/internal/architecture/current/adrs/` (61 ADRs)
 **Skills**: `.claude/skills/` (6 Tier 1 skills)
-**Omnibus Logs**: `docs/omnibus-logs/` (continuous through Mar 2)
+**Omnibus Logs**: `docs/omnibus-logs/` (continuous through Mar 9)
+**Wiki**: `https://github.com/mediajunkie/piper-morgan-product/wiki`
 **CITATIONS**: `docs/references/CITATIONS.md` (updated Mar 3)
 **Glossary**: `knowledge/piper-morgan-glossary-v1.1.md`
 
 ---
 
-*Last Updated: March 4, 2026, 8:00 AM PT*
+*Last Updated: March 10, 2026*
 *Source: GitHub commit history, omnibus logs, Serena symbolic index*

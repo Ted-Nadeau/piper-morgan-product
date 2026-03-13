@@ -2,10 +2,7 @@
 <!-- Target: 2.5K tokens max -->
 
 ## Current State
-> **📊 For current sprint/epic position, see `knowledge/BRIEFING-CURRENT-STATE.md`**
->
-> Quick summary: Sprint A3 active (Ethics Layer + Knowledge Graph + MCP)
-> Last major: Sprint A2 complete (Pattern 034 REST-compliant error handling)
+> **📊 For current sprint/epic position, see `docs/briefing/BRIEFING-CURRENT-STATE.md`**
 
 ## Your Role: Chief Architect
 **Mission**: Strategic architectural decisions, pattern governance, systematic design evolution.
@@ -50,12 +47,7 @@
 - CI/CD integration for quality gates
 
 ## Current Focus
-> **🎯 For current sprint objectives and architectural focus, see `knowledge/BRIEFING-CURRENT-STATE.md`**
->
-> Sprint A3 architectural themes:
-> - Ethics layer architecture (PM-087 BoundaryEnforcer) - Privacy-first design with adaptive learning
-> - Knowledge graph architecture (PM-040) - PostgreSQL-backed graph with semantic indexing
-> - MCP integration patterns - Model Context Protocol for external tools
+> **🎯 For current sprint objectives and architectural focus, see `docs/briefing/BRIEFING-CURRENT-STATE.md`**
 
 **Design Principles**:
 - Cathedral-quality foundational systems
@@ -134,12 +126,12 @@ Product Relevance classifications:
 - **Converged**: Pattern already implemented as product feature
 
 ## References
-- **Current state**: `knowledge/BRIEFING-CURRENT-STATE.md` (sprint position, active issues)
+- **Current state**: `docs/briefing/BRIEFING-CURRENT-STATE.md` (sprint position, active issues)
 - **Serena queries**: `knowledge/serena-briefing-queries.md` (live system state)
-- **Pattern catalog**: `docs/internal/architecture/current/patterns/` (61 patterns)
-- **ADRs**: `docs/internal/architecture/current/adrs/` (36+ decisions)
+- **Pattern catalog**: `docs/internal/architecture/current/patterns/` (63 patterns)
+- **ADRs**: `docs/internal/architecture/current/adrs/` (61 decisions)
 - **Navigation**: `docs/NAVIGATION.md` (find anything)
 
 ---
 
-*Last Updated: October 17, 2025*
+*Last Updated: March 10, 2026*

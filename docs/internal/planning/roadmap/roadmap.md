@@ -1,141 +1,289 @@
-# Piper Morgan Roadmap v13.0
-**Date**: 2026-01-12
-**Author**: Documentation Agent (updated from Chief Architect v12.2)
-**Status**: Active - Sprint B1 COMPLETE, MUX Planning
+# Piper Morgan Roadmap v14.3
+
+**Date**: March 10, 2026
+**Author**: Documentation Agent (updated from v14.2)
+**Status**: Active - M0 COMPLETE (v0.8.6), M1 Sprint Next
 
 ---
 
 ## Executive Summary
 
-**Major milestone achieved**: Sprint B1 completed January 11, 2026. v0.8.4 released with Integration Settings (Epic #543) and Portfolio Onboarding (#490). 23+ issues closed in 3 days (Jan 9-11). Project is ready to begin MUX (Modeled User Experience) phase.
+**Current state**: M0 (Conversational Glue) shipped as v0.8.6 on March 4, 2026. 27 issues total (5 planned + 22 discovered via Assembly Assumption). Sprint executed in 3 days vs 13-22 day estimate. All quality gates passed. PM taking deliberate pause before M1.
 
-**Key Changes from v12.2**:
-- Sprint B1 COMPLETE - all FTUX, CONV, and Integration Settings work done
-- v0.8.4 released (January 12, 2026)
-- Completion Discipline Triad established (Patterns 045/046/047)
-- MUX phase ready to begin
+**Key Changes from v14.2**:
+- M0 COMPLETE — gate #779 closed, epic #762 closed, v0.8.6 released
+- 56-commit merge to main, production push
+- Inchworm position advanced: 4.4.1 → 4.4.2
+- M0 sprint summary updated with final totals
+- Ship #033 "The Cathedral Ships" drafted
+- GitHub wiki published
+- Branch protection enabled on main
 
 ---
 
 ## Current Position
 
 ```
-Inchworm Position: 4.2.1.1 (per Chief Architect Jan 11)
+Inchworm Position: 4.4.2 (M0 Complete, M1 Next)
 
 1. ✅ The Great Refactor (GREAT)
 2. ✅ CORE functionality
-3. ✅ ALPHA testing (v0.8.0 → v0.8.4)
-4. 🎯 MVP Track
-   4.1. ✅ B1 - FTUX & Conversations (COMPLETE Jan 11)
-        ✅ FTUX-PIPER-INTRO (#547)
-        ✅ FTUX-EMPTY-STATES (#548)
-        ✅ FTUX-POST-SETUP (#549)
-        ✅ FTUX-QUICK-2, QUICK-3
-        ✅ FTUX-CHAT-BRIDGE (#550)
-        ✅ FTUX-CONCIERGE
-        ✅ CONV-UX-GREET (#102)
-        ✅ CONV-MCP-STANDUP-INTERACTIVE (Epic #242 - 5 children)
-        ✅ SLACK-ATTENTION-DECAY (#365)
-        ✅ FTUX-PORTFOLIO (#490)
-        ✅ TEST-GAP (#559)
-        ✅ CONV-UX-PERSIST (Epic #314 - 4 children)
-        ✅ CORE-SETTING-DISCONNECT (#544)
-        ✅ CORE-SETTINGS-INTEGRATION (Epic #543 - 4 children)
-   4.2. 🎯 MUX-V1: Vision & Conceptual Architecture (NEXT)
-   4.3. MUX-V2: Integration & Learning
-   4.4. MUX-INTERACT: Interaction Design
-   4.5. MUX-IMPLEMENT: UI Polish
+3. ✅ ALPHA testing (v0.8.0 → v0.8.5.1)
+4. 🎯 Complete build of MVP
+   4.1. ✅ B1 - Beta Enablers (v0.8.3.x) - COMPLETE Jan 11
+   4.2. ✅ A20 - Alpha Testing round 2 (v0.8.4.x) - COMPLETE Jan 18
+   4.3. ✅ MUX: Modeled User Experience - COMPLETE Jan 27
+   4.4. 🎯 MVP Sprints (M0-M6) ← CURRENT
+        ✅ M0: Conversational Glue — COMPLETE (v0.8.6, Mar 4)
+        ○ M1: Foundation (47% cherry-picked) ← NEXT
+        ○ M2: Activation (4%)
+        ○ M3: Skills (30%)
+        ○ M4: Documents (0%)
+        ○ M5: Polish (0%)
+        ○ M6: Future/Hardening (18%)
+   4.5. ○ DIST: Distribution Packaging (after M6)
 5. Beta testing on 0.9
 6. Launch 1.0
 ```
 
 ---
 
-## Sprint B1 Completion Summary (Jan 5-11, 2026)
+## MVP Sprint Status (March 10, 2026)
 
-### Issues Closed: 23+
+### M0 — Conversational Glue ✅ COMPLETE
 
-**Epics Completed**:
-- Epic #242: Interactive Standup Assistant (5 children)
-- Epic #314: Conversation Persistence (4 children)
-- Epic #543: Integration Settings (4 children)
+**Status**: COMPLETE — v0.8.6 shipped March 4, 2026
+**Theme**: Natural conversation flow — "The sheet music for the orchestra"
+**Epic**: #762 (GLUE - Conversational Glue Implementation) — CLOSED
+**Gate**: #779 (M0-GLUE Sprint Completion Gate) — CLOSED
 
-**Major Features**:
-| Issue | Feature | Commit |
-|-------|---------|--------|
-| #547 | FTUX Piper Intro | ab6716e1 |
-| #548 | FTUX Empty States | e993005f |
-| #549 | FTUX Post-Setup | b82b674a |
-| #550 | FTUX Chat Bridge | (part of FTUX batch) |
-| #490 | Portfolio Onboarding | d3554765 |
-| #365 | Slack Attention Decay | 45c8d93d |
-| #544 | Disconnect All button | cee6c3eb |
-| #562 | Integration Test OAuth fix | ab44a72e |
-| #563-566 | Conversation Persistence | (CONV-PERSIST-1 through 4) |
-| #570-573 | Integration Preferences | (Slack/Calendar/Notion/GitHub) |
-| #576-579 | OAuth Credential UI | (Slack/Calendar/GitHub/Notion) |
+**Final Totals**: 27 issues (5 planned + 22 discovered via Assembly Assumption)
+- Sprint executed in 3 days (Feb 17-19) vs 13-22 day estimate
+- 56-commit merge to main, production release
+- All B2 quality gate criteria resolved
+- #858 Conversation Lifecycle Spec approved (4 reviewers, same-day)
+- #715 full lifecycle implementation (27 tests)
 
-### Key Patterns Established
-- **Pattern-045**: Green Tests, Red User (completion discipline)
-- **Pattern-046**: Beads Completion Discipline
-- **Pattern-047**: Time Lord Alert (uncertainty signaling)
-- **Pattern-048**: Periodic Background Job (from #365)
+**Lesson Learned**: 5 planned issues expanded to 27 total. Assembly Assumption pattern (Pattern-049) — individually correct components ≠ correct composition. B2 testing revealed the gap between "tests pass" and "users succeed" (Pattern-045).
 
 ---
 
-## Next Phase: MUX (Modeled User Experience)
+### M1 — MVP Foundation (47% cherry-picked)
 
-### MUX-VISION V1: Conceptual Architecture
-**Status**: Ready to begin
-**GitHub Issues**: #433-436 (MUX-TECH phases)
+**Status**: 14/30 done — cherry-picked during MUX and alpha testing
+**Theme**: Security + Testing foundation
 
-**Scope**:
-- VISION-OBJECT-MODEL - ADR-045 formalization
-- VISION-GRAMMAR-CORE - "Entities experience Moments in Places"
-- VISION-CONSCIOUSNESS - Extract from Morning Standup
-- VISION-METAPHORS - Native/Federated/Synthetic
+**Done (14 issues)**:
+#239, #245, #275, #301, #305, #306, #307, #308, #316, #317, #332, #385, #696, #697
 
-### MUX-TECH: Technical Implementation
-**GitHub Issues Created**:
-- #433: MUX-TECH-PHASE1-GRAMMAR
-- #434: MUX-TECH-PHASE2-ENTITY
-- #435: MUX-TECH-PHASE3-OWNERSHIP
-- #436: MUX-TECH-PHASE4-COMPOSTING
+**Blocked (1 issue)**:
+- #358 SEC-ENCRYPT-ATREST (blocked on expert consultation → M6)
 
-### MUX Gates (Milestones)
-- #531: MUX-GATE-1 - Foundation Phase Complete
-- #532: MUX-GATE-2 - Core Implementation Complete
-- #533: MUX-GATE-3 - Integration Phase Complete
-- #534: MUX-GATE-4 - Interaction Design Complete
+**Remaining (15 issues)**:
+| Category | Issues |
+|----------|--------|
+| Testing | #190, #247, #352, #472, #738, #739 |
+| Security | #470 (RBAC epic), #482, #542 |
+| Architecture | #557 (WebSocket) |
+| MUX follow-up | #705, #706, #717 |
+| Learning | #372 |
+| QA | #375 |
 
 ---
 
-## Open Issues by Category
+### M2 — MVP Activation (4%)
 
-### MUX Phase (Future)
-- #433-436: MUX-TECH Phases 1-4
-- #477: MUX-VISION-LISTS
-- #474: MUX-TECH-LISTS
-- #488: MUX-INTERACT-DISCOVERY
-- #567-569: MUX Portfolio extensions
+**Status**: 1/23 done
+**Theme**: MUX Wiring + Infrastructure
 
-### Architecture & Infrastructure
-- #551: ARCH-COMMANDS (Command Parity)
-- #557: ARCH-WebSocket Infrastructure
-- #463: FLY-COORD-TREES (Git Worktrees)
+**Done (1 issue)**: #298 AUTH-PASSWORD-CHANGE
 
-### Security
-- #542: SEC Token Revocation
-- #482: SEC-KMS-INTEGRATION
+**Remaining (22 issues)**:
+| Category | Issues |
+|----------|--------|
+| WIRE-* (MUX wiring) | #683, #690, #691, #692, #693, #694, #695 |
+| MUX Lifecycle | #703 (epic 25%), #707, #714, #715 |
+| Testing | #167, #191, #273 (75%), #276 |
+| Infrastructure | #304 (Notion quick win), #309, #310, #366, #371, #471 |
+| Feature | #790 (Trust-gated calendar) |
 
-### Bug Fixes
-- #574: Conversation history panel switching
+---
 
-### Tech Debt
-- #546: Alternate issue providers
-- #558: LLM-based preference extraction
-- #471: Infrastructure Epic (OAuth, Learning, TimeSeries)
-- #472: Slack Integration TDD Gaps
+### M3 — MVP Skills (30%)
+
+**Status**: 3/10 done
+**Theme**: Canonical queries + Core skills
+
+**Done (3 issues)**: #143, #248, #303
+
+**Remaining (7 issues)**:
+| Issue | Title |
+|-------|-------|
+| #118 | INFR-AGENT: Multi-Agent Coordinator |
+| #312 | CONV-UX-DESIGN: Unified Design System |
+| #315 | CONV-MCP-LIBRARY: Core Skills Library |
+| #496 | CANONICAL-#9: Priority queries |
+| #497 | CANONICAL-#10: Focus guidance synthesis |
+| #704 | MUX-LIFECYCLE-UI-A: Morning Standup lifecycle |
+| #716 | MUX-FEATURES-VIEW |
+
+---
+
+### M4 — MVP Document Revolution (0%)
+
+**Status**: 0/5 done
+**Theme**: Document processing (coherent, focused)
+
+| Issue | Title |
+|-------|-------|
+| #302 | CONV-MCP-DOCS: Unified Document Processing |
+| #313 | CONV-UX-DOCS: File Browser & Document Management UI |
+| #355 | DOCS-STOPGAP: Basic Artifact Persistence |
+| #712 | MUX-DOCUMENT-VIEWER |
+| #713 | MUX-DOCUMENTS-LIFECYCLE-UI |
+
+---
+
+### M5 — MVP Polish (0%)
+
+**Status**: 0/11 done
+**Theme**: Auth polish, Slack, remaining features
+
+| Issue | Title | Category |
+|-------|-------|----------|
+| #100 | CONV-FEAT-PROJ: Project Portfolio Awareness | Feature |
+| #101 | CONV-FEAT-TIME: Temporal Context System | Feature |
+| #103 | CONV-FEAT-PRIOR: Priority Calculation Engine | Feature |
+| #146 | FLY-VERIFY: Three-Tier Verification Pyramid | Infrastructure |
+| #147 | FLY-VERIFY-HAND: Mandatory Handoff Protocol | Infrastructure |
+| #148 | FLY-VERIFY-CONFIG: Configuration Layer | Infrastructure |
+| #244 | CONV-UX-SLACK: Interactive Slack Standup | Feature |
+| #272 | RESEARCH-TOKENS-THINKING | Research |
+| #338 | INFRA-MIGRATION-ROLLBACK | Infrastructure |
+| #441 | CORE-UX-AUTH-PHASE2 | Auth |
+| #463 | FLY-COORD-TREES: Git Worktrees | Infrastructure |
+
+---
+
+### M6 — MVP Future/Hardening (18%)
+
+**Status**: 2/11 done
+**Theme**: Security hardening + future features
+
+**Done (2 issues)**: #270, #450
+
+**Remaining (9 issues)**:
+| Issue | Title | Category |
+|-------|-------|----------|
+| #104 | CONV-FEAT-ALLOC: Time Allocation Analysis | Feature |
+| #106 | CONV-FEAT-STRAT: Strategic Recommendations | Feature |
+| #241 | CORE-ETHICS-TUNE: Post-Alpha Ethics | Ethics |
+| #465 | FLY-COORD-TREES-2: Phase 3-5 Python | Infrastructure |
+| #546 | TECH-DEBT: Alternate issue providers | Tech Debt |
+| #558 | MUX-STANDUP-CONVERSE: LLM preference extraction | MUX |
+| #568 | MUX-CORE-PORTFOLIO-ACROSS | MUX |
+| #669 | COMPOSTING-HYBRID-TRIGGER | Learning |
+| #760 | TECH-DEBT: slack_workspaces table | Tech Debt |
+
+**Deferred to M6**: #358 SEC-ENCRYPT-ATREST (from M1, blocked on expert consultation)
+
+---
+
+### DIST — Distribution Packaging (NEW)
+
+**Status**: 0/10 — Issues created Feb 21, 2026
+**Theme**: MCP-native + Desktop distribution
+**Epic**: #828 (DIST — Distribution Packaging)
+**Placement**: After M6, before Beta
+
+**Strategic rationale**: MCP-native first positions us for fluid UI surfaces while being the lightest distribution path. Desktop follows for standalone experience. Hosted deferred unless demand warrants.
+
+**Phase 1 — MCP-Native (2-3 weeks)**:
+| Issue | Title | Priority |
+|-------|-------|----------|
+| #829 | DIST-MCP-PACKAGE: Package Piper as MCP server | P0 |
+| #830 | DIST-MCP-DOCS: Integration documentation | P0 |
+| #831 | DIST-MCP-REGISTRY: Publish to registries | P1 |
+| #832 | DIST-MCP-TEST: Integration testing | P1 |
+
+**Phase 2 — Desktop (3-5 weeks)**:
+| Issue | Title | Priority |
+|-------|-------|----------|
+| #833 | DIST-SQLITE: SQLite adapter | P0 |
+| #834 | DIST-WRAPPER: Desktop application wrapper | P0 |
+| #835 | DIST-UPDATE: Auto-update mechanism | P1 |
+| #836 | DIST-INSTALLER: Platform installers | P1 |
+| #837 | DIST-FIRST-RUN: First-run experience | P1 |
+
+**Open Questions**:
+1. Package name: `piper-morgan`? Check PyPI/npm availability
+2. Electron vs Tauri: Needs investigation
+3. Python bundling: Bundle runtime or require system Python?
+4. Signing certificates: Apple ($99/yr), Windows ($200-400/yr)
+
+---
+
+## Sprint Summary
+
+| Sprint | Theme | Total | Done | Remaining | % | Status |
+|--------|-------|-------|------|-----------|---|--------|
+| **M0** | Conversational Glue | 27 | 27 | 0 | 100% | ✅ COMPLETE (v0.8.6) |
+| **M1** | MVP Foundation | 31 | 14 | 17 | 45% | ○ NEXT |
+| **M2** | MVP Activation | 23 | 1 | 22 | 4% | — |
+| **M3** | MVP Skills | 10 | 3 | 7 | 30% | — |
+| **M4** | Document Revolution | 5 | 0 | 5 | 0% | — |
+| **M5** | MVP Polish | 11 | 0 | 11 | 0% | — |
+| **M6** | Future/Hardening | 11 | 2 | 9 | 18% | — |
+| **DIST** | Distribution | 10 | 0 | 10 | 0% | — |
+| **Total** | | **128** | **47** | **81** | **37%** | — |
+
+---
+
+## Timeline (Revised March 2026)
+
+### February 2026
+- [x] M0 sprint execution (Feb 16-18: 3 days vs 13-22 day estimate)
+- [x] M0 bug fixes and quality gate resolution (Feb 19 - Mar 2)
+
+### March 2026
+- [x] M0 gate closure + v0.8.6 release (Mar 4)
+- [ ] M1 sprint begin
+- [ ] M1-M2 complete
+- [ ] Security bugs resolved
+- [ ] MUX wiring operational
+
+### April 2026
+- [ ] M3-M4 complete
+- [ ] Skills + Documents operational
+- [ ] MVP feature-complete approaching
+
+### May 2026
+- [ ] M5-M6 complete
+- [ ] Security hardening
+- [ ] v0.9 beta preparation
+
+### June 2026
+- [ ] DIST Phase 1 (MCP-native)
+- [ ] Beta release
+
+### July 2026
+- [ ] DIST Phase 2 (Desktop)
+- [ ] v1.0 launch preparation
+
+---
+
+## B2 Quality Gate (from PDR-002 v3)
+
+**Definition**: "B2" represents the threshold where conversational glue works well enough that users experience Piper as a colleague, not a chatbot.
+
+| Criterion | Test | Pass Condition |
+|-----------|------|----------------|
+| **Naturalness** | "Does this feel like talking to a colleague?" | Alpha testers agree ≥4/5 |
+| **Memory** | "Does Piper remember what matters?" | Context references resolve >85% |
+| **Proactivity** | "Are suggestions helpful or annoying?" | Acceptance >30%, annoyance <10% |
+| **Discovery** | "Can I discover capabilities without docs?" | ≥3 features discovered/30 days |
+| **Recovery** | "When things go wrong, does Piper help?" | >60% continue after hitting limits |
+| **Flow** | "Can I accomplish goals naturally?" | No explicit command required |
 
 ---
 
@@ -143,132 +291,75 @@ Inchworm Position: 4.2.1.1 (per Chief Architect Jan 11)
 
 | Version | Date | Key Features |
 |---------|------|--------------|
-| v0.8.4 | Jan 12, 2026 | Sprint B1 Complete, Integration Settings, Portfolio Onboarding |
-| v0.8.3.2 | Jan 8, 2026 | Epic #242 Interactive Standup |
-| v0.8.3.1 | Jan 7, 2026 | FTUX improvements |
-| v0.8.3 | Jan 2, 2026 | Setup wizard enhancements |
-| v0.8.2 | Dec 2025 | Alpha stability |
-| v0.8.1 | Nov 2025 | Initial alpha |
-
----
-
-## Success Metrics
-
-### January 2026 ✅ ACHIEVED
-- [x] Sprint B1 complete
-- [x] v0.8.4 released
-- [x] Integration Settings working
-- [x] Portfolio Onboarding implemented
-- [x] 23+ issues closed in 3 days
-
-### February 2026 (Targets)
-- [ ] MUX-V1 Vision sprint complete
-- [ ] MUX-TECH Phase 1 (Grammar) implemented
-- [ ] Conversation history bug fixed (#574)
-- [ ] WebSocket infrastructure evaluated
-
-### March 2026 (Targets)
-- [ ] MUX-V2 Integration complete
-- [ ] Entity consciousness visible in code
-- [ ] Learning pipeline operational
-
----
-
-## Gate Implementation (from v12.3)
-
-### Gate Structure
-Each gate (#531-534) is a GitHub issue with mandatory checklist:
-1. All phase issues closed with evidence
-2. Pattern discovery ceremony completed
-3. No P0/P1 bugs
-4. Team alignment checkpoint
-5. PM approval
-
-### Pattern Discovery Ceremony
-End of each sprint:
-- What patterns emerged?
-- What anti-patterns appeared?
-- What should be documented?
-- Output: Pattern log updates or DRAFT patterns
+| v0.8.6 | Mar 4, 2026 | M0 Conversational Glue — 27 issues, 56-commit merge |
+| v0.8.5.3 | Feb 11, 2026 | Windows compat, setup UX, 14 issues |
+| v0.8.5.2 | Feb 6, 2026 | Alpha bug fixes, timezone alignment |
+| v0.8.5.1 | Jan 31, 2026 | Alpha testing stabilization |
+| v0.8.5 | Jan 27, 2026 | MUX-IMPLEMENT complete |
+| v0.8.4.3 | Jan 18, 2026 | Fresh install fixes |
+| v0.8.4 | Jan 12, 2026 | Sprint B1 Complete |
 
 ---
 
 ## Risk Mitigation
 
 ### Technical Risks
-- **Conversation switching bug (#574)**: Known, needs investigation
-- **MUX complexity**: Gate system provides checkpoints
-- **Learning system gap**: Composting pipeline is spec only (per Jan 11 audit)
+- **M0 expansion pattern**: 5 planned → 23 actual. Expect similar expansion in M1-M6
+- **Assembly Assumption**: Wiring passes now standard practice post-sprint
+- **Distribution complexity**: Phase 1 (MCP) is lightweight; Phase 2 (Desktop) has more unknowns
 
 ### Process Risks
-- **Completion bias**: Patterns 045/046/047 provide countermeasures
-- **Documentation drift**: Weekly audits (issue #580 template)
-- **MUX 75% Abandonment**: Mitigated by gates and Beads discipline (Pattern-046)
-
-### Contingency Plans (from v12.3)
-- If MUX slips: Continue MVP work in parallel
-- If discovery fails: Return to command paradigm
-- If gates block: Time-box investigation
+- **75% pattern**: Mitigated by Beads Discipline (Pattern-046)
+- **Vision flattening**: Anti-flattening safeguards in implementation guide
+- **Scope creep**: Clear P0/P1/P2 prioritization per sprint
 
 ---
 
-## Pattern Integration
+## Patterns Applied
 
-All work follows these patterns (embedded from v12.3):
-- **Pattern-006**: Verification-First
-- **Pattern-009**: GitHub Issue Tracking
-- **Pattern-021**: Session Management
-- **Pattern-045**: Green Tests, Red User (completion discipline)
-- **Pattern-046**: Beads Completion Discipline
-- **Pattern-047**: Time Lord Alert (uncertainty signaling)
-- **Pattern-048**: Periodic Background Job
-
----
-
-## Notes
-
-**Inchworm Principle**: Each phase completes 100% before next begins. Sprint B1 demonstrated this with 23+ issues closed systematically.
-
-**Completion Discipline Triad**: Patterns 045/046/047 form a reinforcing system against AI completion bias.
-
-**Learning System Status** (per Jan 11 audit):
-- Built: Preference Learning (118 tests), Attention Decay (7 tests), Query Learning Loop
-- Spec Only: Composting Pipeline, Insight Journal, Dreaming Jobs
-
-**Dependency Stack** (from v12.3, still valid):
-1. Setup/Config (explicit wizard support) ✅ COMPLETE
-2. Conversational Glue (discovery enablement) ✅ COMPLETE (Portfolio Onboarding)
-3. MUX-VISION (conceptual architecture) ← NEXT
-4. MUX-TECH (implementation)
-5. MUX-INTERACT (discovery patterns)
-6. MUX-IMPLEMENT (polish)
+- **Pattern-045**: Green Tests, Red User — M0 discovered 17 integration gaps
+- **Pattern-046**: Beads Completion Discipline — Gate #779 enforces 100%
+- **Pattern-047**: Time Lord Alert — Uncertainty signaling
+- **Pattern-049**: Assembly Assumption — Wiring pass validates composition
 
 ---
 
 ## Change Log
 
-### v13.0 (Jan 12, 2026)
-- Sprint B1 COMPLETE documented
-- Updated inchworm position to 4.2.1.1
-- Added Sprint B1 completion summary with all 23+ issues
-- Updated version history through v0.8.4
-- Refreshed open issues from GitHub
-- Added MUX gates (#531-534)
-- Documented Completion Discipline Triad
-- **Merged v12.3 insights**: Gate implementation details, pattern discovery ceremony, contingency plans, dependency stack
+### v14.3 (March 10, 2026)
+- M0 COMPLETE — gate #779 closed, epic #762 closed, v0.8.6 released Mar 4
+- 56-commit merge, 27 total issues (5 planned + 22 discovered)
+- Inchworm position: 4.4.1 → 4.4.2
+- Sprint summary updated: M0 100%, total 37% (47/128)
+- Timeline updated through March
+- Version history updated (v0.8.5.2, v0.8.5.3, v0.8.6)
 
-### v12.3 (Dec 27, 2025) - knowledge/roadmap-v12.3.md
-- Reality-based timeline (MUX in February)
-- Added setup wizard issues
-- Added gate milestones
-- Pattern insights integrated
-- Quick wins identified
+### v14.2 (February 23, 2026)
+- B2 quality gate assessment: NOT READY (CXO Feb 22 testing)
+- #767 GLUE-SOFTINVOKE: Tests pass but users fail (Pattern-045)
+- #763 GLUE-FOLLOWUP: Blocked by calendar query infrastructure issue
+- #813 closed (coroutine mock bug fixed)
+- #814 deferred from M0 to M1
+- Sprint summary updated with B2 status column
+- Total: 124 issues (40 done, 84 remaining = 32%)
 
-### v12.2 (Nov 29, 2025)
-- Added MUX-TECH epic with 4 phases
-- Established dual-track visualization
-- Documented convergence points
+### v14.1 (February 21, 2026)
+- M0 actual status: 23 issues (18 done, 4 blocking gate, 1 gate issue)
+- M1-M6 sprint data refreshed from GitHub exports
+- DIST sprint created: Epic #828 + 9 children (#829-837)
+- Sprint summary table with completion percentages
+- Distribution consensus documented: MCP-native → Desktop → Hosted
+- Timeline revised through July 2026
+- Assembly Assumption pattern lesson captured
+- Total MVP scope: 123 issues (38 done, 85 remaining)
+
+### v14.0 (February 1, 2026)
+- Added M0 (Conversational Glue Sprint) as critical path
+- Updated inchworm position to 4.4.0
+- PDR-002 updated to v3 with implementation guide
+- Backlog freshness audit: 4 deferred, 1 merged, 1 closed
+- B2 quality gate formalized
 
 ---
 
-*Roadmap v13.0 - Sprint B1 Complete, MUX Phase Beginning*
+*Roadmap v14.3 — M0 COMPLETE (v0.8.6), M1 Next*

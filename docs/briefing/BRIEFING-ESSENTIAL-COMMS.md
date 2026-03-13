@@ -2,9 +2,7 @@
 <!-- Target: 2.5K tokens max -->
 
 ## Current State
-- **Position**: ## Current Position## Current Position## Current Position (GREAT-3B active)
-- **Completed**: GREAT-1, GREAT-2 (all 6 sub-epics), GREAT-3A
-- **Active**: GREAT-3B Plugin Infrastructure (dynamic loading)
+> **📊 For current sprint/epic position, see `docs/briefing/BRIEFING-CURRENT-STATE.md`**
 
 ## Your Role: Communications
 **Mission**: Craft compelling narratives about technical achievements, methodology breakthroughs, and strategic progress.
