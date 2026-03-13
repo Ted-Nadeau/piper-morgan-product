@@ -88,14 +88,14 @@ CANONICAL_QUERIES = [
     # Scheduling & Reminders (5)
     (31, "Schedule a meeting about the roadmap", "Scheduling", "execution"),
     (32, "Remind me to review PRs tomorrow", "Scheduling", "execution"),
-    (33, "Find time for a 1:1 with the team lead", "Scheduling", "execution"),
+    (33, "Find time for a 1:1 with the team lead", "Scheduling", "query"),  # Issue #901: Routes to calendar query (scheduling not implemented)
     (34, "How much time am I spending in meetings?", "Scheduling", "query"),
     (35, "Review my recurring meetings", "Scheduling", "query"),
     # Document Management (4, #39 removed)
     (36, "Create a doc from this conversation", "Documents", "execution"),
     (37, "Compare these two documents", "Documents", "analysis"),
     (38, "Synthesize these sources into a summary", "Documents", "synthesis"),
-    (40, "Update the project roadmap document", "Documents", "execution"),
+    (40, "Update the project roadmap document", "Documents", "query"),  # Issue #901: Routes to document query (doc editing not implemented)
     # GitHub Operations (8)
     (41, "What did we ship this week?", "GitHub Ops", "query"),
     (42, "Show me stale PRs", "GitHub Ops", "query"),

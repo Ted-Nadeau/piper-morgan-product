@@ -270,6 +270,18 @@ class PreClassifier:
 
     # Issue #521: Contextual Intelligence query patterns
     # MUST be checked BEFORE PRIORITY to avoid pattern collision
+    # Issue #901: Feature/integration info queries - Query #27
+    # "Tell me more about the GitHub integration" should be QUERY, not IDENTITY
+    # These MUST be checked before IDENTITY to prevent "about" keyword collision
+    FEATURE_INFO_PATTERNS = [
+        r"\btell me (?:more )?about the\s+\w+\s+(?:integration|feature|plugin|tool|capability)\b",
+        r"\btell me (?:more )?about\s+(?:github|slack|notion|calendar|mcp)\b",
+        r"\bhow does the\s+\w+\s+(?:integration|feature|plugin|tool)\s+work\b",
+        r"\bwhat is the\s+\w+\s+(?:integration|feature|plugin)\b",
+        r"\blearn (?:more )?about the\s+\w+\s+(?:integration|feature)\b",
+        r"\binformation about the\s+\w+\s+(?:integration|feature)\b",
+    ]
+
     CONTEXTUAL_QUERY_PATTERNS = [
         # Changes query - Query #29
         r"\bwhat changed since\b",
@@ -344,6 +356,18 @@ class PreClassifier:
         r"\bshow.*my week\b",
         r"\bweek ahead\b",
         r"\bweek calendar\b",
+        # Issue #901: Calendar conflict/check queries - Query #62
+        # "Check my calendar for conflicts" should be QUERY, not TEMPORAL
+        r"\bcheck.{0,10}calendar\b",
+        r"\bcalendar.*conflict\b",
+        r"\bcalendar.*overlap\b",
+        r"\bconflict.*calendar\b",
+        # Issue #901: Scheduling/availability queries - Query #33
+        # "Find time for a 1:1" should be calendar QUERY, not TEMPORAL
+        r"\bfind time for\b",
+        r"\bfind.{0,10}time.{0,10}(?:meeting|1:1|1 on 1|sync|chat)\b",
+        r"\bschedule.{0,10}(?:1:1|1 on 1|meeting|sync|call)\b",
+        r"\bbook.{0,10}(?:meeting|time|1:1|slot)\b",
     ]
 
     # GitHub queries - Queries #41, #42, #45, #59, #60
@@ -430,6 +454,21 @@ class PreClassifier:
         r"\bedit\s+(?:the\s+)?[\w\s]+\s+with\b",
         r"\bmodify\s+(?:the\s+)?[\w\s]+\s+with\b",
         r"\bchange\s+(?:the\s+)?[\w\s]+\s+to\b",
+    ]
+
+    # Issue #901: Analysis patterns — blockers, risks, impact assessment
+    # "What's blocking the milestone?" should be ANALYSIS, not STATUS
+    ANALYSIS_PATTERNS = [
+        r"\bwhat'?s blocking\b",
+        r"\bwhat is blocking\b",
+        r"\bwhat.*block(?:s|ing|ed)\s+(?:the|my|our)\b",
+        r"\bblockers?\s+(?:for|on|in)\b",
+        r"\bwhat.*obstacle\b",
+        r"\bwhat'?s in the way\b",
+        r"\banalyze.*(?:risk|impact|blocker|bottleneck)\b",
+        r"\brisk assessment\b",
+        r"\bimpact analysis\b",
+        r"\bbottleneck.*(?:analysis|report)\b",
     ]
 
     PRIORITY_PATTERNS = [
@@ -767,6 +806,18 @@ class PreClassifier:
                 context={"original_message": message},
             )
 
+        # Issue #901: Check feature/integration info queries BEFORE identity
+        # "Tell me more about the GitHub integration" → QUERY, not IDENTITY
+        if PreClassifier._matches_patterns(
+            clean_for_matching, PreClassifier.FEATURE_INFO_PATTERNS
+        ):
+            return Intent(
+                category=IntentCategory.QUERY,
+                action="get_feature_info",
+                confidence=1.0,
+                context={"original_message": message},
+            )
+
         # Check for identity queries - "Who are you?"
         if PreClassifier._matches_patterns(clean_for_matching, PreClassifier.IDENTITY_PATTERNS):
             return Intent(
@@ -1006,6 +1057,18 @@ class PreClassifier:
                 context={"original_message": message},
             )
 
+        # Issue #901: Check ANALYSIS before STATUS to catch blocker/risk queries
+        # "What's blocking the milestone?" should be ANALYSIS, not STATUS
+        if PreClassifier._matches_patterns(
+            clean_for_matching, PreClassifier.ANALYSIS_PATTERNS
+        ):
+            return Intent(
+                category=IntentCategory.ANALYSIS,
+                action="analyze_blockers",
+                confidence=1.0,
+                context={"original_message": message},
+            )
+
         if PreClassifier._matches_patterns(clean_for_matching, PreClassifier.STATUS_PATTERNS):
             return Intent(
                 category=IntentCategory.STATUS,
@@ -1148,6 +1211,10 @@ class PreClassifier:
             (PreClassifier.PORTFOLIO_PATTERNS, IntentCategory.PORTFOLIO, "manage_portfolio"),
             # Repo management patterns (Issue #862)
             (PreClassifier.REPO_MANAGEMENT_PATTERNS, IntentCategory.PORTFOLIO, "manage_repos"),
+            # Issue #901: Feature info patterns
+            (PreClassifier.FEATURE_INFO_PATTERNS, IntentCategory.QUERY, "get_feature_info"),
+            # Issue #901: Analysis patterns
+            (PreClassifier.ANALYSIS_PATTERNS, IntentCategory.ANALYSIS, "analyze_blockers"),
             # Status patterns
             (PreClassifier.STATUS_PATTERNS, IntentCategory.STATUS, "get_project_status"),
             # Priority patterns
