@@ -27,7 +27,7 @@ Before writing ANY prose, create a verified facts list from the source logs.
 ### Trigger/Origin
 - [What actually started this? Line/timestamp reference]
 
-### Sequence of Events  
+### Sequence of Events
 - [First thing that happened - cite line]
 - [Second thing - cite line]
 - [etc.]
@@ -72,16 +72,16 @@ These categories are high-risk for fabrication. If you can't cite a source line,
 Use specific placeholders that explain what's needed:
 
 ```markdown
-[PM PLACEHOLDER: What was the actual trigger for this investigation? 
+[PM PLACEHOLDER: What was the actual trigger for this investigation?
 Logs show X but not what prompted looking at X initially.]
 
-[PM PLACEHOLDER: The logs show 47 columns, not 73. Please verify 
+[PM PLACEHOLDER: The logs show 47 columns, not 73. Please verify
 the correct number, or explain if 73 refers to something else.]
 
-[PM PLACEHOLDER: How did you feel when this was discovered? 
+[PM PLACEHOLDER: How did you feel when this was discovered?
 Logs don't capture the emotional moment.]
 
-[PM PLACEHOLDER: Is this sequence correct? Logs show A and B 
+[PM PLACEHOLDER: Is this sequence correct? Logs show A and B
 but don't explicitly state A caused B.]
 ```
 
