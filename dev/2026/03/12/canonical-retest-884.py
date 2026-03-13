@@ -51,54 +51,46 @@ CANONICAL_QUERIES = [
     (3, "Are you working properly?", "Identity", "identity"),
     (4, "How do I get help?", "Identity", "identity"),
     (5, "What makes you different?", "Identity", "identity"),
-
     # Temporal (5) — expect TEMPORAL
     (6, "What day is it?", "Temporal", "temporal"),
     (7, "What did we accomplish yesterday?", "Temporal", "temporal"),
     (8, "What's on the agenda for today?", "Temporal", "temporal"),
     (9, "When was the last time we worked on this?", "Temporal", "temporal"),
     (10, "How long have we been working on this project?", "Temporal", "temporal"),
-
     # Spatial (4) — expect STATUS/PRIORITY
     (11, "What projects are we working on?", "Spatial", "status"),
     (12, "Show me the project landscape", "Spatial", "status"),
     (13, "Which project should I focus on?", "Spatial", "priority"),
     (14, "What's the status of project X?", "Spatial", "status"),
-
     # Capability (5) — expect EXECUTION/QUERY
     (16, "Create a GitHub issue about testing", "Capability", "execution"),
     (17, "Analyze this document", "Capability", "analysis"),
     (18, "List all my projects", "Capability", "query"),
     (19, "Generate a status report", "Capability", "query"),
     (20, "Search for authentication in our documents", "Capability", "query"),
-
     # Predictive (5) — expect PRIORITY/LEARNING/ANALYSIS/SYNTHESIS/PLANNING
     (21, "What should I focus on today?", "Predictive", "priority"),
     (22, "What patterns do you see?", "Predictive", "learning"),
     (23, "What risks should I be aware of?", "Predictive", "analysis"),
     (24, "What opportunities should I pursue?", "Predictive", "synthesis"),
     (25, "What's the next milestone?", "Predictive", "planning"),
-
     # Conversational (5)
     (26, "What else can you help with?", "Conversational", "identity"),
     (27, "Tell me more about the GitHub integration", "Conversational", "query"),
     (28, "How do I use the calendar feature?", "Conversational", "guidance"),
     (29, "What changed since yesterday?", "Conversational", "temporal"),
     (30, "What needs my attention?", "Conversational", "priority"),
-
     # Scheduling & Reminders (5)
     (31, "Schedule a meeting about the roadmap", "Scheduling", "execution"),
     (32, "Remind me to review PRs tomorrow", "Scheduling", "execution"),
     (33, "Find time for a 1:1 with the team lead", "Scheduling", "execution"),
     (34, "How much time am I spending in meetings?", "Scheduling", "query"),
     (35, "Review my recurring meetings", "Scheduling", "query"),
-
     # Document Management (4, #39 removed)
     (36, "Create a doc from this conversation", "Documents", "execution"),
     (37, "Compare these two documents", "Documents", "analysis"),
     (38, "Synthesize these sources into a summary", "Documents", "synthesis"),
     (40, "Update the project roadmap document", "Documents", "execution"),
-
     # GitHub Operations (8)
     (41, "What did we ship this week?", "GitHub Ops", "query"),
     (42, "Show me stale PRs", "GitHub Ops", "query"),
@@ -108,29 +100,24 @@ CANONICAL_QUERIES = [
     (58, "Update issue #123", "GitHub Ops", "execution"),
     (59, "Comment on issue #456", "GitHub Ops", "execution"),
     (60, "Review issue #789", "GitHub Ops", "query"),
-
     # Slack Communication (5)
     (46, "Any mentions I missed?", "Slack", "query"),
     (47, "Summarize #general from yesterday", "Slack", "synthesis"),
     (48, "Post this update to the team channel", "Slack", "execution"),
     (49, "/standup", "Slack", "execution"),
     (50, "/piper help", "Slack", "identity"),
-
     # Productivity Tracking (3)
     (51, "What's my productivity this week?", "Productivity", "query"),
     (52, "Are we on track for the milestone?", "Productivity", "status"),
     (53, "What did the team accomplish this sprint?", "Productivity", "query"),
-
     # Todo Management (4)
     (54, "Add a todo: review the deployment plan", "Todos", "execution"),
     (55, "Complete the PR review todo", "Todos", "execution"),
     (56, "Show my todos", "Todos", "query"),
     (57, "What's my next todo?", "Todos", "priority"),
-
     # Calendar Extended (2)
     (61, "What's my week look like?", "Calendar Ext", "temporal"),
     (62, "Check my calendar for conflicts", "Calendar Ext", "query"),
-
     # Knowledge Operations (1)
     (63, "Upload a file to the knowledge base", "Knowledge", "execution"),
 ]
@@ -138,10 +125,13 @@ CANONICAL_QUERIES = [
 
 def login(session: requests.Session) -> bool:
     """Authenticate and store cookie."""
-    resp = session.post(LOGIN_ENDPOINT, data={
-        "username": USERNAME,
-        "password": PASSWORD,
-    })
+    resp = session.post(
+        LOGIN_ENDPOINT,
+        data={
+            "username": USERNAME,
+            "password": PASSWORD,
+        },
+    )
     if resp.status_code == 200 and "token" in resp.json():
         print(f"  Logged in as {USERNAME}")
         return True
@@ -150,8 +140,9 @@ def login(session: requests.Session) -> bool:
         return False
 
 
-def classify_failure(query_num, query_text, category, expected_intent,
-                     response_data, http_status, error_text) -> dict:
+def classify_failure(
+    query_num, query_text, category, expected_intent, response_data, http_status, error_text
+) -> dict:
     """
     Analyze a query result and classify its outcome.
 
@@ -289,8 +280,7 @@ def classify_failure(query_num, query_text, category, expected_intent,
     return result
 
 
-def run_test(session: requests.Session, query_num, query_text,
-             category, expected_intent) -> dict:
+def run_test(session: requests.Session, query_num, query_text, category, expected_intent) -> dict:
     """Send a single query and return classified result."""
     try:
         resp = session.post(
@@ -304,32 +294,40 @@ def run_test(session: requests.Session, query_num, query_text,
         if resp.status_code == 200:
             data = resp.json()
             return classify_failure(
-                query_num, query_text, category, expected_intent,
-                data, resp.status_code, None
+                query_num, query_text, category, expected_intent, data, resp.status_code, None
             )
         else:
             return classify_failure(
-                query_num, query_text, category, expected_intent,
-                None, resp.status_code, resp.text[:200]
+                query_num,
+                query_text,
+                category,
+                expected_intent,
+                None,
+                resp.status_code,
+                resp.text[:200],
             )
     except requests.exceptions.Timeout:
         return classify_failure(
-            query_num, query_text, category, expected_intent,
-            None, 0, "Request timeout (30s)"
+            query_num, query_text, category, expected_intent, None, 0, "Request timeout (30s)"
         )
     except Exception as e:
-        return classify_failure(
-            query_num, query_text, category, expected_intent,
-            None, 0, str(e)
-        )
+        return classify_failure(query_num, query_text, category, expected_intent, None, 0, str(e))
 
 
 def write_csv(results: list, filepath: Path):
     """Write results to CSV."""
     fieldnames = [
-        "query_num", "query", "category", "expected_intent",
-        "actual_intent", "confidence", "http_status",
-        "status", "failure_mode", "response_preview", "notes"
+        "query_num",
+        "query",
+        "category",
+        "expected_intent",
+        "actual_intent",
+        "confidence",
+        "http_status",
+        "status",
+        "failure_mode",
+        "response_preview",
+        "notes",
     ]
     with open(filepath, "w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
@@ -350,8 +348,14 @@ def write_report(results: list, filepath: Path):
 
         cat = r["category"]
         if cat not in by_category:
-            by_category[cat] = {"total": 0, "PASS": 0, "FAIL": 0,
-                                "NOT_IMPL": 0, "ERROR": 0, "UNKNOWN": 0}
+            by_category[cat] = {
+                "total": 0,
+                "PASS": 0,
+                "FAIL": 0,
+                "NOT_IMPL": 0,
+                "ERROR": 0,
+                "UNKNOWN": 0,
+            }
         by_category[cat]["total"] += 1
         by_category[cat][st] = by_category[cat].get(st, 0) + 1
 
@@ -385,10 +389,13 @@ def write_report(results: list, filepath: Path):
         f"| ERROR | {error_count} | {error_count/total*100:.1f}% |",
         f"| **Total** | **{total}** | |",
         "",
-        f"**Pass Rate (implemented queries)**: "
-        f"{pass_count}/{pass_count+fail_count+error_count} "
-        f"({pass_count/(pass_count+fail_count+error_count)*100:.1f}%)"
-        if (pass_count+fail_count+error_count) > 0 else "",
+        (
+            f"**Pass Rate (implemented queries)**: "
+            f"{pass_count}/{pass_count+fail_count+error_count} "
+            f"({pass_count/(pass_count+fail_count+error_count)*100:.1f}%)"
+            if (pass_count + fail_count + error_count) > 0
+            else ""
+        ),
         "",
         "---",
         "",
@@ -399,27 +406,40 @@ def write_report(results: list, filepath: Path):
     ]
 
     for cat in [
-        "Identity", "Temporal", "Spatial", "Capability", "Predictive",
-        "Conversational", "Scheduling", "Documents", "GitHub Ops",
-        "Slack", "Productivity", "Todos", "Calendar Ext", "Knowledge"
+        "Identity",
+        "Temporal",
+        "Spatial",
+        "Capability",
+        "Predictive",
+        "Conversational",
+        "Scheduling",
+        "Documents",
+        "GitHub Ops",
+        "Slack",
+        "Productivity",
+        "Todos",
+        "Calendar Ext",
+        "Knowledge",
     ]:
         if cat in by_category:
             d = by_category[cat]
-            rate = f"{d['PASS']/d['total']*100:.0f}%" if d['total'] else "N/A"
+            rate = f"{d['PASS']/d['total']*100:.0f}%" if d["total"] else "N/A"
             lines.append(
                 f"| {cat} | {d['total']} | {d['PASS']} | {d['FAIL']} "
                 f"| {d['NOT_IMPL']} | {d['ERROR']} | {rate} |"
             )
 
-    lines.extend([
-        "",
-        "---",
-        "",
-        "## Failure Mode Breakdown",
-        "",
-        "| Mode | Count | Description |",
-        "|------|-------|-------------|",
-    ])
+    lines.extend(
+        [
+            "",
+            "---",
+            "",
+            "## Failure Mode Breakdown",
+            "",
+            "| Mode | Count | Description |",
+            "|------|-------|-------------|",
+        ]
+    )
 
     mode_descriptions = {
         "ROUTING": "Query reached wrong handler",
@@ -441,13 +461,15 @@ def write_report(results: list, filepath: Path):
     # Detailed failures
     failures = [r for r in results if r["status"] in ("FAIL", "ERROR")]
     if failures:
-        lines.extend([
-            "",
-            "---",
-            "",
-            "## Detailed Failures",
-            "",
-        ])
+        lines.extend(
+            [
+                "",
+                "---",
+                "",
+                "## Detailed Failures",
+                "",
+            ]
+        )
         for r in failures:
             lines.append(
                 f"- **Q{r['query_num']}** ({r['category']}): "
@@ -457,23 +479,27 @@ def write_report(results: list, filepath: Path):
     # NOT_IMPL queries (informational)
     not_impl_list = [r for r in results if r["status"] == "NOT_IMPL"]
     if not_impl_list:
-        lines.extend([
-            "",
-            "---",
-            "",
-            "## Not Implemented (Graceful)",
-            "",
-        ])
+        lines.extend(
+            [
+                "",
+                "---",
+                "",
+                "## Not Implemented (Graceful)",
+                "",
+            ]
+        )
         for r in not_impl_list:
             lines.append(f"- Q{r['query_num']} ({r['category']}): `{r['query']}`")
 
-    lines.extend([
-        "",
-        "---",
-        "",
-        f"*Generated {datetime.now().strftime('%Y-%m-%d %H:%M')} by canonical-retest-884.py*",
-        "",
-    ])
+    lines.extend(
+        [
+            "",
+            "---",
+            "",
+            f"*Generated {datetime.now().strftime('%Y-%m-%d %H:%M')} by canonical-retest-884.py*",
+            "",
+        ]
+    )
 
     with open(filepath, "w") as f:
         f.write("\n".join(lines))
@@ -508,8 +534,11 @@ def main():
 
         # Status icon
         icon = {
-            "PASS": "\u2705", "FAIL": "\u274c", "NOT_IMPL": "\u2b1c",
-            "ERROR": "\U0001f4a5", "UNKNOWN": "\u2753",
+            "PASS": "\u2705",
+            "FAIL": "\u274c",
+            "NOT_IMPL": "\u2b1c",
+            "ERROR": "\U0001f4a5",
+            "UNKNOWN": "\u2753",
         }.get(result["status"], "?")
 
         fm_str = f" [{result['failure_mode']}]" if result["failure_mode"] else ""
