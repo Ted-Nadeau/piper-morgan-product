@@ -190,3 +190,46 @@ PM approved: "yes, please proceed. Full approval to execute." — commit, push, 
 - `tests/unit/services/process/test_registry.py`
 - `tests/unit/services/intent_service/test_setup_routing_814.py`
 - `tests/unit/services/standup/test_conversation_state.py`
+
+### 12:30–14:00 — Issue #889 Audit Cascade + Scoping
+
+- PM directed: #889 = Category A only (bug fixes), Category B = new issue
+- Filed **#900**: "ENHANCE: Standup 3-part structural collection and enhanced completion"
+- PM approved Category A scope
+
+### 14:00–15:30 — Issue #889 Category A Implementation
+
+**Three bugs identified and fixed:**
+
+1. **SUSPENDED not excluded from manager lookups** (`services/standup/conversation_manager.py`)
+   - Added `include_suspended: bool = False` to `get_conversation_by_session()` and `get_conversation_by_user()`
+   - SUSPENDED excluded by default, opt-in with flag for resume flows
+
+2. **Resume acceptance/decline wiring** (`services/intent/intent_service.py`)
+   - Added `_check_pending_resume_offer()` in intent pipeline (after onboarding offer check)
+   - Accept signals → SUSPENDED → INITIATED (with session_id update and content display)
+   - Decline signals → SUSPENDED → ABANDONED
+   - Parallel onboarding resume/abandon methods
+
+3. **Dead code cleanup** (`services/intent/intent_service.py`)
+   - `_check_active_standup()` marked DEPRECATED, debug prints removed, SUSPENDED excluded
+   - `_check_active_onboarding()` debug prints removed
+
+**Tests**: 19 new tests in `tests/unit/services/standup/test_standup_suspend_resume_889.py`
+- 19/19 pass, 5051 broader tests pass
+
+**Commits**: `feca695b` (impl) + `60cb238c` (style) → merged to main `28a80428`
+
+### 15:30 — #889 CLOSED
+
+- Evidence posted to GitHub issue
+- #900 filed for Category B (PM to triage)
+- Merged to main, pushed to origin
+
+### Status — Awaiting PM
+
+- **#888**: CLOSED (escape, timeout, offer-first) ✅
+- **#889**: CLOSED (standup suspend/resume bug fixes) ✅
+- **#899**: Filed (off-topic detection follow-on)
+- **#900**: Filed (standup 3-part structural collection, Category B)
+- All on main, pushed to origin
