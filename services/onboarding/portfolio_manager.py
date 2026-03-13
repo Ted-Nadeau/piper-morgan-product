@@ -44,25 +44,39 @@ class PortfolioOnboardingManager:
     MAX_TURN_HISTORY = 20  # Onboarding typically completes in 3-5 turns
 
     # Valid state transitions - defines the state machine
+    # Issue #888: Added OFFERED (pre-activation) and SUSPENDED (escape/timeout) states
     VALID_TRANSITIONS: Dict[PortfolioOnboardingState, List[PortfolioOnboardingState]] = {
+        PortfolioOnboardingState.OFFERED: [
+            PortfolioOnboardingState.INITIATED,  # User accepted the offer
+            PortfolioOnboardingState.DECLINED,  # User said no thanks
+        ],
         PortfolioOnboardingState.INITIATED: [
+            PortfolioOnboardingState.OFFERED,  # Issue #888: offer_onboarding() transitions here immediately
             PortfolioOnboardingState.GATHERING_PROJECTS,  # User said yes
             PortfolioOnboardingState.DECLINED,  # User said no thanks
+            PortfolioOnboardingState.SUSPENDED,  # Escape command or timeout
         ],
         PortfolioOnboardingState.GATHERING_PROJECTS: [
             PortfolioOnboardingState.GATHERING_PROJECTS,  # More projects to add
             PortfolioOnboardingState.CONFIRMING,  # User done adding projects
             PortfolioOnboardingState.DECLINED,  # User changed mind
+            PortfolioOnboardingState.SUSPENDED,  # Escape command or timeout
         ],
         PortfolioOnboardingState.CONFIRMING: [
             PortfolioOnboardingState.GATHERING_PROJECTS,  # User wants to add more
             PortfolioOnboardingState.GATHERING_REPOS,  # Proceed to repo linking (#863)
             PortfolioOnboardingState.COMPLETE,  # User confirmed, save projects
             PortfolioOnboardingState.DECLINED,  # User cancelled
+            PortfolioOnboardingState.SUSPENDED,  # Escape command or timeout
         ],
         PortfolioOnboardingState.GATHERING_REPOS: [
             PortfolioOnboardingState.GATHERING_REPOS,  # Next project's repo
             PortfolioOnboardingState.COMPLETE,  # All done / skip all
+            PortfolioOnboardingState.SUSPENDED,  # Escape command or timeout
+        ],
+        PortfolioOnboardingState.SUSPENDED: [
+            PortfolioOnboardingState.INITIATED,  # User accepted resume offer
+            PortfolioOnboardingState.DECLINED,  # User declined to resume
         ],
         PortfolioOnboardingState.COMPLETE: [],  # Terminal state
         PortfolioOnboardingState.DECLINED: [],  # Terminal state

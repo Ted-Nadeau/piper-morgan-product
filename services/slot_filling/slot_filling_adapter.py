@@ -10,7 +10,7 @@ with the ProcessRegistry (Tier 1 handler per ADR-049).
 from typing import Any, Dict, Optional
 
 from services.domain.models import IntentCategory
-from services.process.registry import ProcessCheckResult, ProcessType
+from services.process.registry import ProcessCheckResult, ProcessType, SuspendedInfo
 from services.slot_filling.slot_filling_manager import SlotFillingManager
 
 
@@ -63,6 +63,33 @@ class SlotFillingProcessAdapter:
             response_message=response.message,
             intent_data=self._build_intent_data(response, "slot_filling"),
         )
+
+    async def suspend(
+        self,
+        user_id: Optional[str],
+        session_id: Optional[str],
+    ) -> None:
+        """
+        Suspend (cancel) the active slot-filling session.
+
+        Issue #888: Slot-filling sessions are short-lived, so suspend
+        simply cancels the session. No resume is offered for slot-filling.
+        """
+        session = self._manager._find_session(user_id, session_id)
+        if session:
+            self._manager._cancel_session(session)
+
+    async def has_suspended_session(
+        self,
+        user_id: Optional[str],
+    ) -> Optional[SuspendedInfo]:
+        """
+        Check if this user has a suspended slot-filling session.
+
+        Slot-filling sessions are not resumable — they are simply
+        cancelled on escape. Always returns None.
+        """
+        return None
 
     def _build_intent_data(self, response, action: str) -> Dict[str, Any]:
         """Build intent data dict for ProcessCheckResult."""

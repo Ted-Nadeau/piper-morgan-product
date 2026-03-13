@@ -41,30 +41,40 @@ class StandupConversationManager:
     MAX_TURN_HISTORY = 50  # Typical standups complete in 5-10 turns
 
     # Valid state transitions - defines the state machine
+    # Issue #888: Added SUSPENDED state (escape command or timeout)
     VALID_TRANSITIONS: Dict[StandupConversationState, List[StandupConversationState]] = {
         StandupConversationState.INITIATED: [
             StandupConversationState.GATHERING_PREFERENCES,
             StandupConversationState.GENERATING,  # Skip preferences if user wants quick standup
             StandupConversationState.ABANDONED,
+            StandupConversationState.SUSPENDED,  # Escape command or timeout
         ],
         StandupConversationState.GATHERING_PREFERENCES: [
             StandupConversationState.GENERATING,
             StandupConversationState.ABANDONED,
+            StandupConversationState.SUSPENDED,  # Escape command or timeout
         ],
         StandupConversationState.GENERATING: [
             StandupConversationState.REFINING,
             StandupConversationState.FINALIZING,  # Skip refinement if user accepts
             StandupConversationState.ABANDONED,
+            StandupConversationState.SUSPENDED,  # Escape command or timeout
         ],
         StandupConversationState.REFINING: [
             StandupConversationState.GENERATING,  # Re-generate with new preferences
             StandupConversationState.FINALIZING,
             StandupConversationState.ABANDONED,
+            StandupConversationState.SUSPENDED,  # Escape command or timeout
         ],
         StandupConversationState.FINALIZING: [
             StandupConversationState.COMPLETE,
             StandupConversationState.REFINING,  # User wants more changes
             StandupConversationState.ABANDONED,
+            StandupConversationState.SUSPENDED,  # Escape command or timeout
+        ],
+        StandupConversationState.SUSPENDED: [
+            StandupConversationState.INITIATED,  # User accepted resume offer
+            StandupConversationState.ABANDONED,  # User declined to resume
         ],
         StandupConversationState.COMPLETE: [],  # Terminal state
         StandupConversationState.ABANDONED: [],  # Terminal state

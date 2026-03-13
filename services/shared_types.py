@@ -220,6 +220,7 @@ class StandupConversationState(Enum):
     FINALIZING = "finalizing"  # Confirming final version
     COMPLETE = "complete"  # Standup delivered
     ABANDONED = "abandoned"  # User cancelled or timed out
+    SUSPENDED = "suspended"  # Issue #888: User escaped, state preserved for resumption
 
 
 class PortfolioOnboardingState(Enum):
@@ -232,12 +233,14 @@ class PortfolioOnboardingState(Enum):
     Simpler than standup - focused on project capture.
     """
 
-    INITIATED = "initiated"  # Piper offered onboarding, awaiting user response
+    OFFERED = "offered"  # Issue #888: Piper offered onboarding, awaiting yes/no
+    INITIATED = "initiated"  # User accepted offer, onboarding in progress
     GATHERING_PROJECTS = "gathering_projects"  # Collecting project info
     CONFIRMING = "confirming"  # Confirming captured info before save
     GATHERING_REPOS = "gathering_repos"  # Optionally linking repos to projects (#863)
     COMPLETE = "complete"  # Projects saved, onboarding done
     DECLINED = "declined"  # User said no thanks
+    SUSPENDED = "suspended"  # Issue #888: User escaped, state preserved for resumption
 
 
 class InteractionSpace(str, Enum):
