@@ -4727,9 +4727,7 @@ class IntentService:
                 error_type=None,
             )
 
-    def _get_contextual_fallback(
-        self, mapped_action: str, original_message: str
-    ) -> str:
+    def _get_contextual_fallback(self, mapped_action: str, original_message: str) -> str:
         """
         Issue #886: Return contextual fallback copy for not-implemented capabilities.
 
@@ -4747,8 +4745,7 @@ class IntentService:
 
         # Scheduling: "schedule a meeting", "set up a meeting"
         if any(
-            kw in msg_lower
-            for kw in ["schedule a meeting", "set up a meeting", "book a meeting"]
+            kw in msg_lower for kw in ["schedule a meeting", "set up a meeting", "book a meeting"]
         ):
             return (
                 "I can't create calendar events yet — that's coming soon. "
@@ -4764,10 +4761,7 @@ class IntentService:
             )
 
         # Document creation: "create a doc", "create a document"
-        if any(
-            kw in msg_lower
-            for kw in ["create a doc", "create a document", "make a doc"]
-        ):
+        if any(kw in msg_lower for kw in ["create a doc", "create a document", "make a doc"]):
             return (
                 "I can't create documents yet. If you'd like to capture something "
                 "from our conversation, I can summarize the key points so you can "
@@ -4791,9 +4785,7 @@ class IntentService:
             )
 
         # Close issues: "close" + "issue"
-        if "close" in msg_lower and (
-            "issue" in msg_lower or "completed" in msg_lower
-        ):
+        if "close" in msg_lower and ("issue" in msg_lower or "completed" in msg_lower):
             return (
                 "I can't close issues yet — that's on my roadmap. For now, you "
                 "can close them directly in GitHub. Want me to show you which "
@@ -4801,9 +4793,7 @@ class IntentService:
             )
 
         # Post to Slack: "post" + ("channel" or "slack" or "team")
-        if "post" in msg_lower and any(
-            kw in msg_lower for kw in ["channel", "slack", "team"]
-        ):
+        if "post" in msg_lower and any(kw in msg_lower for kw in ["channel", "slack", "team"]):
             return (
                 "I can't post to Slack channels yet. I can help you draft the "
                 "message though — then you can paste it into the channel. "
@@ -4818,9 +4808,7 @@ class IntentService:
             )
 
         # Upload file: "upload" + ("file" or "knowledge")
-        if "upload" in msg_lower and any(
-            kw in msg_lower for kw in ["file", "knowledge"]
-        ):
+        if "upload" in msg_lower and any(kw in msg_lower for kw in ["file", "knowledge"]):
             return (
                 "I can't accept file uploads yet. If you paste the content here, "
                 "I can analyze it — or you can add files directly to Notion and "
