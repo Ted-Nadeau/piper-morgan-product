@@ -104,9 +104,124 @@ class PortfolioOnboardingHandler:
         """
         self.manager = manager
 
+    def offer_onboarding(self, session_id: str, user_id: str) -> OnboardingResponse:
+        """
+        Offer onboarding to a new user WITHOUT creating an active session.
+
+        Issue #888: PPM binding direction — offer-first activation model.
+        Creates a session in OFFERED state, which the ProcessRegistry treats
+        as non-active (check_active returns False for OFFERED). The session
+        only transitions to INITIATED when the user explicitly accepts.
+
+        This prevents the hijack bug: the user's response goes through
+        normal classification since there's no active process claiming it.
+        We catch the acceptance in handle_offer_response().
+
+        Args:
+            session_id: Session identifier
+            user_id: User identifier
+
+        Returns:
+            OnboardingResponse with offer prompt (OFFERED state)
+        """
+        session = self.manager.create_session(session_id, user_id)
+
+        # Immediately transition to OFFERED (create_session defaults to INITIATED)
+        self.manager.transition_state(session.id, PortfolioOnboardingState.OFFERED)
+
+        message = (
+            "Hey! I'm Piper, your PM assistant. I notice you're new here. "
+            "I can walk you through setting up your workspace — want to do "
+            "that now, or would you rather just dive in?"
+        )
+
+        # Record the turn
+        self.manager.add_turn(
+            session.id,
+            user_message="[greeting]",
+            assistant_response=message,
+        )
+
+        return OnboardingResponse(
+            message=message,
+            state=session.state,
+            is_complete=False,
+            metadata={"onboarding_id": session.id},
+        )
+
+    def handle_offer_response(
+        self, session_id: str, user_message: str
+    ) -> Optional[OnboardingResponse]:
+        """
+        Handle the user's response to the onboarding offer.
+
+        Issue #888: Called when we detect a user has an OFFERED session and
+        sends a new message. Checks for acceptance or decline.
+
+        Args:
+            session_id: The onboarding session ID (in OFFERED state)
+            user_message: User's response to the offer
+
+        Returns:
+            OnboardingResponse if accepted/declined, None if message
+            doesn't clearly indicate either (treat as decline-by-ignoring).
+        """
+        session = self.manager.get_session(session_id)
+        if not session or session.state != PortfolioOnboardingState.OFFERED:
+            return None
+
+        message_lower = user_message.lower()
+
+        # Check for acceptance
+        if self._matches_patterns(message_lower, self.ACCEPTANCE_PATTERNS):
+            # Transition OFFERED → INITIATED → GATHERING_PROJECTS
+            self.manager.transition_state(session.id, PortfolioOnboardingState.INITIATED)
+            self.manager.transition_state(session.id, PortfolioOnboardingState.GATHERING_PROJECTS)
+
+            response_message = (
+                "Great! Let's get you set up. Tell me about the projects you're "
+                "working on. You can mention one at a time — project name and a "
+                "quick description of what it is."
+            )
+            self.manager.add_turn(session.id, user_message, response_message)
+
+            return OnboardingResponse(
+                message=response_message,
+                state=session.state,
+                is_complete=False,
+                metadata={"onboarding_id": session.id},
+            )
+
+        # Check for explicit decline
+        if self._matches_patterns(message_lower, self.DECLINE_PATTERNS):
+            self.manager.transition_state(session.id, PortfolioOnboardingState.DECLINED)
+            response_message = (
+                "No problem! Whenever you're ready to tell me about your projects, "
+                "just say 'set up my projects' and we can do this then. "
+                "What can I help you with today?"
+            )
+            self.manager.add_turn(session.id, user_message, response_message)
+
+            return OnboardingResponse(
+                message=response_message,
+                state=session.state,
+                is_complete=False,
+                metadata={"onboarding_id": session.id},
+            )
+
+        # Neither clear accept nor decline — treat as implicit decline
+        # (user is just diving in, per PPM direction: "accept 'no' gracefully")
+        self.manager.transition_state(session.id, PortfolioOnboardingState.DECLINED)
+        # Return None so the message gets handled by normal classification
+        return None
+
     def start_onboarding(self, session_id: str, user_id: str) -> OnboardingResponse:
         """
-        Start a new onboarding conversation.
+        Start a new onboarding conversation (legacy method).
+
+        Issue #888: Prefer offer_onboarding() for new activations.
+        This method is retained for backward compatibility and direct
+        invocation scenarios (e.g., "set up my projects" command).
 
         Args:
             session_id: Session identifier

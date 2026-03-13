@@ -162,6 +162,12 @@ class ConversationHandler:
             context_keys=list(intent.context.keys()) if intent.context else [],
         )
 
+        # Issue #888: Check for suspended sessions before offering new onboarding
+        if user_id:
+            reentry_response = await self._check_suspended_session_reentry(user_id)
+            if reentry_response:
+                return reentry_response
+
         if user_id and session_id:
             onboarding_response = await self._check_portfolio_onboarding(user_id, session_id)
             if onboarding_response:
@@ -184,9 +190,13 @@ class ConversationHandler:
         self, user_id: str, session_id: str
     ) -> Optional[Dict[str, Any]]:
         """
-        Issue #490: Check if user should be offered portfolio onboarding.
+        Issue #490, #888: Check if user should be offered portfolio onboarding.
 
-        Returns an onboarding response if the user has no projects,
+        Issue #888: Changed from auto-activate to offer-first model.
+        Creates session in OFFERED state (non-active from registry perspective).
+        User must explicitly accept before onboarding begins.
+
+        Returns an onboarding offer if the user has no projects,
         otherwise returns None to continue with normal greeting.
         """
         try:
@@ -199,12 +209,12 @@ class ConversationHandler:
                 detector = FirstMeetingDetector(project_repo)
 
                 if await detector.should_trigger(user_id):
-                    # Start onboarding flow
+                    # Issue #888: Offer onboarding (OFFERED state, not INITIATED)
                     _, onboarding_handler = _get_onboarding_components()
-                    response = onboarding_handler.start_onboarding(session_id, user_id)
+                    response = onboarding_handler.offer_onboarding(session_id, user_id)
 
                     logger.info(
-                        "portfolio_onboarding_triggered",
+                        "portfolio_onboarding_offered",
                         user_id=user_id,
                         session_id=session_id,
                         onboarding_id=response.metadata.get("onboarding_id"),
@@ -214,11 +224,12 @@ class ConversationHandler:
                         "message": response.message,
                         "intent": {
                             "category": IntentCategory.GUIDANCE.value,
-                            "action": "portfolio_onboarding",
+                            "action": "portfolio_onboarding_offered",
                             "confidence": 1.0,
                             "context": {
                                 "onboarding_id": response.metadata.get("onboarding_id"),
                                 "state": response.state.value,
+                                "offer_pending": True,
                             },
                         },
                         "workflow_id": None,
@@ -227,6 +238,110 @@ class ConversationHandler:
 
         except Exception as e:
             logger.warning(f"Could not check portfolio onboarding: {e}")
+
+        return None
+
+    async def _check_pending_onboarding_offer(
+        self, user_id: str, message: str
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Issue #888: Check if user has a pending onboarding offer (OFFERED state).
+
+        When the user sends a message after being offered onboarding,
+        this checks for an OFFERED session and routes the response
+        to handle_offer_response(). If the user accepts, transitions
+        to active onboarding. If declined or ignored, transitions to DECLINED.
+
+        Returns a response dict if the offer was handled, None otherwise.
+        """
+        try:
+            from services.shared_types import PortfolioOnboardingState
+
+            onboarding_manager, onboarding_handler = _get_onboarding_components()
+            session = onboarding_manager.get_session_by_user(user_id)
+
+            if not session or session.state != PortfolioOnboardingState.OFFERED:
+                return None
+
+            logger.info(
+                "checking_pending_onboarding_offer",
+                user_id=user_id,
+                session_id=session.id,
+            )
+
+            response = onboarding_handler.handle_offer_response(session.id, message)
+
+            if response is None:
+                # Implicit decline — user ignored the offer. Return None
+                # so the message goes through normal classification.
+                return None
+
+            return {
+                "message": response.message,
+                "intent": {
+                    "category": IntentCategory.GUIDANCE.value,
+                    "action": "portfolio_onboarding",
+                    "confidence": 1.0,
+                    "context": {
+                        "onboarding_id": session.id,
+                        "state": response.state.value,
+                    },
+                },
+                "workflow_id": None,
+                "onboarding_session": session.id,
+            }
+
+        except Exception as e:
+            logger.warning(f"Could not check pending onboarding offer: {e}")
+
+        return None
+
+    async def _check_suspended_session_reentry(self, user_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Issue #888: Check for suspended sessions and offer to resume.
+
+        PPM direction: "Save state, offer to resume once at next conversation
+        start, accept 'no' gracefully." This runs during greeting handling.
+
+        Returns a resume offer if a suspended session exists, None otherwise.
+        """
+        try:
+            from services.process.registry import get_process_registry
+
+            registry = get_process_registry()
+            suspended = await registry.check_suspended_processes(user_id)
+
+            if suspended is None:
+                return None
+
+            logger.info(
+                "offering_suspended_session_reentry",
+                user_id=user_id,
+                process_type=suspended.process_type.value,
+            )
+
+            # Construct a friendly resume offer
+            resume_message = (
+                f"Welcome back! {suspended.description} "
+                "Would you like to continue, or start fresh?"
+            )
+
+            return {
+                "message": resume_message,
+                "intent": {
+                    "category": IntentCategory.GUIDANCE.value,
+                    "action": "suspended_session_reentry",
+                    "confidence": 1.0,
+                    "context": {
+                        "suspended_process": suspended.process_type.value,
+                        "offer_resume": True,
+                    },
+                },
+                "workflow_id": None,
+            }
+
+        except Exception as e:
+            logger.warning(f"Could not check suspended sessions: {e}")
 
         return None
 

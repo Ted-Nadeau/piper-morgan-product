@@ -345,23 +345,32 @@ class TestIntegrationSetupContinuity:
 
 
 class TestGreetingOnboardingRegression:
-    """Issue #814: Existing greeting-triggered onboarding still works."""
+    """Issue #814, #888: Greeting-triggered onboarding uses offer-first model."""
 
     @pytest.mark.asyncio
-    async def test_greeting_still_triggers_onboarding_for_zero_projects(self):
-        """Greeting-based onboarding via ConversationHandler is not broken."""
+    async def test_greeting_offers_onboarding_for_zero_projects(self):
+        """
+        Greeting-based onboarding via ConversationHandler offers (not auto-activates).
+
+        Issue #888: Changed from start_onboarding() to offer_onboarding().
+        Session is created in OFFERED state — user must explicitly accept.
+        """
         from services.conversation.conversation_handler import ConversationHandler
 
         handler = ConversationHandler()
 
         mock_response = MagicMock()
-        mock_response.message = "Hello! Let's set up your projects."
+        mock_response.message = (
+            "Hey! I'm Piper, your PM assistant. I notice you're new here. "
+            "I can walk you through setting up your workspace — want to do "
+            "that now, or would you rather just dive in?"
+        )
         mock_response.state = MagicMock()
-        mock_response.state.value = "initiated"
+        mock_response.state.value = "offered"
         mock_response.metadata = {"onboarding_id": "onb-456"}
 
         mock_onboarding_handler = MagicMock()
-        mock_onboarding_handler.start_onboarding.return_value = mock_response
+        mock_onboarding_handler.offer_onboarding.return_value = mock_response
 
         mock_project_repo = MagicMock()
         mock_project_repo.count_active_projects = AsyncMock(return_value=0)
@@ -390,5 +399,7 @@ class TestGreetingOnboardingRegression:
             result = await handler._check_portfolio_onboarding("user-1", "sess-1")
 
         assert result is not None
-        assert result["intent"]["action"] == "portfolio_onboarding"
+        assert result["intent"]["action"] == "portfolio_onboarding_offered"
         assert result["onboarding_session"] == "onb-456"
+        assert result["intent"]["context"]["offer_pending"] is True
+        mock_onboarding_handler.offer_onboarding.assert_called_once_with("sess-1", "user-1")

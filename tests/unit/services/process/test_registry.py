@@ -10,28 +10,37 @@ from typing import Optional
 import pytest
 
 from services.process.registry import (
+    ESCAPE_COMMANDS,
     GuidedProcess,
     ProcessCheckResult,
     ProcessRegistry,
     ProcessType,
+    SuspendedInfo,
     get_process_registry,
 )
 
 
 class MockGuidedProcess:
-    """Mock guided process for testing."""
+    """Mock guided process for testing.
+
+    Issue #888: Added suspend() and has_suspended_session() to match
+    extended GuidedProcess protocol.
+    """
 
     def __init__(
         self,
         process_type: ProcessType,
         is_active: bool = False,
         response_message: str = "Mock response",
+        has_suspended: bool = False,
     ):
         self._process_type = process_type
         self._is_active = is_active
         self._response_message = response_message
+        self._has_suspended = has_suspended
         self._check_active_called = False
         self._handle_message_called = False
+        self._suspend_called = False
 
     @property
     def process_type(self) -> ProcessType:
@@ -57,6 +66,24 @@ class MockGuidedProcess:
             response_message=self._response_message,
             intent_data={"action": "test", "bypassed_classification": True},
         )
+
+    async def suspend(
+        self,
+        user_id: Optional[str],
+        session_id: Optional[str],
+    ) -> None:
+        self._suspend_called = True
+
+    async def has_suspended_session(
+        self,
+        user_id: Optional[str],
+    ) -> Optional[SuspendedInfo]:
+        if self._has_suspended:
+            return SuspendedInfo(
+                process_type=self._process_type,
+                description=f"Mock suspended {self._process_type.value}",
+            )
+        return None
 
 
 class TestProcessCheckResult:
@@ -245,6 +272,12 @@ class TestProcessRegistry:
             async def handle_message(self, user_id, session_id, message):
                 return ProcessCheckResult.not_handled()
 
+            async def suspend(self, user_id, session_id):
+                pass
+
+            async def has_suspended_session(self, user_id):
+                return None
+
         registry = get_process_registry()
         registry.register(FailingProcess())
 
@@ -303,3 +336,208 @@ class TestGuidedProcessProtocol:
                 return False
 
         assert not isinstance(MissingHandleMessage(), GuidedProcess)
+
+    def test_protocol_requires_suspend(self):
+        """Protocol requires suspend method (Issue #888)."""
+
+        class MissingSuspend:
+            @property
+            def process_type(self):
+                return ProcessType.ONBOARDING
+
+            async def check_active(self, user_id, session_id):
+                return False
+
+            async def handle_message(self, user_id, session_id, message):
+                return ProcessCheckResult.not_handled()
+
+            async def has_suspended_session(self, user_id):
+                return None
+
+        assert not isinstance(MissingSuspend(), GuidedProcess)
+
+    def test_protocol_requires_has_suspended_session(self):
+        """Protocol requires has_suspended_session method (Issue #888)."""
+
+        class MissingHasSuspended:
+            @property
+            def process_type(self):
+                return ProcessType.ONBOARDING
+
+            async def check_active(self, user_id, session_id):
+                return False
+
+            async def handle_message(self, user_id, session_id, message):
+                return ProcessCheckResult.not_handled()
+
+            async def suspend(self, user_id, session_id):
+                pass
+
+        assert not isinstance(MissingHasSuspended(), GuidedProcess)
+
+
+class TestEscapeCommands:
+    """Tests for escape command interception (Issue #888)."""
+
+    @pytest.fixture(autouse=True)
+    def reset_singleton(self):
+        ProcessRegistry.reset_instance()
+        yield
+        ProcessRegistry.reset_instance()
+
+    def test_escape_commands_constant(self):
+        """ESCAPE_COMMANDS contains expected commands."""
+        assert "cancel" in ESCAPE_COMMANDS
+        assert "exit" in ESCAPE_COMMANDS
+        assert "stop" in ESCAPE_COMMANDS
+        assert "skip" in ESCAPE_COMMANDS
+        assert "quit" in ESCAPE_COMMANDS
+        assert "never mind" in ESCAPE_COMMANDS
+
+    def test_is_escape_command_exact_match(self):
+        """_is_escape_command requires exact match on full message."""
+        registry = get_process_registry()
+        assert registry._is_escape_command("cancel") is True
+        assert registry._is_escape_command("  cancel  ") is True  # Strips whitespace
+        assert registry._is_escape_command("CANCEL") is True  # Case-insensitive
+        assert registry._is_escape_command("Cancel") is True
+
+    def test_is_escape_command_rejects_substring(self):
+        """_is_escape_command does NOT match substrings."""
+        registry = get_process_registry()
+        assert registry._is_escape_command("cancel my standup") is False
+        assert registry._is_escape_command("I want to exit") is False
+        assert registry._is_escape_command("please stop") is False
+        assert registry._is_escape_command("skip this step") is False
+
+    def test_is_escape_command_never_mind(self):
+        """'never mind' is a multi-word escape command."""
+        registry = get_process_registry()
+        assert registry._is_escape_command("never mind") is True
+        assert registry._is_escape_command("Never Mind") is True
+        assert registry._is_escape_command("  never mind  ") is True
+
+    @pytest.mark.asyncio
+    async def test_escape_command_during_active_process(self):
+        """Escape command suspends active process and returns escaped result."""
+        registry = get_process_registry()
+        handler = MockGuidedProcess(ProcessType.ONBOARDING, is_active=True)
+        registry.register(handler)
+
+        result = await registry.check_active_processes("user1", "session1", "cancel")
+
+        assert result.handled is True
+        assert result.escaped is True
+        assert result.process_type == ProcessType.ONBOARDING
+        assert "paused" in result.response_message.lower()
+        assert handler._suspend_called is True
+        assert handler._handle_message_called is False  # Message NOT forwarded
+
+    @pytest.mark.asyncio
+    async def test_escape_command_no_active_process(self):
+        """Escape command with no active process returns not_handled."""
+        registry = get_process_registry()
+        handler = MockGuidedProcess(ProcessType.ONBOARDING, is_active=False)
+        registry.register(handler)
+
+        result = await registry.check_active_processes("user1", "session1", "cancel")
+
+        assert result.handled is False
+        assert handler._suspend_called is False
+
+    @pytest.mark.asyncio
+    async def test_normal_message_during_active_process(self):
+        """Normal message during active process routes to handler."""
+        registry = get_process_registry()
+        handler = MockGuidedProcess(ProcessType.ONBOARDING, is_active=True)
+        registry.register(handler)
+
+        result = await registry.check_active_processes("user1", "session1", "my project is Piper")
+
+        assert result.handled is True
+        assert result.escaped is False
+        assert handler._handle_message_called is True
+        assert handler._suspend_called is False
+
+    @pytest.mark.asyncio
+    async def test_escape_command_quit(self):
+        """'quit' is recognized as escape command."""
+        registry = get_process_registry()
+        handler = MockGuidedProcess(ProcessType.STANDUP, is_active=True)
+        registry.register(handler)
+
+        result = await registry.check_active_processes("user1", "session1", "quit")
+
+        assert result.handled is True
+        assert result.escaped is True
+        assert handler._suspend_called is True
+
+
+class TestProcessCheckResultEscaped:
+    """Tests for ProcessCheckResult.escaped_from factory (Issue #888)."""
+
+    def test_escaped_from(self):
+        """escaped_from() creates escaped result with correct data."""
+        result = ProcessCheckResult.escaped_from(
+            process_type=ProcessType.ONBOARDING,
+            response_message="Paused onboarding.",
+        )
+        assert result.handled is True
+        assert result.escaped is True
+        assert result.process_type == ProcessType.ONBOARDING
+        assert result.response_message == "Paused onboarding."
+        assert result.intent_data["action"] == "workflow_escaped"
+        assert result.intent_data["context"]["escaped_process"] == "onboarding"
+
+
+class TestSuspendedSessionDiscovery:
+    """Tests for suspended session discovery (Issue #888)."""
+
+    @pytest.fixture(autouse=True)
+    def reset_singleton(self):
+        ProcessRegistry.reset_instance()
+        yield
+        ProcessRegistry.reset_instance()
+
+    @pytest.mark.asyncio
+    async def test_no_suspended_sessions(self):
+        """No suspended sessions returns None."""
+        registry = get_process_registry()
+        handler = MockGuidedProcess(ProcessType.ONBOARDING, has_suspended=False)
+        registry.register(handler)
+
+        result = await registry.check_suspended_processes("user1")
+        assert result is None
+
+    @pytest.mark.asyncio
+    async def test_finds_suspended_session(self):
+        """Finds suspended session from handler."""
+        registry = get_process_registry()
+        handler = MockGuidedProcess(ProcessType.ONBOARDING, has_suspended=True)
+        registry.register(handler)
+
+        result = await registry.check_suspended_processes("user1")
+        assert result is not None
+        assert result.process_type == ProcessType.ONBOARDING
+
+    @pytest.mark.asyncio
+    async def test_priority_order_for_suspended(self):
+        """Higher priority suspended session found first."""
+        registry = get_process_registry()
+        onboarding = MockGuidedProcess(ProcessType.ONBOARDING, has_suspended=True)
+        standup = MockGuidedProcess(ProcessType.STANDUP, has_suspended=True)
+        registry.register(onboarding)
+        registry.register(standup)
+
+        result = await registry.check_suspended_processes("user1")
+        assert result.process_type == ProcessType.ONBOARDING
+
+    @pytest.mark.asyncio
+    async def test_no_user_id_returns_none(self):
+        """None user_id returns None."""
+        registry = get_process_registry()
+        handler = MockGuidedProcess(ProcessType.ONBOARDING, has_suspended=True)
+        registry.register(handler)
+
+        result = await registry.check_suspended_processes(None)
+        assert result is None

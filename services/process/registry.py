@@ -15,12 +15,28 @@ Issue #687: ADR-049 Implementation
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
+from datetime import datetime
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Protocol, runtime_checkable
 
 import structlog
 
 logger = structlog.get_logger(__name__)
+
+
+# Issue #888, #889: Escape commands recognized at registry level.
+# PPM binding direction (2026-03-13): These bypass workflow handlers entirely.
+# Arch guidance: Exact match on stripped+lowercased full message. Use frozenset.
+ESCAPE_COMMANDS: frozenset = frozenset(
+    {
+        "cancel",
+        "exit",
+        "stop",
+        "skip",
+        "quit",
+        "never mind",
+    }
+)
 
 
 class ProcessType(str, Enum):
@@ -48,6 +64,20 @@ class ProcessType(str, Enum):
 
 
 @dataclass
+class SuspendedInfo:
+    """
+    Lightweight info about a suspended workflow session.
+
+    Issue #888: Arch guidance — registry discovers suspended sessions
+    via has_suspended_session(), handlers own the semantics.
+    """
+
+    process_type: ProcessType
+    suspended_at: Optional[datetime] = None
+    description: str = ""
+
+
+@dataclass
 class ProcessCheckResult:
     """
     Result of checking for an active guided process.
@@ -60,6 +90,7 @@ class ProcessCheckResult:
     process_type: Optional[ProcessType] = None
     response_message: Optional[str] = None
     intent_data: Optional[Dict[str, Any]] = None
+    escaped: bool = False  # True when user used an escape command
 
     @classmethod
     def not_handled(cls) -> "ProcessCheckResult":
@@ -81,6 +112,29 @@ class ProcessCheckResult:
             intent_data=intent_data,
         )
 
+    @classmethod
+    def escaped_from(
+        cls,
+        process_type: ProcessType,
+        response_message: str,
+    ) -> "ProcessCheckResult":
+        """User escaped from an active guided process via escape command."""
+        return cls(
+            handled=True,
+            escaped=True,
+            process_type=process_type,
+            response_message=response_message,
+            intent_data={
+                "category": "guidance",
+                "action": "workflow_escaped",
+                "confidence": 1.0,
+                "context": {
+                    "escaped_process": process_type.value,
+                    "bypassed_classification": True,
+                },
+            },
+        )
+
 
 @runtime_checkable
 class GuidedProcess(Protocol):
@@ -89,6 +143,9 @@ class GuidedProcess(Protocol):
 
     Each guided process type implements this protocol to integrate
     with the process registry.
+
+    Issue #888: Added suspend() and has_suspended_session() per
+    PPM direction and Arch guidance (2026-03-13).
     """
 
     @property
@@ -119,6 +176,34 @@ class GuidedProcess(Protocol):
 
         Only called if check_active returned True.
         Returns ProcessCheckResult with handled=True and response.
+        """
+        ...
+
+    async def suspend(
+        self,
+        user_id: Optional[str],
+        session_id: Optional[str],
+    ) -> None:
+        """
+        Suspend the active session, preserving state for later resumption.
+
+        Issue #888: Called by ProcessRegistry when user issues an escape
+        command. Transitions session to SUSPENDED state. Handler owns
+        the semantics of what "suspended" means for its workflow.
+        """
+        ...
+
+    async def has_suspended_session(
+        self,
+        user_id: Optional[str],
+    ) -> Optional[SuspendedInfo]:
+        """
+        Check if this user has a suspended session.
+
+        Issue #888: Arch guidance — registry discovers suspended sessions
+        by iterating handlers. Each handler checks its own state machine.
+
+        Returns SuspendedInfo if a suspended session exists, None otherwise.
         """
         ...
 
@@ -210,6 +295,55 @@ class ProcessRegistry:
                 return True
         return False
 
+    def _is_escape_command(self, message: str) -> bool:
+        """
+        Check if a message is an escape command.
+
+        Issue #888: PPM binding direction — exact match on stripped+lowercased
+        full message. No regex, no substring. "cancel" escapes, but
+        "cancel my standup" does NOT.
+
+        Arch guidance (2026-03-13): Use frozenset for O(1) lookup.
+        """
+        normalized = message.strip().lower()
+        return normalized in ESCAPE_COMMANDS
+
+    async def check_suspended_processes(
+        self,
+        user_id: Optional[str],
+    ) -> Optional[SuspendedInfo]:
+        """
+        Check all handlers for a suspended session belonging to user_id.
+
+        Issue #888: Arch guidance — registry is a "dumb aggregator."
+        Iterates handlers, each checks its own state machine. First
+        suspended session found wins (priority order).
+
+        Returns SuspendedInfo if a suspended session exists, None otherwise.
+        """
+        if not user_id:
+            return None
+
+        for handler in self._handlers:
+            try:
+                suspended = await handler.has_suspended_session(user_id)
+                if suspended is not None:
+                    logger.info(
+                        "Found suspended session",
+                        process_type=suspended.process_type.value,
+                        user_id=user_id,
+                    )
+                    return suspended
+            except Exception as e:
+                logger.warning(
+                    "Error checking suspended session",
+                    process_type=handler.process_type.value,
+                    error=str(e),
+                )
+                continue
+
+        return None
+
     async def check_active_processes(
         self,
         user_id: Optional[str],
@@ -218,6 +352,10 @@ class ProcessRegistry:
     ) -> ProcessCheckResult:
         """
         Check all registered processes for an active session.
+
+        Issue #888: Escape commands are checked BEFORE routing to handler.
+        PPM binding direction: "recognized by the ProcessRegistry directly,
+        not passed to the workflow handler for interpretation."
 
         Checks in priority order. First process that has an active
         session and can handle the message wins.
@@ -242,6 +380,33 @@ class ProcessRegistry:
                         user_id=user_id,
                         session_id=session_id,
                     )
+
+                    # Issue #888: Check for escape commands BEFORE routing to handler.
+                    # This is the guaranteed escape hatch — no handler can break it.
+                    if self._is_escape_command(message):
+                        logger.info(
+                            "Escape command intercepted by registry",
+                            process_type=handler.process_type.value,
+                            escape_command=message.strip().lower(),
+                            user_id=user_id,
+                            session_id=session_id,
+                        )
+                        # Suspend the session (handler owns semantics)
+                        try:
+                            await handler.suspend(user_id, session_id)
+                        except Exception as suspend_err:
+                            logger.warning(
+                                "Error suspending process after escape",
+                                process_type=handler.process_type.value,
+                                error=str(suspend_err),
+                            )
+                        return ProcessCheckResult.escaped_from(
+                            process_type=handler.process_type,
+                            response_message=(
+                                f"No problem — I've paused {handler.process_type.value}. "
+                                "We can pick it up anytime."
+                            ),
+                        )
 
                     # Let the handler process the message
                     result = await handler.handle_message(user_id, session_id, message)

@@ -559,6 +559,17 @@ class IntentService:
             if guided_process_result:
                 return guided_process_result
 
+            # Issue #888: Check for pending onboarding offer (OFFERED state).
+            # This runs AFTER the active process check (OFFERED is not active)
+            # but BEFORE classification, so we can catch yes/no responses.
+            if user_id:
+                pending_offer_result = await self._check_pending_onboarding_offer(
+                    user_id=user_id,
+                    message=message,
+                )
+                if pending_offer_result:
+                    return pending_offer_result
+
             # Issue #585: Check for /standup command BEFORE classification
             # This routes the explicit command to the interactive handler
             # Note: This starts a NEW standup, not checking an active one (registry handles that)
@@ -1221,6 +1232,62 @@ class IntentService:
 
         except Exception as e:
             self.logger.warning(f"Could not check active guided processes: {e}")
+            return None
+
+    async def _check_pending_onboarding_offer(
+        self, user_id: str, message: str
+    ) -> Optional[IntentProcessingResult]:
+        """
+        Issue #888: Check for pending onboarding offer (OFFERED state).
+
+        After the offer-first activation model, the user may have been
+        offered onboarding on the previous turn. If they respond, we
+        need to route that response to handle_offer_response() before
+        normal classification runs.
+
+        Returns IntentProcessingResult if the offer was handled, None otherwise.
+        """
+        try:
+            from services.conversation.conversation_handler import _get_onboarding_components
+            from services.shared_types import PortfolioOnboardingState
+
+            manager, handler = _get_onboarding_components()
+            session = manager.get_session_by_user(user_id)
+
+            if not session or session.state != PortfolioOnboardingState.OFFERED:
+                return None
+
+            self.logger.info(
+                "Checking pending onboarding offer response",
+                user_id=user_id,
+                session_id=session.id,
+            )
+
+            response = handler.handle_offer_response(session.id, message)
+
+            if response is None:
+                # Implicit decline — user ignored the offer
+                # Return None so message goes through normal classification
+                return None
+
+            return IntentProcessingResult(
+                success=True,
+                message=response.message,
+                intent_data={
+                    "category": "guidance",
+                    "action": "portfolio_onboarding",
+                    "confidence": 1.0,
+                    "context": {
+                        "onboarding_id": session.id,
+                        "state": response.state.value,
+                    },
+                },
+                workflow_id=None,
+                requires_clarification=False,
+            )
+
+        except Exception as e:
+            self.logger.warning(f"Could not check pending onboarding offer: {e}")
             return None
 
     async def _check_active_onboarding(

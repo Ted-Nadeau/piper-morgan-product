@@ -89,11 +89,18 @@ async def process_intent(self, message: str, user_id: str, session_id: str):
 ### State Transitions
 
 ```
-[No Process] --(greeting + new user)--> [Onboarding Active]
+[No Process] --(greeting + new user)--> [Onboarding Offered]
+[Onboarding Offered] --(user accepts)--> [Onboarding Active]
+[Onboarding Offered] --(user declines)--> [Onboarding Declined] --> [No Process]
 [Onboarding Active] --(user confirms)--> [Onboarding Complete] --> [No Process]
 [Onboarding Active] --(user declines)--> [Onboarding Declined] --> [No Process]
-[Onboarding Active] --(timeout)--> [Onboarding Expired] --> [No Process]
+[Onboarding Active] --(escape command)--> [Onboarding Suspended]
+[Onboarding Active] --(timeout 30min)--> [Onboarding Suspended]
+[Onboarding Suspended] --(greeting re-entry)--> [Onboarding Active]
+[Onboarding Suspended] --(user declines)--> [Onboarding Declined] --> [No Process]
 ```
+
+**Issue #888 key principle**: "The session belongs to the user, not the workflow."
 
 ## Rationale
 
@@ -144,9 +151,10 @@ The `PortfolioOnboardingManager` uses a module-level singleton to persist sessio
 | Risk | Mitigation |
 |------|------------|
 | Memory growth from abandoned sessions | `cleanup_expired()` runs on configurable interval (default 30 min) |
-| Process "traps" user | Explicit decline patterns always work; timeout releases |
+| Process "traps" user | **Issue #888**: Escape commands ("stop", "quit", "cancel", "nevermind", "never mind", "exit") intercepted at registry level BEFORE handler routing; timeout auto-suspends (onboarding 30min, standup 15min); offer-first activation for onboarding (OFFERED state, not auto-active) |
 | Classification never runs during process | Deliberate - process handler interprets messages contextually |
 | Testing complexity | E2E tests validate real user flows (Pattern-045 compliance) |
+| Suspended session confusion | **Issue #888**: Registry discovers suspended sessions on greeting, offers resume. One suspended session per process type per user. |
 
 ## Implementation Notes
 
@@ -170,8 +178,59 @@ The pattern has been generalized into the **ProcessRegistry** system:
 - **ProcessType Enum**: ONBOARDING, STANDUP, PLANNING, FEEDBACK, CLARIFICATION
 
 **Test Coverage**:
-- `tests/unit/services/process/test_registry.py`: 18 tests for registry behavior
+- `tests/unit/services/process/test_registry.py`: 33 tests (18 original + 15 new for escape/suspend/discovery)
 - `tests/unit/services/process/test_adapters.py`: 14 tests for adapters
+
+### Issue #888 Amendment: Escape, Timeout, Offer-First (March 2026)
+
+**Problem**: The original architecture allowed guided processes to "trap" users.
+Onboarding auto-activated on greeting with no escape mechanism. Users who didn't
+want onboarding had their messages hijacked by the process handler.
+
+**PPM Binding Direction**: "The session belongs to the user, not the workflow."
+
+**New Mechanisms**:
+
+1. **Escape Commands** (`ESCAPE_COMMANDS` frozenset in registry.py):
+   - "stop", "quit", "cancel", "nevermind", "never mind", "exit"
+   - Intercepted at registry level BEFORE handler routing
+   - Triggers `handler.suspend()` then returns `ProcessCheckResult.escaped_from()`
+   - Exact match on stripped+lowercased full message (not substring)
+
+2. **Timeout Auto-Suspend** (adapters.py):
+   - Onboarding: 30 minutes inactive → auto-suspend
+   - Standup: 15 minutes inactive → auto-suspend
+   - Checked in `check_active()` with `isinstance(updated_at, datetime)` guard
+
+3. **Offer-First Activation** (portfolio_handler.py, conversation_handler.py):
+   - New `OFFERED` state for onboarding (non-active from registry perspective)
+   - `offer_onboarding()` creates session in OFFERED state
+   - `handle_offer_response()` transitions on explicit acceptance
+   - `_check_pending_onboarding_offer()` in intent_service.py catches responses
+
+4. **Suspended Session Re-Entry** (conversation_handler.py):
+   - `has_suspended_session()` on GuidedProcess protocol
+   - `check_suspended_processes()` on ProcessRegistry (dumb aggregator)
+   - Greeting handler checks for suspended sessions, offers resume
+
+5. **SUSPENDED State** (shared_types.py):
+   - Added to both `PortfolioOnboardingState` and `StandupConversationState`
+   - Non-active from `check_active()` perspective
+   - Preserves all captured data for resumption
+
+**Extended GuidedProcess Protocol**:
+- `suspend(user_id, session_id)` — transition to SUSPENDED state
+- `has_suspended_session(user_id)` → `Optional[SuspendedInfo]` — discover suspended sessions
+
+**Modified Files**:
+- `services/process/registry.py`: ESCAPE_COMMANDS, SuspendedInfo, escaped_from(), _is_escape_command(), check_suspended_processes()
+- `services/process/adapters.py`: Timeout, suspend(), has_suspended_session() on both adapters
+- `services/shared_types.py`: OFFERED + SUSPENDED states
+- `services/onboarding/portfolio_manager.py`: VALID_TRANSITIONS updated
+- `services/onboarding/portfolio_handler.py`: offer_onboarding(), handle_offer_response()
+- `services/standup/conversation_manager.py`: VALID_TRANSITIONS updated
+- `services/conversation/conversation_handler.py`: Offer-first flow, suspended re-entry
+- `services/intent/intent_service.py`: _check_pending_onboarding_offer()
 
 ### Original Files (MVP)
 
@@ -205,3 +264,5 @@ User-defined guided processes (analogous to Claude skills) could extend this arc
 | 2026-01-09 | PM (xian) | Proposed |
 | 2026-01-26 | PPM, Chief Architect | Approved for MVP implementation |
 | 2026-01-26 | PM (xian) | Accepted - implemented in #427 |
+| 2026-03-13 | PPM, Chief Architect | #888 amendment: escape commands, timeout, offer-first activation, suspended re-entry |
+| 2026-03-13 | PM (xian) | Approved and implemented in #888 |

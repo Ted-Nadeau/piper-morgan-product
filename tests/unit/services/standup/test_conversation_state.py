@@ -26,7 +26,7 @@ class TestStandupConversationState:
     """Tests for StandupConversationState enum."""
 
     def test_enum_has_all_states(self):
-        """All required states exist."""
+        """All required states exist (Issue #888: added SUSPENDED)."""
         states = [s.value for s in StandupConversationState]
 
         assert "initiated" in states
@@ -36,10 +36,11 @@ class TestStandupConversationState:
         assert "finalizing" in states
         assert "complete" in states
         assert "abandoned" in states
+        assert "suspended" in states
 
     def test_enum_count(self):
-        """Exactly 7 states defined."""
-        assert len(StandupConversationState) == 7
+        """Exactly 8 states defined (Issue #888: added SUSPENDED)."""
+        assert len(StandupConversationState) == 8
 
     def test_enum_values_are_strings(self):
         """All enum values are lowercase strings."""
