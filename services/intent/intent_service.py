@@ -1248,9 +1248,7 @@ class IntentService:
         Returns IntentProcessingResult if the offer was handled, None otherwise.
         """
         try:
-            from services.conversation.conversation_handler import (
-                _get_onboarding_components,
-            )
+            from services.conversation.conversation_handler import _get_onboarding_components
             from services.shared_types import PortfolioOnboardingState
 
             manager, handler = _get_onboarding_components()

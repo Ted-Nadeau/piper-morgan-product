@@ -14,12 +14,7 @@ from typing import Any, Dict, Optional
 
 import structlog
 
-from services.process.registry import (
-    GuidedProcess,
-    ProcessCheckResult,
-    ProcessType,
-    SuspendedInfo,
-)
+from services.process.registry import GuidedProcess, ProcessCheckResult, ProcessType, SuspendedInfo
 from services.shared_types import IntentCategory
 
 logger = structlog.get_logger(__name__)
@@ -110,9 +105,7 @@ class OnboardingProcessAdapter:
                 )
                 manager, _ = self._get_components()
                 try:
-                    manager.transition_state(
-                        session.id, PortfolioOnboardingState.SUSPENDED
-                    )
+                    manager.transition_state(session.id, PortfolioOnboardingState.SUSPENDED)
                 except Exception as e:
                     logger.warning(
                         "Error auto-suspending timed-out onboarding",
@@ -312,9 +305,7 @@ class StandupProcessAdapter:
                 )
                 manager, _ = self._get_components()
                 try:
-                    manager.transition_state(
-                        conversation.id, StandupConversationState.SUSPENDED
-                    )
+                    manager.transition_state(conversation.id, StandupConversationState.SUSPENDED)
                 except Exception as e:
                     logger.warning(
                         "Error auto-suspending timed-out standup",
@@ -387,7 +378,9 @@ class StandupProcessAdapter:
                 "Standup conversation suspended",
                 conversation_id=conversation.id,
                 user_id=user_id,
-                previous_state=conversation.previous_state.value if conversation.previous_state else None,
+                previous_state=(
+                    conversation.previous_state.value if conversation.previous_state else None
+                ),
             )
         except Exception as e:
             logger.warning(

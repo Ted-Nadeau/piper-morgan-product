@@ -296,9 +296,7 @@ class ConversationHandler:
 
         return None
 
-    async def _check_suspended_session_reentry(
-        self, user_id: str
-    ) -> Optional[Dict[str, Any]]:
+    async def _check_suspended_session_reentry(self, user_id: str) -> Optional[Dict[str, Any]]:
         """
         Issue #888: Check for suspended sessions and offer to resume.
 

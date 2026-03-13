@@ -27,14 +27,16 @@ logger = structlog.get_logger(__name__)
 # Issue #888, #889: Escape commands recognized at registry level.
 # PPM binding direction (2026-03-13): These bypass workflow handlers entirely.
 # Arch guidance: Exact match on stripped+lowercased full message. Use frozenset.
-ESCAPE_COMMANDS: frozenset = frozenset({
-    "cancel",
-    "exit",
-    "stop",
-    "skip",
-    "quit",
-    "never mind",
-})
+ESCAPE_COMMANDS: frozenset = frozenset(
+    {
+        "cancel",
+        "exit",
+        "stop",
+        "skip",
+        "quit",
+        "never mind",
+    }
+)
 
 
 class ProcessType(str, Enum):

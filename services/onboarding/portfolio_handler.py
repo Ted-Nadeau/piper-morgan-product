@@ -176,9 +176,7 @@ class PortfolioOnboardingHandler:
         if self._matches_patterns(message_lower, self.ACCEPTANCE_PATTERNS):
             # Transition OFFERED → INITIATED → GATHERING_PROJECTS
             self.manager.transition_state(session.id, PortfolioOnboardingState.INITIATED)
-            self.manager.transition_state(
-                session.id, PortfolioOnboardingState.GATHERING_PROJECTS
-            )
+            self.manager.transition_state(session.id, PortfolioOnboardingState.GATHERING_PROJECTS)
 
             response_message = (
                 "Great! Let's get you set up. Tell me about the projects you're "
