@@ -1,0 +1,111 @@
+query_num,query,category,expected_intent,actual_intent,confidence,http_status,status,failure_mode,response_preview,notes
+1,What's your name?,Identity,identity,identity,1.0,200,PASS,,"I'm Piper Morgan, your AI Product Management assistant. I help with development coordination, issue tracking, and strategic planning. Think of me as y","Exact match, conf=1.0"
+2,What can you help me with?,Identity,identity,discovery,1.0,200,FAIL,ROUTING,"Here's what I can help you with:
+
+**Core Capabilities**:
+  - Development Coordination
+  - Issue Tracking
+  - Strategic Planning
+
+**Available Integrati","Expected identity, got discovery"
+3,Are you working properly?,Identity,identity,identity,1.0,200,PASS,,"I'm Piper Morgan, your AI Product Management assistant. I help with development coordination, issue tracking, and strategic planning. Think of me as y","Exact match, conf=1.0"
+4,How do I get help?,Identity,identity,guidance,1.0,200,PASS,,"Based on your current priorities and the time of day:
+
+**Right Now**: Flexible time - consider strategic planning or methodology refinement.
+
+**Today'","Related match (guidance), conf=1.0"
+5,What makes you different?,Identity,identity,identity,1.0,200,PASS,,"I'm Piper Morgan, your AI Product Management assistant. I help with development coordination, issue tracking, and strategic planning. Think of me as y","Exact match, conf=1.0"
+6,What day is it?,Temporal,temporal,temporal,1.0,200,PASS,,"Today is Thursday, March 12, 2026 at 10:49 PM PT.","Exact match, conf=1.0"
+7,What did we accomplish yesterday?,Temporal,temporal,temporal,1.0,200,PASS,,"Today is Thursday, March 12, 2026 at 10:49 PM PT.","Exact match, conf=1.0"
+8,What's on the agenda for today?,Temporal,temporal,query,1.0,200,PASS,,"I'd love to analyze your meeting time, but Google Calendar isn't configured yet. To enable Calendar integration, please run the setup wizard or config","Related match (query), conf=1.0"
+9,When was the last time we worked on this?,Temporal,temporal,temporal,1.0,200,PASS,,"Today is Thursday, March 12, 2026 at 10:49 PM PT.","Exact match, conf=1.0"
+10,How long have we been working on this project?,Temporal,temporal,temporal,1.0,200,PASS,,"Today is Thursday, March 12, 2026 at 10:49 PM PT.","Exact match, conf=1.0"
+11,What projects are we working on?,Spatial,status,status,1.0,200,PASS,,"You're working on 1 active project:
+
+- Canonical Test Project","Exact match, conf=1.0"
+12,Show me the project landscape,Spatial,status,status,1.0,200,PASS,,"You're working on 1 active project:
+
+- Canonical Test Project","Exact match, conf=1.0"
+13,Which project should I focus on?,Spatial,priority,priority,1.0,200,PASS,,You don't have any priorities configured in your PIPER.md yet. Would you like me to help you set up your priority list?,"Exact match, conf=1.0"
+14,What's the status of project X?,Spatial,status,status,1.0,200,PASS,,"You're working on 1 active project:
+
+- Canonical Test Project","Exact match, conf=1.0"
+16,Create a GitHub issue about testing,Capability,execution,execution,0.9,200,FAIL,INTEGRATION,"I ran into something: while creating a new issue, Something unexpected happened. Please try again in a moment. Want me to try again, or should we try ",Service error: Failed to create GitHub issue — API returned no response
+17,Analyze this document,Capability,analysis,analysis,0.9,200,PASS,,"**Document Analysis: Test Document with Bold Formatting**
+
+**Overview:**
+- Word count: 119
+- Character count: 726
+- Sections: 42
+- Last edited: 2025-0","Exact match, conf=0.9"
+18,List all my projects,Capability,query,status,1.0,200,PASS,,"You're working on 1 active project:
+
+- Canonical Test Project","Related match (status), conf=1.0"
+19,Generate a status report,Capability,query,status,1.0,200,PASS,,"You're working on 1 active project:
+
+- Canonical Test Project","Related match (status), conf=1.0"
+20,Search for authentication in our documents,Capability,query,query,0.9,200,PASS,,"I searched through your Notion workspace for ""Search for authentication in our documents"" and found 5 results.
+
+The top match is **Protocol-Ready JWT ","Exact match, conf=0.9"
+21,What should I focus on today?,Predictive,priority,priority,1.0,200,PASS,,You don't have any priorities configured in your PIPER.md yet. Would you like me to help you set up your priority list?,"Exact match, conf=1.0"
+22,What patterns do you see?,Predictive,learning,analysis,0.85,200,PASS,,Analysis processed: identify_patterns,"Related match (analysis), conf=0.85"
+23,What risks should I be aware of?,Predictive,analysis,guidance,1.0,200,FAIL,ROUTING,"Based on your current priorities and the time of day:
+
+**Right Now**: Flexible time - consider strategic planning or methodology refinement.
+
+**Today'","Expected analysis, got guidance"
+24,What opportunities should I pursue?,Predictive,synthesis,priority,1.0,200,FAIL,ROUTING,You don't have any priorities configured in your PIPER.md yet. Would you like me to help you set up your priority list?,"Expected synthesis, got priority"
+25,What's the next milestone?,Predictive,planning,priority,1.0,200,FAIL,ROUTING,You don't have any priorities configured in your PIPER.md yet. Would you like me to help you set up your priority list?,"Expected planning, got priority"
+26,What else can you help with?,Conversational,identity,identity,1.0,200,PASS,,"I'm Piper Morgan, your AI Product Management assistant. I help with development coordination, issue tracking, and strategic planning. Think of me as y","Exact match, conf=1.0"
+27,Tell me more about the GitHub integration,Conversational,query,identity,1.0,200,FAIL,ROUTING,"I'm Piper Morgan, your AI Product Management assistant. I help with development coordination, issue tracking, and strategic planning. Think of me as y","Expected query, got identity"
+28,How do I use the calendar feature?,Conversational,guidance,guidance,1.0,200,PASS,,"Based on your current priorities and the time of day:
+
+**Right Now**: Flexible time - consider strategic planning or methodology refinement.
+
+**Today'","Exact match, conf=1.0"
+29,What changed since yesterday?,Conversational,temporal,temporal,1.0,200,PASS,,"Today is Thursday, March 12, 2026 at 10:50 PM PT. I wasn't able to check on changes query right now, but I'll keep trying.","Exact match, conf=1.0"
+30,What needs my attention?,Conversational,priority,query,1.0,200,PASS,,Everything looks good! No urgent items need your attention right now.,"Related match (query), conf=1.0"
+31,Schedule a meeting about the roadmap,Scheduling,execution,execution,0.9,200,NOT_IMPL,,"I don't have that capability yet, but I'm learning! Try asking 'What can you do?' to see what I can help with, or let me know if there's something els",Feature not implemented (graceful)
+32,Remind me to review PRs tomorrow,Scheduling,execution,execution,0.9,200,NOT_IMPL,,"I don't have that capability yet, but I'm learning! Try asking 'What can you do?' to see what I can help with, or let me know if there's something els",Feature not implemented (graceful)
+33,Find time for a 1:1 with the team lead,Scheduling,execution,temporal,1.0,200,FAIL,ROUTING,"Today is Thursday, March 12, 2026 at 10:50 PM PT.","Expected execution, got temporal"
+34,How much time am I spending in meetings?,Scheduling,query,query,1.0,200,PASS,,"I'd love to analyze your meeting time, but Google Calendar isn't configured yet. To enable Calendar integration, please run the setup wizard or config","Exact match, conf=1.0"
+35,Review my recurring meetings,Scheduling,query,query,1.0,200,PASS,,"I'd love to review your recurring meetings, but Google Calendar isn't configured yet. To enable Calendar integration, please run the setup wizard or c","Exact match, conf=1.0"
+36,Create a doc from this conversation,Documents,execution,execution,0.95,200,NOT_IMPL,,"I don't have that capability yet, but I'm learning! Try asking 'What can you do?' to see what I can help with, or let me know if there's something els",Feature not implemented (graceful)
+37,Compare these two documents,Documents,analysis,analysis,0.85,200,PASS,,Analysis processed: compare_documents,"Exact match, conf=0.85"
+38,Synthesize these sources into a summary,Documents,synthesis,synthesis,0.95,200,PASS,,Synthesis capability ready for 'generate_summary'. Specific implementation pending.,"Exact match, conf=0.95"
+40,Update the project roadmap document,Documents,execution,portfolio,0.7,200,FAIL,ROUTING,"I can help you manage your projects. You can ask me to:
+- Show your projects
+- Archive a project
+- Restore an archived project
+- Search for projects
+
+","Expected execution, got portfolio"
+41,What did we ship this week?,GitHub Ops,query,query,1.0,200,PASS,,"I'd love to show you what was shipped, but GitHub isn't configured yet. To enable GitHub integration, please add your GITHUB_TOKEN to your environment","Exact match, conf=1.0"
+42,Show me stale PRs,GitHub Ops,query,query,1.0,200,PASS,,"I'd love to show you stale PRs, but GitHub isn't configured yet. To enable GitHub integration, please add your GITHUB_TOKEN to your environment or con","Exact match, conf=1.0"
+43,What's blocking the milestone?,GitHub Ops,analysis,status,1.0,200,FAIL,ROUTING,"You're working on 1 active project:
+
+- Canonical Test Project","Expected analysis, got status"
+44,Create issues from this meeting's action items,GitHub Ops,execution,execution,0.9,200,NOT_IMPL,,"I don't have that capability yet, but I'm learning! Try asking 'What can you do?' to see what I can help with, or let me know if there's something els",Feature not implemented (graceful)
+45,Close completed issues,GitHub Ops,execution,execution,0.9,200,NOT_IMPL,,"I don't have that capability yet, but I'm learning! Try asking 'What can you do?' to see what I can help with, or let me know if there's something els",Feature not implemented (graceful)
+58,Update issue #123,GitHub Ops,execution,execution,,200,PASS,,Cannot update issue: issue number not specified. Please provide the issue number.,"Exact match, conf=None"
+59,Comment on issue #456,GitHub Ops,execution,query,1.0,200,PASS,,"I'd love to add comments to issues for you, but GitHub isn't configured yet. To enable GitHub integration, please add your GITHUB_TOKEN to your enviro","Related match (query), conf=1.0"
+60,Review issue #789,GitHub Ops,query,query,1.0,200,PASS,,"I'd love to show you issue details, but GitHub isn't configured yet. To enable GitHub integration, please add your GITHUB_TOKEN to your environment or","Exact match, conf=1.0"
+46,Any mentions I missed?,Slack,query,query,0.85,200,PASS,,Query processed successfully: check_mentions,"Exact match, conf=0.85"
+47,Summarize #general from yesterday,Slack,synthesis,synthesis,0.85,200,PASS,,Synthesis capability ready for 'summarize_channel_activity'. Specific implementation pending.,"Exact match, conf=0.85"
+48,Post this update to the team channel,Slack,execution,execution,0.95,200,NOT_IMPL,,"I don't have that capability yet, but I'm learning! Try asking 'What can you do?' to see what I can help with, or let me know if there's something els",Feature not implemented (graceful)
+49,/standup,Slack,execution,execution,1.0,200,PASS,,Good morning! Ready for your standup?,"Exact match, conf=1.0"
+50,/piper help,Slack,identity,identity,1.0,200,PASS,,"I'm Piper Morgan, your AI Product Management assistant. I help with development coordination, issue tracking, and strategic planning. Think of me as y","Exact match, conf=1.0"
+51,What's my productivity this week?,Productivity,query,query,1.0,200,PASS,,Query processed successfully: productivity_query,"Exact match, conf=1.0"
+52,Are we on track for the milestone?,Productivity,status,status,1.0,200,PASS,,"You're working on 1 active project:
+
+- Canonical Test Project","Exact match, conf=1.0"
+53,What did the team accomplish this sprint?,Productivity,query,status,1.0,200,PASS,,"You're working on 1 active project:
+
+- Canonical Test Project","Related match (status), conf=1.0"
+54,Add a todo: review the deployment plan,Todos,execution,execution,0.95,200,PASS,,I didn't catch what you'd like me to add. Could you try: 'add todo: [description]'?,"Exact match, conf=0.95"
+55,Complete the PR review todo,Todos,execution,execution,0.85,200,NOT_IMPL,,"I don't have that capability yet, but I'm learning! Try asking 'What can you do?' to see what I can help with, or let me know if there's something els",Feature not implemented (graceful)
+56,Show my todos,Todos,query,query,1.0,200,PASS,,Query processed successfully: list_todos_query,"Exact match, conf=1.0"
+57,What's my next todo?,Todos,priority,priority,1.0,200,PASS,,You don't have any priorities configured in your PIPER.md yet. Would you like me to help you set up your priority list? I wasn't able to check on next,"Exact match, conf=1.0"
+61,What's my week look like?,Calendar Ext,temporal,query,1.0,200,PASS,,"I'd love to show you your week, but Google Calendar isn't configured yet. To enable Calendar integration, please run the setup wizard or configure you","Related match (query), conf=1.0"
+62,Check my calendar for conflicts,Calendar Ext,query,temporal,1.0,200,FAIL,ROUTING,"Today is Thursday, March 12, 2026 at 10:51 PM PT.","Expected query, got temporal"
+63,Upload a file to the knowledge base,Knowledge,execution,execution,0.95,200,NOT_IMPL,,"I don't have that capability yet, but I'm learning! Try asking 'What can you do?' to see what I can help with, or let me know if there's something els",Feature not implemented (graceful)
