@@ -3090,7 +3090,8 @@ class IntentService:
             )
 
             github_router = GitHubIntegrationRouter()
-            await github_router.initialize()
+            _user_id = intent.context.get("user_id") if intent.context else None
+            await github_router.initialize(user_id=_user_id)
 
             # Check if GitHub is configured
             if not github_router.config_service.is_configured(_user_id or "system"):
