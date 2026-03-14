@@ -452,6 +452,11 @@
         // Remove the old thinking message
         thinkingDiv.remove();
 
+        // Issue #248/#375: Render preference suggestions if detected
+        if (result.preferences && typeof renderPreferenceSuggestions === 'function') {
+          renderPreferenceSuggestions(result.preferences, botDiv);
+        }
+
         // Issue #676: Only show workflow status when valid workflow_id exists
         // Check for non-empty string to avoid spurious "Starting workflow..." messages
         // Issue #875: Don't poll if the response contains an error (workflow never started)

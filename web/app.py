@@ -249,6 +249,9 @@ RouterInitializer.mount_router(
 RouterInitializer.mount_router(
     app, "web.api.routes.work_items", "router", "Work Items API"  # Issue #710
 )
+RouterInitializer.mount_router(
+    app, "web.api.routes.preferences", "router", "Preferences API"  # Issue #248 rewired
+)
 
 # Web components (Jinja2 templates, config_parser, personality_enhancer) are now initialized
 # in WebComponentsInitializationPhase during startup and stored in app.state (Phase 4)
