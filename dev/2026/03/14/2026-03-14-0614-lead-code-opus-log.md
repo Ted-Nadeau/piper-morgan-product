@@ -93,3 +93,35 @@ New core journey tests (Phase 1) will focus on **deterministic behavior** — HT
 - Suite runs in ~41s locally
 
 ---
+
+## 07:30 — Session Resumed (Post-Compaction #2)
+
+Context compacted. Background agents for #706 MUX discovery were lost — re-launching.
+
+### Pending Items
+- **#883**: Investigation complete — 2.5-3 hours, low risk, ~40 call sites. Awaiting PM decision.
+- **#375**: QA checklist delivered to PM. Awaiting test results.
+- **#706**: Re-launching discovery agents (docs inventory + domain model inventory).
+- **#717**: On hold pending #706.
+
+### Issues closed this session: #705, #352
+### Issues filed this session: #905, #906
+
+---
+
+## 07:45 — #706 MUX Discovery Report Complete
+
+Synthesized findings from two discovery agents (docs inventory + domain model inventory) into:
+`dev/2026/03/14/706-mux-objects-views-discovery-report.md`
+
+### Key Findings
+- **4 objects** already have MUX lifecycle fields (Feature, WorkItem, Todo, Project)
+- **0 views** currently surface lifecycle state to users
+- **302 MUX tests** passing, full protocol/lens infrastructure implemented
+- **5 design decisions** identified for PM collaborative work
+- **Dual status/lifecycle system** needs resolution (Gap 3)
+- **Composting pipeline** is architecture-only, no implementation yet
+
+### Delivered to PM for review — collaborative work to close gaps.
+
+---
