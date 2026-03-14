@@ -48,6 +48,7 @@ class IntentEnforcementMiddleware(BaseHTTPMiddleware):
         "/debug-markdown",  # Debug endpoints
         "/personality-preferences",  # Static UI pages
         "/standup",  # Static UI page
+        "/api/v1/preferences",  # Preference accept/dismiss actions (structured data)
         "/",  # Root page
     ]
 
