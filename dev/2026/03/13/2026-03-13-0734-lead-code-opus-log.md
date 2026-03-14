@@ -266,3 +266,54 @@ PM approved: "yes, please proceed. Full approval to execute." — commit, push, 
 - 5 existing test bugs resolved
 - CXO projected M1 pass rate: 70.5% → ~92.5% after today's fixes
 - Discovered issues: None new (Q16 confirmed as test env artifact)
+
+### 17:00–17:30 — Audit Cascade: Test Infrastructure Issues
+
+- PM directed: "Let's focus on group 1 [test infra]. We can start with audit cascades."
+- Audited 6 test infra items against feature.md template
+- Created `dev/2026/03/13/test-infra-m1-issue-audit.md`
+- Findings:
+  - #738: Ready for gameplan (small, clear root cause)
+  - #247: May be closeable ("FIX IMPLEMENTED" in status)
+  - #739: Needs investigation
+  - #352, #375: Stubs needing PM scoping
+  - TEST-QUALITY: No issue filed
+
+### Session Resumed (after compaction)
+
+Proceeding with investigations on #247 and #739 per audit cascade recommendations.
+
+### Investigation Results — #247 and #739
+
+**#247 (BUG-TEST-ASYNC: AsyncSessionFactory event loop conflicts)**:
+- Original event loop fix IS correctly implemented in code
+- Database schema blocker IS resolved
+- Tests still fail due to **unrelated conftest issue**: `mock_token_blacklist` autouse fixture patches `is_blacklisted` to return False for non-integration tests. Performance tests aren't marked `@pytest.mark.integration`, so the mock intercepts real Redis calls.
+- **Fix**: ~2-line change in `tests/conftest.py` line 159 to also skip mocking for `performance`-marked tests
+- **Status**: Not closeable as-is, but remaining work is trivial
+
+**#739 (TEST-FIX: test_response_handler_observability)**:
+- Test is skipped with `@pytest.mark.skip`
+- When run: fails because of double-wrapping of workflow result + `_lock` mock issues
+- **Root cause**: Integration test masquerading as unit test — mocks internal adapter attributes (`_lock`, `_timestamp_to_position`, `_context_storage`)
+- **Recommendation**: Rewrite as proper unit test that mocks `_get_slack_context_from_spatial_event` as a whole instead of adapter internals
+- **Estimated effort**: Small — simpler mocking at higher level
+
+### 17:50–18:00 — Execution: #247, #739, #738
+
+PM directive: "Yes, please work on those three actionable items. Please run a full audit cascade on each issue before executing."
+
+**Audit cascade**: Created `dev/2026/03/13/247-739-738-issue-audit.md` — audited all three against feature.md template.
+
+**#247 fix**: Added `"performance" in request.keywords` to `mock_token_blacklist` skip condition. 3/3 perf tests pass.
+
+**#739 fix**: Rewrote `test_response_handler_observability` to mock at handler level. 3/3 tests pass (0 skipped, was 1 skipped).
+
+**#738 fix**:
+- Production: Injectable `clock` param on `AttentionModel.__init__()` + `now` param on `get_current_intensity()`
+- Test 3: Injectable clock replaces datetime patching
+- Test 4: Pre-populated territory SpatialMemoryRecords in fixture
+- Test 5: `event_context_metadata` dict replaces `event.context` references
+- 6/6 attention tests pass (0 skipped, was 3 skipped)
+
+**Regression**: 657 pass, 1 pre-existing failure, 1 skipped — no regressions

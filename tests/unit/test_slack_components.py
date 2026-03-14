@@ -132,12 +132,6 @@ class TestSlackResponseHandler:
         # Assert: No orchestration for monitoring intents
         mock_dependencies["orchestration_engine"].create_workflow_from_intent.assert_not_called()
 
-    @pytest.mark.skip(
-        reason="Complex mocking issue with spatial adapter - requires full integration "
-        "refactoring. Tracked in piper-morgan-i98. Issues found: 1) context_storage not "
-        "synced with _timestamp_to_position, 2) EXECUTION category required for workflow, "
-        "3) Silent exceptions in async flow. Needs proper integration test approach."
-    )
     @pytest.mark.smoke
     async def test_response_handler_observability(
         self, response_handler, mock_spatial_event, mock_dependencies
@@ -146,58 +140,61 @@ class TestSlackResponseHandler:
         Test that response handler maintains observability throughout processing.
 
         This ensures all operations are tracked and observable.
+
+        Fix for #739: Mocks at handler method level (_get_slack_context_from_spatial_event)
+        instead of adapter internals (_lock, _timestamp_to_position, _context_storage).
+        This decouples the test from spatial adapter implementation details.
         """
+        import time
+
         # Arrange: Set up successful processing with EXECUTION category
         # Note: Only EXECUTION intents trigger workflow creation per emergency fix
         intent = Intent(action="create_task", category=IntentCategory.EXECUTION, confidence=0.95)
         mock_dependencies["intent_classifier"].classify.return_value = intent
 
         # Use unique timestamp to avoid duplicate detection
-        import time
-
         unique_ts = str(time.time())
 
-        # Mock the spatial adapter's internal mappings to find the timestamp
-        mock_dependencies["spatial_adapter"]._timestamp_to_position = {
-            unique_ts: mock_spatial_event.object_position
-        }
-
-        # Create a proper async context manager mock
-        async_lock = AsyncMock()
-        async_lock.__aenter__ = AsyncMock(return_value=None)
-        async_lock.__aexit__ = AsyncMock(return_value=None)
-        mock_dependencies["spatial_adapter"]._lock = async_lock
-
-        # Update context storage with our unique timestamp
-        context_data = {
+        # Mock _get_slack_context_from_spatial_event at the handler level
+        # This avoids all adapter internal mocking (_lock, _timestamp_to_position, etc.)
+        slack_context = {
             "channel_id": "C1234567890",
             "user_id": "U1234567890",
             "ts": unique_ts,
         }
-        mock_dependencies["spatial_adapter"]._context_storage[unique_ts] = context_data
+        response_handler._get_slack_context_from_spatial_event = AsyncMock(
+            return_value=slack_context
+        )
 
-        # Mock get_response_context as async function to return proper Slack context
-        async def mock_get_response_context(timestamp):
-            return mock_dependencies["spatial_adapter"]._context_storage.get(timestamp)
-
-        mock_dependencies["spatial_adapter"].get_response_context = mock_get_response_context
-
+        # Mock orchestration: execute_workflow returns a FLAT result dict
+        # _process_through_orchestration wraps it as:
+        #   {'type': 'workflow_result', 'result': <execute_workflow return>, ...}
+        # So _format_response_content sees result={'summary': 'Test completed'}
         mock_dependencies["orchestration_engine"].create_workflow_from_intent.return_value = (
             MagicMock(id="test_workflow")
         )
         mock_dependencies["orchestration_engine"].execute_workflow.return_value = {
-            "type": "workflow_result",
-            "result": {"summary": "Test completed"},
+            "summary": "Test completed",
         }
 
         success_response = SlackResponse(success=True, data={"ok": True, "ts": unique_ts})
         mock_dependencies["slack_client"].send_message.return_value = success_response
+
+        # Clear PROCESSED_EVENTS to prevent duplicate detection from other tests
+        from services.integrations.slack.response_handler import PROCESSED_EVENTS
+
+        PROCESSED_EVENTS.discard(unique_ts)
 
         # Act: Process spatial event
         result = await response_handler.handle_spatial_event(mock_spatial_event)
 
         # Assert: All steps should be observable
         assert result is not None, "Response handler should return result"
+
+        # Assert: Slack context was retrieved (our mocked method was called)
+        response_handler._get_slack_context_from_spatial_event.assert_called_once_with(
+            mock_spatial_event
+        )
 
         # Assert: Intent classification was called
         mock_dependencies["intent_classifier"].classify.assert_called_once()

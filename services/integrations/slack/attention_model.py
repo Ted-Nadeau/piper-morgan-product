@@ -15,7 +15,7 @@ import math
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 from uuid import uuid4
 
 from .spatial_memory import SpatialMemoryStore
@@ -85,15 +85,24 @@ class AttentionEvent:
     deadline_pressure: float = 0.0
 
     def get_current_intensity(
-        self, decay_model: AttentionDecay = AttentionDecay.EXPONENTIAL
+        self,
+        decay_model: AttentionDecay = AttentionDecay.EXPONENTIAL,
+        now: Optional[datetime] = None,
     ) -> float:
-        """Calculate current attention intensity with decay"""
+        """Calculate current attention intensity with decay.
 
-        if self.expires_at and datetime.now() > self.expires_at:
+        Args:
+            decay_model: The decay model to use for intensity calculation.
+            now: Optional current time for deterministic time simulation (#738).
+                 Defaults to datetime.now() if not provided.
+        """
+        current_time = now or datetime.now()
+
+        if self.expires_at and current_time > self.expires_at:
             return 0.0
 
         # Calculate time-based decay
-        age = (datetime.now() - self.created_at).total_seconds()
+        age = (current_time - self.created_at).total_seconds()
 
         if decay_model == AttentionDecay.LINEAR:
             # Linear decay over 1 hour
@@ -181,6 +190,7 @@ class AttentionModel:
         memory_store: Optional[SpatialMemoryStore] = None,
         user_id: Optional[str] = None,
         db_session_factory: Optional[Any] = None,
+        clock: Optional[Callable[[], datetime]] = None,
     ):
         """
         Initialize AttentionModel.
@@ -189,8 +199,12 @@ class AttentionModel:
             memory_store: Spatial memory store for location data
             user_id: Optional user ID for pattern persistence (Issue #365)
             db_session_factory: Optional database session factory for persistence
+            clock: Optional clock function for time simulation in tests (Issue #738).
+                   Defaults to datetime.now. Injected into create_attention_event()
+                   and get_current_intensity() to enable deterministic time control.
         """
         self.memory_store = memory_store or SpatialMemoryStore()
+        self._clock = clock or datetime.now
 
         # User context for pattern persistence (Issue #365)
         self._user_id = user_id
@@ -410,7 +424,8 @@ class AttentionModel:
         # Calculate personal relevance
         personal_relevance = self._calculate_personal_relevance(coordinates, context)
 
-        # Create attention event
+        # Create attention event with injectable clock for time simulation (#738)
+        now = self._clock()
         event = AttentionEvent(
             event_id=event_id,
             source=source,
@@ -418,6 +433,8 @@ class AttentionModel:
             base_intensity=base_intensity,
             urgency_level=urgency_level,
             personal_relevance=personal_relevance,
+            created_at=now,
+            last_updated=now,
         )
 
         # Populate from context
@@ -471,7 +488,7 @@ class AttentionModel:
             return False
 
         event = self._active_events[event_id]
-        event.last_updated = datetime.now()
+        event.last_updated = self._clock()
 
         # Apply updates
         for key, value in updates.items():
@@ -498,8 +515,8 @@ class AttentionModel:
             "source": event.source.value,
             "coordinates": event.spatial_coordinates.to_slack_reference(),
             "resolution": resolution,
-            "resolution_time": datetime.now().isoformat(),
-            "response_time": (datetime.now() - event.created_at).total_seconds(),
+            "resolution_time": self._clock().isoformat(),
+            "response_time": (self._clock() - event.created_at).total_seconds(),
             "final_intensity": event.get_current_intensity(),
         }
 
@@ -678,20 +695,20 @@ class AttentionModel:
         self._attention_focus.primary_coordinates = coordinates
         self._attention_focus.focus_strength = strength
         self._attention_focus.focus_reason = reason
-        self._attention_focus.last_shift = datetime.now()
+        self._attention_focus.last_shift = self._clock()
 
         # Calculate focus duration if we had previous focus
         if old_coordinates:
-            focus_duration = datetime.now() - self._attention_focus.established_at
+            focus_duration = self._clock() - self._attention_focus.established_at
             self._attention_focus.focus_duration += focus_duration
             self._metrics["focus_shifts"] += 1
 
-        self._attention_focus.established_at = datetime.now()
+        self._attention_focus.established_at = self._clock()
 
         # Record focus shift
         if old_coordinates != coordinates:
             focus_record = {
-                "timestamp": datetime.now().isoformat(),
+                "timestamp": self._clock().isoformat(),
                 "from_coordinates": (
                     old_coordinates.to_slack_reference() if old_coordinates else None
                 ),
@@ -832,7 +849,7 @@ class AttentionModel:
         if pattern_name in self._learned_patterns:
             pattern = self._learned_patterns[pattern_name]
             pattern.observation_count += 1
-            pattern.last_observed = datetime.now()
+            pattern.last_observed = self._clock()
 
             # Update confidence based on consistency
             consistency = self._calculate_pattern_consistency(pattern, triggers)
@@ -987,12 +1004,12 @@ class AttentionModel:
         if urgency_level > 0.7:
             duration = duration * (1.0 + urgency_level)
 
-        return datetime.now() + duration
+        return self._clock() + duration
 
     def _cleanup_expired_events(self):
         """Remove expired attention events"""
 
-        current_time = datetime.now()
+        current_time = self._clock()
         expired_events = [
             event_id
             for event_id, event in self._active_events.items()
