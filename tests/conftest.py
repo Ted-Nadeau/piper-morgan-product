@@ -155,8 +155,8 @@ def mock_token_blacklist(request):
     """
     from unittest.mock import AsyncMock, patch
 
-    # Skip mock for integration tests - they use real database
-    if "integration" in request.keywords:
+    # Skip mock for integration and performance tests - they use real database/Redis
+    if "integration" in request.keywords or "performance" in request.keywords:
         yield
         return
 

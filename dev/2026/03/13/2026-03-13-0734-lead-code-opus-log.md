@@ -226,10 +226,94 @@ PM approved: "yes, please proceed. Full approval to execute." — commit, push, 
 - #900 filed for Category B (PM to triage)
 - Merged to main, pushed to origin
 
-### Status — Awaiting PM
+### 15:30–16:00 — CXO Memos + Sprint Check-In
 
-- **#888**: CLOSED (escape, timeout, offer-first) ✅
-- **#889**: CLOSED (standup suspend/resume bug fixes) ✅
-- **#899**: Filed (off-topic detection follow-on)
-- **#900**: Filed (standup 3-part structural collection, Category B)
-- All on main, pushed to origin
+- Read 2 CXO memos: contextual fallback copy, revised failure gap analysis
+- Committed `narrative-verification` skill (was untracked)
+- Sprint check-in with PM — approved sequential work on #886, #901, #895-897
+
+### 16:00–16:10 — #886 UI-POLISH: Contextual Fallbacks — CLOSED
+
+- Added `_get_contextual_fallback()` to `services/intent/intent_service.py`
+- 8 contextual fallback messages (CXO-authored copy) for not-implemented queries
+- Updated Q2 test expectation from `identity` to `discovery` per CXO guidance
+- 24 new tests in `test_contextual_fallbacks_886.py`, 1067 full intent tests pass
+
+### 16:10–16:40 — #901 CLASSIFIER-KEYWORD: Disambiguation — CLOSED
+
+- Investigated all 5 keyword collisions via pre-classifier tracing
+- Q40 already correct in pre-classifier (was test expectation issue)
+- Q62: Added "check.*calendar" to CALENDAR_QUERY_PATTERNS
+- Q27: New FEATURE_INFO_PATTERNS (before IDENTITY)
+- Q33: Extended CALENDAR_QUERY_PATTERNS with scheduling patterns
+- Q43: New ANALYSIS_PATTERNS (before STATUS)
+- 22 new tests with regression verification, all 1067 intent tests pass
+
+### 16:40–17:00 — #895, #896, #897 Test Bug Triage — ALL CLOSED
+
+- **#895**: Fixed CalendarIntegrationRouter mock patch path (get_plugin_registry → CalendarConfigService). 12/12 pass.
+- **#897**: Restored MockAgentCoordinator, fixed progress assertion. 8/8 pass.
+- **#896**: Calendar narrative tests — verified no longer reproducing. 98/98 pass in both standalone and full suite. Likely transient.
+- **Q16 investigation**: Test environment artifact — GITHUB_TOKEN not set. No code fix needed.
+
+### Session Status at 17:00
+
+**Issues closed today**: #888, #889, #886, #895, #896, #897, #901
+**Issues filed today**: #899, #900 (plus #901-904 filed by CXO)
+**All code on main, pushed to origin.**
+
+- 46+ new tests written across 3 test files
+- 5 existing test bugs resolved
+- CXO projected M1 pass rate: 70.5% → ~92.5% after today's fixes
+- Discovered issues: None new (Q16 confirmed as test env artifact)
+
+### 17:00–17:30 — Audit Cascade: Test Infrastructure Issues
+
+- PM directed: "Let's focus on group 1 [test infra]. We can start with audit cascades."
+- Audited 6 test infra items against feature.md template
+- Created `dev/2026/03/13/test-infra-m1-issue-audit.md`
+- Findings:
+  - #738: Ready for gameplan (small, clear root cause)
+  - #247: May be closeable ("FIX IMPLEMENTED" in status)
+  - #739: Needs investigation
+  - #352, #375: Stubs needing PM scoping
+  - TEST-QUALITY: No issue filed
+
+### Session Resumed (after compaction)
+
+Proceeding with investigations on #247 and #739 per audit cascade recommendations.
+
+### Investigation Results — #247 and #739
+
+**#247 (BUG-TEST-ASYNC: AsyncSessionFactory event loop conflicts)**:
+- Original event loop fix IS correctly implemented in code
+- Database schema blocker IS resolved
+- Tests still fail due to **unrelated conftest issue**: `mock_token_blacklist` autouse fixture patches `is_blacklisted` to return False for non-integration tests. Performance tests aren't marked `@pytest.mark.integration`, so the mock intercepts real Redis calls.
+- **Fix**: ~2-line change in `tests/conftest.py` line 159 to also skip mocking for `performance`-marked tests
+- **Status**: Not closeable as-is, but remaining work is trivial
+
+**#739 (TEST-FIX: test_response_handler_observability)**:
+- Test is skipped with `@pytest.mark.skip`
+- When run: fails because of double-wrapping of workflow result + `_lock` mock issues
+- **Root cause**: Integration test masquerading as unit test — mocks internal adapter attributes (`_lock`, `_timestamp_to_position`, `_context_storage`)
+- **Recommendation**: Rewrite as proper unit test that mocks `_get_slack_context_from_spatial_event` as a whole instead of adapter internals
+- **Estimated effort**: Small — simpler mocking at higher level
+
+### 17:50–18:00 — Execution: #247, #739, #738
+
+PM directive: "Yes, please work on those three actionable items. Please run a full audit cascade on each issue before executing."
+
+**Audit cascade**: Created `dev/2026/03/13/247-739-738-issue-audit.md` — audited all three against feature.md template.
+
+**#247 fix**: Added `"performance" in request.keywords` to `mock_token_blacklist` skip condition. 3/3 perf tests pass.
+
+**#739 fix**: Rewrote `test_response_handler_observability` to mock at handler level. 3/3 tests pass (0 skipped, was 1 skipped).
+
+**#738 fix**:
+- Production: Injectable `clock` param on `AttentionModel.__init__()` + `now` param on `get_current_intensity()`
+- Test 3: Injectable clock replaces datetime patching
+- Test 4: Pre-populated territory SpatialMemoryRecords in fixture
+- Test 5: `event_context_metadata` dict replaces `event.context` references
+- 6/6 attention tests pass (0 skipped, was 3 skipped)
+
+**Regression**: 657 pass, 1 pre-existing failure, 1 skipped — no regressions
