@@ -317,3 +317,28 @@ PM directive: "Yes, please work on those three actionable items. Please run a fu
 - 6/6 attention tests pass (0 skipped, was 3 skipped)
 
 **Regression**: 657 pass, 1 pre-existing failure, 1 skipped — no regressions
+
+### 08:33 — M1 Remaining Issues Review
+
+PM asks for full review of remaining M1 issues to determine actionability.
+Reviewing: #352, #375, #190, #883, #884, #885, #717, #706, #705, #542, #472, #470
+
+Recommended groupings:
+- **Close now**: #884 (done), #885 (no risk)
+- **Investigate**: #190 (audit checklist)
+- **PM decisions**: #352 (defer M2), #375 (PM QA activity), #883 (defer M2)
+- **M2 feature work**: #717, #706, #705, #542, #472, #470
+
+### 08:45 — Investigations
+
+**#884** — CLOSED. Diagnostic work completed 2026-03-12, child issues filed and mostly closed.
+
+**#885 investigation result**: 43 `__init__.py` files in tests/, ALL are empty or contain only docstrings/comments. Zero contain imports or code. No shadowing risk exists. Closeable.
+
+**#190 investigation result**:
+- Mock Pattern Fixes: PARTIALLY ADDRESSED (no await/MagicMock errors, docs incomplete)
+- Integration Test Alignment: ADDRESSED (no 200==422 mismatches)
+- Cache Test Infrastructure (#216): ADDRESSED (#216 closed)
+- Critical Path Coverage: STILL NEEDED (no coverage thresholds configured)
+- Error Scenario Fixes: PARTIALLY ADDRESSED (no collection errors in unit tests; 40+ route contract drift failures in web tests)
+- Recommendation: Close #190, file targeted successors for coverage targets + route contract drift
