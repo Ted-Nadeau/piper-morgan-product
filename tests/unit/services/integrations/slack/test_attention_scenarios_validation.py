@@ -595,7 +595,9 @@ class TestAdvancedAttentionAlgorithms:
         assert len(predicted_attention_events) > 0
 
         standup_predictions = [
-            p for p in predicted_attention_events if "message" in p["pattern"] and "T_CORP" in p["pattern"]
+            p
+            for p in predicted_attention_events
+            if "message" in p["pattern"] and "T_CORP" in p["pattern"]
         ]
 
         assert len(standup_predictions) > 0
