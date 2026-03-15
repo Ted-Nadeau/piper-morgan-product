@@ -19,10 +19,11 @@ Architecture: One new terminal node in the routing graph. Everything upstream
 untouched. The floor replaces a dead-end with a conversation.
 """
 
-import structlog
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
+
+import structlog
 
 logger = structlog.get_logger()
 
@@ -99,7 +100,9 @@ class FloorContext:
         elif self.formality_baseline >= 0.6:
             return "\nTone: The user prefers a balanced, collegial style. Be warm but professional."
         elif self.formality_baseline >= 0.4:
-            return "\nTone: The user prefers a professional, measured style. Be clear and respectful."
+            return (
+                "\nTone: The user prefers a professional, measured style. Be clear and respectful."
+            )
         else:
             return "\nTone: The user prefers a formal, precise style. Be concise and business-like."
 
@@ -169,6 +172,7 @@ class ConversationalFloor:
         if base is None:
             try:
                 from services.configuration.piper_config_loader import piper_config_loader
+
                 base = piper_config_loader.get_system_prompt()
             except Exception:
                 base = "You are Piper Morgan, an AI product management assistant."
@@ -262,5 +266,6 @@ class ConversationalFloor:
             return self.llm_client
         # Lazy import to avoid circular dependencies
         from services.llm.clients import LLMClient
+
         self.llm_client = LLMClient()
         return self.llm_client

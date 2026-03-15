@@ -1122,7 +1122,9 @@ class IntentService:
             # GREAT-4D Phase 7: Handle UNKNOWN intents via conversational floor (#907)
             if intent.category.value.upper() == "UNKNOWN":
                 result = await self._handle_unknown_intent(
-                    intent, workflow, session_id,
+                    intent,
+                    workflow,
+                    session_id,
                     user_id=user_id,
                     formality_baseline=formality_baseline,
                     trust_stage=resolved_trust_stage,
@@ -9243,8 +9245,12 @@ Content to summarize:
         return format_patterns_learned_conscious(patterns, total_analyzed)
 
     async def _handle_unknown_intent(
-        self, intent: Intent, workflow, session_id: str,
-        user_id: str = None, formality_baseline: float = None,
+        self,
+        intent: Intent,
+        workflow,
+        session_id: str,
+        user_id: str = None,
+        formality_baseline: float = None,
         trust_stage=None,
     ) -> IntentProcessingResult:
         """
@@ -9259,10 +9265,7 @@ Content to summarize:
         self.logger.info(f"Processing UNKNOWN intent via conversational floor: {intent.action}")
 
         # Issue #907: Build floor context from available state
-        from services.intent_service.conversational_floor import (
-            ConversationalFloor,
-            FloorContext,
-        )
+        from services.intent_service.conversational_floor import ConversationalFloor, FloorContext
 
         # Gather conversation history from in-memory context
         conv_context = get_or_create_context(session_id, user_id=user_id)
