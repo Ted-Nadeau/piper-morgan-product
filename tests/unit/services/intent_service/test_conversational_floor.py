@@ -335,3 +335,35 @@ class TestConversationalFloorForUnhandledExecution:
         prompt = call_kwargs.kwargs.get("prompt", "")
         # Should mention what Piper can currently help with
         assert "todo" in prompt.lower() or "capability" in prompt.lower() or len(prompt) > 50
+
+
+class TestGenericCanonicalResponseDetection:
+    """Issue #907: Detect when canonical handlers return generic template responses."""
+
+    def test_detects_generic_guidance_response(self):
+        """The GUIDANCE handler's generic priority template should be detected."""
+        from services.intent.intent_service import IntentService
+
+        service = IntentService.__new__(IntentService)
+        generic_msg = (
+            "Based on your current priorities and the time of day:\n"
+            "**Right Now**: Flexible time - consider strategic planning.\n"
+            "**Today's Key Focus**: your key priorities"
+        )
+        assert service._is_generic_canonical_response(generic_msg) is True
+
+    def test_does_not_flag_specific_responses(self):
+        """Specific, useful canonical responses should NOT be caught."""
+        from services.intent.intent_service import IntentService
+
+        service = IntentService.__new__(IntentService)
+        specific_msg = "I'm Piper Morgan, an AI product management assistant."
+        assert service._is_generic_canonical_response(specific_msg) is False
+
+    def test_does_not_flag_empty_or_none(self):
+        """Empty/None responses should not crash."""
+        from services.intent.intent_service import IntentService
+
+        service = IntentService.__new__(IntentService)
+        assert service._is_generic_canonical_response("") is False
+        assert service._is_generic_canonical_response(None) is False

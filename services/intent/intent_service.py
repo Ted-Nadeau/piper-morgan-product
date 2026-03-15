@@ -924,8 +924,37 @@ class IntentService:
                 # Issue #582: Pass user_id to enable database project lookup
                 canonical_result = await self.canonical_handlers.handle(intent, session_id, user_id)
 
-                # Issue #595: Add greeting prefix if multi-intent with greeting detected
+                # Issue #907: Detect generic template responses from canonical handlers.
+                # When a handler returns a generic response that doesn't actually address
+                # the user's query, route through the conversational floor instead.
                 response_message = canonical_result["message"]
+                if self._is_generic_canonical_response(response_message):
+                    self.logger.info(
+                        "canonical_generic_detected_routing_to_floor",
+                        category=intent.category.value,
+                        action=intent.action,
+                        original_message=intent.original_message,
+                    )
+                    result = await self._handle_unknown_intent(
+                        intent,
+                        None,
+                        session_id,
+                        user_id=user_id,
+                        formality_baseline=formality_baseline,
+                        trust_stage=resolved_trust_stage,
+                    )
+                    result.suggestions = all_suggestions
+                    result.preferences = preferences
+                    return self._apply_soft_offer(
+                        result,
+                        message,
+                        session_id,
+                        trust_stage=resolved_trust_stage,
+                        user_id=user_id,
+                        formality_baseline=formality_baseline,
+                    )
+
+                # Issue #595: Add greeting prefix if multi-intent with greeting detected
                 multi_intent_greeting = (
                     intent.context.get("multi_intent_greeting", False) if intent.context else False
                 )
@@ -9241,6 +9270,30 @@ Content to summarize:
             Formatted message string with consciousness
         """
         return format_patterns_learned_conscious(patterns, total_analyzed)
+
+    # Issue #907: Known generic template signatures from canonical handlers.
+    # When a handler returns one of these, the response doesn't actually address
+    # the user's query — route to the conversational floor instead.
+    _GENERIC_CANONICAL_SIGNATURES = [
+        "Based on your current priorities and the time of day:",
+    ]
+
+    def _is_generic_canonical_response(self, response_message: str) -> bool:
+        """
+        Issue #907: Detect generic template responses from canonical handlers.
+
+        Some canonical handlers (e.g., GUIDANCE) return template responses that
+        apply to ANY query in their category, regardless of what the user actually
+        asked. These should route to the conversational floor instead.
+
+        Returns:
+            True if the response is a known generic template
+        """
+        if not response_message:
+            return False
+        return any(
+            sig in response_message for sig in self._GENERIC_CANONICAL_SIGNATURES
+        )
 
     async def _handle_unknown_intent(
         self, intent: Intent, workflow, session_id: str,
