@@ -2041,6 +2041,17 @@ class IntentService:
                 intent, workflow.id, session_id, user_id=user_id
             )
 
+        # Issue #904: Todo list/next queries (pre-classifier routes as QUERY)
+        elif intent.action in [
+            "list_todos_query",
+            "list_completed_todos",
+            "next_todo_query",
+        ]:
+            # Route to EXECUTION handler which has the todo handlers wired
+            return await self._handle_execution_intent(
+                intent, workflow, session_id, user_id
+            )
+
         # Handle specific query actions that were broken in August 22 refactor
         elif intent.action in ["show_standup", "get_standup"]:
             return await self._handle_standup_query(intent, workflow.id, session_id)

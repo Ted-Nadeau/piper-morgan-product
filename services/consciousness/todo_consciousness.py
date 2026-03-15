@@ -231,9 +231,14 @@ def _build_todo_discovery(todos: List[Todo]) -> str:
         elif todo.priority == "high":
             priority_note = " (important)"
 
+        # Completion state (Issue #904)
+        completion_note = ""
+        if getattr(todo, "completed", False) or getattr(todo, "status", "") == "completed":
+            completion_note = " ✓ done"
+
         # Truncate long text
         text = todo.text[:50] + "..." if len(todo.text) > 50 else todo.text
-        lines.append(f"{prefix} '{text}'{priority_note}.")
+        lines.append(f"{prefix} '{text}'{priority_note}{completion_note}.")
 
     # If more than 5, summarize the rest
     if len(todos) > 5:

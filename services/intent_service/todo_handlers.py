@@ -7,15 +7,20 @@ Wires chat commands to existing todo_management API (PM-081)
 Enhanced with consciousness injection (#407 MUX-VISION-STANDUP-EXTRACT)
 for more alive, present-feeling responses.
 
+Issue #904: CANONICAL-TODO-COMPLETE — Added fuzzy text matching for
+completion ("complete the PR review" matches "Review the PR for auth").
+
 Example commands:
 - "add todo: Review PR #285"
 - "show my todos"
+- "show all my todos" (includes completed)
 - "mark todo 1 as complete"
+- "complete the PR review todo"
 - "delete todo about meeting"
 """
 
 import re
-from typing import Optional
+from typing import List, Optional, Tuple
 from uuid import UUID
 
 import structlog
@@ -28,10 +33,21 @@ from services.consciousness.todo_consciousness import (
     format_todo_deleted_conscious,
     format_todo_list_conscious,
 )
-from services.domain.models import Intent
+from services.domain.models import Intent, Todo
 from services.todo.todo_management_service import TodoManagementService
 
 logger = structlog.get_logger()
+
+# Words that don't contribute to meaningful matching
+_STOPWORDS = frozenset({
+    "a", "an", "the", "in", "on", "at", "to", "for", "of", "with",
+    "and", "or", "but", "is", "it", "my", "your", "this", "that",
+    "i", "me", "we", "do", "did", "has", "have", "had", "be", "been",
+    "todo", "task", "item", "thing",
+})
+
+# Minimum fuzzy match score to consider a match
+_FUZZY_MATCH_THRESHOLD = 0.3
 
 
 class TodoIntentHandlers:
@@ -86,15 +102,28 @@ class TodoIntentHandlers:
             return "I had trouble saving that todo — it may be a temporary issue. You can try again, or rephrase with 'add todo: [your task]'."
 
     async def handle_list_todos(self, intent: Intent, session_id: str, user_id: UUID) -> str:
-        """Handle: "show my todos" or "list todos" - shows active todos from database."""
-        try:
-            # Get active todos from database
-            todos = await self.todo_service.list_todos(user_id=user_id, include_completed=False)
+        """Handle: "show my todos" or "list todos" - shows active todos from database.
 
-            logger.info("Todo list retrieved", user_id=user_id, count=len(todos))
+        Issue #904: Now supports "show all my todos" to include completed items.
+        """
+        try:
+            original_message = intent.original_message or intent.context.get("original_message", "")
+            include_completed = self._wants_completed_todos(original_message)
+
+            # Get todos from database
+            todos = await self.todo_service.list_todos(
+                user_id=user_id, include_completed=include_completed
+            )
+
+            logger.info(
+                "Todo list retrieved",
+                user_id=user_id,
+                count=len(todos),
+                include_completed=include_completed,
+            )
 
             # Format with consciousness
-            return format_todo_list_conscious(todos)
+            return format_todo_list_conscious(todos, include_completed=include_completed)
 
         except Exception as e:
             logger.error("Todo list retrieval failed", error=str(e), user_id=user_id, exc_info=True)
@@ -125,33 +154,63 @@ class TodoIntentHandlers:
             return "I had trouble finding your next todo right now. You can try 'show my todos' to see your full list, or ask again in a moment."
 
     async def handle_complete_todo(self, intent: Intent, session_id: str, user_id: UUID) -> str:
-        """Handle: "mark todo 1 as complete" or "complete todo about PR"""
+        """Handle: "mark todo 1 as complete" or "complete the PR review todo"
+
+        Issue #904: Supports both number-based and fuzzy text-based matching.
+        Number path: "mark todo 3 as complete" → completes todo #3 by position.
+        Text path: "complete the PR review" → fuzzy matches against todo texts.
+        """
         # Note: original_message may be in intent.original_message OR intent.context["original_message"]
         # depending on how the Intent was created (Issue #744)
         original_message = intent.original_message or intent.context.get("original_message", "")
-        todo_number = self._extract_todo_id(original_message)
-        if not todo_number:
-            return "Which todo? Try: 'mark todo [number] as complete'"
 
         try:
-            # Get user's todo list to find the todo by position
+            # Get user's todo list
             todos = await self.todo_service.list_todos(user_id=user_id, include_completed=False)
 
-            # Convert todo number to index
-            try:
-                idx = int(todo_number) - 1
-                if idx < 0 or idx >= len(todos):
-                    return (
-                        f"I couldn't find todo #{todo_number}. You have {len(todos)} active todos."
-                    )
-            except ValueError:
-                return f"'{todo_number}' doesn't look like a number. Try: 'mark todo 1 as complete'"
+            if not todos:
+                return (
+                    "You don't have any active todos to complete. "
+                    "Add one with 'add todo: [task]' first."
+                )
 
-            # Get the todo at that position
-            todo = todos[idx]
+            # Path 1: Try number-based matching first
+            todo_number = self._extract_todo_id(original_message)
+            if todo_number is not None:
+                try:
+                    idx = int(todo_number) - 1
+                    if idx < 0 or idx >= len(todos):
+                        return (
+                            f"I couldn't find todo #{todo_number}. "
+                            f"You have {len(todos)} active todos."
+                        )
+                    todo = todos[idx]
+                except ValueError:
+                    return (
+                        f"'{todo_number}' doesn't look like a number. "
+                        "Try: 'mark todo 1 as complete'"
+                    )
+            else:
+                # Path 2: Fuzzy text matching (Issue #904)
+                completion_text = self._extract_completion_text(original_message)
+                if not completion_text:
+                    return (
+                        "Which todo would you like to complete? "
+                        "Try 'complete todo 1' or 'complete the [description]'."
+                    )
+
+                todo = self._find_best_matching_todo(completion_text, todos)
+                if todo is None:
+                    return (
+                        f"I couldn't find a todo matching '{completion_text}'. "
+                        "Try 'show my todos' to see your list, then "
+                        "'complete todo [number]'."
+                    )
 
             # Mark as complete
-            completed_todo = await self.todo_service.complete_todo(todo_id=todo.id, user_id=user_id)
+            completed_todo = await self.todo_service.complete_todo(
+                todo_id=todo.id, user_id=user_id
+            )
 
             if completed_todo:
                 logger.info("Todo completed", todo_id=str(todo.id), user_id=user_id)
@@ -160,8 +219,13 @@ class TodoIntentHandlers:
                 return "I couldn't complete that todo. It might have been deleted."
 
         except Exception as e:
-            logger.error("Todo completion failed", error=str(e), user_id=user_id, exc_info=True)
-            return "I had trouble marking that as complete. You can try again with 'complete todo [number]', or say 'show my todos' to check the list first."
+            logger.error(
+                "Todo completion failed", error=str(e), user_id=user_id, exc_info=True
+            )
+            return (
+                "I had trouble marking that as complete. You can try again with "
+                "'complete todo [number]', or say 'show my todos' to check the list first."
+            )
 
     async def handle_delete_todo(self, intent: Intent, session_id: str, user_id: UUID) -> str:
         """Handle: "delete todo 3" or "remove todo about meeting"""
@@ -248,3 +312,109 @@ class TodoIntentHandlers:
             return match.group(1)
 
         return None
+
+    # ------------------------------------------------------------------
+    # Issue #904: Fuzzy text matching for todo completion
+    # ------------------------------------------------------------------
+
+    def _extract_completion_text(self, message: str) -> Optional[str]:
+        """Extract the descriptive text from a completion request.
+
+        Extracts the part of the message that describes which todo to complete.
+        Returns None if the message uses a number (handled by _extract_todo_id).
+
+        Examples:
+            "complete the PR review todo" → "PR review"
+            "finish the deployment task" → "deployment"
+            "mark todo 3 as complete" → None (number-based)
+        """
+        # If a number is present, defer to number-based path
+        if self._extract_todo_id(message) is not None:
+            return None
+
+        # Try various completion patterns and extract the descriptive part
+        patterns = [
+            # "complete the X todo/task"
+            r"(?:complete|finish|done with)\s+(?:the\s+)?(.+?)(?:\s+todo|\s+task|\s*$)",
+            # "mark the X as done/complete"
+            r"mark\s+(?:the\s+)?(.+?)\s+(?:as\s+)?(?:done|complete|finished)",
+            # "mark done: X" or "mark done the X"
+            r"mark\s+done:?\s+(?:the\s+)?(.+?)(?:\s+todo|\s+task|\s*$)",
+            # "I'm done with X"
+            r"(?:i'?m\s+)?done\s+with\s+(?:the\s+)?(.+?)(?:\s+todo|\s+task|\s*$)",
+        ]
+
+        for pattern in patterns:
+            match = re.search(pattern, message, re.IGNORECASE)
+            if match:
+                text = match.group(1).strip()
+                # Clean up trailing noise
+                text = re.sub(r"\s+(todo|task|item|thing)$", "", text, flags=re.IGNORECASE)
+                if text:
+                    return text
+
+        return None
+
+    def _find_best_matching_todo(
+        self, search_text: str, todos: List[Todo]
+    ) -> Optional[Todo]:
+        """Find the todo that best matches the search text using fuzzy word overlap.
+
+        Returns the best matching todo if score >= threshold, else None.
+        """
+        if not todos or not search_text:
+            return None
+
+        scored: List[Tuple[float, Todo]] = []
+        for todo in todos:
+            score = self._fuzzy_match_score(search_text, todo.text)
+            if score >= _FUZZY_MATCH_THRESHOLD:
+                scored.append((score, todo))
+
+        if not scored:
+            return None
+
+        # Sort by score descending, return best match
+        scored.sort(key=lambda x: x[0], reverse=True)
+        return scored[0][1]
+
+    @staticmethod
+    def _fuzzy_match_score(query: str, candidate: str) -> float:
+        """Score how well query words match candidate words (0.0 to 1.0).
+
+        Uses word overlap with stopword filtering. Score is the fraction
+        of meaningful query words found in the candidate.
+        """
+        query_words = {
+            w for w in re.findall(r"\w+", query.lower()) if w not in _STOPWORDS
+        }
+        candidate_words = {
+            w for w in re.findall(r"\w+", candidate.lower()) if w not in _STOPWORDS
+        }
+
+        if not query_words:
+            return 0.0
+
+        overlap = query_words & candidate_words
+        return len(overlap) / len(query_words)
+
+    @staticmethod
+    def _wants_completed_todos(message: str) -> bool:
+        """Check if the user wants to see completed todos too.
+
+        Issue #904: "show all my todos" or "show completed todos" includes done items.
+        """
+        message_lower = message.lower()
+        return any(
+            phrase in message_lower
+            for phrase in [
+                "all my todos",
+                "all todos",
+                "completed todos",
+                "done todos",
+                "finished todos",
+                "including completed",
+                "include completed",
+                "show everything",
+            ]
+        )
