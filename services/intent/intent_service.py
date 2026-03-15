@@ -9277,7 +9277,12 @@ Content to summarize:
     # When a handler returns one of these, the response doesn't actually address
     # the user's query — route to the conversational floor instead.
     _GENERIC_CANONICAL_SIGNATURES = [
+        # GUIDANCE handler: standard priority template
         "Based on your current priorities and the time of day:",
+        # GUIDANCE handler: granular variant
+        "Here's comprehensive guidance for your focus:",
+        # CONVERSATION handler: chitchat catch-all (ignores user's actual message)
+        "I've been keeping an eye on your projects. What's on your mind?",
     ]
 
     def _is_generic_canonical_response(self, response_message: str) -> bool:
