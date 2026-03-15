@@ -9293,9 +9293,7 @@ Content to summarize:
         """
         if not response_message:
             return False
-        return any(
-            sig in response_message for sig in self._GENERIC_CANONICAL_SIGNATURES
-        )
+        return any(sig in response_message for sig in self._GENERIC_CANONICAL_SIGNATURES)
 
     async def _handle_unknown_intent(
         self,
