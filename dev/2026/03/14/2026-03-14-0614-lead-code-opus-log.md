@@ -125,3 +125,26 @@ Synthesized findings from two discovery agents (docs inventory + domain model in
 ### Delivered to PM for review — collaborative work to close gaps.
 
 ---
+
+## Session Resumed — 14:15 (post-compaction)
+
+Context restored from summary. Continuing #907 work.
+
+### 14:15 — #907 Generic Canonical Signatures Expanded
+
+Committed expanded `_GENERIC_CANONICAL_SIGNATURES` (3 signatures now):
+1. GUIDANCE standard: `"Based on your current priorities and the time of day:"`
+2. GUIDANCE granular: `"Here's comprehensive guidance for your focus:"`
+3. CONVERSATION chitchat: `"I've been keeping an eye on your projects. What's on your mind?"`
+
+All 23 conversational floor tests pass. Merged to main, pushed to origin (`a0099116`).
+
+PM needs to restart server and retest "Can you help me manage the agents" query.
+
+### Pending
+- File discovered work issue: architectural `generic_response: bool` flag (per audit subagent recommendation)
+- #907 Phase 2 (instrumentation), Phase 3 (verification), Phase Z (completion)
+- #904 Todo Completion — next after #907
+- Read roundtable synthesis memo from mailbox
+
+---

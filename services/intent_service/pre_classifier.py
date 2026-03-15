@@ -432,11 +432,31 @@ class PreClassifier:
         r"\blist my todos\b",
         r"\bwhat are my todos\b",
         r"\bmy todos\b",
+        r"\bshow.*completed\s+todos\b",
+        r"\bshow\s+all\s+(?:my\s+)?todos\b",
         # Next todo query - Query #57
         r"\bwhat'?s my next todo\b",
         r"\bnext todo\b",
         r"\bwhat should i do next\b",
         r"\bwhat.*next.*do\b",
+    ]
+
+    # Issue #904: Todo completion patterns - Query #55
+    TODO_COMPLETE_PATTERNS = [
+        # "mark/complete/finish todo N" or "mark/complete/finish todo #N"
+        r"\b(?:mark|complete|finish)\s+todo\s+#?\d+",
+        # "complete the X todo" or "finish the X task"
+        r"\b(?:mark|complete|finish)\s+(?:the\s+)?.+?\s+(?:todo|task)\b",
+        # "mark X as done/complete"
+        r"\b(?:mark|complete|finish)\s+(?:the\s+)?.+?\s+(?:as\s+)?(?:done|complete|finished)\b",
+        # "done with the X todo/task"
+        r"\bdone\s+with\s+(?:the\s+)?.+?\s*(?:todo|task)?\b",
+        # "finish todo about X" (todo immediately after finish)
+        r"\bfinish\s+todo\b",
+        # "mark done"
+        r"\bmark\s+done\b",
+        # "complete todo about X" (todo immediately after complete)
+        r"\bcomplete\s+todo\b",
     ]
 
     # Issue #522: Document update query patterns - Query #40
@@ -1012,10 +1032,29 @@ class PreClassifier:
                 context={"original_message": message},
             )
 
+        # Issue #904: Check Todo completion patterns (Query #55) before list patterns
+        if PreClassifier._matches_patterns(
+            clean_for_matching, PreClassifier.TODO_COMPLETE_PATTERNS
+        ):
+            return Intent(
+                category=IntentCategory.EXECUTION,
+                action="complete_todo",
+                confidence=1.0,
+                context={"original_message": message},
+            )
+
         # Check Todo queries (Queries #56, #57)
         if PreClassifier._matches_patterns(clean_for_matching, PreClassifier.TODO_QUERY_PATTERNS):
             # Determine specific action based on which pattern matched
             if any(
+                re.search(pattern, clean_for_matching)
+                for pattern in [
+                    r"\bshow.*completed\s+todos\b",
+                    r"\bshow\s+all\s+(?:my\s+)?todos\b",
+                ]
+            ):
+                action = "list_completed_todos"
+            elif any(
                 re.search(pattern, clean_for_matching)
                 for pattern in [
                     r"\bshow my todos\b",
