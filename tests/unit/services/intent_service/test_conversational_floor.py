@@ -15,17 +15,17 @@ responses when no structured handler matches. Tests verify:
 TDD: Tests written first, implementation follows.
 """
 
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
 from dataclasses import dataclass
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 from services.intent_service.conversational_floor import (
+    FLOOR_SYSTEM_PROMPT_ADDENDUM,
     ConversationalFloor,
     FloorContext,
     FloorResponse,
-    FLOOR_SYSTEM_PROMPT_ADDENDUM,
 )
-
 
 # ---- FloorContext Tests ----
 
@@ -177,14 +177,19 @@ class TestConversationalFloor:
         await floor.respond(ctx)
 
         call_kwargs = mock_llm.complete.call_args
-        prompt = call_kwargs.kwargs.get("prompt", call_kwargs.args[1] if len(call_kwargs.args) > 1 else "")
+        prompt = call_kwargs.kwargs.get(
+            "prompt", call_kwargs.args[1] if len(call_kwargs.args) > 1 else ""
+        )
         assert "project architecture" in prompt or "FastAPI" in prompt
 
     @pytest.mark.asyncio
     async def test_floor_does_not_promise_actions(self, floor):
         """Floor system prompt must instruct LLM not to promise actions."""
         # Verify the addendum contains the no-actions constraint
-        assert "do not" in FLOOR_SYSTEM_PROMPT_ADDENDUM.lower() or "don't" in FLOOR_SYSTEM_PROMPT_ADDENDUM.lower()
+        assert (
+            "do not" in FLOOR_SYSTEM_PROMPT_ADDENDUM.lower()
+            or "don't" in FLOOR_SYSTEM_PROMPT_ADDENDUM.lower()
+        )
         assert "action" in FLOOR_SYSTEM_PROMPT_ADDENDUM.lower()
 
     @pytest.mark.asyncio
@@ -247,7 +252,11 @@ class TestConversationalFloor:
         call_kwargs = mock_llm.complete.call_args
         system_arg = call_kwargs.kwargs.get("system", "")
         # System prompt should mention warmth or formality calibration
-        assert "warm" in system_arg.lower() or "casual" in system_arg.lower() or "formality" in system_arg.lower()
+        assert (
+            "warm" in system_arg.lower()
+            or "casual" in system_arg.lower()
+            or "formality" in system_arg.lower()
+        )
 
 
 class TestConversationalFloorSystemPrompt:
