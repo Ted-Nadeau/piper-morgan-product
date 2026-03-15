@@ -17,7 +17,6 @@ import pytest
 
 from services.domain.models import Intent, IntentCategory, Todo
 
-
 # ============================================================================
 # 1. Fuzzy Text Matching Tests
 # ============================================================================
@@ -65,7 +64,9 @@ class TestFuzzyTodoMatching:
         result = await handlers.handle_complete_todo(intent, "session1", user_id)
 
         # Should complete the PR review todo, not ask for a number
-        assert "done" in result.lower() or "marked" in result.lower() or "complete" in result.lower()
+        assert (
+            "done" in result.lower() or "marked" in result.lower() or "complete" in result.lower()
+        )
         handlers.todo_service.complete_todo.assert_called_once()
 
     @pytest.mark.asyncio
@@ -84,7 +85,9 @@ class TestFuzzyTodoMatching:
         user_id = uuid4()
         result = await handlers.handle_complete_todo(intent, "session1", user_id)
 
-        assert "done" in result.lower() or "marked" in result.lower() or "complete" in result.lower()
+        assert (
+            "done" in result.lower() or "marked" in result.lower() or "complete" in result.lower()
+        )
         handlers.todo_service.complete_todo.assert_called_once()
 
     @pytest.mark.asyncio
@@ -103,7 +106,9 @@ class TestFuzzyTodoMatching:
         user_id = uuid4()
         result = await handlers.handle_complete_todo(intent, "session1", user_id)
 
-        assert "done" in result.lower() or "marked" in result.lower() or "complete" in result.lower()
+        assert (
+            "done" in result.lower() or "marked" in result.lower() or "complete" in result.lower()
+        )
         handlers.todo_service.complete_todo.assert_called_once()
 
     @pytest.mark.asyncio
@@ -122,7 +127,9 @@ class TestFuzzyTodoMatching:
         user_id = uuid4()
         result = await handlers.handle_complete_todo(intent, "session1", user_id)
 
-        assert "done" in result.lower() or "marked" in result.lower() or "complete" in result.lower()
+        assert (
+            "done" in result.lower() or "marked" in result.lower() or "complete" in result.lower()
+        )
         handlers.todo_service.complete_todo.assert_called_once()
 
     @pytest.mark.asyncio
@@ -140,7 +147,11 @@ class TestFuzzyTodoMatching:
         result = await handlers.handle_complete_todo(intent, "session1", user_id)
 
         # Should explain no match and offer help
-        assert "couldn't find" in result.lower() or "no matching" in result.lower() or "which" in result.lower()
+        assert (
+            "couldn't find" in result.lower()
+            or "no matching" in result.lower()
+            or "which" in result.lower()
+        )
         handlers.todo_service.complete_todo.assert_not_called()
 
     @pytest.mark.asyncio
@@ -370,7 +381,9 @@ class TestFuzzyMatchScoring:
         score = handlers._fuzzy_match_score("fix the deployment", "Fix deployment pipeline bug")
         assert score > 0.5
         # True partial: only "deployment" matches
-        score2 = handlers._fuzzy_match_score("deployment review status", "Fix deployment pipeline bug")
+        score2 = handlers._fuzzy_match_score(
+            "deployment review status", "Fix deployment pipeline bug"
+        )
         assert 0.2 < score2 < 1.0
 
     def test_stopwords_excluded(self, handlers):
