@@ -142,9 +142,26 @@ All 23 conversational floor tests pass. Merged to main, pushed to origin (`a0099
 PM needs to restart server and retest "Can you help me manage the agents" query.
 
 ### Pending
-- File discovered work issue: architectural `generic_response: bool` flag (per audit subagent recommendation)
+- ✅ Filed #908: architectural `generic_response: bool` flag
 - #907 Phase 2 (instrumentation), Phase 3 (verification), Phase Z (completion)
-- #904 Todo Completion — next after #907
 - Read roundtable synthesis memo from mailbox
+
+---
+
+## 20:10 — #904 Todo Completion Lifecycle Management
+
+Handler existed but had 3 gaps: only number-based completion, no completed todos in list view, no pre-classifier patterns.
+
+### Implementation (TDD, 23 tests)
+- **`todo_handlers.py`**: Fuzzy text matching via word-overlap with stopword filtering. Dual path: number + text. `_wants_completed_todos()` for "show all/completed todos".
+- **`pre_classifier.py`**: 8 TODO_COMPLETE_PATTERNS + "show completed/all todos" patterns.
+- **`action_mapper.py`**: Added `list_completed_todos`, `list_todos_query`, `next_todo_query` mappings.
+- **`intent_service.py`**: Route QUERY todo actions to EXECUTION handler.
+- **`todo_consciousness.py`**: Completed todos show "✓ done" marker.
+
+All 23 tests pass. Merged to main, pushed to origin (`07d40b16`).
+
+### Issues closed this session: #705, #352
+### Issues filed this session: #905, #906, #908
 
 ---

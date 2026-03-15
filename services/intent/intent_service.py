@@ -9333,12 +9333,19 @@ Content to summarize:
         from services.intent_service.conversational_floor import ConversationalFloor, FloorContext
 
         # Gather conversation history from in-memory context
-        conv_context = get_or_create_context(session_id, user_id=user_id)
         history = []
-        for turn in conv_context.turns[-6:]:
-            history.append({"role": "user", "content": turn.message})
-            if hasattr(turn, "response") and turn.response:
-                history.append({"role": "assistant", "content": turn.response})
+        try:
+            conv_context = get_or_create_context(session_id, user_id=user_id)
+            for turn in conv_context.turns[-6:]:
+                history.append({"role": "user", "content": turn.message})
+                if hasattr(turn, "response") and turn.response:
+                    history.append({"role": "assistant", "content": turn.response})
+        except Exception as e:
+            self.logger.warning(
+                "floor_context_history_unavailable",
+                error=str(e),
+                session_id=session_id,
+            )
 
         floor_ctx = FloorContext(
             user_message=intent.original_message or "",
