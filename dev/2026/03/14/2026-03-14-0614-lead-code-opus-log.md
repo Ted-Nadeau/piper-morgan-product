@@ -161,7 +161,43 @@ Handler existed but had 3 gaps: only number-based completion, no completed todos
 
 All 23 tests pass. Merged to main, pushed to origin (`07d40b16`).
 
-### Issues closed this session: #705, #352
-### Issues filed this session: #905, #906, #908
+---
+
+## 22:15 — #909 Hardcoded User Name Removal
+
+PM tested floor response and noticed "Hey Christian!" — LLM picked it up from system prompt.
+Scan found 15 hardcoded "Christian" references in 2 files:
+- `piper_config_loader.py` (5): system prompt, behavior guidelines, default config
+- `conversation_queries.py` (10): greetings, status, identity
+
+All replaced with generic user-agnostic text. Filed #909, fixed, merged, pushed (`95997463`).
+
+## 22:30 — #907 Phase 2 Assessment
+
+Floor instrumentation already solid:
+- `FloorResponse.to_log_dict()` with structured data
+- `conversational_floor_hit` log event with session_id, user_id, intent details
+- `floor_hit: True` in `intent_data` for API responses
+- `canonical_generic_detected_routing_to_floor` for interception path
+No additional instrumentation needed for alpha.
+
+## 23:07 — Session Wrap-Up
+
+PM confirmed floor working (screenshot!), will test preferences tomorrow.
+
+### "Failed to fetch" error
+PM reported free chat error: "Well, I've been testing some upgrades..." → "Failed to fetch"
+Not yet investigated. Possibly related to message length, session state, or LLM timeout.
+**TODO**: Investigate next session.
+
+### Issues closed this full session: #705, #352
+### Issues fixed (awaiting closure): #905, #906, #904, #907, #909
+### Issues filed this session: #905, #906, #908, #909
+
+### Pending for next session
+- #375 preference detection QA (PM testing tomorrow)
+- #907 Phase 3/Z (verification + closure after PM confirms)
+- "Failed to fetch" error investigation
+- Roundtable synthesis memo (informational)
 
 ---
