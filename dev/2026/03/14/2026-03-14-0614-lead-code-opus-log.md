@@ -185,10 +185,45 @@ No additional instrumentation needed for alpha.
 
 PM confirmed floor working (screenshot!), will test preferences tomorrow.
 
-### "Failed to fetch" error
-PM reported free chat error: "Well, I've been testing some upgrades..." → "Failed to fetch"
-Not yet investigated. Possibly related to message length, session state, or LLM timeout.
-**TODO**: Investigate next session.
+### "Failed to fetch" error — Investigation Complete
+
+PM reported: "Well, I've been testing some upgrades..." → "Failed to fetch"
+Messages before and after worked fine.
+
+**"Failed to fetch" = browser fetch() never got a response.** Not a server error — the HTTP connection itself failed.
+
+**Traced the full request path:**
+1. `chat.js:432` → POST `/api/v1/intent`
+2. `intent.py:213` → `process_intent()` (has top-level try/except returning 200 with degradation)
+3. `intent_service.py:322` → classification → CONVERSATION handler
+4. `conversation_handler.py:90` → `respond()` method
+
+**All exception paths are wrapped:**
+- Route has try/except returning 200 degradation response (line 367)
+- ConversationHandler.respond() has try/except on onboarding (line 407)
+- Calendar summary has try/except (line 140)
+- Onboarding persistence has try/except (line 407)
+
+**No code path can produce "Failed to fetch" via exception** — server always returns JSON.
+
+**Most likely cause: server restart timing.** PM killed and restarted the server around that time. The message sequence:
+1. "Hi Piper" → worked (old or new server)
+2. "Well, I've been testing..." → **server was down between kill/restart**
+3. "Can you help me manage..." → worked (new server with floor code)
+
+The greeting response for message 1 included calendar data, confirming the server was running. Then it was killed, message 2 hit during the gap, and message 3 hit the new server.
+
+**UPDATE 23:17**: PM pointed out messages 2 and 3 were both at 10:06 PM — seconds apart. Server restart can't explain it. Deeper investigation:
+
+**Subagent finding**: `print()` on line 267 of `intent.py` (DEBUG #490 trace) could raise `BrokenPipeError` if stdout has issues. However, it IS inside the route's try/except block (line 234-378), so this should be caught. Not fully confident this is the cause.
+
+**Other possibilities examined and ruled out:**
+- No middleware reads request body (no stream consumption issue)
+- Auth middleware doesn't crash on valid cookies
+- DB session disposal is wrapped in try/except
+- All conversation handler paths have exception handling
+
+**Plan for tomorrow**: Reproduce with PM watching console + terminal output. That will give definitive answer. The `print()` statement should be removed regardless (use logger instead).
 
 ### Issues closed this full session: #705, #352
 ### Issues fixed (awaiting closure): #905, #906, #904, #907, #909
