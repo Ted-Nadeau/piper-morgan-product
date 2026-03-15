@@ -124,6 +124,15 @@ class IntentService:
     Phase 2B: Extracted from web/app.py lines 327-551 (225 lines)
     """
 
+    # Issue #907: Generic fallback text constant for comparison.
+    # When _get_contextual_fallback returns this exact text, the conversational
+    # floor takes over instead.
+    _GENERIC_FALLBACK_TEXT = (
+        "I don't have that capability yet, but I'm learning! "
+        "Try asking 'What can you do?' to see what I can help with, "
+        "or let me know if there's something else I can assist with."
+    )
+
     def __init__(
         self,
         orchestration_engine: Optional[OrchestrationEngine] = None,
@@ -1110,9 +1119,14 @@ class IntentService:
                     formality_baseline=formality_baseline,
                 )
 
-            # GREAT-4D Phase 7: Handle UNKNOWN intents
+            # GREAT-4D Phase 7: Handle UNKNOWN intents via conversational floor (#907)
             if intent.category.value.upper() == "UNKNOWN":
-                result = await self._handle_unknown_intent(intent, workflow, session_id)
+                result = await self._handle_unknown_intent(
+                    intent, workflow, session_id,
+                    user_id=user_id,
+                    formality_baseline=formality_baseline,
+                    trust_stage=resolved_trust_stage,
+                )
                 result.suggestions = all_suggestions
                 result.preferences = preferences  # Issue #248: Attach preference detection results
                 # Issue #844: Apply soft invocation to all handler paths
@@ -4701,15 +4715,49 @@ class IntentService:
 
         else:
             # Issue #489: Graceful degradation for unhandled EXECUTION actions
-            # Return user-friendly message instead of 422 error
             # Issue #886: Contextual fallback copy (CXO guidance)
+            # Issue #907: Route generic fallback through conversational floor
             self.logger.info(
-                f"Unhandled EXECUTION action: {mapped_action} (original: {intent.action}) - returning graceful fallback"
+                f"Unhandled EXECUTION action: {mapped_action} (original: {intent.action}) - checking contextual fallback"
             )
-            fallback_message = self._get_contextual_fallback(
+
+            # Try specific contextual fallback first (#886 — these are genuinely
+            # useful "I can't do X but I can do Y" responses)
+            specific_fallback = self._get_contextual_fallback(
                 mapped_action=mapped_action,
                 original_message=intent.original_message,
             )
+
+            # If we got the generic fallback, use the conversational floor instead
+            if specific_fallback == self._GENERIC_FALLBACK_TEXT:
+                # Issue #907: Route through conversational floor for genuine engagement
+                from services.intent_service.conversational_floor import (
+                    ConversationalFloor,
+                    FloorContext,
+                )
+
+                conv_context = get_or_create_context(session_id, user_id=user_id)
+                history = []
+                for turn in conv_context.turns[-6:]:
+                    history.append({"role": "user", "content": turn.message})
+                    if hasattr(turn, "response") and turn.response:
+                        history.append({"role": "assistant", "content": turn.response})
+
+                floor_ctx = FloorContext(
+                    user_message=intent.original_message or "",
+                    session_id=session_id,
+                    user_id=user_id,
+                    conversation_history=history,
+                    intent_category="EXECUTION",
+                    intent_action=mapped_action,
+                    intent_confidence=intent.confidence,
+                )
+                floor = ConversationalFloor()
+                floor_response = await floor.respond(floor_ctx)
+                fallback_message = floor_response.message
+            else:
+                fallback_message = specific_fallback
+
             return IntentProcessingResult(
                 success=True,  # Changed from False to prevent 422
                 message=fallback_message,
@@ -4719,6 +4767,7 @@ class IntentService:
                     "mapped_action": mapped_action,
                     "confidence": intent.confidence,
                     "unhandled": True,  # Flag for analytics
+                    "floor_hit": specific_fallback == self._GENERIC_FALLBACK_TEXT,  # #907
                 },
                 # Issue #878: No handler ran — don't set workflow_id or frontend will poll and timeout
                 workflow_id=None,
@@ -4816,11 +4865,9 @@ class IntentService:
             )
 
         # Generic fallback (Issue #489 original)
-        return (
-            "I don't have that capability yet, but I'm learning! "
-            "Try asking 'What can you do?' to see what I can help with, "
-            "or let me know if there's something else I can assist with."
-        )
+        # Issue #907: Now a class constant so the caller can detect it
+        # and route through the conversational floor instead.
+        return self._GENERIC_FALLBACK_TEXT
 
     async def _handle_create_issue(
         self, intent: Intent, workflow_id: str, session_id: str
@@ -9196,31 +9243,62 @@ Content to summarize:
         return format_patterns_learned_conscious(patterns, total_analyzed)
 
     async def _handle_unknown_intent(
-        self, intent: Intent, workflow, session_id: str
+        self, intent: Intent, workflow, session_id: str,
+        user_id: str = None, formality_baseline: float = None,
+        trust_stage=None,
     ) -> IntentProcessingResult:
         """
-        Handle UNKNOWN category intents.
+        Handle UNKNOWN category intents via conversational floor.
 
-        Provides helpful fallback for unclear intents.
-        Follows EXECUTION/ANALYSIS pattern for consistency.
+        Issue #907: Instead of a dead-end deflection, engage conversationally
+        using the LLM with Piper's full context. The floor thinks WITH the user
+        rather than telling them "I can't do that."
 
         GREAT-4D Phase 7: Completes intent handler coverage.
         """
-        self.logger.info(f"Processing UNKNOWN intent: {intent.action}")
+        self.logger.info(f"Processing UNKNOWN intent via conversational floor: {intent.action}")
 
-        # Provide helpful response for unclear intents
+        # Issue #907: Build floor context from available state
+        from services.intent_service.conversational_floor import (
+            ConversationalFloor,
+            FloorContext,
+        )
+
+        # Gather conversation history from in-memory context
+        conv_context = get_or_create_context(session_id, user_id=user_id)
+        history = []
+        for turn in conv_context.turns[-6:]:
+            history.append({"role": "user", "content": turn.message})
+            if hasattr(turn, "response") and turn.response:
+                history.append({"role": "assistant", "content": turn.response})
+
+        floor_ctx = FloorContext(
+            user_message=intent.original_message or "",
+            session_id=session_id,
+            user_id=user_id,
+            conversation_history=history,
+            trust_stage=trust_stage.value if trust_stage else None,
+            formality_baseline=formality_baseline,
+            intent_category="UNKNOWN",
+            intent_action=intent.action,
+            intent_confidence=intent.confidence,
+        )
+
+        floor = ConversationalFloor()
+        response = await floor.respond(floor_ctx)
+
         return IntentProcessingResult(
             success=True,
-            message="I'm not sure what you're asking for. Could you rephrase or provide more details?",
+            message=response.message,
             intent_data={
                 "category": intent.category.value,
                 "action": intent.action,
                 "confidence": intent.confidence,
                 "original_message": intent.original_message,
+                "floor_hit": True,  # Issue #907: Instrumentation flag
             },
-            workflow_id=workflow.id,
-            requires_clarification=True,
-            clarification_type="intent_unclear",
+            workflow_id=None,  # No workflow — conversational response
+            requires_clarification=False,
         )
 
     async def _create_workflow_with_timeout(

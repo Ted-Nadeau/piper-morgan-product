@@ -50,4 +50,11 @@ MODEL_CONFIGS: Dict[str, Dict[str, Any]] = {
         "temperature": 0.7,
         "max_tokens": 3000,
     },
+    # Issue #907: Conversational floor — contextual LLM responses for unmatched queries
+    "conversation": {
+        "provider": LLMProvider.ANTHROPIC,
+        "model": LLMModel.CLAUDE_SONNET,
+        "temperature": 0.7,
+        "max_tokens": 1000,
+    },
 }
