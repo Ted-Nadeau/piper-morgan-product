@@ -449,9 +449,21 @@ def get_or_create_context(
     """
     key = _context_key(session_id, user_id)
     if key not in _conversation_contexts:
+        # Defensive UUID parsing — session_id may not be a valid UUID
+        # (e.g., "default_session" for unauthenticated users)
+        try:
+            parsed_session = UUID(session_id) if session_id else uuid4()
+        except (ValueError, AttributeError):
+            parsed_session = uuid4()
+
+        try:
+            parsed_user = UUID(user_id) if user_id else None
+        except (ValueError, AttributeError):
+            parsed_user = None
+
         _conversation_contexts[key] = ConversationContext(
-            session_id=UUID(session_id) if session_id else uuid4(),
-            user_id=UUID(user_id) if user_id else None,
+            session_id=parsed_session,
+            user_id=parsed_user,
         )
     return _conversation_contexts[key]
 
