@@ -61,6 +61,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
             "/redoc",
             "/openapi.json",
             "/health",
+            "/api/v1/health",  # Issue #906: Health check at versioned API path
             "/login",  # Issue #393: Login UI page
             "/setup",  # Issue #390: Setup wizard UI page
             "/api/setup",  # Issue #390: Setup wizard API endpoints
