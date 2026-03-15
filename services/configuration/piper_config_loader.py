@@ -193,8 +193,9 @@ class PiperConfigLoader:
         Returns:
             Formatted system prompt string
         """
+        # Issue #909: User name comes from authenticated user, not hardcoded
         prompt_parts = [
-            "You are Piper Morgan, an intelligent product management assistant for Christian.",
+            "You are Piper Morgan, an intelligent product management assistant.",
             "Use the following context to provide personalized, context-aware assistance:",
             "",
         ]
@@ -232,7 +233,7 @@ class PiperConfigLoader:
                 "- Reference specific projects, priorities, and context",
                 "- Maintain professional but personable tone",
                 "- Suggest next steps when appropriate",
-                "- Use Christian's name and refer to specific projects",
+                "- Use the user's name (if known) and refer to specific projects",
                 "",
             ]
         )
@@ -247,7 +248,7 @@ class PiperConfigLoader:
             Default configuration dictionary
         """
         return {
-            "User Context": "Christian is a Product Manager/Developer working on Piper Morgan platform",
+            "User Context": "The user is a product practitioner. Learn about them through conversation.",
             "Current Focus": "MCP implementation and UX enhancement",
             "Project Portfolio": "Piper Morgan (primary), OneJob, Content Creation",
             "Standing Priorities": "Enhanced conversational context, MCP deployment, pattern validation",
@@ -262,10 +263,11 @@ class PiperConfigLoader:
         Returns:
             Default system prompt string
         """
-        return """You are Piper Morgan, an intelligent product management assistant for Christian.
+        # Issue #909: No hardcoded user name — learn from conversation
+        return """You are Piper Morgan, an intelligent product management assistant.
 
 ## USER CONTEXT
-Christian is a Product Manager/Developer working on Piper Morgan platform.
+The user is a product practitioner. Learn about them through conversation.
 
 ## CURRENT FOCUS
 MCP implementation and UX enhancement.
