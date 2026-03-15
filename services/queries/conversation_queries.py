@@ -1,8 +1,10 @@
 """
 Service for handling simple conversational queries with PIPER.md context integration
 
-This service now provides context-aware responses based on Christian's personal
+This service provides context-aware responses based on the user's
 configuration, improving the standup experience and conversational flow.
+
+Issue #909: Removed hardcoded user name — greetings no longer assume identity.
 """
 
 from datetime import datetime
@@ -23,13 +25,13 @@ class ConversationQueryService:
         # Check if it's morning standup time
         current_hour = datetime.now().hour
         if 5 <= current_hour <= 7:
-            return "Good morning, Christian! Ready for our daily standup? I have your current priorities and project status ready."
+            return "Good morning! Ready for our daily standup? I have your current priorities and project status ready."
         elif 8 <= current_hour <= 11:
-            return "Good morning, Christian! How can I help you with today's development work?"
+            return "Good morning! How can I help you with today's work?"
         elif 12 <= current_hour <= 16:
-            return "Good afternoon, Christian! What would you like to focus on this afternoon?"
+            return "Good afternoon! What would you like to focus on this afternoon?"
         else:
-            return "Hello, Christian! How can I assist you today?"
+            return "Hello! How can I assist you today?"
 
     async def get_help(self) -> str:
         """Returns a context-aware help message."""
@@ -80,7 +82,7 @@ class ConversationQueryService:
             "",
             "**Current Focus**: " + current_focus,
             "**Configuration**: PIPER.md loaded and active",
-            "**Context**: Personalized for Christian's workflow",
+            "**Context**: Personalized for your workflow",
             "**Status**: Ready for context-aware assistance",
         ]
 
@@ -91,7 +93,7 @@ class ConversationQueryService:
         config = self.config_loader.load_config()
 
         if not config:
-            return "Hello to you too, Christian! How can I help you today?"
+            return "Hello to you too! How can I help you today?"
 
         # Get user context and current focus
         user_context = config.get("User Context", "")
@@ -103,13 +105,13 @@ class ConversationQueryService:
 
         if is_standup_time:
             return (
-                "Good morning, Christian! Perfect timing for our daily standup. "
+                "Good morning! Perfect timing for our daily standup. "
                 "I have your current priorities, project status, and calendar context ready. "
                 "What would you like to review first?"
             )
         else:
             return (
-                f"Hello, Christian! I'm ready to assist you with {current_focus.lower()}. "
+                f"Hello! I'm ready to assist you with {current_focus.lower()}. "
                 "How can I help you today?"
             )
 
@@ -121,7 +123,7 @@ class ConversationQueryService:
             "**Name**: Piper Morgan",
             "**Role**: Your intelligent product management assistant",
             "**Specialization**: MCP integration, project management, and development support",
-            "**Context**: Personalized for Christian's workflow and priorities",
+            "**Context**: Personalized for your workflow and priorities",
             "**Capabilities**: Context-aware responses, project tracking, knowledge navigation",
         ]
 
