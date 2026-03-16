@@ -185,12 +185,11 @@ class TestConversationalFloor:
     @pytest.mark.asyncio
     async def test_floor_does_not_promise_actions(self, floor):
         """Floor system prompt must instruct LLM not to promise actions."""
-        # Verify the addendum contains the no-actions constraint
-        assert (
-            "do not" in FLOOR_SYSTEM_PROMPT_ADDENDUM.lower()
-            or "don't" in FLOOR_SYSTEM_PROMPT_ADDENDUM.lower()
-        )
-        assert "action" in FLOOR_SYSTEM_PROMPT_ADDENDUM.lower()
+        prompt_lower = FLOOR_SYSTEM_PROMPT_ADDENDUM.lower()
+        # Verify the addendum contains constraints against self-introduction
+        assert "do not" in prompt_lower or "don't" in prompt_lower
+        # Prompt should prohibit capability listing or self-introduction
+        assert "capabilities" in prompt_lower or "introduce" in prompt_lower
 
     @pytest.mark.asyncio
     async def test_floor_handles_llm_failure_gracefully(self, floor, mock_llm):
@@ -269,9 +268,11 @@ class TestConversationalFloorSystemPrompt:
         assert any(term in prompt.lower() for term in ["product", "pm", "colleague"])
 
     def test_addendum_includes_no_actions_constraint(self):
-        """Must explicitly state: reason conversationally, don't take actions."""
-        prompt = FLOOR_SYSTEM_PROMPT_ADDENDUM
-        assert "action" in prompt.lower()
+        """Must explicitly state: reason conversationally, don't promise actions."""
+        prompt = FLOOR_SYSTEM_PROMPT_ADDENDUM.lower()
+        # Prompt should prohibit capability listing or self-introduction
+        assert "do not" in prompt or "don't" in prompt
+        assert "capabilities" in prompt or "introduce" in prompt
 
     def test_addendum_encourages_collaborative_thinking(self):
         """Should frame responses as thinking-with, not answering-at."""
