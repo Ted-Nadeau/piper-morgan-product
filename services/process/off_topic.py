@@ -52,21 +52,50 @@ class OffTopicResult:
 # Conservative: only things that could never be a process response.
 GENERIC_OFF_TOPIC_PATTERNS: List[Tuple[re.Pattern, str]] = [
     # Weather/time queries
-    (re.compile(r"\b(?:what(?:'s| is) the weather|weather (?:forecast|today|tomorrow|outside)|is it raining)\b", re.I), "weather_query"),
-    (re.compile(r"\b(?:what time is it|what(?:'s| is) the time|current time)\b", re.I), "time_query"),
+    (
+        re.compile(
+            r"\b(?:what(?:'s| is) the weather|weather (?:forecast|today|tomorrow|outside)|is it raining)\b",
+            re.I,
+        ),
+        "weather_query",
+    ),
+    (
+        re.compile(r"\b(?:what time is it|what(?:'s| is) the time|current time)\b", re.I),
+        "time_query",
+    ),
     (re.compile(r"\b(?:what(?:'s| is) today(?:'s| s)? date|what day is it)\b", re.I), "date_query"),
-
     # Identity/capability queries about Piper
-    (re.compile(r"\b(?:who are you|what are you|tell me about yourself)\b", re.I), "identity_query"),
-    (re.compile(r"\b(?:what can you (?:do|help)|show me your capabilities|your capabilities)\b", re.I), "capability_query"),
-
+    (
+        re.compile(r"\b(?:who are you|what are you|tell me about yourself)\b", re.I),
+        "identity_query",
+    ),
+    (
+        re.compile(
+            r"\b(?:what can you (?:do|help)|show me your capabilities|your capabilities)\b", re.I
+        ),
+        "capability_query",
+    ),
     # Unrelated commands/requests
-    (re.compile(r"\b(?:tell me a joke|sing me a song|write me a poem)\b", re.I), "entertainment_request"),
-    (re.compile(r"\b(?:what(?:'s| is) the meaning of life|meaning of life)\b", re.I), "philosophical_query"),
-    (re.compile(r"\b(?:translate|convert|calculate)\b.*\b(?:to|into|from)\b", re.I), "utility_request"),
-
+    (
+        re.compile(r"\b(?:tell me a joke|sing me a song|write me a poem)\b", re.I),
+        "entertainment_request",
+    ),
+    (
+        re.compile(r"\b(?:what(?:'s| is) the meaning of life|meaning of life)\b", re.I),
+        "philosophical_query",
+    ),
+    (
+        re.compile(r"\b(?:translate|convert|calculate)\b.*\b(?:to|into|from)\b", re.I),
+        "utility_request",
+    ),
     # Explicit topic changes
-    (re.compile(r"^(?:by the way|btw|oh wait|actually|hey|so)\b[,.]?\s*(?:can you|could you|would you|do you)", re.I), "topic_change"),
+    (
+        re.compile(
+            r"^(?:by the way|btw|oh wait|actually|hey|so)\b[,.]?\s*(?:can you|could you|would you|do you)",
+            re.I,
+        ),
+        "topic_change",
+    ),
 ]
 
 
@@ -80,7 +109,10 @@ ONBOARDING_ON_TOPIC_PATTERNS: List[re.Pattern] = [
     re.compile(r"github\.com|gitlab\.com|bitbucket", re.I),
     re.compile(r"\b(?:project|repo|repository|app|service|api|website|site)\b", re.I),
     # Affirmative/negative responses to prompts
-    re.compile(r"^(?:yes|no|yeah|nah|sure|ok|okay|yep|nope|not really|none|nothing|that(?:'s| is) (?:it|all))\b", re.I),
+    re.compile(
+        r"^(?:yes|no|yeah|nah|sure|ok|okay|yep|nope|not really|none|nothing|that(?:'s| is) (?:it|all))\b",
+        re.I,
+    ),
     # Numbers (project counts, etc.)
     re.compile(r"^\d+$"),
     # Short names (likely project names) — max 3 words, no question marks
@@ -96,7 +128,10 @@ STANDUP_ON_TOPIC_PATTERNS: List[re.Pattern] = [
     re.compile(r"\b(?:meeting|sync|standup|retro|review|planning)\b", re.I),
     re.compile(r"\b(?:today|yesterday|tomorrow|this week|last week)\b", re.I),
     # Affirmative/negative
-    re.compile(r"^(?:yes|no|yeah|nah|sure|ok|okay|yep|nope|not really|none|nothing|that(?:'s| is) (?:it|all))\b", re.I),
+    re.compile(
+        r"^(?:yes|no|yeah|nah|sure|ok|okay|yep|nope|not really|none|nothing|that(?:'s| is) (?:it|all))\b",
+        re.I,
+    ),
 ]
 
 SLOT_FILLING_ON_TOPIC_PATTERNS: List[re.Pattern] = [

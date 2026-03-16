@@ -1350,13 +1350,16 @@ class IntentService:
                         await self._persist_onboarding_projects(user_id, captured_projects)
                         print(f"[IntentService] _persist_onboarding_projects completed")
 
-                return IntentProcessingResult(
-                    success=True,
-                    message=result.response_message or "",
-                    intent_data=result.intent_data,
-                    workflow_id=None,
-                    requires_clarification=False,
-                ), None
+                return (
+                    IntentProcessingResult(
+                        success=True,
+                        message=result.response_message or "",
+                        intent_data=result.intent_data,
+                        workflow_id=None,
+                        requires_clarification=False,
+                    ),
+                    None,
+                )
 
             return None, None
 
