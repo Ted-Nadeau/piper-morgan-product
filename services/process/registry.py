@@ -113,6 +113,36 @@ class ProcessCheckResult:
         )
 
     @classmethod
+    def off_topic_pause(
+        cls,
+        process_type: ProcessType,
+        pause_message: str,
+    ) -> "ProcessCheckResult":
+        """
+        Process was paused because user sent an off-topic message.
+
+        Issue #899: Layer C escape. Unlike escaped_from(), this returns
+        handled=False so normal intent processing can answer the user's
+        actual question. The pause_message is prepended by IntentService.
+        """
+        return cls(
+            handled=False,  # Let intent processing handle the actual question
+            escaped=True,
+            process_type=process_type,
+            response_message=pause_message,
+            intent_data={
+                "category": "guidance",
+                "action": "off_topic_pause",
+                "confidence": 1.0,
+                "context": {
+                    "paused_process": process_type.value,
+                    "bypassed_classification": False,  # Intent processing continues
+                    "off_topic_detected": True,
+                },
+            },
+        )
+
+    @classmethod
     def escaped_from(
         cls,
         process_type: ProcessType,
@@ -295,6 +325,24 @@ class ProcessRegistry:
                 return True
         return False
 
+    def _check_off_topic(self, message: str, process_type: ProcessType):
+        """
+        Check if a message is off-topic for the active process.
+
+        Issue #899: Layer C escape — conservative off-topic detection.
+        Returns OffTopicResult if detection ran, None if module unavailable.
+        """
+        try:
+            from services.process.off_topic import OffTopicResult, detect_off_topic
+
+            return detect_off_topic(message, process_type)
+        except Exception as e:
+            logger.warning(
+                "Off-topic detection failed, allowing message through",
+                error=str(e),
+            )
+            return None
+
     def _is_escape_command(self, message: str) -> bool:
         """
         Check if a message is an escape command.
@@ -406,6 +454,36 @@ class ProcessRegistry:
                                 f"No problem — I've paused {handler.process_type.value}. "
                                 "We can pick it up anytime."
                             ),
+                        )
+
+                    # Issue #899: Layer C — off-topic detection.
+                    # Check if the message is clearly unrelated to the active process.
+                    # Conservative: only clear non-sequiturs trigger auto-pause.
+                    off_topic_result = self._check_off_topic(message, handler.process_type)
+                    if off_topic_result is not None and off_topic_result.is_off_topic:
+                        logger.info(
+                            "Off-topic message detected during guided process",
+                            process_type=handler.process_type.value,
+                            pattern=off_topic_result.matched_pattern,
+                            user_id=user_id,
+                            session_id=session_id,
+                        )
+                        # Option A UX: auto-pause + let normal intent processing answer
+                        try:
+                            await handler.suspend(user_id, session_id)
+                        except Exception as suspend_err:
+                            logger.warning(
+                                "Error suspending process after off-topic detection",
+                                process_type=handler.process_type.value,
+                                error=str(suspend_err),
+                            )
+
+                        from services.process.off_topic import format_off_topic_pause_message
+
+                        pause_msg = format_off_topic_pause_message(handler.process_type)
+                        return ProcessCheckResult.off_topic_pause(
+                            process_type=handler.process_type,
+                            pause_message=pause_msg,
                         )
 
                     # Let the handler process the message

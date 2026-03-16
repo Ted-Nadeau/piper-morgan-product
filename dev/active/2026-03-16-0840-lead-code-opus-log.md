@@ -70,3 +70,30 @@ Everything on main. PM questions saved to `dev/active/pm-questions-899-898.md`.
 
 ### Questions Saved for PM
 See `dev/active/pm-questions-899-898.md`
+
+---
+
+## Session Resumed (after compaction)
+
+### #913 Phase 2 Audit Fixes — All Complete
+
+Completed remaining 5 audit fix items:
+
+1. **✅ Core IDENTITY rewrite** — Done before compaction
+2. **✅ Continuation rate logging** — Added `last_response_was_floor` / `last_floor_category` to `ConversationContext`. All 3 floor paths (action gate, unknown, guidance) set the flag. `process_intent()` checks on next request and logs `floor_continuation_detected`. 3 new tests.
+3. **✅ Q2 test expectation** — Updated `test_concierge.py` from IDENTITY → DISCOVERY for "what can you do?" queries.
+4. **✅ Q16 investigation** — Confirmed test env artifact (missing GITHUB_TOKEN). No code fix needed.
+5. **✅ Quality verification queries** — 10 queries from addendum documented in `913-phase2-audit.md`.
+
+**Test results**: 1235 passed, 0 failed (intent service suite)
+
+**Committed**: `feat(#913): Phase 2 Action Gate, Context Assembler, and audit fixes` + style fixup
+**Merged to main and pushed**: ✅
+
+### Audit Status
+All 21 requirements from synthesis memo + addendum now fully met. Audit document updated with all green checkmarks.
+
+### Remaining for PM
+- **#911 floor quality retest**: 10 verification queries ready for PM testing
+- **#902 PM testing**: Close/reopen features await verification
+- **#899 implementation**: PM approved all 4 decisions; ready to start

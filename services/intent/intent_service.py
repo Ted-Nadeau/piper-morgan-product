@@ -417,6 +417,9 @@ class IntentService:
             IntentProcessingError: If processing fails
         """
         try:
+            # Issue #899: Off-topic pause message prefix (set by guided process check)
+            off_topic_prefix = None
+
             # Issue #838: Load formality baseline from PersonalityProfile
             # Must load early — needed by pending offer handling and soft offer detection.
             formality_baseline = None
@@ -578,7 +581,7 @@ class IntentService:
             # Domain invariant: Once a user enters a guided process (onboarding, standup, etc.),
             # ALL their messages belong to that process until completion/exit.
             # This check MUST run before any classification.
-            guided_process_result = await self._check_active_guided_process(
+            guided_process_result, off_topic_prefix = await self._check_active_guided_process(
                 user_id=user_id,
                 session_id=session_id,
                 message=message,
@@ -1256,6 +1259,16 @@ class IntentService:
                 except Exception as e:
                     self.logger.error(f"Learning Handler: Outcome recording failed: {e}")
 
+            # Issue #899: Prepend off-topic pause message if process was auto-paused
+            if off_topic_prefix and result.message:
+                result = IntentProcessingResult(
+                    success=result.success,
+                    message=f"{off_topic_prefix}\n\n{result.message}",
+                    intent_data=result.intent_data,
+                    workflow_id=result.workflow_id,
+                    requires_clarification=result.requires_clarification,
+                )
+
             return result
 
         except Exception as e:
@@ -1264,7 +1277,7 @@ class IntentService:
 
     async def _check_active_guided_process(
         self, user_id: str, session_id: str, message: str
-    ) -> Optional[IntentProcessingResult]:
+    ) -> tuple[Optional[IntentProcessingResult], Optional[str]]:
         """
         ADR-049: Check for active guided processes before intent classification.
 
@@ -1273,18 +1286,31 @@ class IntentService:
 
         Guided processes include: onboarding, standup, planning, feedback, etc.
 
+        Issue #899: Returns a tuple of (result, off_topic_prefix). When off-topic
+        detection triggers, result is None (proceed with normal processing) and
+        off_topic_prefix contains the pause message to prepend to the response.
+
         Args:
             user_id: Authenticated user ID
             session_id: Session identifier
             message: User's message
 
         Returns:
-            IntentProcessingResult if a guided process handled the message,
-            None if no active process (proceed with normal classification)
+            Tuple of (IntentProcessingResult or None, off_topic_prefix or None)
         """
         try:
             registry = get_process_registry()
             result = await registry.check_active_processes(user_id, session_id, message)
+
+            # Issue #899: Off-topic pause — process was suspended but message
+            # should go through normal intent processing
+            if not result.handled and result.escaped and result.response_message:
+                self.logger.info(
+                    "Off-topic detected, process paused, continuing to intent processing",
+                    process_type=result.process_type.value if result.process_type else None,
+                    user_id=user_id,
+                )
+                return None, result.response_message
 
             if result.handled:
                 self.logger.info(
@@ -1330,13 +1356,13 @@ class IntentService:
                     intent_data=result.intent_data,
                     workflow_id=None,
                     requires_clarification=False,
-                )
+                ), None
 
-            return None
+            return None, None
 
         except Exception as e:
             self.logger.warning(f"Could not check active guided processes: {e}")
-            return None
+            return None, None
 
     async def _check_pending_onboarding_offer(
         self, user_id: str, message: str
