@@ -262,10 +262,6 @@ async def process_intent(
                     has_sub=bool(current_user.sub),
                 )
 
-        # DEBUG Issue #490: Trace authentication flow
-        print(
-            f"DEBUG #490: intent route - has_current_user={current_user is not None}, user_id={user_id}, has_auth_cookie={'auth_token' in request.cookies}"
-        )
         logger.info(
             "intent_route_auth_trace",
             has_current_user=current_user is not None,

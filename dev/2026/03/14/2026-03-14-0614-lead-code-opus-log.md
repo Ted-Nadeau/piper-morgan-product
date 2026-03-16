@@ -161,7 +161,78 @@ Handler existed but had 3 gaps: only number-based completion, no completed todos
 
 All 23 tests pass. Merged to main, pushed to origin (`07d40b16`).
 
-### Issues closed this session: #705, #352
-### Issues filed this session: #905, #906, #908
+---
+
+## 22:15 — #909 Hardcoded User Name Removal
+
+PM tested floor response and noticed "Hey Christian!" — LLM picked it up from system prompt.
+Scan found 15 hardcoded "Christian" references in 2 files:
+- `piper_config_loader.py` (5): system prompt, behavior guidelines, default config
+- `conversation_queries.py` (10): greetings, status, identity
+
+All replaced with generic user-agnostic text. Filed #909, fixed, merged, pushed (`95997463`).
+
+## 22:30 — #907 Phase 2 Assessment
+
+Floor instrumentation already solid:
+- `FloorResponse.to_log_dict()` with structured data
+- `conversational_floor_hit` log event with session_id, user_id, intent details
+- `floor_hit: True` in `intent_data` for API responses
+- `canonical_generic_detected_routing_to_floor` for interception path
+No additional instrumentation needed for alpha.
+
+## 23:07 — Session Wrap-Up
+
+PM confirmed floor working (screenshot!), will test preferences tomorrow.
+
+### "Failed to fetch" error — Investigation Complete
+
+PM reported: "Well, I've been testing some upgrades..." → "Failed to fetch"
+Messages before and after worked fine.
+
+**"Failed to fetch" = browser fetch() never got a response.** Not a server error — the HTTP connection itself failed.
+
+**Traced the full request path:**
+1. `chat.js:432` → POST `/api/v1/intent`
+2. `intent.py:213` → `process_intent()` (has top-level try/except returning 200 with degradation)
+3. `intent_service.py:322` → classification → CONVERSATION handler
+4. `conversation_handler.py:90` → `respond()` method
+
+**All exception paths are wrapped:**
+- Route has try/except returning 200 degradation response (line 367)
+- ConversationHandler.respond() has try/except on onboarding (line 407)
+- Calendar summary has try/except (line 140)
+- Onboarding persistence has try/except (line 407)
+
+**No code path can produce "Failed to fetch" via exception** — server always returns JSON.
+
+**Most likely cause: server restart timing.** PM killed and restarted the server around that time. The message sequence:
+1. "Hi Piper" → worked (old or new server)
+2. "Well, I've been testing..." → **server was down between kill/restart**
+3. "Can you help me manage..." → worked (new server with floor code)
+
+The greeting response for message 1 included calendar data, confirming the server was running. Then it was killed, message 2 hit during the gap, and message 3 hit the new server.
+
+**UPDATE 23:17**: PM pointed out messages 2 and 3 were both at 10:06 PM — seconds apart. Server restart can't explain it. Deeper investigation:
+
+**Subagent finding**: `print()` on line 267 of `intent.py` (DEBUG #490 trace) could raise `BrokenPipeError` if stdout has issues. However, it IS inside the route's try/except block (line 234-378), so this should be caught. Not fully confident this is the cause.
+
+**Other possibilities examined and ruled out:**
+- No middleware reads request body (no stream consumption issue)
+- Auth middleware doesn't crash on valid cookies
+- DB session disposal is wrapped in try/except
+- All conversation handler paths have exception handling
+
+**Plan for tomorrow**: Reproduce with PM watching console + terminal output. That will give definitive answer. The `print()` statement should be removed regardless (use logger instead).
+
+### Issues closed this full session: #705, #352
+### Issues fixed (awaiting closure): #905, #906, #904, #907, #909
+### Issues filed this session: #905, #906, #908, #909
+
+### Pending for next session
+- #375 preference detection QA (PM testing tomorrow)
+- #907 Phase 3/Z (verification + closure after PM confirms)
+- "Failed to fetch" error investigation
+- Roundtable synthesis memo (informational)
 
 ---
