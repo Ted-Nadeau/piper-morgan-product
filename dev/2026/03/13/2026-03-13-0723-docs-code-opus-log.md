@@ -36,3 +36,8 @@ PM greeted, confirmed date (Fri Mar 13, 7:23 AM). Mailbox: empty. Context:
   - #904 CANONICAL-TODO-COMPLETE — enhancement (M3)
   - Note: Dropped non-existent labels (M1, M3, canonical-queries) — used valid repo labels only
   - Drafts moved from inbox → read
+- [x] Created GitHub labels: `M1`, `canonical-queries`
+- [x] Updated #901-#904 with revised CXO drafts (all moved to M1), added M1 + canonical-queries labels
+  - Second set of drafts moved from inbox → read
+
+**Session end**: ~3:30 PM

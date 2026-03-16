@@ -7,6 +7,12 @@
 - **Local Directory Name**: `piper-morgan` (legacy naming, but repo is `piper-morgan-product`)
 - **NEVER use**: `Codewarrior1988/piper-morgan` (this is a hallucinated URL that has infected docs)
 
+**Branch Discipline**:
+- **`main`**: Active development. Agents work here or on feature branches/worktrees (`claude/*`).
+- **`production`**: Released builds only. Alpha testers pull from this branch.
+- Releases are tagged on `main` and pushed to `production`. No post-tag work lands on `production`.
+- Upgrade instructions in release notes should reference `production`, not `main`.
+
 ## Vision
 
 Piper Morgan is an intelligent PM assistant that transforms how product managers work with AI agents. By combining spatial intelligence, domain-driven design, and systematic orchestration, Piper becomes a true thought partner who learns and adapts to each PM's unique style and needs.
@@ -141,4 +147,4 @@ _Welcome to the Piper Morgan project. Your contribution matters._
 
 **Document Maintenance**: This document describes stable project context. For current state (version, sprint position, active issues), always check `docs/briefing/BRIEFING-CURRENT-STATE.md`.
 
-*Last Updated: January 16, 2026*
+*Last Updated: March 14, 2026*
