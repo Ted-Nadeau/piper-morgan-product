@@ -205,10 +205,7 @@ class ConversationalFloor:
 
         # Context about what Piper detected (helps the LLM understand the routing)
         # Issue #911: Skip for categories that are intentionally floor-routed
-        if (
-            ctx.intent_category
-            and ctx.intent_category not in self._FLOOR_NATIVE_CATEGORIES
-        ):
+        if ctx.intent_category and ctx.intent_category not in self._FLOOR_NATIVE_CATEGORIES:
             parts.append(
                 f"\n[Context: The user's message was classified as '{ctx.intent_category}' "
                 f"(action: '{ctx.intent_action}') but no specialized handler is available "
@@ -245,9 +242,7 @@ class ConversationalFloor:
                     f"{fb.get('duration_minutes', '?')} minutes"
                 )
             if cal.get("time_available_minutes") is not None:
-                lines.append(
-                    f"- Minutes until next commitment: {cal['time_available_minutes']}"
-                )
+                lines.append(f"- Minutes until next commitment: {cal['time_available_minutes']}")
 
         if "projects" in domain_context:
             proj = domain_context["projects"]

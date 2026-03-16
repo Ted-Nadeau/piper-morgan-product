@@ -5,14 +5,12 @@ Verifies that GUIDANCE intents route through the conversational floor with
 assembled domain context instead of through canonical template handlers.
 """
 
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
 from dataclasses import asdict
+from unittest.mock import AsyncMock, MagicMock, patch
 
-from services.intent_service.conversational_floor import (
-    ConversationalFloor,
-    FloorContext,
-)
+import pytest
+
+from services.intent_service.conversational_floor import ConversationalFloor, FloorContext
 
 
 class TestFloorContextDomainContext:
@@ -48,58 +46,66 @@ class TestFormatDomainContext:
         assert "Current time: 3:00 PM" in result
 
     def test_calendar_next_meeting(self):
-        result = self.floor._format_domain_context({
-            "calendar": {
-                "next_meeting": {"title": "Sprint Review", "start": "4:00 PM"},
+        result = self.floor._format_domain_context(
+            {
+                "calendar": {
+                    "next_meeting": {"title": "Sprint Review", "start": "4:00 PM"},
+                }
             }
-        })
+        )
         assert 'Next meeting: "Sprint Review" at 4:00 PM' in result
 
     def test_calendar_free_block(self):
-        result = self.floor._format_domain_context({
-            "calendar": {
-                "next_free_block": {"start": "2:00 PM", "duration_minutes": 60},
+        result = self.floor._format_domain_context(
+            {
+                "calendar": {
+                    "next_free_block": {"start": "2:00 PM", "duration_minutes": 60},
+                }
             }
-        })
+        )
         assert "Next free block: 2:00 PM" in result
         assert "60 minutes" in result
 
     def test_projects_with_issues(self):
-        result = self.floor._format_domain_context({
-            "projects": {
-                "Klatch": {"open_issues_count": 12, "has_github": True},
-                "Piper": {"open_issues_count": 5, "has_github": True},
+        result = self.floor._format_domain_context(
+            {
+                "projects": {
+                    "Klatch": {"open_issues_count": 12, "has_github": True},
+                    "Piper": {"open_issues_count": 5, "has_github": True},
+                }
             }
-        })
+        )
         assert '"Klatch": 12 open issues' in result
         assert '"Piper": 5 open issues' in result
 
     def test_projects_as_list(self):
         """When projects are just names without metadata."""
-        result = self.floor._format_domain_context({
-            "projects": ["Klatch", "Piper"]
-        })
+        result = self.floor._format_domain_context({"projects": ["Klatch", "Piper"]})
         assert '"Klatch": tracked' in result
         assert '"Piper": tracked' in result
 
     def test_priorities_rendered(self):
-        result = self.floor._format_domain_context({
-            "priorities": {
-                "user_priorities": ["Ship v2", "Onboard beta users"],
-                "urgent_items": 3,
+        result = self.floor._format_domain_context(
+            {
+                "priorities": {
+                    "user_priorities": ["Ship v2", "Onboard beta users"],
+                    "urgent_items": 3,
+                }
             }
-        })
+        )
         assert "Ship v2" in result
         assert "Onboard beta users" in result
         assert "High-priority issues: 3" in result
 
     def test_full_context_all_sections(self):
-        result = self.floor._format_domain_context({
-            "current_time": "3:00 PM",
-            "calendar": {"next_meeting": {"title": "Standup", "start": "3:30 PM"}},
-            "projects": {"MyApp": {"open_issues_count": 7}},
-            "priorities": {"user_priorities": ["Launch"], "urgent_items": 1},
-        })
+        result = self.floor._format_domain_context(
+            {
+                "current_time": "3:00 PM",
+                "calendar": {"next_meeting": {"title": "Standup", "start": "3:30 PM"}},
+                "projects": {"MyApp": {"open_issues_count": 7}},
+                "priorities": {"user_priorities": ["Launch"], "urgent_items": 1},
+            }
+        )
         assert "Current time: 3:00 PM" in result
         assert "Standup" in result
         assert '"MyApp": 7 open issues' in result

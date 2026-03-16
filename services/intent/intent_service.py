@@ -9335,9 +9335,7 @@ Content to summarize:
         try:
             from services.user_context_service import user_context_service
 
-            user_context = await user_context_service.get_user_context(
-                session_id, user_id
-            )
+            user_context = await user_context_service.get_user_context(session_id, user_id)
         except Exception:
             pass
 
@@ -9366,15 +9364,9 @@ Content to summarize:
             priority_metadata = await handlers._get_priority_metadata(user_id=user_id)
             if priority_metadata:
                 context["priorities"] = {
-                    "user_priorities": (
-                        user_context.priorities if user_context else []
-                    ),
-                    "urgent_items": len(
-                        priority_metadata.get("high_priority_issues", [])
-                    ),
-                    "total_open_issues": priority_metadata.get(
-                        "total_open_issues", 0
-                    ),
+                    "user_priorities": (user_context.priorities if user_context else []),
+                    "urgent_items": len(priority_metadata.get("high_priority_issues", [])),
+                    "total_open_issues": priority_metadata.get("total_open_issues", 0),
                 }
             elif user_context and user_context.priorities:
                 context["priorities"] = {
@@ -9407,15 +9399,10 @@ Content to summarize:
             original_message=intent.original_message,
         )
 
-        from services.intent_service.conversational_floor import (
-            ConversationalFloor,
-            FloorContext,
-        )
+        from services.intent_service.conversational_floor import ConversationalFloor, FloorContext
 
         # Assemble domain context (calendar, projects, priorities)
-        domain_context = await self._assemble_guidance_context(
-            intent, session_id, user_id
-        )
+        domain_context = await self._assemble_guidance_context(intent, session_id, user_id)
 
         # Gather conversation history (same pattern as _handle_unknown_intent)
         history = []
@@ -9424,9 +9411,7 @@ Content to summarize:
             for turn in conv_context.turns[-6:]:
                 history.append({"role": "user", "content": turn.message})
                 if hasattr(turn, "response") and turn.response:
-                    history.append(
-                        {"role": "assistant", "content": turn.response}
-                    )
+                    history.append({"role": "assistant", "content": turn.response})
         except Exception as e:
             self.logger.warning(
                 "guidance_floor_history_unavailable",
