@@ -716,7 +716,10 @@ class TestCloseIssueResults:
 
             # With fuzzy matching, no search terms extracted → asks for issue number
             assert result.requires_clarification is True
-            assert "issue number" in result.message.lower() or "couldn't find" in result.message.lower()
+            assert (
+                "issue number" in result.message.lower()
+                or "couldn't find" in result.message.lower()
+            )
 
     @pytest.mark.asyncio
     async def test_close_issue_returns_graceful_message_when_github_not_configured(

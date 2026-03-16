@@ -326,9 +326,7 @@ class TestExtractSearchTerms:
         assert result == ""
 
     def test_preserves_meaningful_words(self):
-        result = IntentService._extract_search_terms(
-            "close the search feature bug", "close"
-        )
+        result = IntentService._extract_search_terms("close the search feature bug", "close")
         assert "search" in result
         assert "feature" in result
         assert "bug" in result

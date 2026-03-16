@@ -3164,8 +3164,21 @@ class IntentService:
         text = message.lower().strip()
         # Strip common command words and filler
         strip_words = [
-            "close", "reopen", "re-open", "issue", "the", "that", "this",
-            "please", "can", "you", "a", "an", "my", "our", "it",
+            "close",
+            "reopen",
+            "re-open",
+            "issue",
+            "the",
+            "that",
+            "this",
+            "please",
+            "can",
+            "you",
+            "a",
+            "an",
+            "my",
+            "our",
+            "it",
         ]
         for word in strip_words:
             text = _re.sub(rf"\b{word}\b", "", text)
@@ -3307,9 +3320,7 @@ class IntentService:
                     elif len(matches) > 1:
                         lines = ["I found a few issues that might match:"]
                         for _score, issue in matches[:5]:
-                            lines.append(
-                                f"- #{issue.get('number')}: {issue.get('title', '')}"
-                            )
+                            lines.append(f"- #{issue.get('number')}: {issue.get('title', '')}")
                         lines.append("\nWhich one would you like to close?")
                         return IntentProcessingResult(
                             success=False,
@@ -3464,9 +3475,7 @@ class IntentService:
                     elif len(matches) > 1:
                         lines = ["I found a few issues that might match:"]
                         for _score, issue in matches[:5]:
-                            lines.append(
-                                f"- #{issue.get('number')}: {issue.get('title', '')}"
-                            )
+                            lines.append(f"- #{issue.get('number')}: {issue.get('title', '')}")
                         lines.append("\nWhich one would you like to reopen?")
                         return IntentProcessingResult(
                             success=False,
