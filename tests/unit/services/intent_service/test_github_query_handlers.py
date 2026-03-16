@@ -695,7 +695,7 @@ class TestCloseIssueResults:
 
     @pytest.mark.asyncio
     async def test_handles_missing_issue_number_for_close(self, intent_service):
-        """Test handling when issue number is missing from close request"""
+        """Test handling when issue number is missing and no fuzzy matches found"""
         intent = Intent(
             category=IntentCategory.QUERY,
             action="close_issue_query",
@@ -708,13 +708,15 @@ class TestCloseIssueResults:
             mock_router = MagicMock()
             mock_router.config_service.is_configured.return_value = True
             mock_router.initialize = AsyncMock()
+            # Fuzzy search returns no matches (empty search terms after stripping "close the issue")
+            mock_router.get_open_issues = AsyncMock(return_value=[])
             MockRouter.return_value = mock_router
 
             result = await intent_service._handle_close_issue_query(intent, "workflow-id")
 
-            assert result.success is False
-            assert "couldn't find an issue number" in result.message
+            # With fuzzy matching, no search terms extracted → asks for issue number
             assert result.requires_clarification is True
+            assert "issue number" in result.message.lower() or "couldn't find" in result.message.lower()
 
     @pytest.mark.asyncio
     async def test_close_issue_returns_graceful_message_when_github_not_configured(
