@@ -2019,6 +2019,9 @@ class IntentService:
         elif intent.action in ["close_issue", "close_issue_query"]:
             return await self._handle_close_issue_query(intent, workflow.id)
 
+        elif intent.action in ["reopen_issue", "reopen_issue_query"]:
+            return await self._handle_reopen_issue_query(intent, workflow.id)
+
         elif intent.action in ["comment_issue", "add_comment", "comment_issue_query"]:
             return await self._handle_comment_issue_query(intent, workflow.id)
 
@@ -3253,6 +3256,116 @@ class IntentService:
                 error=e,
                 context="closing that issue",
                 error_type="GitHubCloseIssueQueryError",
+            )
+
+    async def _handle_reopen_issue_query(
+        self, intent: Intent, workflow_id: str
+    ) -> IntentProcessingResult:
+        """
+        Handle "Reopen issue #X" query.
+
+        Issue #902: Mirror of close issue handler with state="open".
+
+        Args:
+            intent: The classified intent
+            workflow_id: Current workflow ID
+
+        Returns:
+            IntentProcessingResult with confirmation or error
+        """
+        self.logger.info(f"Processing reopen issue query: {intent.action}")
+
+        try:
+            # Import GitHubIntegrationRouter
+            from services.integrations.github.github_integration_router import (
+                GitHubIntegrationRouter,
+            )
+
+            # Initialize router (Issue #891: pass user_id for token lookup)
+            github_router = GitHubIntegrationRouter()
+            _user_id = intent.context.get("user_id") if intent.context else None
+            await github_router.initialize(user_id=_user_id)
+
+            # Check if GitHub is configured
+            if not github_router.config_service.is_configured(_user_id or "system"):
+                return IntentProcessingResult(
+                    success=True,
+                    message=(
+                        "I'd love to reopen issues for you, but GitHub isn't configured yet. "
+                        "To enable GitHub integration, please add your GITHUB_TOKEN to your environment "
+                        "or configure it in PIPER.user.md."
+                    ),
+                    intent_data={
+                        "category": intent.category.value,
+                        "action": intent.action,
+                        "confidence": intent.confidence,
+                    },
+                    workflow_id=workflow_id,
+                    requires_clarification=False,
+                    implemented=False,  # Graceful degradation
+                )
+
+            # Parse issue number from message
+            import re
+
+            original_message = intent.context.get("original_message", "")
+            match = re.search(r"#?(\d+)", original_message)
+
+            if not match:
+                return IntentProcessingResult(
+                    success=False,
+                    message="I couldn't find an issue number in your request. Please specify an issue number (e.g., 'reopen issue #123').",
+                    intent_data={
+                        "category": intent.category.value,
+                        "action": intent.action,
+                        "confidence": intent.confidence,
+                    },
+                    workflow_id=workflow_id,
+                    requires_clarification=True,
+                )
+
+            issue_number = int(match.group(1))
+
+            # Reopen the issue
+            updated_issue = await github_router.update_issue(
+                "piper-morgan-product", issue_number, state="open"
+            )
+
+            # Get issue title for confirmation
+            title = updated_issue.get("title", f"Issue #{issue_number}")
+            url = updated_issue.get("html_url", "")
+
+            message_lines = [
+                f"Successfully reopened issue #{issue_number}: {title}",
+            ]
+
+            if url:
+                message_lines.append(f"{url}")
+
+            message = "\n".join(message_lines)
+
+            return IntentProcessingResult(
+                success=True,
+                message=message,
+                intent_data={
+                    "category": intent.category.value,
+                    "action": intent.action,
+                    "confidence": intent.confidence,
+                    "issue_number": issue_number,
+                    "issue": updated_issue,
+                },
+                workflow_id=workflow_id,
+                requires_clarification=False,
+            )
+
+        except Exception as e:
+            self.logger.error(f"GitHub reopen issue query error: {e}")
+            return self._make_error_result(
+                intent=intent,
+                workflow_id=workflow_id,
+                error=e,
+                context="reopening that issue",
+                error_type="GitHubReopenIssueQueryError",
             )
 
     async def _handle_comment_issue_query(
@@ -4897,12 +5010,18 @@ class IntentService:
                 "Just tell me the first one."
             )
 
-        # Close issues: "close" + "issue"
+        # Close issues — redirect to the working QUERY handler
         if "close" in msg_lower and ("issue" in msg_lower or "completed" in msg_lower):
             return (
-                "I can't close issues yet — that's on my roadmap. For now, you "
-                "can close them directly in GitHub. Want me to show you which "
-                "issues look ready to close?"
+                "I can close issues! Just tell me the issue number, like "
+                "'close issue #123'. Which issue would you like to close?"
+            )
+
+        # Reopen issues — redirect to the working QUERY handler
+        if "reopen" in msg_lower and "issue" in msg_lower:
+            return (
+                "I can reopen issues! Just tell me the issue number, like "
+                "'reopen issue #123'. Which issue would you like to reopen?"
             )
 
         # Post to Slack: "post" + ("channel" or "slack" or "team")

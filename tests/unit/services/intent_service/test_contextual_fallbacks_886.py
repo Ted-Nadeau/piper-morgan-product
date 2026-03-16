@@ -94,15 +94,17 @@ class TestContextualFallbacks:
             mapped_action="close_issue",
             original_message="Close completed issues",
         )
-        assert "can't close issues yet" in result
-        assert "GitHub" in result
+        # Updated after #902: close issues now works, fallback is helpful redirect
+        assert "I can close issues" in result
+        assert "issue number" in result
 
     def test_close_issue_singular(self):
         result = self.service._get_contextual_fallback(
             mapped_action="close_issue",
             original_message="Close the issue about testing",
         )
-        assert "can't close issues yet" in result
+        # Updated after #902: close issues now works
+        assert "I can close issues" in result
 
     # --- Post to Slack ---
 

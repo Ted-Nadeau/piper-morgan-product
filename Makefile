@@ -1,13 +1,15 @@
 # Piper Morgan 1.0 - Makefile
 # PM-056 Schema Validation Integration
 
-.PHONY: help test validate-schema validate-all clean install
+.PHONY: help test validate-schema validate-all clean install lock check-deps
 
 help:
 	@echo "Piper Morgan 1.0 - Available Commands"
 	@echo ""
 	@echo "Development:"
 	@echo "  install     - Install dependencies"
+	@echo "  lock        - Regenerate requirements.lock from current environment"
+	@echo "  check-deps  - Verify installed packages match requirements.txt"
 	@echo "  test        - Run all tests"
 	@echo "  test-unit   - Run unit tests only"
 	@echo "  test-integration - Run integration tests only"
@@ -28,6 +30,22 @@ help:
 # Development Commands
 install:
 	pip install -r requirements.txt
+
+lock:
+	@echo "Regenerating requirements.lock from current environment..."
+	pip freeze > requirements.lock
+	@echo "Lock file updated. Review changes with: git diff requirements.lock"
+
+check-deps:
+	@echo "Checking for version drift between requirements.txt and installed packages..."
+	@python3 -c "\
+	import subprocess, re, sys; \
+	installed = {line.split('==')[0].lower(): line.split('==')[1] for line in subprocess.check_output(['pip', 'freeze']).decode().strip().split('\n') if '==' in line}; \
+	drifted = []; \
+	[drifted.append(f'  {name}: pinned {ver}, installed {installed.get(name.lower(), \"MISSING\")}') for line in open('requirements.txt') if '==' in line and not line.strip().startswith('#') for name, ver in [line.strip().split('==')] if installed.get(name.lower(), ver) != ver]; \
+	print(f'Found {len(drifted)} drifted packages:') if drifted else print('All packages match requirements.txt'); \
+	[print(d) for d in drifted]; \
+	sys.exit(1 if drifted else 0)"
 
 test:
 	python -m pytest tests/ -v

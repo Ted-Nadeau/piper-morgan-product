@@ -35,6 +35,8 @@ ACTION_TO_LENS: dict[str, str] = {
     "list_issues": ConversationalLens.ISSUES,
     "create_issue": ConversationalLens.ISSUES,
     "close_issue": ConversationalLens.ISSUES,
+    "reopen_issue": ConversationalLens.ISSUES,
+    "reopen_issue_query": ConversationalLens.ISSUES,
     "list_blockers": ConversationalLens.ISSUES,
     "count_issues": ConversationalLens.ISSUES,
     "list_pull_requests": ConversationalLens.ISSUES,
