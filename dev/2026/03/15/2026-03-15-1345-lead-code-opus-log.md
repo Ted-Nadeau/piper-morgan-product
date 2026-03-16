@@ -78,3 +78,46 @@ Routing is inverted from what it should be. Canonical handlers are default, floo
 - Pre-existing test failures in `test_create_endpoints_contract.py` and `test_lists_items.py` — both fail before my changes. May be same root cause as #910.
 
 ### Server restarted with Phase 1 live — ready for PM testing
+
+## 8:54 PM — PM Tests Phase 1
+
+PM tested "What should I focus on today?" and the AI agents coordination question again.
+
+### Results
+- "What should I focus on today?" → "You don't have any priorities configured in your PIPER.md yet. Would you like me to help you set up your priority list?" — This is a PRIORITY handler response, not GUIDANCE. The priority handler still runs canonical.
+- AI agents question → Floor response, but still parroting prompt: "Hi there! I'm Piper, your product management assistant. I'm here to help you think through any product, project, or work topic..."
+
+### Diagnosis
+1. PRIORITY handler is a separate category — Phase 1 only covered GUIDANCE. Need to extend floor routing to PRIORITY and other read-only categories.
+2. Floor prompt quality is the root issue for the parroting. The LLM reads its system prompt instructions and echoes them as a self-introduction instead of engaging with the user's actual message.
+
+### Floor prompt fix applied
+Rewrote floor system prompt to be directive (imperative instructions) rather than descriptive (quotable self-descriptions). Changed "I'm here to help you think through..." to instructions like "Respond directly to what the user said."
+
+PM also flagged that memo and reports weren't on main — merged and pushed docs (`64a79fbd`).
+
+## 10:01 PM — Session Wrap
+
+PM heading to bed. Resume tomorrow.
+
+### End-of-Session Status
+
+**Commits today (on main):**
+- `011dc4f0` — Stub fixes (3 implementation pending + wrong todo fallback + stale print)
+- `52e6cfcc` — Phase 1 GUIDANCE floor routing with context assembler
+- `64a79fbd` — Docs: architecture report, advisory memo, stub inventory
+
+**Issues filed:**
+- **#911** — Floor inversion (supersedes #908)
+- **#910** — Pre-existing test failure
+
+**Open items for tomorrow:**
+1. PM to test Phase 1 again after floor prompt fix — need to verify LLM is actually engaging with user messages instead of parroting
+2. Extend floor routing to PRIORITY, IDENTITY, DISCOVERY, TRUST, MEMORY (Phase 2 of #911)
+3. CONVERSATION chitchat/farewell/thanks → floor (Phase 4 of #911)
+4. PM circulating advisory memo — may have leadership feedback
+5. #375 preference testing still pending
+6. #904, #907, #909 awaiting PM confirmation for closure
+7. "Failed to fetch" — still not reproduced
+
+**Discovered work filed:** #910 (pre-existing test failure)
