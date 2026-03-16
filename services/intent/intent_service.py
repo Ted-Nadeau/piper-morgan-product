@@ -9729,13 +9729,13 @@ Content to summarize:
 
         # Categories fully migrated to Action Gate floor routing:
         _FLOOR_ROUTED_CATEGORIES = {
-            "GUIDANCE",      # Phase 1: already floor-routed
-            "IDENTITY",      # Phase 2: adjacent identity → floor
-            "DISCOVERY",     # Phase 2: capabilities context → floor
-            "TRUST",         # Phase 2: trust data context → floor
-            "MEMORY",        # Phase 2: history context → floor
+            "GUIDANCE",  # Phase 1: already floor-routed
+            "IDENTITY",  # Phase 2: adjacent identity → floor
+            "DISCOVERY",  # Phase 2: capabilities context → floor
+            "TRUST",  # Phase 2: trust data context → floor
+            "MEMORY",  # Phase 2: history context → floor
             "CONVERSATION",  # Phase 2: chitchat/farewell/thanks → floor
-            "UNKNOWN",       # Already floor-routed since #907
+            "UNKNOWN",  # Already floor-routed since #907
         }
 
         if category not in _FLOOR_ROUTED_CATEGORIES:
@@ -9772,16 +9772,11 @@ Content to summarize:
         )
 
         from services.intent_service.context_assembler import ContextAssembler
-        from services.intent_service.conversational_floor import (
-            ConversationalFloor,
-            FloorContext,
-        )
+        from services.intent_service.conversational_floor import ConversationalFloor, FloorContext
 
         # For GUIDANCE, use the existing specialized context assembler
         if category == "GUIDANCE":
-            domain_context = await self._assemble_guidance_context(
-                intent, session_id, user_id
-            )
+            domain_context = await self._assemble_guidance_context(intent, session_id, user_id)
         else:
             # Use the new ContextAssembler for other categories
             assembler = ContextAssembler()
@@ -9798,9 +9793,7 @@ Content to summarize:
             for turn in conv_context.turns[-6:]:
                 history.append({"role": "user", "content": turn.message})
                 if hasattr(turn, "response") and turn.response:
-                    history.append(
-                        {"role": "assistant", "content": turn.response}
-                    )
+                    history.append({"role": "assistant", "content": turn.response})
         except Exception as e:
             self.logger.warning(
                 "floor_with_context_history_unavailable",

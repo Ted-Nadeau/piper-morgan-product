@@ -192,10 +192,17 @@ class ConversationalFloor:
     # These should NOT get the "no handler available" note — the floor IS the handler.
     # Issue #911 Phase 2: Categories intentionally routed to floor with context.
     # These should NOT get the "no handler available" note — the floor IS the handler.
-    _FLOOR_NATIVE_CATEGORIES = frozenset({
-        "UNKNOWN", "GUIDANCE", "IDENTITY", "DISCOVERY",
-        "TRUST", "MEMORY", "CONVERSATION",
-    })
+    _FLOOR_NATIVE_CATEGORIES = frozenset(
+        {
+            "UNKNOWN",
+            "GUIDANCE",
+            "IDENTITY",
+            "DISCOVERY",
+            "TRUST",
+            "MEMORY",
+            "CONVERSATION",
+        }
+    )
 
     def _build_prompt(self, ctx: FloorContext) -> str:
         """Build the user-facing prompt with conversation history and context."""
