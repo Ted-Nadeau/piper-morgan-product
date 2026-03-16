@@ -9295,6 +9295,20 @@ Content to summarize:
         "Here's comprehensive guidance for your focus:",
         # CONVERSATION handler: chitchat catch-all (ignores user's actual message)
         "I've been keeping an eye on your projects. What's on your mind?",
+        # CONVERSATION handler: chitchat variant without "thanks for asking"
+        "I've been keeping an eye on your projects.",
+        # IDENTITY handler: generic self-introduction (fires for misclassified msgs)
+        "I'm Piper Morgan, your AI Product Management assistant.",
+        # IDENTITY handler: partner sign-off
+        "Think of me as your intelligent PM partner!",
+        # DISCOVERY handler: capabilities list dump
+        "Here's what I can help you with:",
+        # GUIDANCE consolidated variants (time-based generic)
+        "Focus: Deep work",
+        "Focus: Team coordination",
+        "Focus: Task execution",
+        "Focus: Wrap-up and handoff",
+        "Focus: Strategic planning",
     ]
 
     def _is_generic_canonical_response(self, response_message: str) -> bool:
