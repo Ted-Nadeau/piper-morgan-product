@@ -39,10 +39,18 @@ lock:
 check-deps:
 	@echo "Checking for version drift between requirements.txt and installed packages..."
 	@python3 -c "\
-	import subprocess, re, sys; \
+	import subprocess, sys; \
 	installed = {line.split('==')[0].lower(): line.split('==')[1] for line in subprocess.check_output(['pip', 'freeze']).decode().strip().split('\n') if '==' in line}; \
 	drifted = []; \
-	[drifted.append(f'  {name}: pinned {ver}, installed {installed.get(name.lower(), \"MISSING\")}') for line in open('requirements.txt') if '==' in line and not line.strip().startswith('#') for name, ver in [line.strip().split('==')] if installed.get(name.lower(), ver) != ver]; \
+	[\
+	  drifted.append(f'  {name}: pinned {ver}, installed {installed.get(name.lower(), \"MISSING\")}') \
+	  for line in open('requirements.txt') \
+	  if '==' in line and not line.strip().startswith('#') \
+	  for raw_name, raw_ver in [line.strip().split('==', 1)] \
+	  for name in [raw_name.strip()] \
+	  for ver in [raw_ver.split(';')[0].strip()] \
+	  if installed.get(name.lower(), ver) != ver \
+	]; \
 	print(f'Found {len(drifted)} drifted packages:') if drifted else print('All packages match requirements.txt'); \
 	[print(d) for d in drifted]; \
 	sys.exit(1 if drifted else 0)"
