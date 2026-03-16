@@ -399,18 +399,20 @@ class CanonicalHandlers:
         DEFAULT: Moderate detail for standard identity queries.
         Issue #493: Uses dynamic capabilities from PluginRegistry.
         """
-        core_msg = "I'm Piper Morgan, your AI Product Management assistant. I help with development coordination, issue tracking, and strategic planning."
+        # Issue #911 Phase 2: Conversational identity response (per CXO voice guidance).
+        # Core identity stays canonical for consistency but sounds like a colleague.
+        core_msg = "I'm Piper Morgan — I work alongside you on product management. I can help with things like coordinating development work, tracking issues, and thinking through strategy."
 
         # Issue #493: Mention active integrations if any
         integrations = capabilities_data.get("integrations", [])
         if integrations:
-            integration_names = [i["name"].capitalize() for i in integrations[:3]]  # Limit to 3
-            if len(integrations) > 3:
-                integration_names.append(f"and {len(integrations) - 3} more")
-            integrations_text = ", ".join(integration_names)
-            core_msg += f" I'm connected to {integrations_text}."
+            active = [i for i in integrations if i.get("status") == "active" or i.get("configured")]
+            if active:
+                integration_names = [i["name"].capitalize() for i in active[:3]]
+                integrations_text = ", ".join(integration_names)
+                core_msg += f" Right now I'm connected to {integrations_text}."
 
-        core_msg += " Think of me as your intelligent PM partner!"
+        core_msg += " What are you working on?"
         return core_msg
 
     def _detect_health_check_request(self, intent: Intent) -> bool:

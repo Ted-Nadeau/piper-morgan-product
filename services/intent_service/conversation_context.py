@@ -102,6 +102,10 @@ class ConversationContext:
     # Issue #852: Track last contextual offer for continuation detection
     last_offer: Optional[LastOffer] = None
 
+    # Issue #913: Track whether last response was a floor hit (continuation rate)
+    last_response_was_floor: bool = False
+    last_floor_category: Optional[str] = None
+
     def add_turn(
         self,
         message: str,

@@ -345,6 +345,24 @@ class IntentService:
         effective_user_id = str(ctx.user_id) if ctx else user_id
         effective_session_id = str(ctx.conversation_id) if ctx else session_id
 
+        # Issue #913: Continuation rate instrumentation
+        # Check if the previous response in this session was a floor hit
+        try:
+            conv_ctx = get_or_create_context(effective_session_id, user_id=effective_user_id)
+            if conv_ctx.last_response_was_floor:
+                self.logger.info(
+                    "floor_continuation_detected",
+                    session_id=effective_session_id,
+                    user_id=effective_user_id,
+                    previous_floor_category=conv_ctx.last_floor_category,
+                    continuation=True,
+                )
+                # Reset the flag — we've logged the continuation
+                conv_ctx.last_response_was_floor = False
+                conv_ctx.last_floor_category = None
+        except Exception:
+            pass  # Best-effort instrumentation, never block processing
+
         # Process the intent
         result = await self._process_intent_internal(
             message=message,
@@ -918,39 +936,45 @@ class IntentService:
                 f"Suggestion deduplication: {len(automation_patterns)} auto + {len(suggestions)} regular → {len(all_suggestions)} unique"
             )
 
-            # Issue #911 Phase 1: GUIDANCE intents route to floor with context
-            # instead of through the canonical template handler.
-            # Setup requests (e.g., "help me set up my projects") still use canonical.
-            if intent.category.value.upper() == "GUIDANCE":
-                setup_topic = self.canonical_handlers._detect_setup_request(intent)
-                if not setup_topic:
-                    result = await self._handle_guidance_via_floor(
-                        intent,
-                        session_id,
-                        user_id=user_id,
-                        formality_baseline=formality_baseline,
-                        trust_stage=resolved_trust_stage,
-                    )
-                    result.suggestions = all_suggestions
-                    result.preferences = preferences
-                    return self._apply_soft_offer(
-                        result,
-                        message,
-                        session_id,
-                        trust_stage=resolved_trust_stage,
-                        user_id=user_id,
-                        formality_baseline=formality_baseline,
-                    )
+            # Issue #911 Phase 2: Action Gate — decides BEFORE execution whether
+            # the canonical handler is needed or the floor should handle it.
+            #
+            # Architecture:
+            #   Classifier → Action Gate
+            #     ├── Operation LLM cannot perform? → Canonical/Workflow Handler
+            #     ├── Pre-classifier high-confidence + deterministic? → Fast-path canonical
+            #     └── Everything else → Context Assembler → Floor
+            if self._should_route_to_floor(intent):
+                # Floor with context assembly
+                result = await self._handle_floor_with_context(
+                    intent,
+                    session_id,
+                    user_id=user_id,
+                    formality_baseline=formality_baseline,
+                    trust_stage=resolved_trust_stage,
+                )
+                result.suggestions = all_suggestions
+                result.preferences = preferences
+                return self._apply_soft_offer(
+                    result,
+                    message,
+                    session_id,
+                    trust_stage=resolved_trust_stage,
+                    user_id=user_id,
+                    formality_baseline=formality_baseline,
+                )
 
-            # Issue #286: Handle canonical intents (IDENTITY, TEMPORAL, STATUS, PRIORITY, CONVERSATION)
-            # Issue #911: GUIDANCE now routed to floor above (except setup requests)
+            # Issue #286: Handle canonical intents (PORTFOLIO, EXECUTION, STATUS, etc.)
+            # Issue #911 Phase 2: Only reaches here for categories that passed through
+            # the Action Gate (_requires_canonical_handler returned True).
             if self.canonical_handlers.can_handle(intent):
                 # Issue #582: Pass user_id to enable database project lookup
                 canonical_result = await self.canonical_handlers.handle(intent, session_id, user_id)
 
-                # Issue #907: Detect generic template responses from canonical handlers.
-                # When a handler returns a generic response that doesn't actually address
-                # the user's query, route through the conversational floor instead.
+                # Issue #907: Safety net — detect generic template responses from canonical
+                # handlers. Categories not yet migrated to Action Gate (STATUS, PRIORITY,
+                # TEMPORAL-calendar) still fall back to floor on generic response.
+                # Phase 5 will remove this safety net.
                 response_message = canonical_result["message"]
                 if self._is_generic_canonical_response(response_message):
                     self.logger.info(
@@ -9581,16 +9605,12 @@ Content to summarize:
         "Based on your current priorities and the time of day:",
         # GUIDANCE handler: granular variant
         "Here's comprehensive guidance for your focus:",
-        # CONVERSATION handler: chitchat catch-all (ignores user's actual message)
-        "I've been keeping an eye on your projects. What's on your mind?",
-        # CONVERSATION handler: chitchat variant without "thanks for asking"
-        "I've been keeping an eye on your projects.",
-        # IDENTITY handler: generic self-introduction (fires for misclassified msgs)
-        "I'm Piper Morgan, your AI Product Management assistant.",
-        # IDENTITY handler: partner sign-off
-        "Think of me as your intelligent PM partner!",
-        # DISCOVERY handler: capabilities list dump
-        "Here's what I can help you with:",
+        # Issue #911 Phase 2: IDENTITY, DISCOVERY, CONVERSATION, and GUIDANCE
+        # now route through the Action Gate to the floor directly.
+        # These signatures are only needed for categories NOT yet migrated:
+        # STATUS, PRIORITY, TEMPORAL-calendar.
+        # Phase 5 will remove this safety net entirely.
+        #
         # GUIDANCE consolidated variants (time-based generic)
         "Focus: Deep work",
         "Focus: Team coordination",
@@ -9613,6 +9633,206 @@ Content to summarize:
         if not response_message:
             return False
         return any(sig in response_message for sig in self._GENERIC_CANONICAL_SIGNATURES)
+
+    # ---- Issue #911 Phase 2: Action Gate ----
+
+    def _requires_canonical_handler(self, intent: Intent) -> bool:
+        """
+        Issue #911 Phase 2: Determine if an intent requires a canonical handler
+        (an operation the LLM cannot perform on its own).
+
+        Returns True ONLY for intents that need side effects, database writes,
+        or deterministic fast-path responses.
+        """
+        category = intent.category.value.upper()
+
+        # PORTFOLIO: all operations (add/delete/archive/restore) — always canonical
+        if category == "PORTFOLIO":
+            return True
+
+        # EXECUTION: all operations (create issue, manage todos, etc.) — always canonical
+        if category == "EXECUTION":
+            return True
+
+        # CONVERSATION with action="greeting": has onboarding/calendar side effects
+        if category == "CONVERSATION" and intent.action == "greeting":
+            return True
+
+        # TEMPORAL with pure time query: fast-path (sub-ms, deterministic)
+        if category == "TEMPORAL":
+            return True
+
+        # STATUS when no projects exist: triggers onboarding
+        # STATUS otherwise still goes through canonical (not yet migrated)
+        if category == "STATUS":
+            return True
+
+        # PRIORITY: not yet migrated to floor (Phase 5)
+        if category == "PRIORITY":
+            return True
+
+        # IDENTITY core questions: fast-path (consistent identity)
+        # Adjacent identity (health check, differentiation, help) → floor
+        if category == "IDENTITY":
+            if self._is_adjacent_identity(intent):
+                return False
+            return True
+
+        # GUIDANCE setup requests: canonical (triggers setup workflow)
+        if category == "GUIDANCE":
+            setup_topic = self.canonical_handlers._detect_setup_request(intent)
+            if setup_topic:
+                return True
+            return False
+
+        return False
+
+    def _is_adjacent_identity(self, intent: Intent) -> bool:
+        """
+        Issue #911 Phase 2: Detect identity-adjacent queries that benefit from
+        floor handling (health check, differentiation, help/onboarding).
+
+        Uses the existing detection methods from canonical_handlers.
+        """
+        handlers = self.canonical_handlers
+        if handlers._detect_health_check_request(intent):
+            return True
+        if handlers._detect_differentiation_request(intent):
+            return True
+        if handlers._detect_help_request(intent):
+            return True
+        return False
+
+    def _should_route_to_floor(self, intent: Intent) -> bool:
+        """
+        Issue #911 Phase 2: Determine if an intent should go to the conversational
+        floor with context assembly.
+
+        This is the inverse of _requires_canonical_handler, but only for categories
+        that have been migrated to the Action Gate pattern. Categories not yet migrated
+        fall through to the existing can_handle() → handle() path.
+        """
+        category = intent.category.value.upper()
+
+        # Categories fully migrated to Action Gate floor routing:
+        _FLOOR_ROUTED_CATEGORIES = {
+            "GUIDANCE",      # Phase 1: already floor-routed
+            "IDENTITY",      # Phase 2: adjacent identity → floor
+            "DISCOVERY",     # Phase 2: capabilities context → floor
+            "TRUST",         # Phase 2: trust data context → floor
+            "MEMORY",        # Phase 2: history context → floor
+            "CONVERSATION",  # Phase 2: chitchat/farewell/thanks → floor
+            "UNKNOWN",       # Already floor-routed since #907
+        }
+
+        if category not in _FLOOR_ROUTED_CATEGORIES:
+            return False
+
+        # If the Action Gate says canonical is required, don't route to floor
+        if self._requires_canonical_handler(intent):
+            return False
+
+        return True
+
+    async def _handle_floor_with_context(
+        self,
+        intent: Intent,
+        session_id: str,
+        user_id: str = None,
+        formality_baseline: float = None,
+        trust_stage=None,
+    ) -> IntentProcessingResult:
+        """
+        Issue #911 Phase 2: Route intent through the conversational floor
+        with category-specific context assembly.
+
+        Uses ContextAssembler to gather structured data, then creates
+        FloorContext and calls ConversationalFloor.respond().
+        """
+        category = intent.category.value.upper()
+
+        self.logger.info(
+            "action_gate_routing_to_floor",
+            category=category,
+            action=intent.action,
+            original_message=intent.original_message,
+        )
+
+        from services.intent_service.context_assembler import ContextAssembler
+        from services.intent_service.conversational_floor import (
+            ConversationalFloor,
+            FloorContext,
+        )
+
+        # For GUIDANCE, use the existing specialized context assembler
+        if category == "GUIDANCE":
+            domain_context = await self._assemble_guidance_context(
+                intent, session_id, user_id
+            )
+        else:
+            # Use the new ContextAssembler for other categories
+            assembler = ContextAssembler()
+            domain_context = await assembler.gather_context(
+                intent_category=category,
+                user_id=user_id,
+                session_id=session_id,
+            )
+
+        # Gather conversation history (same pattern as _handle_unknown_intent)
+        history = []
+        try:
+            conv_context = get_or_create_context(session_id, user_id=user_id)
+            for turn in conv_context.turns[-6:]:
+                history.append({"role": "user", "content": turn.message})
+                if hasattr(turn, "response") and turn.response:
+                    history.append(
+                        {"role": "assistant", "content": turn.response}
+                    )
+        except Exception as e:
+            self.logger.warning(
+                "floor_with_context_history_unavailable",
+                error=str(e),
+                session_id=session_id,
+            )
+
+        floor_ctx = FloorContext(
+            user_message=intent.original_message or "",
+            session_id=session_id,
+            user_id=user_id,
+            conversation_history=history,
+            trust_stage=trust_stage.value if trust_stage else None,
+            formality_baseline=formality_baseline,
+            intent_category=category,
+            intent_action=intent.action,
+            intent_confidence=intent.confidence,
+            domain_context=domain_context,
+        )
+
+        floor = ConversationalFloor()
+        response = await floor.respond(floor_ctx)
+
+        # Issue #913: Tag session for continuation rate tracking
+        try:
+            conv_ctx = get_or_create_context(session_id, user_id=user_id)
+            conv_ctx.last_response_was_floor = True
+            conv_ctx.last_floor_category = category
+        except Exception:
+            pass  # Best-effort instrumentation
+
+        return IntentProcessingResult(
+            success=True,
+            message=response.message,
+            intent_data={
+                "category": category,
+                "action": intent.action,
+                "confidence": intent.confidence,
+                "original_message": intent.original_message,
+                "floor_hit": True,  # Issue #911: Instrumentation
+                "context_keys": list(domain_context.keys()),
+            },
+            workflow_id=None,  # No workflow — conversational response
+            requires_clarification=False,
+        )
 
     async def _assemble_guidance_context(
         self, intent: Intent, session_id: str, user_id: str = None
@@ -9752,6 +9972,14 @@ Content to summarize:
         floor = ConversationalFloor()
         response = await floor.respond(floor_ctx)
 
+        # Issue #913: Tag session for continuation rate tracking
+        try:
+            conv_ctx_tag = get_or_create_context(session_id, user_id=user_id)
+            conv_ctx_tag.last_response_was_floor = True
+            conv_ctx_tag.last_floor_category = "GUIDANCE"
+        except Exception:
+            pass  # Best-effort instrumentation
+
         return IntentProcessingResult(
             success=True,
             message=response.message,
@@ -9819,6 +10047,14 @@ Content to summarize:
 
         floor = ConversationalFloor()
         response = await floor.respond(floor_ctx)
+
+        # Issue #913: Tag session for continuation rate tracking
+        try:
+            conv_ctx_tag = get_or_create_context(session_id, user_id=user_id)
+            conv_ctx_tag.last_response_was_floor = True
+            conv_ctx_tag.last_floor_category = "UNKNOWN"
+        except Exception:
+            pass  # Best-effort instrumentation
 
         return IntentProcessingResult(
             success=True,

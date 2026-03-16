@@ -190,7 +190,12 @@ class ConversationalFloor:
 
     # Issue #911: Categories intentionally routed to floor with context.
     # These should NOT get the "no handler available" note — the floor IS the handler.
-    _FLOOR_NATIVE_CATEGORIES = frozenset({"UNKNOWN", "GUIDANCE"})
+    # Issue #911 Phase 2: Categories intentionally routed to floor with context.
+    # These should NOT get the "no handler available" note — the floor IS the handler.
+    _FLOOR_NATIVE_CATEGORIES = frozenset({
+        "UNKNOWN", "GUIDANCE", "IDENTITY", "DISCOVERY",
+        "TRUST", "MEMORY", "CONVERSATION",
+    })
 
     def _build_prompt(self, ctx: FloorContext) -> str:
         """Build the user-facing prompt with conversation history and context."""
@@ -277,6 +282,38 @@ class ConversationalFloor:
                     lines.append(f"- User's stated priorities: {', '.join(str(x) for x in plist)}")
             if p.get("urgent_items"):
                 lines.append(f"- High-priority issues: {p['urgent_items']}")
+
+        # Issue #911 Phase 2: New context keys from ContextAssembler
+        if "capabilities" in domain_context:
+            caps = domain_context["capabilities"]
+            if isinstance(caps, list) and caps:
+                lines.append(f"- Piper's core capabilities: {', '.join(caps)}")
+
+        if "integrations" in domain_context:
+            integrations = domain_context["integrations"]
+            if isinstance(integrations, list):
+                active = [i["name"] for i in integrations if i.get("status") == "active"]
+                if active:
+                    lines.append(f"- Active integrations: {', '.join(active)}")
+
+        if "trust_profile" in domain_context:
+            tp = domain_context["trust_profile"]
+            if isinstance(tp, dict):
+                stage = tp.get("stage", "unknown")
+                lines.append(f"- Trust relationship stage: {stage}")
+                interaction_count = tp.get("interaction_count")
+                if interaction_count is not None:
+                    lines.append(f"- Interactions so far: {interaction_count}")
+
+        if "conversation_history_summary" in domain_context:
+            chs = domain_context["conversation_history_summary"]
+            if isinstance(chs, dict):
+                turn_count = chs.get("turn_count", 0)
+                if turn_count > 0:
+                    lines.append(f"- Conversation turns this session: {turn_count}")
+                recent = chs.get("recent_topics", [])
+                if recent:
+                    lines.append(f"- Recent topics: {'; '.join(recent[:3])}")
 
         lines.append("]")
 

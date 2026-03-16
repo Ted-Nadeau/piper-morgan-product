@@ -324,11 +324,16 @@ class TestUnknownIntentGracefulFallback:
 class TestCapabilityDiscovery:
     """Issue #491: Tests for capability discovery flow."""
 
-    def test_what_can_you_do_triggers_identity_handler(self):
-        """'What can you do?' should be handled by IDENTITY handler."""
+    def test_what_can_you_do_triggers_discovery_handler(self):
+        """'What can you do?' should be handled by DISCOVERY handler.
+
+        Issue #488: Capability queries route to DISCOVERY (not IDENTITY)
+        to return dynamic capabilities from PluginRegistry.
+        Issue #913: Confirmed by addendum — Q2 expected category is DISCOVERY.
+        """
         from services.intent_service.pre_classifier import PreClassifier
 
-        # Test common capability queries that ARE in IDENTITY_PATTERNS
+        # Test common capability queries that ARE in DISCOVERY_PATTERNS
         capability_queries = [
             "what can you do",
             "what can you do?",
@@ -338,11 +343,11 @@ class TestCapabilityDiscovery:
 
         for query in capability_queries:
             result = PreClassifier.pre_classify(query)
-            # Should route to IDENTITY category
+            # Should route to DISCOVERY category
             assert result is not None, f"Query '{query}' should match a pattern"
             assert (
-                result.category.value == "identity"
-            ), f"Query '{query}' should route to IDENTITY, got {result.category}"
+                result.category.value == "discovery"
+            ), f"Query '{query}' should route to DISCOVERY, got {result.category}"
 
     def test_who_are_you_triggers_identity_handler(self):
         """'Who are you?' should be handled by IDENTITY handler."""
