@@ -386,6 +386,11 @@ class PreClassifier:
         r"\bclose issue\s*#?\d+\b",
         r"\bclose.*completed.*issue\b",
         r"\bclose.*issue\b",
+        # Reopen issue query - Issue #902
+        r"\breopen\s+issue\s*#?\d+\b",
+        r"\bre-open\s+issue\s*#?\d+\b",
+        r"\breopen\s+.*issue\b",
+        r"\bre-open\s+.*issue\b",
         # Comment issue query - Query #59
         r"\bcomment on issue\s*#?\d+\b",
         r"\badd comment to issue\s*#?\d+\b",
@@ -972,6 +977,16 @@ class PreClassifier:
             elif any(
                 re.search(pattern, clean_for_matching)
                 for pattern in [
+                    r"\breopen\s+issue\s*#?\d+\b",
+                    r"\bre-open\s+issue\s*#?\d+\b",
+                    r"\breopen\s+.*issue\b",
+                    r"\bre-open\s+.*issue\b",
+                ]
+            ):
+                action = "reopen_issue_query"
+            elif any(
+                re.search(pattern, clean_for_matching)
+                for pattern in [
                     r"\bcomment on issue\s*#?\d+\b",
                     r"\badd comment to issue\s*#?\d+\b",
                     r"\breply to issue\s*#?\d+\b",
@@ -1389,6 +1404,15 @@ class PreClassifier:
         ]
         if PreClassifier._matches_patterns(message, close_patterns):
             return "close_issue_query"
+
+        reopen_patterns = [
+            r"\breopen\s+issue\s*#?\d+\b",
+            r"\bre-open\s+issue\s*#?\d+\b",
+            r"\breopen\s+.*issue\b",
+            r"\bre-open\s+.*issue\b",
+        ]
+        if PreClassifier._matches_patterns(message, reopen_patterns):
+            return "reopen_issue_query"
 
         comment_patterns = [
             r"\bcomment on issue\s*#?\d+\b",
