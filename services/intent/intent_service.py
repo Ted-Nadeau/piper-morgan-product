@@ -2139,7 +2139,7 @@ class IntentService:
 
         else:
             # Phase 3C: Generic query handler using QueryRouter
-            return await self._handle_generic_query(intent, workflow.id)
+            return await self._handle_generic_query(intent, workflow.id, session_id)
 
     async def _handle_standup_query(
         self, intent: Intent, workflow_id: str, session_id: str
@@ -2216,41 +2216,23 @@ class IntentService:
         )
 
     async def _handle_generic_query(
-        self, intent: Intent, workflow_id: str
+        self, intent: Intent, workflow_id: str, session_id: str = None
     ) -> IntentProcessingResult:
         """
-        Handle generic QUERY intents using QueryRouter.
+        Handle generic QUERY intents that have no specialized handler.
 
-        Phase 3C: Generic query handler using OrchestrationEngine.
+        Issue #915: Routes to conversational floor instead of returning
+        a dev stub ("Query processed successfully: {action}").
+        The floor can discuss the topic conversationally with context.
         """
-        self.logger.info(f"Routing generic QUERY intent to QueryRouter: {intent.action}")
-        try:
-            result = await self.orchestration_engine.handle_query_intent(intent)
-            return IntentProcessingResult(
-                success=True,
-                message=f"Query processed successfully: {intent.action}",
-                intent_data={
-                    "category": intent.category.value,
-                    "action": intent.action,
-                    "confidence": intent.confidence,
-                    "context": intent.context,
-                },
-                workflow_id=workflow_id,
-                async_work_started=True,
-                requires_clarification=False,
-                clarification_type=None,
-                # Add result data
-                error=None,
-            )
-        except Exception as e:
-            self.logger.error(f"QueryRouter error: {e}")
-            return self._make_error_result(
-                intent=intent,
-                workflow_id=workflow_id,
-                error=e,
-                context="processing your request",
-                error_type="QueryRouterError",
-            )
+        self.logger.info(
+            "query_action_routing_to_floor",
+            action=intent.action,
+            reason="no_specialized_handler",
+        )
+        return await self._handle_unknown_intent(
+            intent, None, session_id or "default_session",
+        )
 
     async def _handle_search_documents_notion(
         self, intent: Intent, workflow_id: str, session_id: str
@@ -5493,30 +5475,17 @@ class IntentService:
             return await self._handle_analyze_data(intent, workflow.id)
 
         else:
-            # Generic analysis handler - route to orchestration
-            self.logger.info(f"Routing generic ANALYSIS to orchestration: {intent.action}")
-            try:
-                result = await self.orchestration_engine.handle_analysis_intent(intent)
-                return IntentProcessingResult(
-                    success=True,
-                    message=f"Analysis processed: {intent.action}",
-                    intent_data={
-                        "category": intent.category.value,
-                        "action": intent.action,
-                        "confidence": intent.confidence,
-                    },
-                    workflow_id=workflow.id,
-                    requires_clarification=False,
-                )
-            except Exception as e:
-                self.logger.error(f"Analysis handler error: {e}")
-                return self._make_error_result(
-                    intent=intent,
-                    workflow_id=workflow.id,
-                    error=e,
-                    context="analyzing data",
-                    error_type="AnalysisError",
-                )
+            # Issue #916: No specialized handler for this analysis action.
+            # Route to conversational floor instead of returning a dev stub.
+            # The floor can engage with analysis questions conversationally.
+            self.logger.info(
+                "analysis_action_routing_to_floor",
+                action=intent.action,
+                reason="no_specialized_handler",
+            )
+            return await self._handle_unknown_intent(
+                intent, None, session_id,
+            )
 
     async def _handle_analyze_commits(
         self, intent: Intent, workflow_id: str

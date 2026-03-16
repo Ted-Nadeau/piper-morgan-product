@@ -1309,6 +1309,15 @@ class PreClassifier:
                     action=final_action,
                 )
 
+        # Issue #919: Subsumption filter — remove phantom intents caused
+        # by pattern overlap between groups. When a more specific category
+        # matches, drop the less specific one it subsumes.
+        #
+        # This mirrors the priority ordering in pre_classify() (which checks
+        # CALENDAR_QUERY before TEMPORAL, etc.) but applies it to multi-intent
+        # detection where ALL groups are checked.
+        intents = PreClassifier._apply_subsumption_filter(intents, logger)
+
         result = MultiIntentResult(
             intents=intents,
             original_message=message,
@@ -1325,6 +1334,78 @@ class PreClassifier:
         )
 
         return result
+
+    @staticmethod
+    def _apply_subsumption_filter(intents: List[Intent], logger) -> List[Intent]:
+        """
+        Issue #919: Remove phantom intents from pattern overlap.
+
+        When a message matches both a specific and a general pattern group
+        (e.g., CALENDAR_QUERY and TEMPORAL), keep only the more specific one.
+        This prevents the orchestrator from trying to handle categories it
+        doesn't support (QUERY through canonical handlers).
+
+        Subsumption rules (specific → general):
+          QUERY (calendar) subsumes TEMPORAL
+          QUERY (contextual) subsumes TEMPORAL
+          PRIORITY subsumes GUIDANCE (focus/next queries)
+          STATUS subsumes TEMPORAL (work-on-today queries)
+          DISCOVERY subsumes GUIDANCE (help queries)
+        """
+        if len(intents) <= 1:
+            return intents
+
+        categories = {i.category.value.upper() for i in intents}
+
+        # Build a set of categories to drop
+        drop_categories = set()
+
+        # Calendar queries subsume temporal
+        if "QUERY" in categories and "TEMPORAL" in categories:
+            # Check if any QUERY intent is calendar-related
+            query_actions = {i.action for i in intents if i.category.value.upper() == "QUERY"}
+            calendar_actions = {"meeting_time", "recurring_meetings", "week_calendar",
+                                "changes_query", "attention_query"}
+            if query_actions & calendar_actions:
+                drop_categories.add("TEMPORAL")
+                logger.debug(
+                    "subsumption_filter_applied",
+                    kept="QUERY",
+                    dropped="TEMPORAL",
+                    reason="calendar_query_subsumes_temporal",
+                )
+
+        # Priority subsumes guidance
+        if "PRIORITY" in categories and "GUIDANCE" in categories:
+            drop_categories.add("GUIDANCE")
+            logger.debug(
+                "subsumption_filter_applied",
+                kept="PRIORITY",
+                dropped="GUIDANCE",
+                reason="priority_subsumes_guidance",
+            )
+
+        # Discovery subsumes guidance (help queries)
+        if "DISCOVERY" in categories and "GUIDANCE" in categories:
+            drop_categories.add("GUIDANCE")
+            logger.debug(
+                "subsumption_filter_applied",
+                kept="DISCOVERY",
+                dropped="GUIDANCE",
+                reason="discovery_subsumes_guidance",
+            )
+
+        if not drop_categories:
+            return intents
+
+        filtered = [i for i in intents if i.category.value.upper() not in drop_categories]
+        logger.info(
+            "subsumption_filter_result",
+            original_count=len(intents),
+            filtered_count=len(filtered),
+            dropped=list(drop_categories),
+        )
+        return filtered
 
     @staticmethod
     def _get_calendar_action(message: str) -> str:
