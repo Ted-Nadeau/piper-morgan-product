@@ -5707,7 +5707,9 @@ class IntentService:
             # Route unhandled synthesis actions through conversational floor
             # instead of returning a dev stub to the user.
             return await self._handle_unknown_intent(
-                intent, workflow, session_id,
+                intent,
+                workflow,
+                session_id,
             )
 
     async def _handle_generate_content(
@@ -7601,7 +7603,9 @@ Content to summarize:
             # instead of returning a dev stub to the user.
             # Issue #878: No workflow_id — conversational response only.
             return await self._handle_unknown_intent(
-                intent, workflow, session_id,
+                intent,
+                workflow,
+                session_id,
             )
 
     async def _handle_strategic_planning(
@@ -8793,7 +8797,9 @@ Content to summarize:
             # Route unhandled learning actions through conversational floor
             # instead of returning a dev stub to the user.
             return await self._handle_unknown_intent(
-                intent, workflow, session_id,
+                intent,
+                workflow,
+                session_id,
             )
 
     async def _handle_learn_pattern(
