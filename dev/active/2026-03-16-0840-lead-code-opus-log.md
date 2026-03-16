@@ -94,6 +94,60 @@ Completed remaining 5 audit fix items:
 All 21 requirements from synthesis memo + addendum now fully met. Audit document updated with all green checkmarks.
 
 ### Remaining for PM
-- **#911 floor quality retest**: 10 verification queries ready for PM testing
 - **#902 PM testing**: Close/reopen features await verification
 - **#899 implementation**: PM approved all 4 decisions; ready to start
+
+---
+
+## PM QA Testing — 3:31 PM
+
+PM tested Q33, Q43, Q62 from the verification queries. All three failed. Five-whys investigation launched for each plus a calendar credential concern.
+
+### Issues Filed
+
+| Issue | Query | Root Cause | Classification |
+|-------|-------|-----------|----------------|
+| #914 | Q16: GitHub integration test needs GITHUB_TOKEN | Test env missing credentials | Test infra |
+| #915 | Q33: "Find time for a 1:1" → raw data dump | QUERY not floor-routed + missing action sub-pattern from #901 | Incomplete wiring |
+| #916 | Q43: "What's blocking the milestone?" → bare stub label | analyze_blockers has no handler, two layers of placeholder | Unfinished implementation |
+| #917 | Calendar credential leak (alfamux sees other user's meetings) | Legacy keychain fallback reads global token when no per-user key exists | Security — incomplete fix from #734/#843 |
+| #918 | Q62: "Check my calendar for conflicts" → success + apology | Multi-intent false positive from pattern overlap, orchestrator can't handle QUERY | Pattern overlap + architectural gap |
+
+### Meta-Analysis: Why the Audit Cascade Missed These
+
+PM raised a valid process question. Root causes of the process gap:
+
+1. **Verification queries tested un-migrated categories**: Q33/Q43/Q62 test QUERY, ANALYSIS, and TEMPORAL — categories scheduled for Phase 3+. The audit correctly marked Phase 2 requirements as met, but the verification queries assumed those categories would also improve. The audit should have flagged: "these queries will still hit old handlers."
+
+2. **No adversarial validation against live system**: All 48 tests were unit tests with mocked dependencies. No e2e test sent actual queries to a running server. The excellence flywheel calls for adversarial validation — we didn't do it.
+
+3. **The 75% pattern on #734/#843**: Calendar multi-tenancy was "fixed" but the legacy fallback was left in. No credential isolation test exists.
+
+4. **Pattern additions without handler wiring (#901)**: Pre-classifier patterns were added for `analyze_blockers` and scheduling queries, but no corresponding handlers or action sub-routes were built.
+
+### Systemic Re-Audit — 4:24 PM
+
+PM asked the right question: "Did our five whys include wondering if they represent a category or pattern?"
+
+**Shared structural root cause: "Extend without verifying"**
+
+All five bugs follow the same meta-pattern:
+1. New capability added at one layer (classification patterns, user-scoped auth)
+2. Downstream layer not updated to match (handler implementation, legacy auth removal)
+3. Silent fallback absorbs the gap (stub responses, global keychain key)
+4. No contract or test exists to detect the mismatch
+5. System appears to work until a human sends a real query
+
+**Two structural failures:**
+1. **No contract between classification and handling** — pre-classifier emits action strings, handler chain matches with if/elif. No registry, no verification. 3+ actions fall to stubs today.
+2. **Tests verify routing, not response quality** — zero tests assert on what the user sees. All four bugs pass the existing test suite.
+
+**Scale (from codebase audit):**
+- 3 pre-classifier actions fall to generic stubs (`analyze_blockers`, `contextual_query`, `get_feature_info`)
+- 8+ pattern overlaps between CALENDAR_QUERY and TEMPORAL in multi-intent detection
+- Multiple legacy fallback patterns in security-sensitive paths
+
+**Methodological note written**: `dev/active/methodological-note-classification-handling-contract.md`
+For discussion with Chief Architect and CIO. Covers: action registry, response quality smoke tests, fail-loud stubs, legacy removal discipline, multi-intent deduplication.
+
+**PM decisions pending**: How to address the systemic issues before fixing individual bugs.
