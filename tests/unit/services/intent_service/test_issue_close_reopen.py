@@ -140,7 +140,7 @@ class TestReopenIssueHandler:
 
     @pytest.mark.asyncio
     async def test_reopen_missing_issue_number(self, intent_service):
-        """Test handling when no issue number is present."""
+        """Test handling when no issue number is present and no search terms."""
         intent = Intent(
             category=IntentCategory.QUERY,
             action="reopen_issue_query",
@@ -158,7 +158,7 @@ class TestReopenIssueHandler:
             result = await intent_service._handle_reopen_issue_query(intent, "workflow-id")
 
             assert result.success is False
-            assert "couldn't find an issue number" in result.message
+            assert "couldn't find any issues matching" in result.message
             assert result.requires_clarification is True
 
     @pytest.mark.asyncio
@@ -292,3 +292,261 @@ class TestFallbackMessages:
             original_message="reopen that issue",
         )
         assert "#123" in result  # suggests format
+
+
+# ---------------------------------------------------------------------------
+# Fuzzy match helper tests (Issue #902)
+# ---------------------------------------------------------------------------
+
+
+class TestExtractSearchTerms:
+    """Test _extract_search_terms static method."""
+
+    def test_strips_close_command(self):
+        result = IntentService._extract_search_terms("close the auth bug", "close")
+        assert "close" not in result
+        assert "auth" in result
+        assert "bug" in result
+
+    def test_strips_reopen_command(self):
+        result = IntentService._extract_search_terms("reopen the login issue", "reopen")
+        assert "reopen" not in result
+        assert "login" in result
+
+    def test_strips_filler_words(self):
+        result = IntentService._extract_search_terms(
+            "please close the issue about authentication", "close"
+        )
+        assert "please" not in result
+        assert "the" not in result.split()
+        assert "authentication" in result
+
+    def test_empty_after_stripping(self):
+        result = IntentService._extract_search_terms("close the issue", "close")
+        assert result == ""
+
+    def test_preserves_meaningful_words(self):
+        result = IntentService._extract_search_terms(
+            "close the search feature bug", "close"
+        )
+        assert "search" in result
+        assert "feature" in result
+        assert "bug" in result
+
+
+class TestScoreIssueMatch:
+    """Test _score_issue_match static method."""
+
+    def test_exact_word_overlap(self):
+        score = IntentService._score_issue_match("auth bug", "Fix authentication bug")
+        assert score == 1  # "bug" matches
+
+    def test_multiple_word_overlap(self):
+        score = IntentService._score_issue_match(
+            "search feature", "Add search feature to dashboard"
+        )
+        assert score == 2
+
+    def test_no_overlap(self):
+        score = IntentService._score_issue_match("auth bug", "Update README")
+        assert score == 0
+
+    def test_empty_search(self):
+        score = IntentService._score_issue_match("", "Some issue title")
+        assert score == 0
+
+    def test_case_insensitive(self):
+        score = IntentService._score_issue_match("Auth", "Fix auth middleware")
+        assert score == 1
+
+
+# ---------------------------------------------------------------------------
+# Fuzzy close/reopen integration tests (Issue #902)
+# ---------------------------------------------------------------------------
+
+
+class TestFuzzyCloseIssue:
+    """Test fuzzy matching in _handle_close_issue_query when no issue number given."""
+
+    @pytest.mark.asyncio
+    async def test_single_fuzzy_match_asks_confirmation(self, intent_service):
+        """When exactly 1 open issue matches, ask for confirmation."""
+        intent = Intent(
+            category=IntentCategory.QUERY,
+            action="close_issue_query",
+            context={"original_message": "close the auth bug"},
+        )
+
+        mock_open_issues = [
+            {"number": 42, "title": "Fix authentication bug", "state": "open"},
+            {"number": 43, "title": "Add search feature", "state": "open"},
+        ]
+
+        with patch(
+            "services.integrations.github.github_integration_router.GitHubIntegrationRouter"
+        ) as MockRouter:
+            mock_router = MagicMock()
+            mock_router.config_service.is_configured.return_value = True
+            mock_router.initialize = AsyncMock()
+            mock_router.get_open_issues = AsyncMock(return_value=mock_open_issues)
+            MockRouter.return_value = mock_router
+
+            result = await intent_service._handle_close_issue_query(intent, "wf-id")
+
+            assert result.success is False
+            assert result.requires_clarification is True
+            assert "Did you mean issue #42" in result.message
+            assert "Fix authentication bug" in result.message
+            assert result.intent_data["matched_issue_number"] == 42
+
+    @pytest.mark.asyncio
+    async def test_multiple_fuzzy_matches_lists_options(self, intent_service):
+        """When multiple open issues match, list them."""
+        intent = Intent(
+            category=IntentCategory.QUERY,
+            action="close_issue_query",
+            context={"original_message": "close the auth middleware"},
+        )
+
+        mock_open_issues = [
+            {"number": 42, "title": "Fix auth middleware crash", "state": "open"},
+            {"number": 55, "title": "Auth middleware update needed", "state": "open"},
+            {"number": 60, "title": "Add search feature", "state": "open"},
+        ]
+
+        with patch(
+            "services.integrations.github.github_integration_router.GitHubIntegrationRouter"
+        ) as MockRouter:
+            mock_router = MagicMock()
+            mock_router.config_service.is_configured.return_value = True
+            mock_router.initialize = AsyncMock()
+            mock_router.get_open_issues = AsyncMock(return_value=mock_open_issues)
+            MockRouter.return_value = mock_router
+
+            result = await intent_service._handle_close_issue_query(intent, "wf-id")
+
+            assert result.success is False
+            assert result.requires_clarification is True
+            assert "I found a few issues" in result.message
+            assert "#42" in result.message
+            assert "#55" in result.message
+            assert "matched_issues" in result.intent_data
+            assert len(result.intent_data["matched_issues"]) == 2
+
+    @pytest.mark.asyncio
+    async def test_no_fuzzy_matches_returns_helpful_message(self, intent_service):
+        """When no issues match the description, return helpful message."""
+        intent = Intent(
+            category=IntentCategory.QUERY,
+            action="close_issue_query",
+            context={"original_message": "close the quantum entanglement problem"},
+        )
+
+        mock_open_issues = [
+            {"number": 42, "title": "Fix authentication middleware", "state": "open"},
+        ]
+
+        with patch(
+            "services.integrations.github.github_integration_router.GitHubIntegrationRouter"
+        ) as MockRouter:
+            mock_router = MagicMock()
+            mock_router.config_service.is_configured.return_value = True
+            mock_router.initialize = AsyncMock()
+            mock_router.get_open_issues = AsyncMock(return_value=mock_open_issues)
+            MockRouter.return_value = mock_router
+
+            result = await intent_service._handle_close_issue_query(intent, "wf-id")
+
+            assert result.success is False
+            assert result.requires_clarification is True
+            assert "couldn't find any issues matching" in result.message
+
+    @pytest.mark.asyncio
+    async def test_no_search_terms_returns_fallback(self, intent_service):
+        """When message has no meaningful search terms, return fallback."""
+        intent = Intent(
+            category=IntentCategory.QUERY,
+            action="close_issue_query",
+            context={"original_message": "close the issue"},
+        )
+
+        with patch(
+            "services.integrations.github.github_integration_router.GitHubIntegrationRouter"
+        ) as MockRouter:
+            mock_router = MagicMock()
+            mock_router.config_service.is_configured.return_value = True
+            mock_router.initialize = AsyncMock()
+            MockRouter.return_value = mock_router
+
+            result = await intent_service._handle_close_issue_query(intent, "wf-id")
+
+            assert result.success is False
+            assert result.requires_clarification is True
+            assert "couldn't find any issues matching" in result.message
+
+
+class TestFuzzyReopenIssue:
+    """Test fuzzy matching in _handle_reopen_issue_query when no issue number given."""
+
+    @pytest.mark.asyncio
+    async def test_single_fuzzy_match_asks_confirmation(self, intent_service):
+        """When exactly 1 closed issue matches, ask for confirmation."""
+        intent = Intent(
+            category=IntentCategory.QUERY,
+            action="reopen_issue_query",
+            context={"original_message": "reopen the search feature"},
+        )
+
+        mock_closed_issues = [
+            {"number": 99, "title": "Add search feature", "state": "closed"},
+            {"number": 100, "title": "Fix login page", "state": "closed"},
+        ]
+
+        with patch(
+            "services.integrations.github.github_integration_router.GitHubIntegrationRouter"
+        ) as MockRouter:
+            mock_router = MagicMock()
+            mock_router.config_service.is_configured.return_value = True
+            mock_router.initialize = AsyncMock()
+            mock_router.get_closed_issues = AsyncMock(return_value=mock_closed_issues)
+            MockRouter.return_value = mock_router
+
+            result = await intent_service._handle_reopen_issue_query(intent, "wf-id")
+
+            assert result.success is False
+            assert result.requires_clarification is True
+            assert "Did you mean issue #99" in result.message
+            assert "reopen issue #99" in result.message
+            assert result.intent_data["matched_issue_number"] == 99
+
+    @pytest.mark.asyncio
+    async def test_multiple_fuzzy_matches_lists_options(self, intent_service):
+        """When multiple closed issues match, list them."""
+        intent = Intent(
+            category=IntentCategory.QUERY,
+            action="reopen_issue_query",
+            context={"original_message": "reopen the auth bug"},
+        )
+
+        mock_closed_issues = [
+            {"number": 10, "title": "Auth bug on login", "state": "closed"},
+            {"number": 20, "title": "Fix auth bug in middleware", "state": "closed"},
+        ]
+
+        with patch(
+            "services.integrations.github.github_integration_router.GitHubIntegrationRouter"
+        ) as MockRouter:
+            mock_router = MagicMock()
+            mock_router.config_service.is_configured.return_value = True
+            mock_router.initialize = AsyncMock()
+            mock_router.get_closed_issues = AsyncMock(return_value=mock_closed_issues)
+            MockRouter.return_value = mock_router
+
+            result = await intent_service._handle_reopen_issue_query(intent, "wf-id")
+
+            assert result.success is False
+            assert result.requires_clarification is True
+            assert "I found a few issues" in result.message
+            assert "#10" in result.message
+            assert "#20" in result.message
+            assert "Which one would you like to reopen?" in result.message

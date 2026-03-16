@@ -3147,6 +3147,84 @@ class IntentService:
                 error_type="GitHubReviewIssueQueryError",
             )
 
+    @staticmethod
+    def _extract_search_terms(message: str, action: str) -> str:
+        """
+        Extract search terms from a close/reopen message by stripping command words.
+
+        Args:
+            message: The original user message
+            action: 'close' or 'reopen'
+
+        Returns:
+            Cleaned search string for fuzzy matching against issue titles
+        """
+        import re as _re
+
+        text = message.lower().strip()
+        # Strip common command words and filler
+        strip_words = [
+            "close", "reopen", "re-open", "issue", "the", "that", "this",
+            "please", "can", "you", "a", "an", "my", "our", "it",
+        ]
+        for word in strip_words:
+            text = _re.sub(rf"\b{word}\b", "", text)
+        # Collapse whitespace
+        text = _re.sub(r"\s+", " ", text).strip()
+        return text
+
+    @staticmethod
+    def _score_issue_match(search_terms: str, issue_title: str) -> int:
+        """
+        Score how well search terms match an issue title using word overlap.
+
+        Returns count of matching words (0 means no match).
+        """
+        if not search_terms or not issue_title:
+            return 0
+        search_words = set(search_terms.lower().split())
+        title_words = set(issue_title.lower().split())
+        return len(search_words & title_words)
+
+    async def _fuzzy_find_issues(
+        self,
+        github_router,
+        search_terms: str,
+        state: str,
+        limit: int = 50,
+    ) -> list:
+        """
+        Find issues matching search terms by fuzzy title matching.
+
+        Args:
+            github_router: Initialized GitHubIntegrationRouter
+            search_terms: Cleaned search string
+            state: 'open' or 'closed' — which issues to search
+            limit: Max issues to fetch from API
+
+        Returns:
+            List of (score, issue_dict) tuples sorted by score descending
+        """
+        try:
+            if state == "open":
+                issues = await github_router.get_open_issues(limit=limit)
+            else:
+                issues = await github_router.get_closed_issues(limit=limit)
+        except Exception as e:
+            self.logger.warning(f"Failed to fetch issues for fuzzy match: {e}")
+            return []
+
+        scored = []
+        for issue in issues:
+            title = issue.get("title", "")
+            score = self._score_issue_match(search_terms, title)
+            if score > 0:
+                scored.append((score, issue))
+
+        # Sort by score descending, then by issue number descending (most recent)
+        scored.sort(key=lambda x: (x[0], x[1].get("number", 0)), reverse=True)
+        return scored
+
     async def _handle_close_issue_query(
         self, intent: Intent, workflow_id: str
     ) -> IntentProcessingResult:
@@ -3155,6 +3233,7 @@ class IntentService:
 
         Issue #519: Canonical Query #45 - GitHub Issue Operations
         Closes a specific GitHub issue.
+        Issue #902: Fuzzy match by description when no issue number given.
 
         Args:
             intent: The classified intent
@@ -3202,9 +3281,56 @@ class IntentService:
             match = re.search(r"#?(\d+)", original_message)
 
             if not match:
+                # Issue #902: Fuzzy match by description
+                search_terms = self._extract_search_terms(original_message, "close")
+                if search_terms:
+                    matches = await self._fuzzy_find_issues(
+                        github_router, search_terms, state="open"
+                    )
+                    if len(matches) == 1:
+                        score, issue = matches[0]
+                        num = issue.get("number")
+                        title = issue.get("title", "")
+                        return IntentProcessingResult(
+                            success=False,
+                            message=f"Did you mean issue #{num}: {title}? Say 'close issue #{num}' to confirm.",
+                            intent_data={
+                                "category": intent.category.value,
+                                "action": intent.action,
+                                "confidence": intent.confidence,
+                                "matched_issue_number": num,
+                                "matched_issue_title": title,
+                            },
+                            workflow_id=workflow_id,
+                            requires_clarification=True,
+                        )
+                    elif len(matches) > 1:
+                        lines = ["I found a few issues that might match:"]
+                        for _score, issue in matches[:5]:
+                            lines.append(
+                                f"- #{issue.get('number')}: {issue.get('title', '')}"
+                            )
+                        lines.append("\nWhich one would you like to close?")
+                        return IntentProcessingResult(
+                            success=False,
+                            message="\n".join(lines),
+                            intent_data={
+                                "category": intent.category.value,
+                                "action": intent.action,
+                                "confidence": intent.confidence,
+                                "matched_issues": [
+                                    {"number": i.get("number"), "title": i.get("title", "")}
+                                    for _s, i in matches[:5]
+                                ],
+                            },
+                            workflow_id=workflow_id,
+                            requires_clarification=True,
+                        )
+
+                # No search terms or no matches
                 return IntentProcessingResult(
                     success=False,
-                    message="I couldn't find an issue number in your request. Please specify an issue number (e.g., 'close issue #123').",
+                    message="I couldn't find any issues matching your description. Please specify an issue number (e.g., 'close issue #123').",
                     intent_data={
                         "category": intent.category.value,
                         "action": intent.action,
@@ -3312,9 +3438,56 @@ class IntentService:
             match = re.search(r"#?(\d+)", original_message)
 
             if not match:
+                # Issue #902: Fuzzy match by description
+                search_terms = self._extract_search_terms(original_message, "reopen")
+                if search_terms:
+                    matches = await self._fuzzy_find_issues(
+                        github_router, search_terms, state="closed"
+                    )
+                    if len(matches) == 1:
+                        score, issue = matches[0]
+                        num = issue.get("number")
+                        title = issue.get("title", "")
+                        return IntentProcessingResult(
+                            success=False,
+                            message=f"Did you mean issue #{num}: {title}? Say 'reopen issue #{num}' to confirm.",
+                            intent_data={
+                                "category": intent.category.value,
+                                "action": intent.action,
+                                "confidence": intent.confidence,
+                                "matched_issue_number": num,
+                                "matched_issue_title": title,
+                            },
+                            workflow_id=workflow_id,
+                            requires_clarification=True,
+                        )
+                    elif len(matches) > 1:
+                        lines = ["I found a few issues that might match:"]
+                        for _score, issue in matches[:5]:
+                            lines.append(
+                                f"- #{issue.get('number')}: {issue.get('title', '')}"
+                            )
+                        lines.append("\nWhich one would you like to reopen?")
+                        return IntentProcessingResult(
+                            success=False,
+                            message="\n".join(lines),
+                            intent_data={
+                                "category": intent.category.value,
+                                "action": intent.action,
+                                "confidence": intent.confidence,
+                                "matched_issues": [
+                                    {"number": i.get("number"), "title": i.get("title", "")}
+                                    for _s, i in matches[:5]
+                                ],
+                            },
+                            workflow_id=workflow_id,
+                            requires_clarification=True,
+                        )
+
+                # No search terms or no matches
                 return IntentProcessingResult(
                     success=False,
-                    message="I couldn't find an issue number in your request. Please specify an issue number (e.g., 'reopen issue #123').",
+                    message="I couldn't find any issues matching your description. Please specify an issue number (e.g., 'reopen issue #123').",
                     intent_data={
                         "category": intent.category.value,
                         "action": intent.action,
