@@ -103,8 +103,11 @@ class TestSoftOfferInCanonicalResponse:
 
     @pytest.mark.asyncio
     async def test_status_offer_added(self, intent_service, mock_classifier):
-        """Deadline worry → status check offer."""
-        intent = _make_intent(IntentCategory.CONVERSATION, "empathy")
+        """Deadline worry → status check offer.
+        Issue #911 Phase 2: Uses STATUS category since CONVERSATION non-greeting
+        now routes to floor, bypassing canonical handler.
+        """
+        intent = _make_intent(IntentCategory.STATUS, "status_query")
 
         mock_classifier.classify_multiple.return_value = MultiIntentResult(
             intents=[intent],
@@ -114,7 +117,7 @@ class TestSoftOfferInCanonicalResponse:
 
         intent_service.canonical_handlers.handle.return_value = {
             "message": "That's understandable.",
-            "intent": {"category": "conversation", "action": "empathy"},
+            "intent": {"category": "status", "action": "status_query"},
         }
 
         result = await intent_service.process_intent(

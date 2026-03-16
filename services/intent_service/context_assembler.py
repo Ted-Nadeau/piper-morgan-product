@@ -1,0 +1,218 @@
+"""
+Context Assembler for Conversational Floor (#911 Phase 2)
+
+Gathers structured data for the conversational floor, organized by intent
+category. The floor LLM receives raw facts and decides what's relevant to
+the user's question.
+
+Design principles:
+1. Declarative — returns structured data (facts, lists), not formatted text
+2. Fail-graceful — partial results on failure, never throws
+3. Cache-ready — design for Redis TTL caching later (not implemented yet)
+"""
+
+from datetime import datetime
+from typing import Any, Dict, List, Optional
+
+import structlog
+
+logger = structlog.get_logger()
+
+
+class ContextAssembler:
+    """Gathers structured context for the conversational floor."""
+
+    async def gather_context(
+        self,
+        intent_category: str,
+        user_id: str = None,
+        session_id: str = None,
+    ) -> Dict[str, Any]:
+        """
+        Main entry point. Returns structured data for floor injection.
+
+        Routes to category-specific gatherers based on intent_category.
+        Always returns a dict (possibly empty on total failure).
+        """
+        context: Dict[str, Any] = {}
+
+        # Current time is always useful
+        context["current_time"] = datetime.now().strftime("%I:%M %p")
+
+        category = (intent_category or "").upper()
+
+        try:
+            if category in ("IDENTITY", "DISCOVERY"):
+                ctx = await self._gather_identity_context(user_id)
+                context.update(ctx)
+            elif category == "TRUST":
+                ctx = await self._gather_trust_context(user_id)
+                context.update(ctx)
+            elif category == "MEMORY":
+                ctx = await self._gather_memory_context(user_id, session_id)
+                context.update(ctx)
+            elif category == "CONVERSATION":
+                # Chitchat/farewell/thanks — minimal context needed
+                pass
+            else:
+                # For any other category routed to floor, gather basic context
+                pass
+        except Exception as e:
+            logger.warning(
+                "context_assembler_gather_error",
+                category=category,
+                error=str(e),
+            )
+
+        return context
+
+    async def _gather_identity_context(self, user_id: str = None) -> Dict[str, Any]:
+        """
+        Gather Piper's capabilities and plugin status for identity-adjacent questions.
+
+        Mirrors data from CanonicalHandlers._get_dynamic_capabilities() and
+        _get_system_health() but returns raw dicts for floor consumption.
+        """
+        context: Dict[str, Any] = {}
+
+        # Capabilities from plugin registry
+        try:
+            from services.plugins import get_plugin_registry
+
+            registry = get_plugin_registry()
+            plugin_status = registry.get_status_all()
+
+            integrations = []
+            for name, status in plugin_status.items():
+                is_configured = status.get("configured", False)
+                is_active = status.get("active", False) or status.get("status") == "active"
+                integrations.append(
+                    {
+                        "name": name,
+                        "status": "active" if (is_configured or is_active) else "inactive",
+                    }
+                )
+
+            context["capabilities"] = [
+                "development coordination",
+                "issue tracking",
+                "strategic planning",
+            ]
+            context["integrations"] = integrations
+        except Exception as e:
+            logger.warning("context_assembler_identity_capabilities_error", error=str(e))
+            context["capabilities"] = [
+                "development coordination",
+                "issue tracking",
+                "strategic planning",
+            ]
+
+        return context
+
+    async def _gather_discovery_context(self, user_id: str = None) -> Dict[str, Any]:
+        """
+        Gather available capabilities list for DISCOVERY intents.
+
+        Same data as identity context — capabilities and integrations.
+        """
+        return await self._gather_identity_context(user_id)
+
+    async def _gather_trust_context(self, user_id: str = None) -> Dict[str, Any]:
+        """
+        Gather trust profile data for TRUST intents.
+
+        Reads from UserTrustProfileRepository if user_id available.
+        """
+        context: Dict[str, Any] = {}
+
+        if not user_id:
+            context["trust_profile"] = {
+                "stage": "unknown",
+                "note": "No user ID available — trust profile not loaded",
+            }
+            return context
+
+        try:
+            from uuid import UUID
+
+            from services.database.session_factory import AsyncSessionFactory
+            from services.repositories.user_trust_profile_repository import (
+                UserTrustProfileRepository,
+            )
+
+            async with AsyncSessionFactory.session_scope() as session:
+                trust_repo = UserTrustProfileRepository(session)
+                profile = await trust_repo.get_by_user_id(UUID(user_id))
+
+                if profile:
+                    context["trust_profile"] = {
+                        "stage": profile.trust_stage.value if profile.trust_stage else "new",
+                        "interaction_count": getattr(profile, "interaction_count", 0),
+                    }
+                else:
+                    context["trust_profile"] = {
+                        "stage": "new",
+                        "interaction_count": 0,
+                    }
+        except Exception as e:
+            logger.warning("context_assembler_trust_error", error=str(e))
+            context["trust_profile"] = {
+                "stage": "unknown",
+                "note": "Could not load trust profile",
+            }
+
+        return context
+
+    async def _gather_memory_context(
+        self, user_id: str = None, session_id: str = None
+    ) -> Dict[str, Any]:
+        """
+        Gather conversation history summary for MEMORY intents.
+
+        Reads from in-memory conversation context and UserHistoryService.
+        """
+        context: Dict[str, Any] = {}
+
+        # Conversation context (in-memory turns)
+        if session_id:
+            try:
+                from services.intent_service.conversation_context import get_or_create_context
+
+                conv_ctx = get_or_create_context(session_id, user_id=user_id)
+                recent_topics = []
+                for turn in conv_ctx.turns[-6:]:
+                    if turn.message:
+                        # Extract a short summary (first 80 chars)
+                        summary = turn.message[:80]
+                        if len(turn.message) > 80:
+                            summary += "..."
+                        recent_topics.append(summary)
+
+                context["conversation_history_summary"] = {
+                    "recent_topics": recent_topics,
+                    "turn_count": len(conv_ctx.turns),
+                }
+            except Exception as e:
+                logger.warning("context_assembler_memory_history_error", error=str(e))
+
+        # User history service (persistent memory)
+        if user_id:
+            try:
+                from services.memory.user_history import (
+                    InMemoryUserHistoryRepository,
+                    UserHistoryService,
+                )
+
+                history_repo = InMemoryUserHistoryRepository()
+                history_service = UserHistoryService(history_repo)
+                summary = await history_service.get_history_summary(user_id=user_id)
+
+                if summary:
+                    context["persistent_memory"] = {
+                        "has_history": True,
+                        "summary": summary,
+                    }
+            except Exception as e:
+                logger.warning("context_assembler_memory_persistent_error", error=str(e))
+
+        return context

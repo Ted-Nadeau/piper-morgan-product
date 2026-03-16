@@ -141,7 +141,7 @@ class TestOfferHintStorage:
         mock_canonical_handlers.handle = AsyncMock(
             return_value={
                 "message": "Would you like me to explain project context?",
-                "intent": {"category": "guidance", "action": "provide_setup_guidance"},
+                "intent": {"category": "status", "action": "provide_status"},
                 "requires_clarification": False,
                 "offer_hint": {
                     "continuation_hint": "explain how project context works",
@@ -149,8 +149,17 @@ class TestOfferHintStorage:
                 },
             }
         )
+        # Issue #911 Phase 2: Use STATUS category (still canonical) instead of
+        # CONVERSATION, which now routes to floor for non-greeting actions.
+        from services.domain.models import Intent
+
+        status_intent = Intent(
+            category=IntentCategory.STATUS, action="provide_status", confidence=1.0
+        )
         mock_classifier.classify_multiple = AsyncMock(
-            return_value=_make_multi_result("provide_setup_guidance")
+            return_value=MultiIntentResult(
+                intents=[status_intent], original_message="test", is_multi_intent=False
+            )
         )
 
         session_id = str(uuid4())
