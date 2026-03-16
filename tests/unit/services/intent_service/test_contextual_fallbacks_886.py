@@ -122,14 +122,10 @@ class TestContextualFallbacks:
         assert "can't post to Slack channels yet" in result
 
     # --- Complete todo ---
-
-    def test_complete_todo_returns_contextual_copy(self):
-        result = self.service._get_contextual_fallback(
-            mapped_action="complete_todo",
-            original_message="Complete the PR review todo",
-        )
-        assert "can't mark todos complete yet" in result
-        assert "todo list" in result
+    # Removed: test_complete_todo_returns_contextual_copy
+    # Issue #904 implemented todo completion, so the "can't complete todos"
+    # fallback was removed. Todo completion now handled by pre-classifier
+    # and todo_handlers.
 
     # --- Upload file ---
 

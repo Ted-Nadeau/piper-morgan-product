@@ -75,6 +75,7 @@ class FloorContext:
     intent_category: Optional[str] = None
     intent_action: Optional[str] = None
     intent_confidence: Optional[float] = None
+    domain_context: Optional[Dict[str, Any]] = None  # Issue #911: Structured context for floor
 
     def format_conversation_history(self) -> str:
         """Format conversation history for inclusion in the LLM prompt."""
@@ -180,6 +181,10 @@ class ConversationalFloor:
         warmth = ctx.format_warmth_guidance()
         return f"{base}\n\n{FLOOR_SYSTEM_PROMPT_ADDENDUM}{warmth}"
 
+    # Issue #911: Categories intentionally routed to floor with context.
+    # These should NOT get the "no handler available" note — the floor IS the handler.
+    _FLOOR_NATIVE_CATEGORIES = frozenset({"UNKNOWN", "GUIDANCE"})
+
     def _build_prompt(self, ctx: FloorContext) -> str:
         """Build the user-facing prompt with conversation history and context."""
         parts = []
@@ -189,11 +194,21 @@ class ConversationalFloor:
         if history:
             parts.append(f"Recent conversation:\n{history}\n")
 
+        # Issue #911: Domain context — structured data assembled for this intent
+        if ctx.domain_context:
+            domain_block = self._format_domain_context(ctx.domain_context)
+            if domain_block:
+                parts.append(domain_block)
+
         # The current message
         parts.append(f"User: {ctx.user_message}")
 
         # Context about what Piper detected (helps the LLM understand the routing)
-        if ctx.intent_category and ctx.intent_category != "UNKNOWN":
+        # Issue #911: Skip for categories that are intentionally floor-routed
+        if (
+            ctx.intent_category
+            and ctx.intent_category not in self._FLOOR_NATIVE_CATEGORIES
+        ):
             parts.append(
                 f"\n[Context: The user's message was classified as '{ctx.intent_category}' "
                 f"(action: '{ctx.intent_action}') but no specialized handler is available "
@@ -203,6 +218,66 @@ class ConversationalFloor:
             )
 
         return "\n".join(parts)
+
+    def _format_domain_context(self, domain_context: Dict[str, Any]) -> str:
+        """
+        Issue #911: Format structured domain context as factual information.
+
+        Presents data as facts the LLM can reference, NOT as instructions
+        to parrot. The LLM decides what's relevant to the user's question.
+        """
+        lines = ["[Available context about the user's current situation:"]
+
+        if "current_time" in domain_context:
+            lines.append(f"- Current time: {domain_context['current_time']}")
+
+        if "calendar" in domain_context:
+            cal = domain_context["calendar"]
+            if cal.get("next_meeting"):
+                m = cal["next_meeting"]
+                title = m.get("title", "Untitled")
+                start = m.get("start", "unknown")
+                lines.append(f'- Next meeting: "{title}" at {start}')
+            if cal.get("next_free_block"):
+                fb = cal["next_free_block"]
+                lines.append(
+                    f"- Next free block: {fb.get('start', 'unknown')}, "
+                    f"{fb.get('duration_minutes', '?')} minutes"
+                )
+            if cal.get("time_available_minutes") is not None:
+                lines.append(
+                    f"- Minutes until next commitment: {cal['time_available_minutes']}"
+                )
+
+        if "projects" in domain_context:
+            proj = domain_context["projects"]
+            if isinstance(proj, dict):
+                for name, meta in proj.items():
+                    if isinstance(meta, dict):
+                        issues = meta.get("open_issues_count")
+                        if issues is not None:
+                            lines.append(f'- Project "{name}": {issues} open issues')
+                        else:
+                            lines.append(f'- Project "{name}": tracked')
+            elif isinstance(proj, list):
+                for name in proj:
+                    lines.append(f'- Project "{name}": tracked')
+
+        if "priorities" in domain_context:
+            p = domain_context["priorities"]
+            if p.get("user_priorities"):
+                plist = p["user_priorities"]
+                if isinstance(plist, list):
+                    lines.append(f"- User's stated priorities: {', '.join(str(x) for x in plist)}")
+            if p.get("urgent_items"):
+                lines.append(f"- High-priority issues: {p['urgent_items']}")
+
+        lines.append("]")
+
+        # Only return if we have actual context beyond the wrapper
+        if len(lines) <= 2:
+            return ""
+        return "\n".join(lines)
 
     async def respond(self, ctx: FloorContext) -> FloorResponse:
         """

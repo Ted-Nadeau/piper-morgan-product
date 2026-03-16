@@ -918,8 +918,32 @@ class IntentService:
                 f"Suggestion deduplication: {len(automation_patterns)} auto + {len(suggestions)} regular → {len(all_suggestions)} unique"
             )
 
-            # Issue #286: Handle canonical intents (IDENTITY, TEMPORAL, STATUS, PRIORITY, GUIDANCE, CONVERSATION)
-            # CONVERSATION moved to canonical section for architectural consistency
+            # Issue #911 Phase 1: GUIDANCE intents route to floor with context
+            # instead of through the canonical template handler.
+            # Setup requests (e.g., "help me set up my projects") still use canonical.
+            if intent.category.value.upper() == "GUIDANCE":
+                setup_topic = self.canonical_handlers._detect_setup_request(intent)
+                if not setup_topic:
+                    result = await self._handle_guidance_via_floor(
+                        intent,
+                        session_id,
+                        user_id=user_id,
+                        formality_baseline=formality_baseline,
+                        trust_stage=resolved_trust_stage,
+                    )
+                    result.suggestions = all_suggestions
+                    result.preferences = preferences
+                    return self._apply_soft_offer(
+                        result,
+                        message,
+                        session_id,
+                        trust_stage=resolved_trust_stage,
+                        user_id=user_id,
+                        formality_baseline=formality_baseline,
+                    )
+
+            # Issue #286: Handle canonical intents (IDENTITY, TEMPORAL, STATUS, PRIORITY, CONVERSATION)
+            # Issue #911: GUIDANCE now routed to floor above (except setup requests)
             if self.canonical_handlers.can_handle(intent):
                 # Issue #582: Pass user_id to enable database project lookup
                 canonical_result = await self.canonical_handlers.handle(intent, session_id, user_id)
@@ -9287,6 +9311,159 @@ Content to summarize:
         if not response_message:
             return False
         return any(sig in response_message for sig in self._GENERIC_CANONICAL_SIGNATURES)
+
+    async def _assemble_guidance_context(
+        self, intent: Intent, session_id: str, user_id: str = None
+    ) -> Dict[str, Any]:
+        """
+        Issue #911: Assemble domain context for GUIDANCE intents routed to the floor.
+
+        Reuses the canonical handler's data-gathering methods but skips the
+        template formatting. The floor LLM gets the raw facts and decides
+        how to use them in its response.
+        """
+        from datetime import datetime
+
+        context = {}
+        current_time = datetime.now()
+        context["current_time"] = current_time.strftime("%I:%M %p")
+
+        handlers = self.canonical_handlers
+
+        # User context (projects, priorities)
+        user_context = None
+        try:
+            from services.user_context_service import user_context_service
+
+            user_context = await user_context_service.get_user_context(
+                session_id, user_id
+            )
+        except Exception:
+            pass
+
+        # Calendar context
+        try:
+            calendar_context = await handlers._get_calendar_context(user_id=user_id)
+            if calendar_context:
+                context["calendar"] = calendar_context
+        except Exception:
+            pass
+
+        # Project metadata
+        projects = user_context.projects if user_context else []
+        if projects:
+            try:
+                project_metadata = await handlers._get_project_metadata(projects)
+                if project_metadata:
+                    context["projects"] = project_metadata
+                else:
+                    context["projects"] = projects  # At least list the names
+            except Exception:
+                context["projects"] = projects
+
+        # Priority metadata
+        try:
+            priority_metadata = await handlers._get_priority_metadata(user_id=user_id)
+            if priority_metadata:
+                context["priorities"] = {
+                    "user_priorities": (
+                        user_context.priorities if user_context else []
+                    ),
+                    "urgent_items": len(
+                        priority_metadata.get("high_priority_issues", [])
+                    ),
+                    "total_open_issues": priority_metadata.get(
+                        "total_open_issues", 0
+                    ),
+                }
+            elif user_context and user_context.priorities:
+                context["priorities"] = {
+                    "user_priorities": user_context.priorities,
+                    "urgent_items": 0,
+                }
+        except Exception:
+            pass
+
+        return context
+
+    async def _handle_guidance_via_floor(
+        self,
+        intent: Intent,
+        session_id: str,
+        user_id: str = None,
+        formality_baseline: float = None,
+        trust_stage=None,
+    ) -> IntentProcessingResult:
+        """
+        Issue #911 Phase 1: Route GUIDANCE intents through the conversational floor
+        with assembled domain context instead of template responses.
+
+        The floor gets calendar, projects, and priorities as factual context,
+        then generates a response that actually addresses the user's question.
+        """
+        self.logger.info(
+            "guidance_routed_to_floor",
+            action=intent.action,
+            original_message=intent.original_message,
+        )
+
+        from services.intent_service.conversational_floor import (
+            ConversationalFloor,
+            FloorContext,
+        )
+
+        # Assemble domain context (calendar, projects, priorities)
+        domain_context = await self._assemble_guidance_context(
+            intent, session_id, user_id
+        )
+
+        # Gather conversation history (same pattern as _handle_unknown_intent)
+        history = []
+        try:
+            conv_context = get_or_create_context(session_id, user_id=user_id)
+            for turn in conv_context.turns[-6:]:
+                history.append({"role": "user", "content": turn.message})
+                if hasattr(turn, "response") and turn.response:
+                    history.append(
+                        {"role": "assistant", "content": turn.response}
+                    )
+        except Exception as e:
+            self.logger.warning(
+                "guidance_floor_history_unavailable",
+                error=str(e),
+                session_id=session_id,
+            )
+
+        floor_ctx = FloorContext(
+            user_message=intent.original_message or "",
+            session_id=session_id,
+            user_id=user_id,
+            conversation_history=history,
+            trust_stage=trust_stage.value if trust_stage else None,
+            formality_baseline=formality_baseline,
+            intent_category="GUIDANCE",
+            intent_action=intent.action,
+            intent_confidence=intent.confidence,
+            domain_context=domain_context,
+        )
+
+        floor = ConversationalFloor()
+        response = await floor.respond(floor_ctx)
+
+        return IntentProcessingResult(
+            success=True,
+            message=response.message,
+            intent_data={
+                "category": "GUIDANCE",
+                "action": intent.action,
+                "confidence": intent.confidence,
+                "original_message": intent.original_message,
+                "floor_hit": True,  # Issue #911: Instrumentation
+                "context_keys": list(domain_context.keys()),
+            },
+            workflow_id=None,  # No workflow — conversational response
+            requires_clarification=False,
+        )
 
     async def _handle_unknown_intent(
         self,
