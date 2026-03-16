@@ -164,7 +164,9 @@ class TestBuildPromptDomainContext:
             intent_action="discuss",
         )
         prompt = self.floor._build_prompt(ctx)
-        assert "no specialized handler" in prompt
+        # Context note mentions the category and encourages engagement
+        assert "STRATEGY" in prompt
+        assert "Engage" in prompt
 
     def test_domain_context_before_user_message(self):
         """Domain context should appear before the user's message."""

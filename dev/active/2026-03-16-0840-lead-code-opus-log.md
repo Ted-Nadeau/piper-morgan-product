@@ -7,6 +7,9 @@
 
 **Active pattern families this session**: Completion Theater (045/046/047/049), Investigation (006/041-043/060)
 
+## Standing Rule
+**Before every report-in to PM**: merge to main + push to origin. PM reads from local main, not the worktree.
+
 ## Session Objectives
 
 1. Assess M1 issues #905, #906, #902, #898, #899 for shovel-readiness
