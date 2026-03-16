@@ -1364,8 +1364,13 @@ class PreClassifier:
         if "QUERY" in categories and "TEMPORAL" in categories:
             # Check if any QUERY intent is calendar-related
             query_actions = {i.action for i in intents if i.category.value.upper() == "QUERY"}
-            calendar_actions = {"meeting_time", "recurring_meetings", "week_calendar",
-                                "changes_query", "attention_query"}
+            calendar_actions = {
+                "meeting_time",
+                "recurring_meetings",
+                "week_calendar",
+                "changes_query",
+                "attention_query",
+            }
             if query_actions & calendar_actions:
                 drop_categories.add("TEMPORAL")
                 logger.debug(

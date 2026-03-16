@@ -2231,7 +2231,9 @@ class IntentService:
             reason="no_specialized_handler",
         )
         return await self._handle_unknown_intent(
-            intent, None, session_id or "default_session",
+            intent,
+            None,
+            session_id or "default_session",
         )
 
     async def _handle_search_documents_notion(
@@ -5484,7 +5486,9 @@ class IntentService:
                 reason="no_specialized_handler",
             )
             return await self._handle_unknown_intent(
-                intent, None, session_id,
+                intent,
+                None,
+                session_id,
             )
 
     async def _handle_analyze_commits(
