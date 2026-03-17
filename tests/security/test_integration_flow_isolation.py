@@ -273,11 +273,12 @@ class TestCalendarCredentialIsolation:
         adapter._user_id = USER_BOB
         adapter._scopes = ["https://www.googleapis.com/auth/calendar.readonly"]
 
-        with patch(
-            "services.infrastructure.keychain_service.KeychainService",
-            return_value=mock_keychain,
-        ), patch(
-            "services.integrations.calendar.oauth_handler.GoogleCalendarOAuthHandler"
+        with (
+            patch(
+                "services.infrastructure.keychain_service.KeychainService",
+                return_value=mock_keychain,
+            ),
+            patch("services.integrations.calendar.oauth_handler.GoogleCalendarOAuthHandler"),
         ):
             result = await adapter._authenticate_from_keychain()
 
@@ -305,11 +306,12 @@ class TestCalendarCredentialIsolation:
         adapter._user_id = None  # No user_id
         adapter._scopes = ["https://www.googleapis.com/auth/calendar.readonly"]
 
-        with patch(
-            "services.infrastructure.keychain_service.KeychainService",
-            return_value=mock_keychain,
-        ), patch(
-            "services.integrations.calendar.oauth_handler.GoogleCalendarOAuthHandler"
+        with (
+            patch(
+                "services.infrastructure.keychain_service.KeychainService",
+                return_value=mock_keychain,
+            ),
+            patch("services.integrations.calendar.oauth_handler.GoogleCalendarOAuthHandler"),
         ):
             result = await adapter._authenticate_from_keychain()
 
@@ -329,11 +331,12 @@ class TestCalendarCredentialIsolation:
         adapter._user_id = "system"
         adapter._scopes = ["https://www.googleapis.com/auth/calendar.readonly"]
 
-        with patch(
-            "services.infrastructure.keychain_service.KeychainService",
-            return_value=mock_keychain,
-        ), patch(
-            "services.integrations.calendar.oauth_handler.GoogleCalendarOAuthHandler"
+        with (
+            patch(
+                "services.infrastructure.keychain_service.KeychainService",
+                return_value=mock_keychain,
+            ),
+            patch("services.integrations.calendar.oauth_handler.GoogleCalendarOAuthHandler"),
         ):
             result = await adapter._authenticate_from_keychain()
 
@@ -354,16 +357,17 @@ class TestCalendarCredentialIsolation:
 
         mock_keychain = MagicMock()
 
-        with patch(
-            "services.integrations.calendar.oauth_handler.GoogleCalendarOAuthHandler",
-            return_value=mock_handler,
-        ), patch(
-            "services.infrastructure.keychain_service.KeychainService",
-            return_value=mock_keychain,
+        with (
+            patch(
+                "services.integrations.calendar.oauth_handler.GoogleCalendarOAuthHandler",
+                return_value=mock_handler,
+            ),
+            patch(
+                "services.infrastructure.keychain_service.KeychainService",
+                return_value=mock_keychain,
+            ),
         ):
-            response = await handle_calendar_oauth_callback(
-                code="test_code", state="test_state"
-            )
+            response = await handle_calendar_oauth_callback(code="test_code", state="test_state")
 
         # Token must NOT be stored under global key
         mock_keychain.store_api_key.assert_not_called()
