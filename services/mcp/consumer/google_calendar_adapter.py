@@ -261,17 +261,20 @@ class GoogleCalendarMCPAdapter(BaseSpatialAdapter):
 
             keychain = KeychainService()
 
-            # Issue #843: Use user-scoped key for multi-tenancy isolation
-            # Try user-scoped key first, fall back to legacy non-scoped key
+            # Issue #843/#917: Use ONLY user-scoped key for multi-tenancy isolation.
+            # The legacy fallback to the global "google_calendar" key was removed
+            # in #917 because it caused cross-user credential leakage: if User A
+            # connected before multi-tenancy, User B would silently inherit their token.
             refresh_token = None
             if self._user_id and self._user_id != "system":
                 refresh_token = keychain.get_api_key(f"google_calendar_{self._user_id}")
 
             if not refresh_token:
-                # Fallback to legacy non-scoped key for backward compatibility
-                refresh_token = keychain.get_api_key("google_calendar")
-
-            if not refresh_token:
+                logger.info(
+                    "calendar_no_user_credential",
+                    user_id=self._user_id or "unknown",
+                    reason="no_user_scoped_keychain_entry",
+                )
                 return False
 
             # Use OAuth handler to refresh the access token

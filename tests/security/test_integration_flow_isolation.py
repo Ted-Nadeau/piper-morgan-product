@@ -1,11 +1,14 @@
 """
-Flow-level isolation tests for integration keychain operations (Issue #849).
+Flow-level isolation tests for integration keychain operations (Issue #849, #917).
 
 Verifies that keychain store/retrieve/delete operations across integrations
 maintain user isolation — User A's tokens are never accessible to User B.
 
 These tests validate the END-TO-END flow, not just individual keychain calls.
 They exercise the same code paths used by route handlers and service-layer callers.
+
+Issue #917: Added calendar credential isolation tests to prevent cross-user
+calendar data leakage via legacy global keychain fallback.
 """
 
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -248,3 +251,129 @@ class TestConnectionTestFlowIsolation:
         keychain.get_api_key.assert_called_with("github_token", username=USER_ALICE)
 
         assert "github_token" in str(keychain.get_api_key.call_args)
+
+
+class TestCalendarCredentialIsolation:
+    """Issue #917: Calendar adapter must NEVER fall back to global keychain key.
+
+    The legacy fallback to 'google_calendar' (non-user-scoped) caused cross-user
+    credential leakage: if User A connected before multi-tenancy, User B silently
+    inherited User A's calendar token.
+    """
+
+    @pytest.mark.asyncio
+    async def test_adapter_does_not_read_global_key(self):
+        """Calendar adapter must only read user-scoped key, never global."""
+        from services.mcp.consumer.google_calendar_adapter import GoogleCalendarMCPAdapter
+
+        mock_keychain = MagicMock()
+        mock_keychain.get_api_key.return_value = None  # No token stored
+
+        adapter = GoogleCalendarMCPAdapter.__new__(GoogleCalendarMCPAdapter)
+        adapter._user_id = USER_BOB
+        adapter._scopes = ["https://www.googleapis.com/auth/calendar.readonly"]
+
+        with patch(
+            "services.infrastructure.keychain_service.KeychainService",
+            return_value=mock_keychain,
+        ), patch(
+            "services.integrations.calendar.oauth_handler.GoogleCalendarOAuthHandler"
+        ):
+            result = await adapter._authenticate_from_keychain()
+
+        # Should have tried ONLY the user-scoped key
+        mock_keychain.get_api_key.assert_called_once_with(f"google_calendar_{USER_BOB}")
+        # Should NOT have tried the global "google_calendar" key
+        for call in mock_keychain.get_api_key.call_args_list:
+            assert call != (("google_calendar",),), (
+                "Calendar adapter must not fall back to global 'google_calendar' key — "
+                "this causes cross-user credential leakage (#917)"
+            )
+        # Should return False (no token found)
+        assert result is False
+
+    @pytest.mark.asyncio
+    async def test_adapter_returns_false_without_user_id(self):
+        """Calendar adapter returns False when user_id is missing/system."""
+        from services.mcp.consumer.google_calendar_adapter import GoogleCalendarMCPAdapter
+
+        mock_keychain = MagicMock()
+        # Store a token under global key to prove it's NOT read
+        mock_keychain.get_api_key.return_value = "leaked_global_token"
+
+        adapter = GoogleCalendarMCPAdapter.__new__(GoogleCalendarMCPAdapter)
+        adapter._user_id = None  # No user_id
+        adapter._scopes = ["https://www.googleapis.com/auth/calendar.readonly"]
+
+        with patch(
+            "services.infrastructure.keychain_service.KeychainService",
+            return_value=mock_keychain,
+        ), patch(
+            "services.integrations.calendar.oauth_handler.GoogleCalendarOAuthHandler"
+        ):
+            result = await adapter._authenticate_from_keychain()
+
+        # Should return False — cannot authenticate without user_id
+        assert result is False
+        # Should NOT have tried any keychain lookup
+        mock_keychain.get_api_key.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_adapter_returns_false_for_system_user(self):
+        """Calendar adapter returns False for 'system' user_id."""
+        from services.mcp.consumer.google_calendar_adapter import GoogleCalendarMCPAdapter
+
+        mock_keychain = MagicMock()
+
+        adapter = GoogleCalendarMCPAdapter.__new__(GoogleCalendarMCPAdapter)
+        adapter._user_id = "system"
+        adapter._scopes = ["https://www.googleapis.com/auth/calendar.readonly"]
+
+        with patch(
+            "services.infrastructure.keychain_service.KeychainService",
+            return_value=mock_keychain,
+        ), patch(
+            "services.integrations.calendar.oauth_handler.GoogleCalendarOAuthHandler"
+        ):
+            result = await adapter._authenticate_from_keychain()
+
+        assert result is False
+        mock_keychain.get_api_key.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_oauth_callback_rejects_missing_user_id(self):
+        """OAuth callback must not store token under global key when user_id is None."""
+        from web.api.routes.setup import handle_calendar_oauth_callback
+
+        mock_handler = AsyncMock()
+        mock_handler.handle_oauth_callback.return_value = {
+            "user_id": None,  # Missing user_id
+            "tokens": MagicMock(refresh_token="leaked_refresh_token"),
+            "user": {"email": "someone@example.com"},
+        }
+
+        mock_keychain = MagicMock()
+
+        with patch(
+            "services.integrations.calendar.oauth_handler.GoogleCalendarOAuthHandler",
+            return_value=mock_handler,
+        ), patch(
+            "services.infrastructure.keychain_service.KeychainService",
+            return_value=mock_keychain,
+        ):
+            response = await handle_calendar_oauth_callback(
+                code="test_code", state="test_state"
+            )
+
+        # Token must NOT be stored under global key
+        mock_keychain.store_api_key.assert_not_called()
+        # Should redirect with error
+        assert "missing_user_id" in str(response.headers.get("location", ""))
+
+    def test_oauth_callback_stores_user_scoped_key(self):
+        """OAuth callback must store token under user-scoped key only."""
+        # Verify the pattern: key_name should be f"google_calendar_{user_id}"
+        user_id = USER_ALICE
+        key_name = f"google_calendar_{user_id}"
+        assert key_name == "google_calendar_user_alice_001"
+        assert "google_calendar" != key_name  # Not the global key
