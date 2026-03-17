@@ -151,6 +151,7 @@ class TestCalendarOAuthCallback:
                 return_value={
                     "tokens": mock_tokens,
                     "user": {"email": "test@gmail.com", "name": "Test User"},
+                    "user_id": "test_user_456",  # Issue #917: user_id required
                 }
             )
             MockHandler.return_value = mock_instance
@@ -228,8 +229,12 @@ class TestCalendarOAuthCallback:
         assert "calendar_error=callback_failed" in str(response.headers.get("location", ""))
 
     @pytest.mark.asyncio
-    async def test_callback_stores_refresh_token(self):
-        """Callback should store refresh token in keychain"""
+    async def test_callback_stores_refresh_token_with_user_scope(self):
+        """Callback should store refresh token in keychain with user-scoped key.
+
+        Issue #917: Token must be stored under user-scoped key
+        (google_calendar_{user_id}), never the global 'google_calendar' key.
+        """
         from web.api.routes.setup import handle_calendar_oauth_callback
 
         with patch(
@@ -239,7 +244,11 @@ class TestCalendarOAuthCallback:
             mock_tokens = MagicMock()
             mock_tokens.refresh_token = "refresh_token_to_store"
             mock_instance.handle_oauth_callback = AsyncMock(
-                return_value={"tokens": mock_tokens, "user": {"email": "test@gmail.com"}}
+                return_value={
+                    "tokens": mock_tokens,
+                    "user": {"email": "test@gmail.com"},
+                    "user_id": "test_user_123",  # Issue #917: user_id required
+                }
             )
             MockHandler.return_value = mock_instance
 
@@ -251,10 +260,49 @@ class TestCalendarOAuthCallback:
                     code="test_code", state="valid_state", error=None
                 )
 
-                # Then: Keychain should have stored the token
+                # Then: Keychain should have stored the token with user-scoped key
                 mock_keychain.store_api_key.assert_called_once_with(
-                    "google_calendar", "refresh_token_to_store"
+                    "google_calendar_test_user_123", "refresh_token_to_store"
                 )
+
+    @pytest.mark.asyncio
+    async def test_callback_rejects_missing_user_id(self):
+        """Callback must not store token when user_id is missing.
+
+        Issue #917: Storing under global key causes cross-user credential leakage.
+        """
+        from starlette.responses import RedirectResponse
+
+        from web.api.routes.setup import handle_calendar_oauth_callback
+
+        with patch(
+            "services.integrations.calendar.oauth_handler.GoogleCalendarOAuthHandler"
+        ) as MockHandler:
+            mock_instance = MagicMock()
+            mock_tokens = MagicMock()
+            mock_tokens.refresh_token = "refresh_token_to_store"
+            mock_instance.handle_oauth_callback = AsyncMock(
+                return_value={
+                    "tokens": mock_tokens,
+                    "user": {"email": "test@gmail.com"},
+                    # No user_id — this should be rejected
+                }
+            )
+            MockHandler.return_value = mock_instance
+
+            with patch("services.infrastructure.keychain_service.KeychainService") as MockKeychain:
+                mock_keychain = MagicMock()
+                MockKeychain.return_value = mock_keychain
+
+                response = await handle_calendar_oauth_callback(
+                    code="test_code", state="valid_state", error=None
+                )
+
+                # Token must NOT be stored
+                mock_keychain.store_api_key.assert_not_called()
+                # Should redirect with error
+                assert isinstance(response, RedirectResponse)
+                assert "missing_user_id" in str(response.headers.get("location", ""))
 
 
 class TestCalendarSetupStatus:

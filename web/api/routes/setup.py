@@ -1313,8 +1313,20 @@ async def handle_calendar_oauth_callback(
         tokens = result["tokens"]
         if tokens.refresh_token:
             keychain = KeychainService()
-            # Issue #734: Use user-scoped key for per-user storage
-            key_name = f"google_calendar_{user_id}" if user_id else "google_calendar"
+            # Issue #734/#917: Use ONLY user-scoped key for per-user storage.
+            # Never store to the global "google_calendar" key — that causes
+            # cross-user credential leakage (see #917).
+            if not user_id:
+                logger.error(
+                    "calendar_oauth_no_user_id",
+                    reason="Cannot store refresh token without user_id — "
+                    "would create global key causing credential leakage",
+                )
+                return RedirectResponse(
+                    url="/setup?calendar_error=missing_user_id#step-2",
+                    status_code=302,
+                )
+            key_name = f"google_calendar_{user_id}"
             keychain.store_api_key(key_name, tokens.refresh_token)
             logger.info("calendar_refresh_token_stored", user_id=user_id)
 
