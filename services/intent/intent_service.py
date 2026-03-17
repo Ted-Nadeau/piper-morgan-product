@@ -1350,13 +1350,16 @@ class IntentService:
                         await self._persist_onboarding_projects(user_id, captured_projects)
                         print(f"[IntentService] _persist_onboarding_projects completed")
 
-                return IntentProcessingResult(
-                    success=True,
-                    message=result.response_message or "",
-                    intent_data=result.intent_data,
-                    workflow_id=None,
-                    requires_clarification=False,
-                ), None
+                return (
+                    IntentProcessingResult(
+                        success=True,
+                        message=result.response_message or "",
+                        intent_data=result.intent_data,
+                        workflow_id=None,
+                        requires_clarification=False,
+                    ),
+                    None,
+                )
 
             return None, None
 
@@ -2125,9 +2128,7 @@ class IntentService:
             "next_todo_query",
         ]:
             # Route to EXECUTION handler which has the todo handlers wired
-            return await self._handle_execution_intent(
-                intent, workflow, session_id, user_id
-            )
+            return await self._handle_execution_intent(intent, workflow, session_id, user_id)
 
         # Handle specific query actions that were broken in August 22 refactor
         elif intent.action in ["show_standup", "get_standup"]:
@@ -2230,7 +2231,9 @@ class IntentService:
             reason="no_specialized_handler",
         )
         return await self._handle_unknown_intent(
-            intent, None, session_id or "default_session",
+            intent,
+            None,
+            session_id or "default_session",
         )
 
     async def _handle_search_documents_notion(
@@ -3198,8 +3201,21 @@ class IntentService:
         text = message.lower().strip()
         # Strip common command words and filler
         strip_words = [
-            "close", "reopen", "re-open", "issue", "the", "that", "this",
-            "please", "can", "you", "a", "an", "my", "our", "it",
+            "close",
+            "reopen",
+            "re-open",
+            "issue",
+            "the",
+            "that",
+            "this",
+            "please",
+            "can",
+            "you",
+            "a",
+            "an",
+            "my",
+            "our",
+            "it",
         ]
         for word in strip_words:
             text = _re.sub(rf"\b{word}\b", "", text)
@@ -3341,9 +3357,7 @@ class IntentService:
                     elif len(matches) > 1:
                         lines = ["I found a few issues that might match:"]
                         for _score, issue in matches[:5]:
-                            lines.append(
-                                f"- #{issue.get('number')}: {issue.get('title', '')}"
-                            )
+                            lines.append(f"- #{issue.get('number')}: {issue.get('title', '')}")
                         lines.append("\nWhich one would you like to close?")
                         return IntentProcessingResult(
                             success=False,
@@ -3498,9 +3512,7 @@ class IntentService:
                     elif len(matches) > 1:
                         lines = ["I found a few issues that might match:"]
                         for _score, issue in matches[:5]:
-                            lines.append(
-                                f"- #{issue.get('number')}: {issue.get('title', '')}"
-                            )
+                            lines.append(f"- #{issue.get('number')}: {issue.get('title', '')}")
                         lines.append("\nWhich one would you like to reopen?")
                         return IntentProcessingResult(
                             success=False,
@@ -5474,7 +5486,9 @@ class IntentService:
                 reason="no_specialized_handler",
             )
             return await self._handle_unknown_intent(
-                intent, None, session_id,
+                intent,
+                None,
+                session_id,
             )
 
     async def _handle_analyze_commits(
@@ -6044,7 +6058,9 @@ class IntentService:
             # Route unhandled synthesis actions through conversational floor
             # instead of returning a dev stub to the user.
             return await self._handle_unknown_intent(
-                intent, workflow, session_id,
+                intent,
+                workflow,
+                session_id,
             )
 
     async def _handle_generate_content(
@@ -7938,7 +7954,9 @@ Content to summarize:
             # instead of returning a dev stub to the user.
             # Issue #878: No workflow_id — conversational response only.
             return await self._handle_unknown_intent(
-                intent, workflow, session_id,
+                intent,
+                workflow,
+                session_id,
             )
 
     async def _handle_strategic_planning(
@@ -9130,7 +9148,9 @@ Content to summarize:
             # Route unhandled learning actions through conversational floor
             # instead of returning a dev stub to the user.
             return await self._handle_unknown_intent(
-                intent, workflow, session_id,
+                intent,
+                workflow,
+                session_id,
             )
 
     async def _handle_learn_pattern(
@@ -9711,13 +9731,13 @@ Content to summarize:
 
         # Categories fully migrated to Action Gate floor routing:
         _FLOOR_ROUTED_CATEGORIES = {
-            "GUIDANCE",      # Phase 1: already floor-routed
-            "IDENTITY",      # Phase 2: adjacent identity → floor
-            "DISCOVERY",     # Phase 2: capabilities context → floor
-            "TRUST",         # Phase 2: trust data context → floor
-            "MEMORY",        # Phase 2: history context → floor
+            "GUIDANCE",  # Phase 1: already floor-routed
+            "IDENTITY",  # Phase 2: adjacent identity → floor
+            "DISCOVERY",  # Phase 2: capabilities context → floor
+            "TRUST",  # Phase 2: trust data context → floor
+            "MEMORY",  # Phase 2: history context → floor
             "CONVERSATION",  # Phase 2: chitchat/farewell/thanks → floor
-            "UNKNOWN",       # Already floor-routed since #907
+            "UNKNOWN",  # Already floor-routed since #907
         }
 
         if category not in _FLOOR_ROUTED_CATEGORIES:
@@ -9754,16 +9774,11 @@ Content to summarize:
         )
 
         from services.intent_service.context_assembler import ContextAssembler
-        from services.intent_service.conversational_floor import (
-            ConversationalFloor,
-            FloorContext,
-        )
+        from services.intent_service.conversational_floor import ConversationalFloor, FloorContext
 
         # For GUIDANCE, use the existing specialized context assembler
         if category == "GUIDANCE":
-            domain_context = await self._assemble_guidance_context(
-                intent, session_id, user_id
-            )
+            domain_context = await self._assemble_guidance_context(intent, session_id, user_id)
         else:
             # Use the new ContextAssembler for other categories
             assembler = ContextAssembler()
@@ -9780,9 +9795,7 @@ Content to summarize:
             for turn in conv_context.turns[-6:]:
                 history.append({"role": "user", "content": turn.message})
                 if hasattr(turn, "response") and turn.response:
-                    history.append(
-                        {"role": "assistant", "content": turn.response}
-                    )
+                    history.append({"role": "assistant", "content": turn.response})
         except Exception as e:
             self.logger.warning(
                 "floor_with_context_history_unavailable",
@@ -9852,9 +9865,7 @@ Content to summarize:
         try:
             from services.user_context_service import user_context_service
 
-            user_context = await user_context_service.get_user_context(
-                session_id, user_id
-            )
+            user_context = await user_context_service.get_user_context(session_id, user_id)
         except Exception:
             pass
 
@@ -9883,15 +9894,9 @@ Content to summarize:
             priority_metadata = await handlers._get_priority_metadata(user_id=user_id)
             if priority_metadata:
                 context["priorities"] = {
-                    "user_priorities": (
-                        user_context.priorities if user_context else []
-                    ),
-                    "urgent_items": len(
-                        priority_metadata.get("high_priority_issues", [])
-                    ),
-                    "total_open_issues": priority_metadata.get(
-                        "total_open_issues", 0
-                    ),
+                    "user_priorities": (user_context.priorities if user_context else []),
+                    "urgent_items": len(priority_metadata.get("high_priority_issues", [])),
+                    "total_open_issues": priority_metadata.get("total_open_issues", 0),
                 }
             elif user_context and user_context.priorities:
                 context["priorities"] = {
@@ -9924,15 +9929,10 @@ Content to summarize:
             original_message=intent.original_message,
         )
 
-        from services.intent_service.conversational_floor import (
-            ConversationalFloor,
-            FloorContext,
-        )
+        from services.intent_service.conversational_floor import ConversationalFloor, FloorContext
 
         # Assemble domain context (calendar, projects, priorities)
-        domain_context = await self._assemble_guidance_context(
-            intent, session_id, user_id
-        )
+        domain_context = await self._assemble_guidance_context(intent, session_id, user_id)
 
         # Gather conversation history (same pattern as _handle_unknown_intent)
         history = []
@@ -9941,9 +9941,7 @@ Content to summarize:
             for turn in conv_context.turns[-6:]:
                 history.append({"role": "user", "content": turn.message})
                 if hasattr(turn, "response") and turn.response:
-                    history.append(
-                        {"role": "assistant", "content": turn.response}
-                    )
+                    history.append({"role": "assistant", "content": turn.response})
         except Exception as e:
             self.logger.warning(
                 "guidance_floor_history_unavailable",

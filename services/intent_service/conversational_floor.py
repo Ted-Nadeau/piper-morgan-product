@@ -192,10 +192,17 @@ class ConversationalFloor:
     # These should NOT get the "no handler available" note — the floor IS the handler.
     # Issue #911 Phase 2: Categories intentionally routed to floor with context.
     # These should NOT get the "no handler available" note — the floor IS the handler.
-    _FLOOR_NATIVE_CATEGORIES = frozenset({
-        "UNKNOWN", "GUIDANCE", "IDENTITY", "DISCOVERY",
-        "TRUST", "MEMORY", "CONVERSATION",
-    })
+    _FLOOR_NATIVE_CATEGORIES = frozenset(
+        {
+            "UNKNOWN",
+            "GUIDANCE",
+            "IDENTITY",
+            "DISCOVERY",
+            "TRUST",
+            "MEMORY",
+            "CONVERSATION",
+        }
+    )
 
     def _build_prompt(self, ctx: FloorContext) -> str:
         """Build the user-facing prompt with conversation history and context."""
@@ -217,10 +224,7 @@ class ConversationalFloor:
 
         # Context about what Piper detected (helps the LLM understand the routing)
         # Issue #911: Skip for categories that are intentionally floor-routed
-        if (
-            ctx.intent_category
-            and ctx.intent_category not in self._FLOOR_NATIVE_CATEGORIES
-        ):
+        if ctx.intent_category and ctx.intent_category not in self._FLOOR_NATIVE_CATEGORIES:
             parts.append(
                 f"\n[Context: The user's message relates to '{ctx.intent_category}'. "
                 f"Engage with their actual question. If your response naturally connects "
@@ -256,9 +260,7 @@ class ConversationalFloor:
                     f"{fb.get('duration_minutes', '?')} minutes"
                 )
             if cal.get("time_available_minutes") is not None:
-                lines.append(
-                    f"- Minutes until next commitment: {cal['time_available_minutes']}"
-                )
+                lines.append(f"- Minutes until next commitment: {cal['time_available_minutes']}")
 
         if "projects" in domain_context:
             proj = domain_context["projects"]

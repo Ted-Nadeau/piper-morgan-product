@@ -39,12 +39,43 @@ from services.todo.todo_management_service import TodoManagementService
 logger = structlog.get_logger()
 
 # Words that don't contribute to meaningful matching
-_STOPWORDS = frozenset({
-    "a", "an", "the", "in", "on", "at", "to", "for", "of", "with",
-    "and", "or", "but", "is", "it", "my", "your", "this", "that",
-    "i", "me", "we", "do", "did", "has", "have", "had", "be", "been",
-    "todo", "task", "item", "thing",
-})
+_STOPWORDS = frozenset(
+    {
+        "a",
+        "an",
+        "the",
+        "in",
+        "on",
+        "at",
+        "to",
+        "for",
+        "of",
+        "with",
+        "and",
+        "or",
+        "but",
+        "is",
+        "it",
+        "my",
+        "your",
+        "this",
+        "that",
+        "i",
+        "me",
+        "we",
+        "do",
+        "did",
+        "has",
+        "have",
+        "had",
+        "be",
+        "been",
+        "todo",
+        "task",
+        "item",
+        "thing",
+    }
+)
 
 # Minimum fuzzy match score to consider a match
 _FUZZY_MATCH_THRESHOLD = 0.3
@@ -208,9 +239,7 @@ class TodoIntentHandlers:
                     )
 
             # Mark as complete
-            completed_todo = await self.todo_service.complete_todo(
-                todo_id=todo.id, user_id=user_id
-            )
+            completed_todo = await self.todo_service.complete_todo(todo_id=todo.id, user_id=user_id)
 
             if completed_todo:
                 logger.info("Todo completed", todo_id=str(todo.id), user_id=user_id)
@@ -219,9 +248,7 @@ class TodoIntentHandlers:
                 return "I couldn't complete that todo. It might have been deleted."
 
         except Exception as e:
-            logger.error(
-                "Todo completion failed", error=str(e), user_id=user_id, exc_info=True
-            )
+            logger.error("Todo completion failed", error=str(e), user_id=user_id, exc_info=True)
             return (
                 "I had trouble marking that as complete. You can try again with "
                 "'complete todo [number]', or say 'show my todos' to check the list first."
@@ -355,9 +382,7 @@ class TodoIntentHandlers:
 
         return None
 
-    def _find_best_matching_todo(
-        self, search_text: str, todos: List[Todo]
-    ) -> Optional[Todo]:
+    def _find_best_matching_todo(self, search_text: str, todos: List[Todo]) -> Optional[Todo]:
         """Find the todo that best matches the search text using fuzzy word overlap.
 
         Returns the best matching todo if score >= threshold, else None.
@@ -385,12 +410,8 @@ class TodoIntentHandlers:
         Uses word overlap with stopword filtering. Score is the fraction
         of meaningful query words found in the candidate.
         """
-        query_words = {
-            w for w in re.findall(r"\w+", query.lower()) if w not in _STOPWORDS
-        }
-        candidate_words = {
-            w for w in re.findall(r"\w+", candidate.lower()) if w not in _STOPWORDS
-        }
+        query_words = {w for w in re.findall(r"\w+", query.lower()) if w not in _STOPWORDS}
+        candidate_words = {w for w in re.findall(r"\w+", candidate.lower()) if w not in _STOPWORDS}
 
         if not query_words:
             return 0.0

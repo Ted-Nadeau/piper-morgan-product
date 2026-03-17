@@ -6,12 +6,12 @@ handler (for operations the LLM cannot perform) or the conversational floor
 (for everything else, with assembled context).
 """
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 from services.domain.models import Intent
 from services.shared_types import IntentCategory as IC
-
 
 # ---- Helpers ----
 
@@ -39,8 +39,12 @@ def _get_intent_service():
         from services.intent_service.canonical_handlers import CanonicalHandlers
 
         real_handlers = CanonicalHandlers()
-        svc.canonical_handlers._detect_health_check_request = real_handlers._detect_health_check_request
-        svc.canonical_handlers._detect_differentiation_request = real_handlers._detect_differentiation_request
+        svc.canonical_handlers._detect_health_check_request = (
+            real_handlers._detect_health_check_request
+        )
+        svc.canonical_handlers._detect_differentiation_request = (
+            real_handlers._detect_differentiation_request
+        )
         svc.canonical_handlers._detect_help_request = real_handlers._detect_help_request
         svc.canonical_handlers._detect_setup_request = real_handlers._detect_setup_request
         return svc
@@ -106,7 +110,9 @@ class TestActionGate:
         assert self.svc._requires_canonical_handler(intent) is False
 
     def test_identity_differentiation_does_not_require_canonical(self):
-        intent = _make_intent(IC.IDENTITY, "provide_identity", "What makes you different from ChatGPT?")
+        intent = _make_intent(
+            IC.IDENTITY, "provide_identity", "What makes you different from ChatGPT?"
+        )
         assert self.svc._requires_canonical_handler(intent) is False
 
     def test_identity_help_does_not_require_canonical(self):
@@ -255,9 +261,7 @@ class TestContextAssembler:
         from services.intent_service.context_assembler import ContextAssembler
 
         assembler = ContextAssembler()
-        with patch(
-            "services.database.session_factory.AsyncSessionFactory"
-        ) as mock_sf:
+        with patch("services.database.session_factory.AsyncSessionFactory") as mock_sf:
             mock_sf.session_scope.side_effect = Exception("DB connection failed")
             result = await assembler.gather_context(
                 "TRUST", user_id="550e8400-e29b-41d4-a716-446655440000"
@@ -281,9 +285,7 @@ class TestContextAssembler:
             "services.intent_service.conversation_context.get_or_create_context",
             return_value=mock_ctx,
         ):
-            result = await assembler.gather_context(
-                "MEMORY", session_id="test-session"
-            )
+            result = await assembler.gather_context("MEMORY", session_id="test-session")
 
         assert "conversation_history_summary" in result
         summary = result["conversation_history_summary"]

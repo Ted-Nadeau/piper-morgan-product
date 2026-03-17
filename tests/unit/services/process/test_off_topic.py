@@ -11,8 +11,9 @@ PM decisions (2026-03-16):
 - Option A UX: auto-pause + answer question
 """
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 from services.process.off_topic import (
     OffTopicConfidence,
@@ -21,7 +22,6 @@ from services.process.off_topic import (
     format_off_topic_pause_message,
 )
 from services.process.registry import ProcessCheckResult, ProcessType
-
 
 # ---- Test detect_off_topic() ----
 
@@ -99,15 +99,11 @@ class TestGenericOffTopicDetection:
         assert result.is_off_topic
 
     def test_topic_change_detected(self):
-        result = detect_off_topic(
-            "By the way, can you check my calendar?", ProcessType.STANDUP
-        )
+        result = detect_off_topic("By the way, can you check my calendar?", ProcessType.STANDUP)
         assert result.is_off_topic
 
     def test_utility_request_detected(self):
-        result = detect_off_topic(
-            "Translate this text to Spanish", ProcessType.ONBOARDING
-        )
+        result = detect_off_topic("Translate this text to Spanish", ProcessType.ONBOARDING)
         assert result.is_off_topic
 
 
@@ -234,9 +230,7 @@ class TestEdgeCases:
         E.g., during standup, "I have a meeting today" mentions 'today' (on-topic)
         even though it could be confused with a date query.
         """
-        result = detect_off_topic(
-            "I have a meeting today about the sprint", ProcessType.STANDUP
-        )
+        result = detect_off_topic("I have a meeting today about the sprint", ProcessType.STANDUP)
         assert not result.is_off_topic
 
     def test_matched_pattern_is_reported(self):

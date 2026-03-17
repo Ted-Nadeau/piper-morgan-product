@@ -5,8 +5,9 @@ Issue #915/#916/#919: Ensures every pre-classifier action has a registry
 entry, stub actions route to floor, and multi-intent subsumption works.
 """
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 from services.intent_service.action_registry import (
     ACTION_EXAMPLES,
@@ -17,7 +18,6 @@ from services.intent_service.action_registry import (
 )
 from services.intent_service.pre_classifier import PreClassifier
 from services.shared_types import IntentCategory
-
 
 # ---- Registry Coverage Tests ----
 
@@ -43,16 +43,16 @@ class TestRegistryCoverage:
         for (category, action), message in ACTION_EXAMPLES.items():
             result = PreClassifier.pre_classify(message)
             if result is not None:
-                assert result.category.value.upper() == category, (
-                    f"'{message}' expected {category} but got {result.category.value}"
-                )
+                assert (
+                    result.category.value.upper() == category
+                ), f"'{message}' expected {category} but got {result.category.value}"
 
     def test_registry_has_no_empty_entries(self):
         """All registry entries should have valid dispositions."""
         for key, disposition in ACTION_REGISTRY.items():
-            assert isinstance(disposition, ActionDisposition), (
-                f"Invalid disposition for {key}: {disposition}"
-            )
+            assert isinstance(
+                disposition, ActionDisposition
+            ), f"Invalid disposition for {key}: {disposition}"
 
 
 class TestDisposition:
@@ -118,7 +118,8 @@ class TestNoStubPhrases:
     def test_floor_actions_bypass_stubs(self):
         """Actions marked FLOOR never reach stub handlers."""
         floor_actions = [
-            (cat, act) for (cat, act), disp in ACTION_REGISTRY.items()
+            (cat, act)
+            for (cat, act), disp in ACTION_REGISTRY.items()
             if disp == ActionDisposition.FLOOR
         ]
         # All previously-stubbed actions should be in this list
@@ -134,29 +135,42 @@ class TestNoStubPhrases:
         known-handled actions as a regression guard.
         """
         workflow_actions = [
-            (cat, act) for (cat, act), disp in ACTION_REGISTRY.items()
+            (cat, act)
+            for (cat, act), disp in ACTION_REGISTRY.items()
             if disp == ActionDisposition.WORKFLOW
         ]
         # All workflow actions should be actions we know have handler branches
         known_handled_query_actions = {
-            "meeting_time", "recurring_meetings", "week_calendar",
-            "shipped_query", "stale_prs_query", "close_issue_query",
-            "reopen_issue_query", "comment_issue_query", "list_issues_query",
-            "list_prs_query", "review_issue_query", "update_document_query",
-            "changes_query", "attention_query", "productivity_query",
-            "list_todos_query", "list_completed_todos", "next_todo_query",
+            "meeting_time",
+            "recurring_meetings",
+            "week_calendar",
+            "shipped_query",
+            "stale_prs_query",
+            "close_issue_query",
+            "reopen_issue_query",
+            "comment_issue_query",
+            "list_issues_query",
+            "list_prs_query",
+            "review_issue_query",
+            "update_document_query",
+            "changes_query",
+            "attention_query",
+            "productivity_query",
+            "list_todos_query",
+            "list_completed_todos",
+            "next_todo_query",
         }
         known_handled_execution_actions = {"complete_todo"}
 
         for cat, act in workflow_actions:
             if cat == "QUERY":
-                assert act in known_handled_query_actions, (
-                    f"QUERY/{act} marked WORKFLOW but not in known-handled set"
-                )
+                assert (
+                    act in known_handled_query_actions
+                ), f"QUERY/{act} marked WORKFLOW but not in known-handled set"
             elif cat == "EXECUTION":
-                assert act in known_handled_execution_actions, (
-                    f"EXECUTION/{act} marked WORKFLOW but not in known-handled set"
-                )
+                assert (
+                    act in known_handled_execution_actions
+                ), f"EXECUTION/{act} marked WORKFLOW but not in known-handled set"
 
 
 # ---- Multi-Intent Subsumption Tests ----
@@ -167,14 +181,12 @@ class TestMultiIntentSubsumption:
 
     def test_calendar_check_does_not_produce_temporal(self):
         """'Check my calendar for conflicts' should NOT trigger TEMPORAL."""
-        result = PreClassifier.detect_multiple_intents(
-            "Check my calendar for conflicts"
-        )
+        result = PreClassifier.detect_multiple_intents("Check my calendar for conflicts")
         categories = [i.category for i in result.intents]
         assert IntentCategory.QUERY in categories
-        assert IntentCategory.TEMPORAL not in categories, (
-            "TEMPORAL should be subsumed by QUERY for calendar queries"
-        )
+        assert (
+            IntentCategory.TEMPORAL not in categories
+        ), "TEMPORAL should be subsumed by QUERY for calendar queries"
 
     def test_show_my_calendar_does_not_produce_temporal(self):
         """'Show my calendar' should not double-match as TEMPORAL."""
@@ -185,18 +197,14 @@ class TestMultiIntentSubsumption:
 
     def test_whats_on_my_calendar_today(self):
         """'What's on my calendar today' should be QUERY, not QUERY+TEMPORAL."""
-        result = PreClassifier.detect_multiple_intents(
-            "What's on my calendar today?"
-        )
+        result = PreClassifier.detect_multiple_intents("What's on my calendar today?")
         categories = [i.category for i in result.intents]
         if IntentCategory.QUERY in categories:
             assert IntentCategory.TEMPORAL not in categories
 
     def test_greeting_plus_calendar_preserved(self):
         """'Good morning! What's on my calendar?' should keep both."""
-        result = PreClassifier.detect_multiple_intents(
-            "Good morning! What's on my calendar?"
-        )
+        result = PreClassifier.detect_multiple_intents("Good morning! What's on my calendar?")
         categories = [i.category for i in result.intents]
         # Greeting + QUERY should both be present
         assert IntentCategory.CONVERSATION in categories
@@ -219,9 +227,7 @@ class TestMultiIntentSubsumption:
 
     def test_priority_subsumes_guidance(self):
         """Priority queries should subsume guidance when both match."""
-        result = PreClassifier.detect_multiple_intents(
-            "What should I focus on next?"
-        )
+        result = PreClassifier.detect_multiple_intents("What should I focus on next?")
         categories = [i.category for i in result.intents]
         # At most one of PRIORITY or GUIDANCE, not both
         if IntentCategory.PRIORITY in categories:

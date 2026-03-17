@@ -17,7 +17,6 @@ from services.intent.intent_service import IntentProcessingResult, IntentService
 from services.intent_service.pre_classifier import PreClassifier
 from services.shared_types import IntentCategory
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
@@ -28,9 +27,7 @@ def intent_service():
     """Create IntentService instance for testing"""
     with patch("services.intent.intent_service.OrchestrationEngine"):
         with patch("services.intent.intent_service.LearningHandler"):
-            with patch(
-                "services.intent.intent_service.ConversationKnowledgeGraphIntegration"
-            ):
+            with patch("services.intent.intent_service.ConversationKnowledgeGraphIntegration"):
                 service = IntentService()
                 return service
 
@@ -129,9 +126,7 @@ class TestReopenIssueHandler:
             mock_router.update_issue = AsyncMock(return_value=mock_updated_issue)
             MockRouter.return_value = mock_router
 
-            result = await intent_service._handle_reopen_issue_query(
-                intent, "workflow-id"
-            )
+            result = await intent_service._handle_reopen_issue_query(intent, "workflow-id")
 
             assert result.success is True
             assert "Successfully reopened issue #42" in result.message
@@ -160,9 +155,7 @@ class TestReopenIssueHandler:
             mock_router.initialize = AsyncMock()
             MockRouter.return_value = mock_router
 
-            result = await intent_service._handle_reopen_issue_query(
-                intent, "workflow-id"
-            )
+            result = await intent_service._handle_reopen_issue_query(intent, "workflow-id")
 
             assert result.success is False
             assert "couldn't find any issues matching" in result.message
@@ -185,9 +178,7 @@ class TestReopenIssueHandler:
             mock_router.initialize = AsyncMock()
             MockRouter.return_value = mock_router
 
-            result = await intent_service._handle_reopen_issue_query(
-                intent, "workflow-id"
-            )
+            result = await intent_service._handle_reopen_issue_query(intent, "workflow-id")
 
             assert result.success is True
             assert "GitHub isn't configured yet" in result.message
@@ -209,17 +200,16 @@ class TestReopenIssueHandler:
             mock_router = MagicMock()
             mock_router.config_service.is_configured.return_value = True
             mock_router.initialize = AsyncMock()
-            mock_router.update_issue = AsyncMock(
-                side_effect=Exception("GitHub API error")
-            )
+            mock_router.update_issue = AsyncMock(side_effect=Exception("GitHub API error"))
             MockRouter.return_value = mock_router
 
-            result = await intent_service._handle_reopen_issue_query(
-                intent, "workflow-id"
-            )
+            result = await intent_service._handle_reopen_issue_query(intent, "workflow-id")
 
             assert result.success is False
-            assert "reopening that issue" in result.message.lower() or "error" in result.message.lower()
+            assert (
+                "reopening that issue" in result.message.lower()
+                or "error" in result.message.lower()
+            )
 
 
 # ---------------------------------------------------------------------------
@@ -254,9 +244,7 @@ class TestCloseIssueHandlerStillWorks:
             mock_router.update_issue = AsyncMock(return_value=mock_updated_issue)
             MockRouter.return_value = mock_router
 
-            result = await intent_service._handle_close_issue_query(
-                intent, "workflow-id"
-            )
+            result = await intent_service._handle_close_issue_query(intent, "workflow-id")
 
             assert result.success is True
             assert "Successfully closed issue #123" in result.message
@@ -338,9 +326,7 @@ class TestExtractSearchTerms:
         assert result == ""
 
     def test_preserves_meaningful_words(self):
-        result = IntentService._extract_search_terms(
-            "close the search feature bug", "close"
-        )
+        result = IntentService._extract_search_terms("close the search feature bug", "close")
         assert "search" in result
         assert "feature" in result
         assert "bug" in result
