@@ -151,3 +151,52 @@ All five bugs follow the same meta-pattern:
 For discussion with Chief Architect and CIO. Covers: action registry, response quality smoke tests, fail-loud stubs, legacy removal discipline, multi-intent deduplication.
 
 **PM decisions pending**: How to address the systemic issues before fixing individual bugs.
+
+### Systemic Fix Implementation — 4:41 PM
+
+PM approved Option A (route stub actions to floor). Implemented three workstreams:
+
+**1. Action Registry** (`services/intent_service/action_registry.py`):
+- All 34 (category, action) pairs from pre-classifier cataloged
+- `ActionDisposition` enum: CANONICAL, FLOOR, HANDLER, WORKFLOW
+- `validate_registry_coverage()` — startup check that fails fast on missing entries
+- Example messages per action for smoke test generation
+- Previously-stubbed actions (`get_feature_info`, `analyze_blockers`) marked FLOOR
+
+**2. Stub-to-Floor Routing**:
+- `_handle_generic_query` → now routes to conversational floor (was: "Query processed successfully: {action}")
+- `_handle_analysis_intent` else → now routes to conversational floor (was: "Analysis processed: {action}")
+- Fixes #915, #916 directly
+
+**3. Multi-intent Subsumption Filter** (`pre_classifier.py`):
+- `_apply_subsumption_filter()` removes phantom intents from pattern overlap
+- CALENDAR_QUERY subsumes TEMPORAL, PRIORITY subsumes GUIDANCE, DISCOVERY subsumes GUIDANCE
+- Fixes #919 directly
+
+**Tests**: 21 new (registry coverage 4, disposition 5, stub routing 4, subsumption 8). 1256 total passing.
+**Committed and pushed to main**: ✅
+
+**CIO cover note**: Delivered to `mailboxes/cio/inbox/`
+
+### #899 — Already Complete
+PM directed "Proceed with #899 now" at 4:48 PM. Investigation found it was already fully implemented:
+- `services/process/off_topic.py` — detection module with all 3 process types
+- Registry integration wired in `services/process/registry.py`
+- 63 tests passing in `tests/unit/services/process/test_off_topic.py`
+- Already on main (commit `3eb500ed`)
+- Added implementation evidence comment to GitHub issue #899
+- Hit STOP condition #3 ("Pattern/class/function already exists")
+
+---
+
+## Session Resumed (after 2nd compaction)
+
+### Status: Waiting for PM Retest
+All systemic fixes merged to main. PM will retest Q33, Q43, Q62 on restarted server.
+
+**Pending PM decisions/actions:**
+- Retest verification queries with new fixes
+- #899 closure (evidence added, awaiting PM verification)
+- #917 calendar credential leak (approved for sprint, not queue-jumping)
+- #914 GitHub integration test enablement
+- #902 close/reopen PM verification

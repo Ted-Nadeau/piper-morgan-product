@@ -35,67 +35,107 @@ def pytest_configure(config):
     """
     Load API keys from macOS Keychain before test collection.
 
-    This allows LLM tests to run when keys are stored securely in keychain
-    rather than requiring them to be exported to shell environment.
+    This allows LLM and GitHub integration tests to run when keys are stored
+    securely in keychain rather than requiring them to be exported to shell
+    environment.
 
     Keys are loaded from the "piper-morgan" keychain service.
-    """
-    # Only attempt keychain loading if keys aren't already in environment
-    if os.environ.get("OPENAI_API_KEY") or os.environ.get("ANTHROPIC_API_KEY"):
-        return  # Keys already available, skip keychain loading
 
+    Issue #914: Added GitHub token loading from keychain.
+    """
     try:
         # Import here to avoid dependency issues if keyring not installed
         from services.infrastructure.keychain_service import get_keychain_service
 
         keychain = get_keychain_service()
 
-        # Try to load OpenAI key
-        openai_key = keychain.get_api_key("openai")
-        if openai_key:
-            os.environ["OPENAI_API_KEY"] = openai_key
-            print("  [conftest] Loaded OPENAI_API_KEY from keychain")
+        # Try to load OpenAI key (skip if already in environment)
+        if not os.environ.get("OPENAI_API_KEY"):
+            openai_key = keychain.get_api_key("openai")
+            if openai_key:
+                os.environ["OPENAI_API_KEY"] = openai_key
+                print("  [conftest] Loaded OPENAI_API_KEY from keychain")
 
-        # Try to load Anthropic key
-        anthropic_key = keychain.get_api_key("anthropic")
-        if anthropic_key:
-            os.environ["ANTHROPIC_API_KEY"] = anthropic_key
-            print("  [conftest] Loaded ANTHROPIC_API_KEY from keychain")
+        # Try to load Anthropic key (skip if already in environment)
+        if not os.environ.get("ANTHROPIC_API_KEY"):
+            anthropic_key = keychain.get_api_key("anthropic")
+            if anthropic_key:
+                os.environ["ANTHROPIC_API_KEY"] = anthropic_key
+                print("  [conftest] Loaded ANTHROPIC_API_KEY from keychain")
+
+        # Try to load GitHub token (Issue #914)
+        # The keychain stores it as "github_token" (via save_github_token route).
+        # The codebase reads it from GITHUB_TOKEN env var (get_github_token()).
+        if not os.environ.get("GITHUB_TOKEN"):
+            github_key = keychain.get_api_key("github_token")
+            if github_key:
+                os.environ["GITHUB_TOKEN"] = github_key
+                print("  [conftest] Loaded GITHUB_TOKEN from keychain")
 
     except ImportError:
         # keyring or keychain_service not available - skip silently
         pass
     except Exception as e:
-        # Log but don't fail - tests will just skip LLM tests
+        # Log but don't fail - tests will just skip when keys unavailable
         print(f"  [conftest] Warning: Could not load API keys from keychain: {e}")
+
+    # Fallback: try `gh auth token` if GITHUB_TOKEN still not set (Issue #914)
+    # The gh CLI stores its own auth token — reuse it for integration tests.
+    if not os.environ.get("GITHUB_TOKEN"):
+        try:
+            import subprocess
+
+            result = subprocess.run(
+                ["gh", "auth", "token"],
+                capture_output=True,
+                text=True,
+                timeout=5,
+            )
+            if result.returncode == 0 and result.stdout.strip():
+                os.environ["GITHUB_TOKEN"] = result.stdout.strip()
+                print("  [conftest] Loaded GITHUB_TOKEN from gh CLI")
+        except (FileNotFoundError, subprocess.TimeoutExpired):
+            pass  # gh not installed or timed out - skip silently
 
 
 # ============================================================================
-# Auto-skip LLM tests when API keys not available
+# Auto-skip tests when required credentials not available
 # ============================================================================
 def pytest_collection_modifyitems(config, items):
     """
-    Auto-skip tests marked with @pytest.mark.llm when no LLM API keys are available.
+    Auto-skip tests marked with @pytest.mark.llm or @pytest.mark.github
+    when the required API keys are not available.
 
-    This prevents test failures in CI/local environments without LLM credentials.
+    This prevents test failures in CI/local environments without credentials.
     Tests will show as 'skipped' rather than 'failed'.
+
+    Issue #914: Added GitHub token auto-skip support.
     """
-    # Check for any LLM API key
+    # Check for LLM API keys
     has_openai = bool(os.environ.get("OPENAI_API_KEY"))
     has_anthropic = bool(os.environ.get("ANTHROPIC_API_KEY"))
     has_llm_keys = has_openai or has_anthropic
 
-    if has_llm_keys:
-        # Keys available, run all tests
-        return
+    # Check for GitHub token
+    has_github = bool(os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN"))
 
-    # No keys - skip LLM-marked tests
-    skip_llm = pytest.mark.skip(
-        reason="LLM API keys not available (OPENAI_API_KEY or ANTHROPIC_API_KEY)"
-    )
     for item in items:
-        if "llm" in item.keywords:
-            item.add_marker(skip_llm)
+        # Skip LLM tests if no LLM keys
+        if not has_llm_keys and "llm" in item.keywords:
+            item.add_marker(
+                pytest.mark.skip(
+                    reason="LLM API keys not available (OPENAI_API_KEY or ANTHROPIC_API_KEY)"
+                )
+            )
+
+        # Skip GitHub tests if no GitHub token (Issue #914)
+        if not has_github and "github" in item.keywords:
+            item.add_marker(
+                pytest.mark.skip(
+                    reason="GitHub token not available (GITHUB_TOKEN or GH_TOKEN). "
+                    "Store via: keychain.store_api_key('github_token', 'ghp_...')"
+                )
+            )
 
 
 # Session-scoped event loop for async integration tests (Issue #290)
