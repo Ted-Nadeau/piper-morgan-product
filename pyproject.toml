@@ -70,6 +70,7 @@ skip_glob = [
 asyncio_mode = "auto"
 markers = [
     "asyncio: mark test as requiring async event loop",
+    "github: Tests that require GitHub API token (skipped without GITHUB_TOKEN) - Issue #914",
 ]
 testpaths = ["tests"]
 addopts = "--ignore=tests/archive --ignore=*/archive/*"
