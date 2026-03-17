@@ -194,9 +194,94 @@ PM directed "Proceed with #899 now" at 4:48 PM. Investigation found it was alrea
 ### Status: Waiting for PM Retest
 All systemic fixes merged to main. PM will retest Q33, Q43, Q62 on restarted server.
 
-**Pending PM decisions/actions:**
-- Retest verification queries with new fixes
-- #899 closure (evidence added, awaiting PM verification)
-- #917 calendar credential leak (approved for sprint, not queue-jumping)
-- #914 GitHub integration test enablement
+### 4:56 PM — #914 GitHub Integration Tests — Complete
+
+PM directed: proceed to #914, then #917, then regroup.
+
+**Changes:**
+- Conftest loads `GITHUB_TOKEN` from keychain (matching OpenAI/Anthropic pattern)
+- Fallback to `gh auth token` CLI when keychain has no token stored
+- `@pytest.mark.github` marker registered in pytest.ini + pyproject.toml
+- Auto-skip github-marked tests when no token available
+- 5 integration tests: auth, scopes, repo access, issue listing, token format
+- All 5 pass (gh CLI token authenticated as mediajunkie)
+
+**Discovered work filed**: #920 — 3 pre-existing httpx `AsyncClient(app=)` failures
+
+**Tests**: 1261 passed (1256 existing + 5 new)
+**Merged and pushed to main**: ✅
+
+### 5:05 PM — #917 Calendar Credential Leak — Fixed
+
+**Root cause confirmed**: Line 272 of `google_calendar_adapter.py` fell back to global `google_calendar` keychain key when no user-scoped key existed. Line 1317 of `setup.py` stored to global key when `user_id` was None.
+
+**Fixes:**
+1. Removed legacy fallback in adapter — now returns `calendar_connected=False` when no user-scoped key exists
+2. OAuth callback now rejects token storage when `user_id` is missing (returns error redirect instead of storing to global key)
+3. Deleted global `google_calendar` keychain entry (contained real refresh token starting with `1//01HFj7F...`)
+4. Added 5 credential isolation tests (adapter: 3, OAuth callback: 2)
+5. Fixed 2 stale tests that expected the old global key pattern
+
+**Tests**: 1302 passed (including 5 new isolation tests)
+**Merged and pushed to main**: ✅
+
+---
+
+## 6:29 PM — Session End: Issue Closure Sweep
+
+PM wrapping up for the day, asked to verify all issues closed properly.
+
+### Issues closed with full evidence:
+| Issue | Title | Status |
+|-------|-------|--------|
+| #913 | FLOOR-INVERSION-P2: Action Gate + Context Assembler | ✅ Closed |
+| #899 | Off-topic detection (Layer C) | ✅ Closed |
+| #914 | GitHub integration tests with token | ✅ Closed |
+| #915 | Calendar raw data dumps | ✅ Closed (partial fix, full in Phase 3) |
+| #916 | analyze_blockers stub label | ✅ Closed |
+| #917 | Calendar credential leak | ✅ Closed |
+| #918 | Multi-intent false positive | ✅ Closed |
+| #919 | Phantom multi-intent (dup of #918) | ✅ Closed |
+
+### Still open:
+- **#902** — Close/reopen GitHub issues: awaiting PM verification
+
+### Pending for PM (2026-03-17)
+- Retest verification queries (Q33, Q43, Q62) with new fixes
 - #902 close/reopen PM verification
+
+---
+
+## 9:33 PM — #920 httpx Pin Fix
+
+PM asked to look at #920 before wrapping up. Investigated and presented 3 options (pin httpx, upgrade full stack, hybrid). PM approved Option A (pin).
+
+- Pinned `httpx>=0.27.0,<0.28` in requirements.txt
+- All 3 failing tests now pass: `test_expired_token_returns_401`, `test_no_auth_on_conversations_endpoint`, `test_create_list_accepts_json_body`
+- Filed #921 for the proper long-term fix (fastapi/starlette/httpx full upgrade)
+- Closed #920 with evidence
+- Merged and pushed to main (commit `646c33f4`)
+
+---
+
+## Day Summary
+
+**Massive day.** Started at 8:40 AM, ending ~9:40 PM. Key accomplishments:
+1. **#913 Phase 2** — Action Gate, Context Assembler, category migration (complete)
+2. **#899** — Off-topic detection verified complete (already existed)
+3. **Five Whys investigations** — Q33, Q43, Q62 bugs root-caused → #915, #916, #918, #919
+4. **#917** — Calendar credential leak found and fixed
+5. **#914** — GitHub integration test infrastructure
+6. **Systemic analysis** — "Extend without verifying" meta-pattern documented
+7. **Action registry** — 34 (category, action) pairs mapped
+8. **Stub-to-floor routing** — Dev stubs eliminated
+9. **Multi-intent subsumption** — Phantom intent deduplication
+10. **#920** — httpx version pin for test compatibility
+11. **9 issues closed** with full evidence, 1 new filed (#921)
+
+**Discovered work filed**: #914, #915, #916, #917, #918, #919, #920, #921 (8 issues)
+
+**Open items for next session**:
+- PM retest of Q33, Q43, Q62
+- #902 PM verification
+- #921 framework upgrade (low priority, when sprint allows)
