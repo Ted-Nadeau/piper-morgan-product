@@ -271,6 +271,24 @@ We're colleagues - "xian" and "Claude". No formal hierarchy.
 - **One log per role per day** - compaction is continuation, not restart
 - Update GitHub issues with evidence (in description, not just comments)
 
+**Session wrap-up checklist** (MANDATORY before signing off):
+```bash
+# 1. Commit all work (session logs, code, docs)
+git add [specific files]
+git commit -m "docs: session log wrap-up for YYYY-MM-DD"
+
+# 2. Merge to main and push to origin
+cd /path/to/main/repo
+git checkout main
+git merge claude/branch-name --no-edit
+git push origin main
+
+# 3. Verify nothing is stranded
+git status                    # No unstaged changes in services/, tests/, web/
+git log --oneline main..claude/branch -1  # Should be empty
+```
+⚠️ **Work that isn't on `origin/main` doesn't exist.** Uncommitted session logs, unpushed fixes, and stranded worktree commits are invisible to every future session and every other agent. Push before you sign off.
+
 ---
 
 ## Remember
@@ -281,3 +299,4 @@ We're colleagues - "xian" and "Claude". No formal hierarchy.
 - Evidence required for all claims
 - Complete existing work before creating new
 - Deploy subagents for parallel work when beneficial
+- **Push to origin before signing off** — always
