@@ -37,10 +37,10 @@ fi
 INBOX_DIR="$PROJECT_ROOT/mailboxes/lead/inbox"
 
 if [ -d "$INBOX_DIR" ]; then
-    # Count non-hidden files
-    UNREAD=$(find "$INBOX_DIR" -maxdepth 1 -type f ! -name '.*' 2>/dev/null | wc -l | tr -d ' ')
+    # Count non-hidden, non-MANIFEST files
+    UNREAD=$(find "$INBOX_DIR" -maxdepth 1 -type f ! -name '.*' ! -name 'MANIFEST.md' 2>/dev/null | wc -l | tr -d ' ')
     if [ "$UNREAD" -gt 0 ]; then
-        FILES=$(find "$INBOX_DIR" -maxdepth 1 -type f ! -name '.*' -exec basename {} \; 2>/dev/null | head -3 | tr '\n' ', ' | sed 's/,$//')
+        FILES=$(find "$INBOX_DIR" -maxdepth 1 -type f ! -name '.*' ! -name 'MANIFEST.md' -exec basename {} \; 2>/dev/null | head -3 | tr '\n' ', ' | sed 's/,$//')
         output+="MAILBOX: $UNREAD unread — $FILES"$'\n'
     else
         output+="MAILBOX: empty"$'\n'
