@@ -2,6 +2,8 @@
 # Session Log Template - Standard
 *For all development sessions*
 
+> **Date boundary rule**: Each calendar day gets its own session log file. If the date has changed since this log was created, close this log and start a new one with today's date and timestamp.
+
 ## Session Start
 - **Time**: [Time]
 - **Date**: [Date]

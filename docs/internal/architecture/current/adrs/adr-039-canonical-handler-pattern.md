@@ -2,6 +2,7 @@
 
 ## Status
 Approved & Implemented (October 7, 2025)
+**Routing philosophy superseded by [ADR-060](adr-060-floor-first-routing.md) (March 2026).** ADR-039 infrastructure (pre-classifier, canonical handler framework, workflow factory) remains in active use. ADR-060 changes the default routing path from canonical handlers to conversational floor. Consult ADR-060 for current routing decisions; consult ADR-039 for handler infrastructure design.
 
 **Related Epics**: GREAT-4C, GREAT-4D, GREAT-4E, GREAT-4F
 **Deciders**: Chief Architect, Lead Developer

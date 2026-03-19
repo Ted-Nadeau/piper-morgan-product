@@ -46,6 +46,18 @@
 - Refactoring artifact detection
 - CI/CD integration for quality gates
 
+**ProcessRegistry / Guided Process Architecture** (ADR-049):
+- Two-tier intent: process-level state checked before message-level classification
+- Active guided process claims messages (onboarding, standup, future workflows)
+- Escape commands, timeout, and suspension mechanisms (implemented/in progress)
+- Note: Onboarding currently removed per ADR-059; infrastructure remains for future workflows
+
+**Floor-First Routing** (ADR-060):
+- LLM conversational floor is the default response path
+- Structured handlers retained for side effects (Action Gate pattern)
+- Context Assembler gathers per-category data for floor prompt injection
+- Supersedes ADR-039 routing philosophy; ADR-039 infrastructure retained
+
 ## Current Focus
 > **🎯 For current sprint objectives and architectural focus, see `docs/briefing/BRIEFING-CURRENT-STATE.md`**
 
@@ -69,25 +81,27 @@ Request "Loading [topic] details" for:
 - Config validation: Operational, detecting real issues
 - Plugin foundation: Solid base for 3B work
 
-**System Capabilities** (~75% functional):
-- ✅ All integrations working via routers
+**System Capabilities**:
+- ✅ All integrations working via routers (7 plugins)
 - ✅ Spatial intelligence operational (3 patterns)
 - ✅ Configuration validation active
-- ✅ Plugin foundation complete
-- 🚧 Dynamic plugin loading (3B scope)
-- ❌ Learning system (future)
-- ❌ Complex workflow automation (future)
+- ✅ Floor-first routing (Phase 1 complete, Phases 2-4 in progress)
+- ✅ ProcessRegistry for guided workflows
+- 🚧 Floor migration Phases 2-4 (in progress, #911)
+- 🚧 Workflow dispatcher consolidation (#922/ADR-059)
+- ❌ Learning system (future, M3+)
 
 **Technical Debt**:
-- Configuration refactoring artifacts (addressed in 3B)
+- ~126 canonical handler tests need migration as floor phases complete
+- `_GENERIC_CANONICAL_SIGNATURES` whack-a-mole (removed after Phase 5)
 - CLI bypasses intent layer (future work)
-- Some TODO comments without issue tracking
+- intent_service.py at ~9,400 lines (large file, refactoring planned)
 
 ## Standing Design Principles
 1. **Backward Compatibility**: Zero breaking changes to existing routers
 2. **Spatial Preservation**: All three patterns maintained across changes
 3. **Quality Standards**: 100% completion, evidence-based validation
-4. **Floor-First Routing**: LLM floor as default, canonical handlers for actions (ADR-039)
+4. **Floor-First Routing**: LLM floor as default, canonical handlers for actions (ADR-060)
 
 ## Critical Rules
 1. **Cathedral Standard**: Foundational systems require 100% quality
@@ -134,4 +148,4 @@ Product Relevance classifications:
 
 ---
 
-*Last Updated: March 10, 2026*
+*Last Updated: March 19, 2026*

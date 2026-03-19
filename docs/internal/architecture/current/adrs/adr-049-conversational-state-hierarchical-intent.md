@@ -1,6 +1,7 @@
 # ADR-049: Conversational State and Hierarchical Intent Architecture
 
 **Status:** Accepted
+**Pending review**: ADR-059 (Workflow Dispatcher, March 2026) removes onboarding workflow and consolidates offer/acceptance systems. Escape command and timeout infrastructure specified in this ADR remains needed for standup (#889) and future guided workflows. Onboarding-specific patterns (OFFERED state, offer-first activation) are on hold pending ADR-059 implementation outcomes and potential onboarding redesign. This ADR will be amended once the post-ADR-059 architecture stabilizes.
 **Date:** 2026-01-09
 **Accepted:** 2026-01-26
 **Issue:** [#490 FTUX-PORTFOLIO](https://github.com/mediajunkie/piper-morgan-product/issues/490)
