@@ -18,6 +18,10 @@ from services.shared_types import PortfolioOnboardingState, StandupConversationS
 from services.standup.conversation_manager import StandupConversationManager
 
 
+# ADR-059: Mark onboarding-related classes for skip
+
+
+@pytest.mark.skip(reason="ADR-059: onboarding on ice")
 class TestPortfolioOnboardingManagerIsolation:
     """Verify PortfolioOnboardingManager isolates users."""
 

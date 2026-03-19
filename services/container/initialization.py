@@ -147,8 +147,23 @@ class ServiceInitializer:
             # Import here to avoid circular imports
             from services.process import register_default_processes
 
-            # Register default guided processes (onboarding, standup)
+            # Register default guided processes (standup; onboarding on ice per ADR-059)
             register_default_processes()
+
+            # ADR-059: Register workflow dispatcher entry points
+            from services.intent_service.workflow_entries import register_default_workflows
+
+            register_default_workflows()
+
+            # Validate workflow registry at startup
+            from services.intent_service.workflow_dispatcher import validate_registry
+
+            errors = validate_registry()
+            if errors:
+                for err in errors:
+                    logger.error("workflow_registry_validation_error", error=err)
+            else:
+                logger.info("WorkflowDispatcher validated successfully")
 
             logger.info("ProcessRegistry initialized successfully")
 

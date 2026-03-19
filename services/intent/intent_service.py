@@ -438,7 +438,8 @@ class IntentService:
                     self.logger.warning(f"Formality baseline load failed: {e}")
                     formality_baseline = DEFAULT_WARMTH
 
-            # Issue #824: Check for pending soft offer accept/decline
+            # ADR-059: Unified offer acceptance via workflow dispatcher.
+            # Single detection point for all offer types — no parallel paths.
             # Must run before classification — "yes please" is a response to an offer,
             # not a new intent to classify.
             pending_offer = self.workflow_offer_service.get_and_clear_pending_offer(
@@ -448,65 +449,57 @@ class IntentService:
                 response_type = detect_offer_response(message)
                 if response_type == "accept":
                     workflow_type = pending_offer["workflow_type"]
-                    trigger_message = pending_offer.get("trigger_message", "")
 
-                    # Issue #825: Start slot filling for meeting offers
-                    if workflow_type == "meeting":
-                        try:
-                            # Issue #821: Pass active lens for contextual prompts
-                            active_lens = pending_offer.get("active_lens")
-                            slot_response = await self.slot_filling_adapter.manager.start_filling(
-                                user_id=user_id,
-                                session_id=session_id,
-                                template=MEETING_TEMPLATE,
-                                initial_message=trigger_message,
-                                active_lens=active_lens,
-                                formality_baseline=formality_baseline,
-                            )
-                            acceptance_msg = self.workflow_offer_service.format_acceptance(
-                                workflow_type, formality_baseline=formality_baseline
-                            )
-                            combined_msg = f"{acceptance_msg}\n\n{slot_response.message}"
-                            self.logger.info(
-                                "soft_offer_accepted_with_slot_filling",
-                                workflow_type=workflow_type,
-                                session_id=session_id,
-                                slots_filled=len(slot_response.filled_slots),
-                            )
-                            return IntentProcessingResult(
-                                success=True,
-                                message=combined_msg,
-                                intent_data={
-                                    "category": "soft_offer_accepted",
-                                    "action": workflow_type,
-                                    "context": {
-                                        "slot_filling_active": True,
-                                        "filled_slots": slot_response.filled_slots,
-                                        "template_name": slot_response.template_name,
-                                        "active_lens": active_lens,
-                                    },
-                                },
-                            )
-                        except Exception as e:
-                            self.logger.warning(f"Slot filling start failed: {e}")
-                            # Fall through to basic acceptance
+                    # ADR-059: Dispatch through workflow registry instead of switch
+                    from services.intent_service.workflow_dispatcher import dispatch_workflow
 
-                    acceptance_msg = self.workflow_offer_service.format_acceptance(
-                        workflow_type, formality_baseline=formality_baseline
-                    )
-                    self.logger.info(
-                        "soft_offer_accepted",
+                    dispatch_context = {
+                        "trigger_message": pending_offer.get("trigger_message", ""),
+                        "active_lens": pending_offer.get("active_lens"),
+                        "formality_baseline": formality_baseline,
+                        "slot_filling_adapter": self.slot_filling_adapter,
+                    }
+
+                    result = await dispatch_workflow(
                         workflow_type=workflow_type,
                         session_id=session_id,
+                        user_id=user_id,
+                        context=dispatch_context,
                     )
-                    return IntentProcessingResult(
-                        success=True,
-                        message=acceptance_msg,
-                        intent_data={
-                            "category": "soft_offer_accepted",
-                            "action": workflow_type,
-                        },
-                    )
+
+                    if result is not None:
+                        # Dispatcher returned a result — build the response
+                        self.logger.info(
+                            "soft_offer_accepted_via_dispatcher",
+                            workflow_type=workflow_type,
+                            session_id=session_id,
+                        )
+                        return IntentProcessingResult(
+                            success=True,
+                            message=result["message"],
+                            intent_data=result.get("intent_data", {
+                                "category": "soft_offer_accepted",
+                                "action": workflow_type,
+                            }),
+                        )
+                    else:
+                        # Unknown workflow type — route to floor with context
+                        self.logger.info(
+                            "soft_offer_accepted_unknown_workflow_to_floor",
+                            workflow_type=workflow_type,
+                            session_id=session_id,
+                        )
+                        return await self._handle_unknown_intent(
+                            Intent(
+                                category=IntentCategory.UNKNOWN,
+                                action=workflow_type,
+                                confidence=0.5,
+                                original_message=message,
+                            ),
+                            None,
+                            session_id,
+                        )
+
                 elif response_type == "decline":
                     decline_msg = pending_offer.get(
                         "decline_message",
@@ -589,16 +582,9 @@ class IntentService:
             if guided_process_result:
                 return guided_process_result
 
-            # Issue #888: Check for pending onboarding offer (OFFERED state).
-            # This runs AFTER the active process check (OFFERED is not active)
-            # but BEFORE classification, so we can catch yes/no responses.
-            if user_id:
-                pending_offer_result = await self._check_pending_onboarding_offer(
-                    user_id=user_id,
-                    message=message,
-                )
-                if pending_offer_result:
-                    return pending_offer_result
+            # ADR-059: Onboarding offer check disabled — onboarding on ice.
+            # Was: _check_pending_onboarding_offer() at pipeline position 2.
+            # Will be replaced by workflow dispatcher (ADR-059 Phase C).
 
             # Issue #889: Check for pending resume offer (SUSPENDED state).
             # If user was offered to resume a suspended session, catch their response.
@@ -1320,35 +1306,8 @@ class IntentService:
                     session_id=session_id,
                 )
 
-                # Handle onboarding completion - persist projects
-                # Issue #731 DEBUG: Trace persistence check
-                print(f"[IntentService] Checking onboarding completion:")
-                print(
-                    f"  process_type={result.process_type.value if result.process_type else None}"
-                )
-                print(
-                    f"  state={result.intent_data.get('context', {}).get('state') if result.intent_data else None}"
-                )
-                print(
-                    f"  captured_projects={result.intent_data.get('context', {}).get('captured_projects', []) if result.intent_data else []}"
-                )
-
-                if (
-                    result.process_type
-                    and result.process_type.value == "onboarding"
-                    and result.intent_data
-                    and result.intent_data.get("context", {}).get("state") == "complete"
-                ):
-                    # Get captured projects from the response context
-                    captured_projects = result.intent_data.get("context", {}).get(
-                        "captured_projects", []
-                    )
-                    print(
-                        f"[IntentService] PERSISTENCE TRIGGERED! captured_projects={captured_projects}, user_id={user_id}"
-                    )
-                    if captured_projects:
-                        await self._persist_onboarding_projects(user_id, captured_projects)
-                        print(f"[IntentService] _persist_onboarding_projects completed")
+                # ADR-059: Onboarding completion check removed (onboarding on ice).
+                # Was: persist captured projects when onboarding completes.
 
                 return (
                     IntentProcessingResult(
@@ -1493,8 +1452,7 @@ class IntentService:
 
                 if suspended.process_type == ProcessType.STANDUP:
                     return await self._resume_suspended_standup(user_id, session_id)
-                elif suspended.process_type == ProcessType.ONBOARDING:
-                    return await self._resume_suspended_onboarding(user_id, session_id)
+                # ADR-059: Onboarding resume disabled (onboarding on ice)
 
             elif msg_lower in decline_signals:
                 # Abandon the suspended session
@@ -1506,8 +1464,7 @@ class IntentService:
 
                 if suspended.process_type == ProcessType.STANDUP:
                     return await self._abandon_suspended_standup(user_id)
-                elif suspended.process_type == ProcessType.ONBOARDING:
-                    return await self._abandon_suspended_onboarding(user_id)
+                # ADR-059: Onboarding abandon disabled (onboarding on ice)
 
             # Not a response to the resume offer — let normal classification handle it.
             # The suspended session stays as-is for next greeting re-entry.

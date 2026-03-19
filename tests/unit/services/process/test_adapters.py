@@ -20,6 +20,7 @@ from services.process.adapters import (
 from services.process.registry import GuidedProcess, ProcessCheckResult, ProcessType
 
 
+@pytest.mark.skip(reason="ADR-059: onboarding on ice")
 class TestOnboardingProcessAdapter:
     """Tests for OnboardingProcessAdapter."""
 
@@ -230,8 +231,8 @@ class TestStandupProcessAdapter:
 class TestRegisterDefaultProcesses:
     """Tests for register_default_processes."""
 
-    def test_registers_both_processes(self):
-        """Registers onboarding and standup adapters."""
+    def test_registers_standup_process(self):
+        """ADR-059: Only standup registered (onboarding on ice)."""
         from services.process.registry import ProcessRegistry
 
         # Reset singleton
@@ -239,15 +240,9 @@ class TestRegisterDefaultProcesses:
 
         try:
             # Mock the components to avoid importing actual managers
-            with (
-                patch(
-                    "services.process.adapters.OnboardingProcessAdapter._get_components",
-                    return_value=(MagicMock(), MagicMock()),
-                ),
-                patch(
-                    "services.process.adapters.StandupProcessAdapter._get_components",
-                    return_value=(MagicMock(), MagicMock()),
-                ),
+            with patch(
+                "services.process.adapters.StandupProcessAdapter._get_components",
+                return_value=(MagicMock(), MagicMock()),
             ):
                 register_default_processes()
 
@@ -255,7 +250,8 @@ class TestRegisterDefaultProcesses:
 
             registry = get_process_registry()
 
-            assert ProcessType.ONBOARDING in registry.registered_types
+            # ADR-059: Onboarding no longer registered
+            assert ProcessType.ONBOARDING not in registry.registered_types
             assert ProcessType.STANDUP in registry.registered_types
         finally:
             ProcessRegistry.reset_instance()

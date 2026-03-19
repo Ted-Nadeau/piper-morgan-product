@@ -57,13 +57,24 @@ def mock_canonical_handlers():
 
 @pytest.fixture
 def intent_service(mock_engine, mock_classifier, mock_canonical_handlers):
+    # ADR-059: Register default workflows so dispatcher has entries
+    from services.intent_service.workflow_dispatcher import WORKFLOW_REGISTRY
+    from services.intent_service.workflow_entries import register_default_workflows
+
+    WORKFLOW_REGISTRY.clear()
+    register_default_workflows()
+
     service = IntentService(
         orchestration_engine=mock_engine,
         intent_classifier=mock_classifier,
     )
     service.canonical_handlers = mock_canonical_handlers
     service.intent_orchestrator = IntentOrchestrator(canonical_handlers=mock_canonical_handlers)
-    return service
+
+    yield service
+
+    # Clean up registry
+    WORKFLOW_REGISTRY.clear()
 
 
 class TestOfferAcceptance:
@@ -71,7 +82,16 @@ class TestOfferAcceptance:
 
     @pytest.mark.asyncio
     async def test_yes_accepts_meeting_offer(self, intent_service, mock_classifier):
-        """'Yes please' with pending meeting offer → acceptance message."""
+        """'Yes please' with pending meeting offer → dispatched via workflow registry."""
+        # Mock slot filling on the intent_service so the meeting workflow entry point works
+        mock_slot_response = MagicMock()
+        mock_slot_response.message = "When would you like to meet?"
+        mock_slot_response.filled_slots = {}
+        mock_slot_response.template_name = "meeting"
+        intent_service.slot_filling_adapter.manager.start_filling = AsyncMock(
+            return_value=mock_slot_response
+        )
+
         # Simulate a pending offer from previous turn
         intent_service.workflow_offer_service.set_pending_offer(
             "sess_accept",
@@ -89,13 +109,14 @@ class TestOfferAcceptance:
         )
 
         assert result.success
-        assert "set that up" in result.message.lower() or "help" in result.message.lower()
+        # ADR-059: Meeting now dispatched via workflow registry
         assert result.intent_data["category"] == "soft_offer_accepted"
         assert result.intent_data["action"] == "meeting"
+        assert result.intent_data["context"]["slot_filling_active"] is True
 
     @pytest.mark.asyncio
-    async def test_sure_accepts_status_offer(self, intent_service, mock_classifier):
-        """'Sure!' with pending status offer → acceptance message."""
+    async def test_sure_accepts_unregistered_workflow_routes_to_floor(self, intent_service, mock_classifier):
+        """ADR-059: 'Sure!' with unregistered workflow type → routes to floor."""
         intent_service.workflow_offer_service.set_pending_offer(
             "sess_accept2",
             {
@@ -111,13 +132,14 @@ class TestOfferAcceptance:
             user_id=None,
         )
 
+        # ADR-059: Unregistered workflow types route to floor (not dead-end acceptance)
         assert result.success
-        assert result.intent_data["category"] == "soft_offer_accepted"
-        assert result.intent_data["action"] == "status_check"
+        # Floor routing produces an "unknown" category, not "soft_offer_accepted"
+        assert result.intent_data["category"] == "unknown"
 
     @pytest.mark.asyncio
-    async def test_go_ahead_accepts(self, intent_service, mock_classifier):
-        """'Go ahead' with pending offer → acceptance."""
+    async def test_go_ahead_accepts_unregistered_routes_to_floor(self, intent_service, mock_classifier):
+        """ADR-059: 'Go ahead' with unregistered workflow → routes to floor."""
         intent_service.workflow_offer_service.set_pending_offer(
             "sess_go",
             {
@@ -133,8 +155,8 @@ class TestOfferAcceptance:
             user_id=None,
         )
 
+        # ADR-059: Unregistered workflow types route to floor
         assert result.success
-        assert result.intent_data["category"] == "soft_offer_accepted"
 
     @pytest.mark.asyncio
     async def test_classifier_not_called_on_accept(self, intent_service, mock_classifier):
@@ -438,8 +460,8 @@ class TestSlotFillingOnAccept:
         assert has_session
 
     @pytest.mark.asyncio
-    async def test_non_meeting_accept_no_slot_filling(self, intent_service, mock_classifier):
-        """Accepting a non-meeting offer → no slot filling, just acceptance."""
+    async def test_non_meeting_accept_routes_to_floor(self, intent_service, mock_classifier):
+        """ADR-059: Accepting unregistered workflow → routes to floor, no slot filling."""
         intent_service.workflow_offer_service.set_pending_offer(
             "sess_status",
             {
@@ -456,13 +478,9 @@ class TestSlotFillingOnAccept:
             user_id=None,
         )
 
+        # ADR-059: Unregistered workflow types route to floor
         assert result.success
-        assert result.intent_data["category"] == "soft_offer_accepted"
-        assert result.intent_data["action"] == "status_check"
-        # No slot filling context for status_check
-        assert "context" not in result.intent_data or not result.intent_data.get("context", {}).get(
-            "slot_filling_active"
-        )
+        assert result.intent_data["category"] == "unknown"
 
     @pytest.mark.asyncio
     async def test_meeting_accept_without_trigger_still_works(
@@ -602,10 +620,11 @@ class TestEmbeddedOfferRegistration:
             user_id=None,
         )
 
-        # Should be accepted, NOT classified as greeting
+        # ADR-059: Should be accepted (not classified as greeting),
+        # but priority_check is unregistered → routes to floor
         assert result.success
-        assert result.intent_data["category"] == "soft_offer_accepted"
-        assert result.intent_data["action"] == "priority_check"
+        # The key assertion: "yes" was NOT classified as a greeting
+        assert result.intent_data.get("category") != "conversation"
 
     @pytest.mark.asyncio
     async def test_project_offer_registers_as_pending(self, intent_service, mock_classifier):

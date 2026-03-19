@@ -1,0 +1,261 @@
+"""
+Tests for the workflow dispatcher (ADR-059).
+
+Verifies:
+- Registry-based dispatch replaces switch statements
+- Unknown workflow types return None (caller routes to floor)
+- Registered workflows dispatch correctly
+- Validation catches bad entries
+- Meeting workflow entry point works
+"""
+
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
+
+from services.intent_service.workflow_dispatcher import (
+    WORKFLOW_REGISTRY,
+    WorkflowEntry,
+    dispatch_workflow,
+    register_workflow,
+    validate_registry,
+)
+
+
+@pytest.fixture(autouse=True)
+def clean_registry():
+    """Reset the workflow registry before each test."""
+    saved = dict(WORKFLOW_REGISTRY)
+    WORKFLOW_REGISTRY.clear()
+    yield
+    WORKFLOW_REGISTRY.clear()
+    WORKFLOW_REGISTRY.update(saved)
+
+
+class TestWorkflowRegistry:
+    """Tests for workflow registration."""
+
+    def test_register_workflow(self):
+        """Can register a workflow entry."""
+        entry = WorkflowEntry(
+            entry_point=AsyncMock(),
+            description="Test workflow",
+        )
+        register_workflow("test_type", entry)
+        assert "test_type" in WORKFLOW_REGISTRY
+        assert WORKFLOW_REGISTRY["test_type"].description == "Test workflow"
+
+    def test_duplicate_registration_raises(self):
+        """Cannot register the same workflow type twice."""
+        entry = WorkflowEntry(entry_point=AsyncMock(), description="First")
+        register_workflow("dupe", entry)
+
+        with pytest.raises(ValueError, match="already registered"):
+            register_workflow("dupe", WorkflowEntry(entry_point=AsyncMock(), description="Second"))
+
+    def test_get_registered_workflows(self):
+        """get_registered_workflows returns a copy."""
+        from services.intent_service.workflow_dispatcher import get_registered_workflows
+
+        register_workflow("test", WorkflowEntry(entry_point=AsyncMock(), description="Test"))
+        result = get_registered_workflows()
+        assert "test" in result
+        # Mutating the copy doesn't affect the real registry
+        result.pop("test")
+        assert "test" in WORKFLOW_REGISTRY
+
+
+class TestDispatchWorkflow:
+    """Tests for the dispatch_workflow function."""
+
+    @pytest.mark.asyncio
+    async def test_unknown_type_returns_none(self):
+        """Unknown workflow types return None for floor routing."""
+        result = await dispatch_workflow(
+            workflow_type="nonexistent",
+            session_id="sess-1",
+        )
+        assert result is None
+
+    @pytest.mark.asyncio
+    async def test_dispatch_calls_entry_point(self):
+        """Dispatches to the registered entry point."""
+        mock_handler = AsyncMock(return_value={"message": "Started!"})
+        register_workflow(
+            "test_workflow",
+            WorkflowEntry(entry_point=mock_handler, description="Test"),
+        )
+
+        result = await dispatch_workflow(
+            workflow_type="test_workflow",
+            session_id="sess-1",
+            user_id="user-1",
+            context={"key": "value"},
+        )
+
+        assert result == {"message": "Started!"}
+        mock_handler.assert_called_once_with(
+            session_id="sess-1",
+            user_id="user-1",
+            context={"key": "value"},
+        )
+
+    @pytest.mark.asyncio
+    async def test_dispatch_with_resume_point(self):
+        """Resume uses resume_point when available."""
+        mock_start = AsyncMock(return_value={"message": "Fresh start"})
+        mock_resume = AsyncMock(return_value={"message": "Resumed!"})
+        register_workflow(
+            "resumable",
+            WorkflowEntry(
+                entry_point=mock_start,
+                resume_point=mock_resume,
+                description="Resumable",
+            ),
+        )
+
+        result = await dispatch_workflow(
+            workflow_type="resumable",
+            session_id="sess-1",
+            resume=True,
+        )
+
+        assert result == {"message": "Resumed!"}
+        mock_resume.assert_called_once()
+        mock_start.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_dispatch_resume_fallback_to_entry(self):
+        """Resume falls back to entry_point when no resume_point."""
+        mock_start = AsyncMock(return_value={"message": "Fresh start"})
+        register_workflow(
+            "no_resume",
+            WorkflowEntry(entry_point=mock_start, description="No resume"),
+        )
+
+        result = await dispatch_workflow(
+            workflow_type="no_resume",
+            session_id="sess-1",
+            resume=True,
+        )
+
+        assert result == {"message": "Fresh start"}
+        mock_start.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_dispatch_error_returns_none(self):
+        """Entry point errors are caught and return None."""
+        mock_handler = AsyncMock(side_effect=RuntimeError("boom"))
+        register_workflow(
+            "broken",
+            WorkflowEntry(entry_point=mock_handler, description="Broken"),
+        )
+
+        result = await dispatch_workflow(
+            workflow_type="broken",
+            session_id="sess-1",
+        )
+
+        assert result is None
+
+
+class TestValidateRegistry:
+    """Tests for registry validation."""
+
+    def test_valid_registry(self):
+        """Valid registry produces no errors."""
+        register_workflow(
+            "valid",
+            WorkflowEntry(entry_point=AsyncMock(), description="Valid"),
+        )
+        errors = validate_registry()
+        assert errors == []
+
+    def test_non_callable_entry_point(self):
+        """Non-callable entry_point is caught."""
+        WORKFLOW_REGISTRY["bad"] = WorkflowEntry(
+            entry_point="not_a_function",  # type: ignore
+            description="Bad entry",
+        )
+        errors = validate_registry()
+        assert len(errors) == 1
+        assert "not callable" in errors[0]
+
+    def test_non_callable_resume_point(self):
+        """Non-callable resume_point is caught."""
+        WORKFLOW_REGISTRY["bad_resume"] = WorkflowEntry(
+            entry_point=AsyncMock(),
+            resume_point=42,  # type: ignore
+            description="Bad resume",
+        )
+        errors = validate_registry()
+        assert len(errors) == 1
+        assert "resume_point" in errors[0]
+
+
+class TestMeetingWorkflowEntry:
+    """Tests for the meeting workflow entry point."""
+
+    @pytest.mark.asyncio
+    async def test_meeting_workflow_starts_slot_filling(self):
+        """Meeting workflow starts slot filling via the adapter."""
+        import sys
+
+        mock_slot_response = MagicMock()
+        mock_slot_response.message = "When would you like to meet?"
+        mock_slot_response.filled_slots = {}
+        mock_slot_response.template_name = "meeting"
+
+        mock_manager = MagicMock()
+        mock_manager.start_filling = AsyncMock(return_value=mock_slot_response)
+
+        mock_adapter_instance = MagicMock()
+        mock_adapter_instance.manager = mock_manager
+
+        mock_wos_instance = MagicMock()
+        mock_wos_instance.format_acceptance.return_value = "Great, let's set that up!"
+
+        # Patch WorkflowOfferService which is lazily imported
+        with patch(
+            "services.intent_service.soft_invocation.WorkflowOfferService",
+            return_value=mock_wos_instance,
+        ):
+            from services.intent_service.workflow_entries import start_meeting_workflow
+
+            result = await start_meeting_workflow(
+                session_id="sess-1",
+                user_id="user-1",
+                context={
+                    "trigger_message": "get the team together",
+                    "active_lens": "people",
+                    "formality_baseline": 0.6,
+                    "slot_filling_adapter": mock_adapter_instance,
+                },
+            )
+
+        assert "Great, let's set that up!" in result["message"]
+        assert "When would you like to meet?" in result["message"]
+        assert result["intent_data"]["action"] == "meeting"
+        assert result["intent_data"]["context"]["slot_filling_active"] is True
+
+
+class TestDefaultWorkflowRegistration:
+    """Tests for register_default_workflows."""
+
+    def test_registers_meeting_workflow(self):
+        """register_default_workflows registers the meeting workflow."""
+        from services.intent_service.workflow_entries import register_default_workflows
+
+        register_default_workflows()
+
+        assert "meeting" in WORKFLOW_REGISTRY
+        assert WORKFLOW_REGISTRY["meeting"].description == "Meeting scheduling via slot-filling"
+
+    def test_double_registration_raises(self):
+        """Calling register_default_workflows twice raises."""
+        from services.intent_service.workflow_entries import register_default_workflows
+
+        register_default_workflows()
+
+        with pytest.raises(ValueError, match="already registered"):
+            register_default_workflows()

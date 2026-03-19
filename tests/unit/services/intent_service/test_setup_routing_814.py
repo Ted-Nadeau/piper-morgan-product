@@ -42,43 +42,24 @@ class TestProjectSetupZeroProjects:
     """Issue #814: When user has 0 projects, explicit setup triggers onboarding."""
 
     @pytest.mark.asyncio
-    async def test_zero_projects_starts_onboarding(self, canonical_handlers):
-        """'Help me set up a project' with 0 projects triggers interactive onboarding."""
+    async def test_zero_projects_returns_guidance(self, canonical_handlers):
+        """ADR-059: With 0 projects, returns static guidance (onboarding on ice)."""
         intent = _make_intent("help me set up a project")
 
         mock_user_context = MagicMock()
         mock_user_context.projects = []
 
-        mock_response = MagicMock()
-        mock_response.message = (
-            "Hello! I'm Piper Morgan. Would you like to tell me about your projects?"
-        )
-        mock_response.state = MagicMock()
-        mock_response.state.value = "initiated"
-        mock_response.metadata = {"onboarding_id": "onb-123"}
-
-        mock_handler = MagicMock()
-        mock_handler.start_onboarding.return_value = mock_response
-
-        with (
-            patch(
-                "services.intent_service.canonical_handlers.user_context_service.get_user_context",
-                new_callable=AsyncMock,
-                return_value=mock_user_context,
-            ),
-            patch(
-                "services.conversation.conversation_handler._get_onboarding_components",
-                return_value=(MagicMock(), mock_handler),
-            ),
+        with patch(
+            "services.intent_service.canonical_handlers.user_context_service.get_user_context",
+            new_callable=AsyncMock,
+            return_value=mock_user_context,
         ):
             result = await canonical_handlers._handle_project_setup_request(
                 intent, "sess-1", "user-1"
             )
 
-        assert result["intent"]["action"] == "portfolio_onboarding"
-        assert result["onboarding_session"] == "onb-123"
-        assert result["intent"]["context"]["triggered_by"] == "explicit_setup_request"
-        mock_handler.start_onboarding.assert_called_once_with("sess-1", "user-1")
+        # ADR-059: Returns static guidance instead of launching onboarding
+        assert result["intent"]["action"] == "provide_setup_guidance"
 
     @pytest.mark.asyncio
     async def test_no_user_id_falls_back_to_static(self, canonical_handlers):
