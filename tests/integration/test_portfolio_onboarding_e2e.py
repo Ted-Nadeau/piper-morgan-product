@@ -10,6 +10,11 @@ Tests the full flow:
 3. User confirms → project persisted
 4. Subsequent greetings → normal (no onboarding)
 """
+import pytest
+
+# ADR-059: Onboarding on ice
+pytestmark = pytest.mark.skip(reason="ADR-059: onboarding on ice")
+
 
 from unittest.mock import AsyncMock, MagicMock, patch
 

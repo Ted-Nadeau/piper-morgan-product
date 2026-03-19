@@ -111,5 +111,57 @@ Instances identified:
 - HOSR questionnaire: Left in inbox per PM direction (will respond when time permits)
 
 ### Awaiting
-- Chief Architect response on ADR-059
+- ~~Chief Architect response on ADR-059~~ ✅ Received 9:02 AM
 - PM retest of Q33/Q43/Q62 (later today)
+
+---
+
+## 9:02 AM — Architect Review Received: ADR-059 APPROVED
+
+All three questions answered:
+- **Q1**: New component ✅ (confirmed: presentation vs routing are different concerns)
+- **Q2**: Option (a) — remove registration, comment out handler code (don't delete) ✅
+- **Q3**: Resume through dispatcher ✅ (with optional `resume_point` on WorkflowEntry)
+
+**Additional guidance from architect**:
+- Ensure exactly ONE acceptance detection point in the pipeline after refactor
+- Log unknown workflow types hitting dispatcher (Pattern-062 wiring bug detection)
+- Flag #888 as partially superseded by ADR-059 when updating
+- Suggested formalizing Pattern-063: Extension Without Integration
+
+ADR-059 status updated to APPROVED. Proceeding with implementation.
+
+### Implementation Plan (6 phases, ~5 hours)
+- **Phase A**: Remove onboarding (~1h) ✅
+- **Phase B**: Create workflow_dispatcher.py (~1h) ✅
+- **Phase C**: Refactor soft offer acceptance to use dispatcher (~1h) ✅
+- **Phase D**: Route resume offers through dispatcher (~30m) ✅ (onboarding removed; standup handled directly; future workflows via registry)
+- **Phase E**: Verify meeting slot-filling end-to-end (~30m) ✅ (14 dispatcher tests + 20 offer tests passing)
+- **Phase F**: Update action_registry with workflow dispositions (~30m) — deferred, not blocking
+
+## 10:00 AM — Implementation Complete (Phases A-E)
+
+### What was done:
+1. **Onboarding disabled** — registration removed, pipeline hooks commented out, 9 test files skipped with `ADR-059: onboarding on ice`
+2. **Workflow dispatcher created** — `services/intent_service/workflow_dispatcher.py` (150 lines): registry-based dispatch, `WorkflowEntry` dataclass with `entry_point` + optional `resume_point`, validation at startup
+3. **Meeting workflow registered** — `services/intent_service/workflow_entries.py`: extracted slot-filling start logic from intent_service.py switch statement
+4. **Soft offer acceptance refactored** — single switch replaced with `dispatch_workflow()` call. Unknown types → floor (not dead-end).
+5. **Startup wiring** — `register_default_workflows()` + `validate_registry()` called from container initialization
+
+### Test results:
+- **6190 passed, 228 skipped, 0 failures** (excluding 4 pre-existing httpx/calendar failures)
+- 14 new dispatcher tests
+- 20 offer accept/decline tests updated and passing
+- 228 skipped = onboarding tests on ice
+
+### Files modified:
+- NEW: `services/intent_service/workflow_dispatcher.py`
+- NEW: `services/intent_service/workflow_entries.py`
+- NEW: `tests/unit/services/intent_service/test_workflow_dispatcher.py`
+- MOD: `services/intent/intent_service.py` — dispatcher integration, onboarding hooks removed
+- MOD: `services/process/adapters.py` — onboarding registration disabled
+- MOD: `services/conversation/conversation_handler.py` — onboarding checks disabled
+- MOD: `services/intent_service/canonical_handlers.py` — onboarding start disabled, static guidance instead
+- MOD: `services/container/initialization.py` — workflow dispatcher startup
+- MOD: `docs/internal/architecture/current/adrs/adr-059-*` — status → APPROVED
+- MOD: 12 test files (updated expectations, added skip markers)

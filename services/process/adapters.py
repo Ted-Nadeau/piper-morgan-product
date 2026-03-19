@@ -440,7 +440,8 @@ def register_default_processes() -> None:
     registry = get_process_registry()
 
     # Register adapters for existing process managers
-    registry.register(OnboardingProcessAdapter())
+    # ADR-059: Onboarding disabled — put on ice until workflow dispatcher is in place
+    # registry.register(OnboardingProcessAdapter())
     registry.register(StandupProcessAdapter())
 
     logger.info(

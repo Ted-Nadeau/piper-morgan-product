@@ -1,6 +1,6 @@
 # ADR-059: Workflow Dispatcher and Offer System Consolidation
 
-**Status**: PROPOSED (Awaiting Chief Architect Review)
+**Status**: APPROVED (2026-03-19, Chief Architect)
 **Issue**: #922
 **Date**: 2026-03-19
 **Decision Makers**: Lead Developer, Chief Architect, PM

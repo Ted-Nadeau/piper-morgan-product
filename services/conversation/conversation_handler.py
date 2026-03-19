@@ -93,12 +93,8 @@ class ConversationHandler:
         """Generate appropriate conversational response"""
         import random
 
-        # Issue #490: Check for active onboarding session first
+        # ADR-059: Active onboarding check disabled (onboarding on ice)
         user_id = intent.context.get("user_id") if intent.context else None
-        if user_id and session_id:
-            onboarding_response = await self._handle_active_onboarding(user_id, session_id, intent)
-            if onboarding_response:
-                return onboarding_response
 
         # Handle clarification_needed action
         if intent.action == "clarification_needed":
@@ -168,10 +164,8 @@ class ConversationHandler:
             if reentry_response:
                 return reentry_response
 
-        if user_id and session_id:
-            onboarding_response = await self._check_portfolio_onboarding(user_id, session_id)
-            if onboarding_response:
-                return onboarding_response
+        # ADR-059: Portfolio onboarding offer disabled (onboarding on ice)
+        # Was: _check_portfolio_onboarding(user_id, session_id)
 
         # Get calendar summary (may be None if unavailable)
         # Issue #849: Thread user_id for user-scoped calendar auth

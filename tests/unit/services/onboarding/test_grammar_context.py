@@ -4,6 +4,11 @@ Tests for Onboarding Grammar Context.
 Issue #626: GRAMMAR-TRANSFORM: Onboarding System
 Phase 1: Context Dataclass Tests
 """
+import pytest
+
+# ADR-059: Onboarding on ice
+pytestmark = pytest.mark.skip(reason="ADR-059: onboarding on ice")
+
 
 import pytest
 

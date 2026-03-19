@@ -19,6 +19,11 @@ Test Flow (matches manual testing):
 
 Fixtures: e2e_db_session, e2e_test_user, e2e_client from conftest.py (#352)
 """
+import pytest
+
+# ADR-059: Onboarding on ice
+pytestmark = pytest.mark.skip(reason="ADR-059: onboarding on ice")
+
 
 from uuid import uuid4
 

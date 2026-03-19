@@ -10,6 +10,11 @@ Tests:
 - test_handles_database_error_gracefully: Fails safe on database errors
 - test_respects_decline_flag: Does not trigger when user has declined
 """
+import pytest
+
+# ADR-059: Onboarding on ice
+pytestmark = pytest.mark.skip(reason="ADR-059: onboarding on ice")
+
 
 from unittest.mock import AsyncMock, MagicMock
 

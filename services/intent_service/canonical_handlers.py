@@ -1290,54 +1290,11 @@ General AI assistants are great for general tasks. I'm specifically designed to 
 
         # Check if we have project data
         if not projects:
-            # Issue #737: Start onboarding session so "yes" response is handled properly
-            # Previously just returned a teaser message without creating a session,
-            # causing "yes" to route to small talk instead of onboarding handler
-            if user_id and session_id:
-                try:
-                    # Get or create singleton manager (matches conversation_handler.py pattern)
-                    from services.conversation.conversation_handler import (
-                        _get_onboarding_components,
-                    )
-                    from services.onboarding import (
-                        PortfolioOnboardingHandler,
-                        PortfolioOnboardingManager,
-                    )
-
-                    _, onboarding_handler = _get_onboarding_components()
-
-                    # Start the onboarding session
-                    response = onboarding_handler.start_onboarding(session_id, user_id)
-
-                    logger.info(
-                        "portfolio_onboarding_started_from_status",
-                        user_id=user_id,
-                        session_id=session_id,
-                        onboarding_id=response.metadata.get("onboarding_id"),
-                    )
-
-                    return {
-                        "message": response.message,
-                        "intent": {
-                            "category": IntentCategoryEnum.GUIDANCE.value,
-                            "action": "portfolio_onboarding",
-                            "confidence": 1.0,
-                            "context": {
-                                "onboarding_id": response.metadata.get("onboarding_id"),
-                                "state": response.state.value,
-                            },
-                        },
-                        "workflow_id": None,
-                        "onboarding_session": response.metadata.get("onboarding_id"),
-                    }
-                except Exception as e:
-                    logger.warning(f"Could not start portfolio onboarding: {e}")
-
-            # Fallback if onboarding couldn't start
+            # ADR-059: Onboarding session start disabled (onboarding on ice).
+            # Instead of offering interactive onboarding, give a simple floor response.
             return {
-                "message": "You don't have any active projects configured in your PIPER.md yet. "
-                "Would you like me to help you set up your project portfolio?",
-                "action_required": "configure_projects",
+                "message": "You don't have any active projects configured yet. "
+                "You can tell me about your projects anytime and I'll help you track them.",
                 "intent": {
                     "category": IntentCategoryEnum.STATUS.value,
                     "action": "provide_status",
@@ -2638,39 +2595,10 @@ Would you like me to explain more about how Piper uses project context, or are y
         project_names = user_context.projects if has_projects else []
         project_count = len(project_names)
 
-        # Case 1: Zero projects — start interactive onboarding
+        # ADR-059: Interactive onboarding disabled (on ice).
+        # Instead of launching onboarding workflow, give helpful guidance.
         if project_count == 0:
-            try:
-                from services.conversation.conversation_handler import _get_onboarding_components
-
-                _, onboarding_handler = _get_onboarding_components()
-                response = onboarding_handler.start_onboarding(session_id, user_id)
-
-                logger.info(
-                    "portfolio_onboarding_started_from_setup_request",
-                    user_id=user_id,
-                    session_id=session_id,
-                    onboarding_id=response.metadata.get("onboarding_id"),
-                )
-
-                return {
-                    "message": response.message,
-                    "intent": {
-                        "category": IntentCategoryEnum.GUIDANCE.value,
-                        "action": "portfolio_onboarding",
-                        "confidence": 1.0,
-                        "context": {
-                            "onboarding_id": response.metadata.get("onboarding_id"),
-                            "state": response.state.value,
-                            "triggered_by": "explicit_setup_request",
-                        },
-                    },
-                    "workflow_id": None,
-                    "onboarding_session": response.metadata.get("onboarding_id"),
-                }
-            except Exception as e:
-                logger.warning(f"Could not start portfolio onboarding: {e}")
-                return self._format_project_setup_guidance(None)
+            return self._format_project_setup_guidance(None)
 
         # Case 2: N>0 projects — state-aware response (CXO Option C)
         label = formality_label(DEFAULT_WARMTH)

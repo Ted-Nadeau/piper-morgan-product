@@ -11,6 +11,11 @@ Tests:
 - Decline flow
 - Graceful fallback
 """
+import pytest
+
+# ADR-059: Onboarding on ice
+pytestmark = pytest.mark.skip(reason="ADR-059: onboarding on ice")
+
 
 import pytest
 

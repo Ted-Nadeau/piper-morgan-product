@@ -4,6 +4,11 @@ Tests for Onboarding Narrative Helpers.
 Issue #626: GRAMMAR-TRANSFORM: Onboarding System
 Phase 3: Helper Integration Tests
 """
+import pytest
+
+# ADR-059: Onboarding on ice
+pytestmark = pytest.mark.skip(reason="ADR-059: onboarding on ice")
+
 
 import pytest
 
