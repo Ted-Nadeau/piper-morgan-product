@@ -44,17 +44,53 @@ Committed and pushed to website repo.
 - Created March log index CSV: `docs/internal/planning/log-index-mar-1-19.csv` (continues format from Feb index)
 - PM noted CSV has future rows after all (was looking at older copy). CSV UI still wanted for usability.
 
+### ~9:22 AM - "The Gate Closes" Repatriation
+
+New post published on Medium. Added CSV row (hashId: aa4e05a6a162, imageSlug: ai-portcullis.png), ran fetch-blog-posts.js. **269 total posts.** Committed and pushed.
+
+PM requested imageAlt and imageCaption columns for a11y — noted for future CSV schema update.
+
+### ~10:40 AM - Sitemap v3 Homepage Copy Edits
+
+Applied all v3 copy changes from `homepage-copy-draft-v3-2026-02-16.md` to `src/app/page.tsx`:
+
+1. **Trust Signal section** added between Hero and Differentiation ("Your work. Your patterns. Yours.")
+2. **"PM tools"** replaced "Task managers" + added "Context matters."
+3. **"Growing with you"** renamed from "Learning your world" + data ownership callback
+4. **"Ethics as architecture" removed** — section deleted, grid changed from 3-col to 2-col
+5. **"260+ blog posts"** updated from 160+
+6. **"Read the Journey →"** link to /blog added in Why Trust Us section
+7. **Footer CTA** kept "Follow along as we build" per PM preference
+
+Committed and pushed to website repo. Deployment succeeded (verified via `gh run list`).
+
+### ~11:21 AM - Build Error Investigation
+
+PM asked to fix the `<Html> should not be imported outside of pages/_document` build error. Investigation:
+- Error occurs during `next build` static prerendering of `/404` page
+- NOT caused by Sentry (confirmed by testing without `withSentryConfig`)
+- Root cause: Next.js 15.4 + Node.js 24 incompatibility — local Node is v24.2.0, CI uses Node 20
+- All CI deployments are succeeding — error is local-only
+- Attempted fixes: Sentry auto-instrumentation flags, custom `_error.tsx`/`_document.tsx` in `src/pages/` — `src/pages/` approach conflicts with App Router
+- **Resolution (12:37 PM)**: Root cause was `NODE_ENV=development` set by Claude Code's environment, not Node version. Next.js `_error` prerendering behaves differently in dev mode. Fix: set `NODE_ENV=production` in build script. Also installed `fnm` via Homebrew, added `.nvmrc` pinning Node 20 to match CI, configured auto-switch in `.zshrc`.
+
 ---
 
 ## Tasks
 
 - [x] Create session log (this file)
 - [x] Check mailbox — 1 item (questionnaire, already distributed)
-- [x] Blog image matching — 268/268 (100%) complete
+- [x] Blog image matching — 268/268 → 269/269 (100%) complete
 - [x] Mar 18 omnibus log — MINIMAL, 1 session
 - [x] March log index CSV — created
-- [ ] Run fetch-blog-posts.js to rebuild medium-posts.json with imageSlugs
-- [ ] Sitemap v3 content edits (review/implement)
-- [ ] CSV HTML UI for blog metadata
+- [x] "The Gate Closes" repatriation — 269 posts
+- [x] Sitemap v3 homepage copy edits — all applied and deployed
+- [x] Build error fixed — root cause was NODE_ENV=development (not Node version). Fixed build script + added .nvmrc + installed fnm
+- [x] Architect memo — all 4 items applied (briefing updates, session template date rule, ADR-039/049 annotations)
+- [x] Agent 360 questionnaire response — delivered to HOSR inbox
+- [ ] CSV HTML UI for blog metadata (+ imageAlt/imageCaption columns)
+- [x] Mailbox v3 — plan written and approved, infrastructure built, skill created
+- [ ] Publishing flow discussion
 - [ ] Mailbox system upgrade discussion
 - [ ] Agent questionnaire response (when PM opens session)
+- [ ] Architect memo review (docs feedback from 360)
