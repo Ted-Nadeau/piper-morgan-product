@@ -477,10 +477,13 @@ class IntentService:
                         return IntentProcessingResult(
                             success=True,
                             message=result["message"],
-                            intent_data=result.get("intent_data", {
-                                "category": "soft_offer_accepted",
-                                "action": workflow_type,
-                            }),
+                            intent_data=result.get(
+                                "intent_data",
+                                {
+                                    "category": "soft_offer_accepted",
+                                    "action": workflow_type,
+                                },
+                            ),
                         )
                     else:
                         # Unknown workflow type — route to floor with context

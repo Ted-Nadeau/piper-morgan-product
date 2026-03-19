@@ -10,6 +10,7 @@ Tests the full flow:
 3. User confirms → project persisted
 4. Subsequent greetings → normal (no onboarding)
 """
+
 import pytest
 
 # ADR-059: Onboarding on ice

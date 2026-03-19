@@ -13,6 +13,7 @@ Tests cover:
 - Conversation patterns for intent detection
 - Search projects (partial match, typeahead)
 """
+
 import pytest
 
 # ADR-059: Onboarding on ice

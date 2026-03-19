@@ -115,7 +115,9 @@ class TestOfferAcceptance:
         assert result.intent_data["context"]["slot_filling_active"] is True
 
     @pytest.mark.asyncio
-    async def test_sure_accepts_unregistered_workflow_routes_to_floor(self, intent_service, mock_classifier):
+    async def test_sure_accepts_unregistered_workflow_routes_to_floor(
+        self, intent_service, mock_classifier
+    ):
         """ADR-059: 'Sure!' with unregistered workflow type → routes to floor."""
         intent_service.workflow_offer_service.set_pending_offer(
             "sess_accept2",
@@ -138,7 +140,9 @@ class TestOfferAcceptance:
         assert result.intent_data["category"] == "unknown"
 
     @pytest.mark.asyncio
-    async def test_go_ahead_accepts_unregistered_routes_to_floor(self, intent_service, mock_classifier):
+    async def test_go_ahead_accepts_unregistered_routes_to_floor(
+        self, intent_service, mock_classifier
+    ):
         """ADR-059: 'Go ahead' with unregistered workflow → routes to floor."""
         intent_service.workflow_offer_service.set_pending_offer(
             "sess_go",

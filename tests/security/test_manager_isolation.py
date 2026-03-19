@@ -17,7 +17,6 @@ from services.onboarding.portfolio_manager import PortfolioOnboardingManager
 from services.shared_types import PortfolioOnboardingState, StandupConversationState
 from services.standup.conversation_manager import StandupConversationManager
 
-
 # ADR-059: Mark onboarding-related classes for skip
 
 

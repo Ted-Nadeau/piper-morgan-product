@@ -19,6 +19,7 @@ Test Flow (matches manual testing):
 
 Fixtures: e2e_db_session, e2e_test_user, e2e_client from conftest.py (#352)
 """
+
 import pytest
 
 # ADR-059: Onboarding on ice

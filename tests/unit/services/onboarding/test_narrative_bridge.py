@@ -4,6 +4,7 @@ Tests for Onboarding Narrative Bridge.
 Issue #626: GRAMMAR-TRANSFORM: Onboarding System
 Phase 2: Narrative Bridge Tests
 """
+
 import pytest
 
 # ADR-059: Onboarding on ice

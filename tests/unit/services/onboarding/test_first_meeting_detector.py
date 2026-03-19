@@ -10,6 +10,7 @@ Tests:
 - test_handles_database_error_gracefully: Fails safe on database errors
 - test_respects_decline_flag: Does not trigger when user has declined
 """
+
 import pytest
 
 # ADR-059: Onboarding on ice

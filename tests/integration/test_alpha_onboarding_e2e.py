@@ -12,6 +12,7 @@ Tests the complete happy path:
 Issue #259: CORE-USER-ALPHA-TABLE (Alpha/production data separation)
 Issue #218: CORE-USERS-ONBOARD (Setup wizard)
 """
+
 import pytest
 
 # ADR-059: Onboarding on ice

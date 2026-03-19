@@ -11,6 +11,7 @@ Tests:
 - Decline flow
 - Graceful fallback
 """
+
 import pytest
 
 # ADR-059: Onboarding on ice
