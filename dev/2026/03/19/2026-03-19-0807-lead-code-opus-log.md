@@ -165,3 +165,22 @@ ADR-059 status updated to APPROVED. Proceeding with implementation.
 - MOD: `services/container/initialization.py` — workflow dispatcher startup
 - MOD: `docs/internal/architecture/current/adrs/adr-059-*` — status → APPROVED
 - MOD: 12 test files (updated expectations, added skip markers)
+
+---
+
+## 9:40 AM — PM Smoke Test + HOSR Questionnaire
+
+Provided PM with 5 smoke test queries for retest. PM testing while I respond to HOSR.
+
+### HOSR Agent 360 Questionnaire — Completed
+- Response delivered to `mailboxes/hosr/inbox/agent-360-response-lead-dev-2026-03-19.md`
+- Key friction points surfaced:
+  1. Briefing docs stale (BRIEFING-ESSENTIAL-LEAD-DEV.md describes router era, not floor inversion era)
+  2. Pre-existing test failures mixed with new failures — need `@pytest.mark.known_failure` or baseline
+  3. No programmatic way to test live server responses (PM tests manually via screenshots)
+  4. Feature disabling requires manual reference tracing across ~20 files
+  5. LLM response quality debugging is opaque — treat `services/intelligence/` as black box
+
+### Awaiting
+- PM retest results on 5 smoke queries
+- HOSR synthesis of questionnaire responses
