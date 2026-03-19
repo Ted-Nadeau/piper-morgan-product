@@ -89,7 +89,7 @@
 ## Progressive Loading
 
 Request additional detail for:
-- **Pattern Catalog**: `docs/internal/architecture/current/patterns/` (44+ patterns)
+- **Pattern Catalog**: `docs/internal/architecture/current/patterns/` (see CURRENT-STATE for count)
 - **Methodology Docs**: `docs/internal/methodology/` (20+ methodology files)
 - **Excellence Flywheel**: Search "flywheel" in knowledge
 - **Session Logs**: `archives/session-logs/YYYY/MM/` (raw material for patterns)
@@ -131,7 +131,7 @@ Request additional detail for:
 
 ---
 
-*Last Updated: January 16, 2026*
+*Last Updated: March 17, 2026*
 *Owner: xian (acting, until role transitions)*
 *Workstream: Methodology & Process Innovation*
 *Note: This describes stable role context. For current project state, see BRIEFING-CURRENT-STATE.md*

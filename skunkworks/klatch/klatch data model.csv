@@ -1,0 +1,28 @@
+,Klatch concept,Parent Object,Child Objects,Metadata,Claude.ai,Claude Code (filesystem),"Claude Code (cloud repo), not supported yet)",Klatch UI,Notes
+Environment,Klatch,N/A,Project,,N/A,N/A,N/A,This is Klatch,Klatch needs concept of other environments for I/O
+Kit Briefing,Kit Briefing,Klatch,,Kit Briefing,??,??,??,"Should be inspectable by user, acknowledge by imported branch.",
+Project name,Project name,,,Project name,projects.json > name,cwd for folder,repo name,Project,"requires merge/dedup, fuzzy-match offer with confirm?"
+Project location,(not supported yet),Project,,Project location,(a relative cloud mount),local folder,github repo,not supported yet,"We should enable chats to access a local folder associated with their project, and later support github interchange as well when we can use skills."
+Project instructions,Project instructions,,,Project instructions,projects.json > prompt_template,sourceMetadata.claudeMd (legacy) or project.instructions,??,"Should be associated with project settings, editable but typically imported with branch","may require merge/dedup, fuzzy-match offer with confirm? when importing chats from different versions of the same project"
+Project memory,Project memory,,,Project memory,"memories in zip, were not parsed by Daedalus may have fixed by now and can update this",.claude/MEMORY.md  > sourceMetadata.memoryMD,??,"Should be associated with project settings, editable but typically imported with branch","may require merge/dedup, fuzzy-match offer with confirm? when importing chats from different versions of the same project"
+Project resources,(not supported yet),,,Project resources,Project knowledge base,folder,repository,(not supported yet),Are knowledge files in the data download from claude.ai? It woudn't be hard to let Klatch look at a local file system too.
+Files,(not supported yet),,Files,,Files,files in folder,files in repository,(not supported yet),
+Project,Project,Environment,,,Project,Project,Project,Project,
+Channel,,,Channel,,NOT SUPPORTED,NOT SUPPORTED,NOT SUPPORTED,Each channel appears as a solo chat or group klatch,Data group of 1-1 and synthetic multi-entity chats
+Name,,,,Channel name,NOT SUPPORTED,NOT SUPPORTED,NOT SUPPORTED,Klatch name shown with #,
+Channel,Channel,Project,,,"""","""","""","""",
+Group Chat,,,Klatch,,NOT SUPPORTED,NOT SUPPORTED,NOT SUPPORTED,Klatch,
+Klatch topic,,,,Klatch topic,NOT SUPPORTED,NOT SUPPORTED,NOT SUPPORTED,Editable now as channel prompt?,
+Group Chat,Klatch,Channel,,,"""","""","""",Klatch,
+Chat in group chat,,,Chat,,"""","""",,UI for adding chats to klatch still tbd,
+Conversation name,,,,Conversation name,chat title? not sure what they call it,chat title? not sure what they call it,chat title? not sure what they call it,"Editable name, shown with @ ",
+Nickname,,,,Nickname,NOT SUPPORTED,NOT SUPPORTED,NOT SUPPORTED,We will support nickname view option and @mentions in group chat... maybe later an @mention in a 1-1 chat could tentatively start a group chat?,
+Role prompt,,,,Role prompt,NOT SUPPORTED,NOT SUPPORTED,NOT SUPPORTED,Supported - could be more assistive,My porjects have these hacked in so I will use this feature!
+Chat model,,,,Chat model,lost on import,lost on import,lost on import,"We offer choice so user can override, and will let them set default",
+Message history,,,,Message history,yes,yes,yes,imports just fine,
+Tool use,,,,Tool use,info imports,info imports,?,we show imported info but have not tool us yet,"we can start to offfer tool use selectively, with file read/write to begin with, and track carefully the dif when importing or, later, exporting back."
+Chat,Chat,Channel,,,Conversation,Conversation?,?,"Chat, with @",
+Message,,,Message,,info imports,info imports,,,
+Time stamp,,,,Time stamp,info imports,info imports,,,
+Files (uploaded to chat),(not supported yet),,Files,Files (uploaded to chat),are they in the zip?,incliuded in transcript or no?,?,(not supported yet),Eventually support imported uploaded files (if exists) and user upload of new files
+Files (created by chat),(not supported yet),,,Files (created by chat),are they in the zip?,"on the filesystem, typically",in the repo typically,(not supported yet),Eventually suport imported created files (if exist) and Klatch chat ability to write files

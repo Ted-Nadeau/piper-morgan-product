@@ -104,11 +104,11 @@
 3. Document coordination patterns in active use
 4. Identify any roles experiencing drift
 
-**Known Coordination Challenges** (from Dec 27 brief):
-- MUX epic coordination across 38 issues
-- 5+ agents working in parallel at scale
+**Known Coordination Challenges**:
+- 8+ agent roles working in parallel at scale
 - Multi-sprint drift prevention
-- Context maintenance across sessions
+- Context maintenance across sessions and chat successions
+- Briefing staleness and role drift detection
 
 **Metrics to Track**:
 - Role drift incidents per month
@@ -184,7 +184,7 @@ Request additional detail for:
 
 ---
 
-*Last Updated: January 16, 2026*
+*Last Updated: March 17, 2026*
 *Owner: xian (acting, until role onboarded)*
 *Workstream: Governance & Operations → Sapient Resources*
 *Note: This describes stable role context. For current project state, see BRIEFING-CURRENT-STATE.md*

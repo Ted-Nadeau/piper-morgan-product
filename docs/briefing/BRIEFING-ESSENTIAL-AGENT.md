@@ -50,11 +50,11 @@ git commit -m "your message"
 - Preserve existing spatial functionality in all changes
 - Never modify spatial logic without explicit authorization
 
-**Plugin System** (Current work):
+**Plugin System**:
 
 - Interface + Registry + Wrapper pattern
+- 7 active plugins (Slack, GitHub, Notion, Calendar, MCP, Spatial, Demo)
 - Config services standardized across all integrations
-- Dynamic loading foundation from GREAT-3A
 
 ## Current Focus
 > **🎯 For current sprint objectives and tasks, see `docs/briefing/BRIEFING-CURRENT-STATE.md`**
@@ -73,7 +73,7 @@ Request "Loading [topic] details" for:
 - **Implementation patterns** → knowledge/agent-prompt-template-v3.md
 - **Testing requirements** → BRIEFING-METHODOLOGY
 - **Current architecture** → ADR-038 (spatial), ADR-034 (plugins)
-- **Specific tasks** → GitHub issues #197-200
+- **Specific tasks** → See BRIEFING-CURRENT-STATE.md for active issues
 
 ## Critical Rules
 

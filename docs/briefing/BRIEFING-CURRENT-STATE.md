@@ -135,7 +135,7 @@ GUIDANCE, TRUST, MEMORY, PORTFOLIO, UNKNOWN
 - **Skill Count**: 6 (Tier 1 complete)
 - **Test Suite**: 7,358 tests
 - **Total Docs**: 1,151 markdown files
-- **Omnibus Logs**: Through Mar 9 (continuous daily coverage)
+- **Omnibus Logs**: Through Mar 16 (continuous daily coverage)
 
 ### Version History (Recent)
 | Version | Date | Milestone |
@@ -174,7 +174,7 @@ GUIDANCE, TRUST, MEMORY, PORTFOLIO, UNKNOWN
 **Patterns**: `docs/internal/architecture/current/patterns/` (63 patterns)
 **ADRs**: `docs/internal/architecture/current/adrs/` (61 ADRs)
 **Skills**: `.claude/skills/` (6 Tier 1 skills)
-**Omnibus Logs**: `docs/omnibus-logs/` (continuous through Mar 9)
+**Omnibus Logs**: `docs/omnibus-logs/` (continuous through Mar 16)
 **Wiki**: `https://github.com/mediajunkie/piper-morgan-product/wiki`
 **CITATIONS**: `docs/references/CITATIONS.md` (updated Mar 3)
 **Glossary**: `knowledge/piper-morgan-glossary-v1.1.md`

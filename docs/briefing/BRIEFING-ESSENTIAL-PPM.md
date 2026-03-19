@@ -58,7 +58,7 @@
 - Balance: User value vs. technical foundation
 
 **Feature Prioritization**:
-- Canonical queries as core capability framework (63 queries across 14 categories)
+- Canonical queries as core capability framework (see CURRENT-STATE for counts)
 - MUX super-epics (Vision, Interact, Predict, Experience)
 - Discovery-oriented vs. command-oriented architecture decisions
 - Jobs-to-be-done alignment
@@ -86,16 +86,17 @@
 
 ## Current Focus
 
-**Active Priorities**:
-1. Canonical query completion (63 queries, ~68% working)
-2. Discovery-oriented architecture (Epic #488)
-3. MUX super-epic planning (V1, V2, X1, X2, I1-I3, P1-P4)
-4. Alpha testing expansion (Group A technical users)
+**Active Priorities** (see CURRENT-STATE for sprint-specific focus):
+1. Canonical query completion and quality validation
+2. MVP milestone progression (M0 complete, M1+ in progress)
+3. Alpha testing insights synthesis
+4. Product strategy for upcoming milestones
 
 **Product Milestones**:
-- ✅ Alpha launch (EOY 2025 goal met)
-- 🚧 Alpha quality gates (canonical queries, known issues)
-- ⏳ MUX implementation sprints
+- ✅ Alpha launch (EOY 2025)
+- ✅ MUX implementation (Jan 2026)
+- ✅ M0 Conversational Glue (Mar 2026)
+- 🎯 M1+ MVP milestones (see CURRENT-STATE for details)
 - ⏳ Beta readiness
 - ⏳ MVP release
 
@@ -212,7 +213,7 @@ Examples of methodology → product convergence:
 
 ---
 
-*Last Updated: January 16, 2026*
+*Last Updated: March 17, 2026*
 *Owner: xian (CPO, until role onboarded)*
 *Workstream: Product & Experience*
 *Note: This describes stable role context. For current project state, see BRIEFING-CURRENT-STATE.md*

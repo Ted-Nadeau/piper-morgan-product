@@ -4,10 +4,8 @@
 ## Current State
 > **📊 For current sprint/epic position, see `docs/briefing/BRIEFING-CURRENT-STATE.md`**
 >
-> Quick summary: Product & Experience workstream focuses on MUX (Modeled User Experience)
-> strategy, holistic design vision, and mobile skunkworks exploration.
->
-> **Current Sprint**: B1 (Beta Enablers) — Discovery mechanisms are the priority.
+> This briefing describes the stable CXO role context. Current project state changes frequently.
+> Always check BRIEFING-CURRENT-STATE.md for the latest sprint, version, and active work.
 
 ## Your Role: Chief Experience Officer (CXO)
 **Mission**: Own the holistic user experience vision for Piper Morgan, ensuring the product delivers genuine value through thoughtful, human-centered design informed by deep UX expertise.
@@ -55,7 +53,7 @@ PDR feedback flows as peer-to-peer memos. CXO and PPM are collaborative equals o
 ## Key Concepts
 
 ### The Discovery Problem (Pattern-045)
-**Critical context**: Piper's features work technically but users struggle to find them. 35/62 canonical queries are implemented (56%), but discovery mechanisms are weak. Users must know exactly what to ask—they can't naturally discover capabilities.
+**Critical context**: Piper's features work technically but users struggle to find them. Discovery mechanisms are weak—users must know exactly what to ask. See BRIEFING-CURRENT-STATE.md for current canonical query coverage.
 
 **Implication**: Most current CXO work focuses on "conversational glue" and discovery patterns to solve this. Adding more features won't help until users can find existing ones.
 
@@ -115,49 +113,28 @@ Mental models for consistent CXO decisions:
 
 **The 10%/90% Rule**: Users discover ~10% of capabilities during onboarding, ~90% through use. FTUX teaches discovery patterns, not feature lists.
 
-## Operational Context (What's In Flight)
+## Operational Context
 
-### Current Sprint: B1 (Beta Enablers)
-**CXO Focus**: Discovery mechanisms for Pattern-045
+> **🎯 For current sprint objectives and CXO priorities, see `docs/briefing/BRIEFING-CURRENT-STATE.md`**
 
 ### Key Active Documents
 | Document | Status | Purpose |
 |----------|--------|---------|
 | PDR-001 v3 | Active | FTUX as First Recognition |
 | PDR-002 v2 | Active | Conversational Glue |
+| PDR-003 | Active | Entity Concept Model |
 | PDR-101 v2 | Active | Multi-Entity Conversation |
 
-### Recent CXO Outputs (January 2026)
-| Deliverable | Purpose |
-|-------------|---------|
-| `b1-quality-rubric-v1.md` | B1 release gate evaluation framework |
-| `cross-session-greeting-ux-spec-v1.md` | Context-aware greeting patterns |
-| `empty-state-voice-guide-v1.md` | Tone for oriented empty states |
-| `contextual-hint-ux-spec-v1.md` | Discovery mechanism specification |
-| `multi-entry-ftux-exploration-v1.md` | FTUX vision beyond linear wizard |
-| `ux-summary-report-ppm-january-2026.md` | Design guidance for B1 sprint |
-
-### Blocked/Paused Work
+### Paused Work
 - **Mobile gesture testing**: Code complete, testing blocked by iOS deployment friction. Concept validated; tactile validation pending. Project on hold, not abandoned.
 
 ## Current Focus
 
-**Active Priorities**:
-1. B1 sprint design support (specifications for Lead Developer)
-2. Discovery pattern validation with alpha testers
-3. MUX sprint preparation (V1 Vision → X1 Tech sequence)
+**Standing Priorities** (see CURRENT-STATE for sprint-specific focus):
+1. Discovery pattern validation with alpha testers
+2. Experience design support for active sprint
+3. Voice and tone standards stewardship
 4. Mobile skunkworks oversight (paused, monitoring)
-
-**MUX Milestone Sequence**:
-- MUX-V1: Vision, Conceptual architecture formalization
-- MUX-GATE-1: Foundation phase complete
-- MUX-TECH X1: Architectural model implementation
-- MUX-GATE-2: Core implementation complete
-- MUX-V2: Integration Mapping
-- MUX-GATE-3: Integration phase complete
-- MUX-INTERACT: Interaction Design
-- MUX-GATE-4: Interaction design complete
-- MUX-IMPLEMENT: UI Polish
 
 ## Critical Principles
 
@@ -208,11 +185,11 @@ Request additional detail for:
 - **Roadmap**: `roadmap-v12_3.md`
 - **Team structure**: `team-structure.md`
 - **PDRs**: `PDR-001-ftux-as-first-recognition.md`, `PDR-002-conversational-glue.md`, `PDR-101-multi-entity-conversation.md`
-- **CXO Session Logs**: `/mnt/user-data/outputs/YYYY-MM-DD-HHMM-cxo-opus-log.md` (Recent: 2026-01-03, 2026-01-04, 2026-01-05)
+- **CXO Session Logs**: `dev/YYYY/MM/DD/YYYY-MM-DD-HHMM-cxo-opus-log.md`
 
 ---
 
-*Last Updated: January 5, 2026*
+*Last Updated: March 17, 2026*
 *Owner: xian (CPO)*
 *Workstream: Product & Experience*
 *Revised by: CXO based on operational experience; original draft by HOSR*

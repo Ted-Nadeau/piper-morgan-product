@@ -21,37 +21,22 @@
 - Progress storytelling for stakeholders
 
 ## Key Achievements (Story Material)
-**GREAT-2 Epic Completion** (Major narrative):
-- **Discovery**: Found sophisticated 75-95% complete systems (not broken!)
-- **Innovation**: Three spatial intelligence patterns working simultaneously
-- **Methodology**: Anti-80% completion bias breakthrough
-- **Quality**: 100% router completion across all integrations
-- **Security**: Critical vulnerability resolution with zero functionality impact
 
-**GREAT-3A Success** (Recent win):
-- **Refactoring**: web/app.py reduced from 1,052 to 467 lines
-- **Architecture**: Plugin foundation established with 4 operational plugins
-- **Standardization**: Configuration services unified across all integrations
-- **Quality**: Maintained 72/72 test passing throughout refactoring
+> **📝 For current sprint achievements and story material, see `docs/briefing/BRIEFING-CURRENT-STATE.md`**
+> **📝 For recent daily summaries, see `docs/omnibus-logs/`**
+
+**Major Completed Narratives**:
+- **The Great Refactor** (GREAT-1 through GREAT-3): Router architecture, spatial intelligence, plugin system
+- **M0 Conversational Glue** (v0.8.6): 27 issues, shipped Mar 4 — "The Cathedral Ships"
+- **Floor Inversion Discovery** (#911): PM's manual testing revealed routing architecture was inverted
+- **Assembly Assumption** (Pattern-062): Systemic discovery about extend-without-verifying
 
 **Methodology Innovations** (Unique stories):
 - **Anti-80% Pattern**: Systematic prevention of completion bias
 - **Time Lord Philosophy**: Quality over arbitrary deadlines
 - **Cathedral Building**: Excellence standards for foundational systems
-- **Multi-Agent Coordination**: Code/Cursor collaboration with systematic verification
-
-## Current Focus: GREAT-3B Narrative
-**Technical Story**: "Dynamic Plugin Architecture Comes Alive"
-- Foundation built in 3A, now adding dynamic capabilities
-- Backward compatibility preservation during transformation
-- Registry-based discovery system enabling extensibility
-- Lifecycle management for robust plugin ecosystem
-
-**Methodology Story**: "Systematic Excellence at Scale"
-- Proven patterns from GREAT-1 & 2 applied to new challenges
-- Cross-agent validation preventing regression
-- Evidence-based completion verification
-- 100% quality maintenance during rapid development
+- **Multi-Agent Coordination**: 8+ roles working in parallel with systematic verification
+- **Building in Public**: Transparency narrative across blog, Medium, LinkedIn
 
 ## Progressive Loading
 Request "Loading [topic] details" for:
@@ -74,29 +59,20 @@ Request "Loading [topic] details" for:
 - Evidence-based progress: Real proof, not claims
 
 **Strategic Progress**:
-- The Great Refactor: ~30% complete, accelerating velocity
-- System capability: ~75% functional, targeted growth path
+- MVP milestone progression (see CURRENT-STATE for latest position)
 - Architecture maturity: Proven patterns scaling successfully
 - Team effectiveness: Systematic execution with quality maintenance
+- Building in public: Active blog, Medium, and LinkedIn presence
 
 ## Weekly Ship Material
-**This Week's Achievements**:
-- GREAT-3A: Complete config standardization and app.py refactoring
-- Plugin foundation: 4 operational plugins ready for dynamic loading
-- Quality maintenance: 72/72 tests passing throughout changes
-- Documentation: Comprehensive architectural guidance created
 
-**Measurable Progress**:
-- Code reduction: 1,052 → 467 lines (55% reduction in web/app.py)
-- Plugin readiness: 4/4 integrations converted to plugin pattern
-- Test reliability: 100% pass rate maintained
-- Architecture coverage: 98/98 directories documented
+> **📝 See `docs/omnibus-logs/` for daily synthesis and `docs/internal/planning/comms/editorial-calendar.csv` for publication tracking**
 
-**Methodology Wins**:
-- Anti-80% success: 100% completion rate across all phases
-- Quality velocity: Faster delivery through systematic standards
-- Team coordination: Smooth multi-agent collaboration
-- Evidence discipline: Real proof for all completion claims
+**Standing Measurable Metrics** (check CURRENT-STATE for latest):
+- Test suite size and pass rate
+- Pattern catalog count
+- ADR count
+- Sprint milestone completion percentage
 
 ## Narrative Frameworks
 **Achievement Stories**:
@@ -119,8 +95,9 @@ Request "Loading [topic] details" for:
 5. **Accessible Language**: Translate technical complexity into clear stories
 
 ## References
-- **Current achievements**: BRIEFING-CURRENT-STATE
-- **Technical details**: GitHub #197-200
+- **Current state**: `docs/briefing/BRIEFING-CURRENT-STATE.md`
+- **Editorial calendar**: `docs/internal/planning/comms/editorial-calendar.csv`
 - **Methodology context**: BRIEFING-METHODOLOGY
-- **Progress tracking**: docs/omnibus-logs/ (weekly synthesis)
-- **Architecture stories**: ADR-038, ADR-034 (pattern documentation)
+- **Progress tracking**: `docs/omnibus-logs/` (daily synthesis)
+- **Architecture stories**: ADR-038, ADR-034, ADR-039 (pattern documentation)
+- **Publish skill**: `.claude/skills/publish-to-blog/SKILL.md`

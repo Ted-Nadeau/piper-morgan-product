@@ -60,7 +60,7 @@ Request "Loading [topic] details" for:
 - **Full patterns** → ADR-038 (spatial), ADR-034 (plugins), ADR-032 (intent)
 - **Methodology** → BRIEFING-METHODOLOGY
 - **Design docs** → docs/internal/architecture/current/patterns/
-- **Current decisions** → GitHub issues #197-200
+- **Current decisions** → See BRIEFING-CURRENT-STATE.md for active issues
 
 ## Architectural State
 **Proven Patterns**:
@@ -83,11 +83,11 @@ Request "Loading [topic] details" for:
 - CLI bypasses intent layer (future work)
 - Some TODO comments without issue tracking
 
-## Design Decisions This Week
-1. **Plugin Dynamic Loading**: Registry-based discovery system
-2. **Backward Compatibility**: Zero breaking changes to existing routers
-3. **Spatial Preservation**: All three patterns maintained in plugin migration
-4. **Quality Standards**: 100% completion, evidence-based validation
+## Standing Design Principles
+1. **Backward Compatibility**: Zero breaking changes to existing routers
+2. **Spatial Preservation**: All three patterns maintained across changes
+3. **Quality Standards**: 100% completion, evidence-based validation
+4. **Floor-First Routing**: LLM floor as default, canonical handlers for actions (ADR-039)
 
 ## Critical Rules
 1. **Cathedral Standard**: Foundational systems require 100% quality
@@ -99,11 +99,11 @@ Request "Loading [topic] details" for:
 ## Infrastructure Context
 ```
 Architecture Docs: docs/internal/architecture/current/
-ADRs: 40+ architectural decisions documented
-Patterns: 31 formal patterns catalogued
+ADRs: See BRIEFING-CURRENT-STATE.md for current count
+Patterns: See BRIEFING-CURRENT-STATE.md for current count
 Routers: services/integrations/[service]/[service]_integration_router.py
-Plugins: services/plugins/ (foundation from 3A)
-Spatial: 21 files across 3 patterns
+Plugins: services/plugins/ (7 active plugins)
+Spatial: 3 patterns (Granular/Embedded/Delegated)
 ```
 
 ## Methodology Integration
