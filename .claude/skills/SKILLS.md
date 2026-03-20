@@ -15,6 +15,7 @@ This directory contains formalized Agent Skills - self-contained procedural inst
 | [close-issue-properly](./close-issue-properly/SKILL.md) | Cross-role | Close GitHub issues with evidence, updated descriptions, audit-ready records | 1.0 |
 | [audit-cascade](./audit-cascade/SKILL.md) | Cross-role | Systematic audit-and-correct between phases; implements Pattern-049 | 1.0 |
 | [discovered-work-capture](./discovered-work-capture/SKILL.md) | Cross-role | Capture discovered issues immediately; prevents invisible work | 1.0 |
+| [publish-to-blog](./publish-to-blog/SKILL.md) | Role-specific | Publish finished blog post to pipermorgan.ai; bridge editorial calendar to website repo | 0.1 |
 
 ---
 
@@ -32,6 +33,7 @@ Skills every agent should know. High frequency, low complexity.
 ### Tier 2: Role-Specific Operations
 Skills for specific workflows or roles.
 
+- **publish-to-blog** - Docs/Comms: publish finished post to pipermorgan.ai, update editorial calendar
 - **create-omnibus-log** - *(planned)* Docs agent daily synthesis
 - **create-gameplan** - *(planned)* Lead Dev sprint planning
 - **run-debug-protocol** - *(planned)* Systematic debugging framework
