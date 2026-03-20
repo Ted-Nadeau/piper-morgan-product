@@ -74,6 +74,24 @@ PM asked to fix the `<Html> should not be imported outside of pages/_document` b
 - Attempted fixes: Sentry auto-instrumentation flags, custom `_error.tsx`/`_document.tsx` in `src/pages/` — `src/pages/` approach conflicts with App Router
 - **Resolution (12:37 PM)**: Root cause was `NODE_ENV=development` set by Claude Code's environment, not Node version. Next.js `_error` prerendering behaves differently in dev mode. Fix: set `NODE_ENV=production` in build script. Also installed `fnm` via Homebrew, added `.nvmrc` pinning Node 20 to match CI, configured auto-switch in `.zshrc`.
 
+### ~3:34 PM - Mailbox v3 First Run (/deliver-mail)
+
+First live run of the assisted delivery skill:
+- **Phase 1 (Ingest)**: 1 memo from incoming/ — `memo-cos-to-docs-infrastructure-2026-03-19.md` (slug corrected: cos→exec per PM)
+- **Phase 2 (Outbound)**: 21 items across 5 web inboxes — HOSR (4), COMMS (1), CXO (5), CIO (5), PPM (6). Mix of new questionnaire deliveries and pre-v3 confirmations.
+- **Phase 3 (Summary)**: No stale items. All inboxes clear except docs (1 self-serve item).
+- **DIRECTORY.md updated**: cos retired, exec=Chief of Staff, comms=Communications Chief, ppm=Principal Product Manager, spec reactivated, xian/ceo=PM founder
+
+### ~10:47 PM - CSV Viewer + Schema Update
+
+- Added `imageAlt` and `imageCaption` columns to `blog-metadata.csv` (empty, for future a11y)
+- Built `tools/csv-viewer.html` — standalone drag-and-drop viewer with search, sort, filter, missing data highlighting
+- Fixed title column width issue (min-width: 350px)
+- Rebuilt `medium-posts.json` (269 posts)
+- Committed and pushed to website repo
+
+**Next iteration**: In-place editing capability (PM's real need is editing during publish workflow, not just viewing)
+
 ---
 
 ## Tasks
@@ -88,9 +106,10 @@ PM asked to fix the `<Html> should not be imported outside of pages/_document` b
 - [x] Build error fixed — root cause was NODE_ENV=development (not Node version). Fixed build script + added .nvmrc + installed fnm
 - [x] Architect memo — all 4 items applied (briefing updates, session template date rule, ADR-039/049 annotations)
 - [x] Agent 360 questionnaire response — delivered to HOSR inbox
-- [ ] CSV HTML UI for blog metadata (+ imageAlt/imageCaption columns)
+- [x] CSV viewer tool — standalone HTML, drag-and-drop, search/sort/filter
+- [x] imageAlt/imageCaption columns added to blog-metadata.csv (empty, for future use)
 - [x] Mailbox v3 — plan written and approved, infrastructure built, skill created
-- [ ] Publishing flow discussion
-- [ ] Mailbox system upgrade discussion
-- [ ] Agent questionnaire response (when PM opens session)
-- [ ] Architect memo review (docs feedback from 360)
+- [x] First /deliver-mail run — 1 ingested, 21 outbound delivered, DIRECTORY.md corrected
+- [x] DIRECTORY.md updated — cos retired, exec=Chief of Staff, comms=Communications Chief, ppm=Principal Product Manager, spec reactivated, xian/ceo=PM
+- [ ] Publishing flow discussion — deferred to tomorrow
+- [ ] CoS infrastructure memo in docs/inbox — 4 proposals, deferred to tomorrow
