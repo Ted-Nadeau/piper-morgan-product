@@ -1,0 +1,1040 @@
+MIME-Version: 1.0
+Date: Sat, 14 Mar 2026 13:23:32 -0700
+Bcc: Michelle Hertzfeld <mhertzfeld@gmail.com>, adam laskowitz <adam@lasko.design>,
+	Beatrice Mercier <beatrice.mercier.data@gmail.com>, jake.krajewski@gmail.com,
+	Rebecca Refoy <rrefoy@gmail.com>, Ted Nadeau <trnadeau@gmail.com>,
+	Dominique Derosena <dderosena1@gmail.com>, davidfeldman@gmail.com,
+	Tony Brancato <brancato@gmail.com>, komal.rasheed@gmail.com, luca.candela@gmail.com,
+	Dan Brodnitz <dbrodnitz@gmail.com>, Uday Gajendar <udanium@gmail.com>
+Message-ID: <CAFotqfZ+NSHbVB-Mw=6765RHAjaQi73G-ABaNdWmocYkS_R4JA@mail.gmail.com>
+Subject: Piper Morgan alpha release 0.8.6
+From: Christian Crumlish <xian@designinproduct.com>
+To: piper@dinp.xyz
+Cc: Christian Crumlish <xian@pobox.com>
+Content-Type: multipart/alternative; boundary="0000000000007156ed064d01c2ec"
+
+--0000000000007156ed064d01c2ec
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+Hello good alpha testers and alpha-test curious folks. I filled a gap that
+has been bugging me for a while. While connecting up all this theoretically
+useful stuff, I wasn't able to actually talk to Piper like even the
+crappiest ChatGPT wrapper, so the "zeroth" sprint of the MVP track that I
+hope gets us from alpha to beta was to wire up that "conversational glue."
+
+I've done a lot of testing but it's never enough. Anything you find is gold
+for me, even "I couldn't update it or get it to run." Thanks again for the
+encouragement!
+
+TLDR, do this in the root of your local copy of the piper-morgan-product
+ repository:
+git pull origin main pip install -r requirements.txt python -m alembic
+upgrade head python main.py
+
+
+to
+1. Pull latest changes
+2 Update dependencies
+3. Run new migrations
+4. Start server
+
+     --xian
+
+p.s.: Check out Klatch <https://klatch.ing> - my side project has a side
+project.
+p.p.s: Here are the release notes:
+*Release Date*: March 4, 2026
+
+*Previous Version*: v0.8.5.3
+
+*Sprint*: M0 =E2=80=94 Conversational Glue
+------------------------------
+Summary
+
+This release delivers the M0 Conversational Glue sprint, transforming Piper
+from =E2=80=9Cchatbot with features=E2=80=9D into a conversational colleagu=
+e. Users can now
+converse naturally with Piper =E2=80=94 workflows emerge from conversation;
+commands are shortcuts, not requirements. The release also includes
+repository management, conversation lifecycle tracking, security hardening,
+and 8 bug fixes from post-gate CXO testing.
+
+*Reference*: PDR-002 v3.1 (Conversational Glue)
+------------------------------
+What=E2=80=99s NewConversational Glue (M0 Sprint)
+
+Five core features that make Piper conversational:
+
+   -
+
+   *#766 - Narrative System*: Piper adapts tone to relationship stage
+   (first meeting =E2=86=92 warm introduction, returning user =E2=86=92 con=
+cise colleague).
+   Eliminates the repeated =E2=80=9CIs that your main project?=E2=80=9D que=
+stion during
+   onboarding.
+   -
+
+   *#763 - Conversational Lens Tracking*: Piper remembers what you=E2=80=99=
+re
+   talking about. Follow-up queries like =E2=80=9Cwhat about next week?=E2=
+=80=9D resolve
+   correctly based on conversational context (>90% follow-up resolution). 1=
+52
+   new tests.
+   -
+
+   *#765 - Natural Slot Filling*: When Piper needs information to complete
+   a task, it asks naturally instead of interrogating. Lens-aware prompt
+   phrasing adapts to conversational context. 124 new tests.
+   -
+
+   *#764 - Multi-Intent Orchestration*: Handle compound queries like =E2=80=
+=9Ccheck
+   my calendar and create an issue for the API bug=E2=80=9D coherently, wit=
+h natural
+   topic transitions (=E2=80=9CAs for your calendar=E2=80=A6=E2=80=9D). 47 =
+new tests.
+   -
+
+   *#767 - Soft Workflow Invocation*: Piper offers workflows
+   conversationally (=E2=80=9CSounds like you might want to set up a meetin=
+g=E2=80=A6=E2=80=9D)
+   instead of requiring explicit commands. Graceful decline handling. 79 ne=
+w
+   tests.
+
+Repository Management
+
+   -
+
+   *#866 - Repository Entity*: Repository as a first-class domain entity
+   with many-to-many Project links.
+   -
+
+   *#861 - Settings UI*: Project integration and repository management page=
+.
+   -
+
+   *#860 - Setup Wizard*: Project-repo linking step in onboarding.
+   -
+
+   *#863 - Portfolio Onboarding*: Repo-linking step during portfolio setup.
+   -
+
+   *#862 - Conversational Repo Management*: Natural language handler for
+   repo operations.
+   -
+
+   *#867 - GitHub Validation*: API validation for repository link
+   operations.
+
+Conversation Lifecycle
+
+   -
+
+   *#715/#858 - Conversation State Machine*: Conversations now track
+   lifecycle state (active, stale, archived) with proper database columns a=
+nd
+   repository support.
+
+Supporting Infrastructure
+
+   -
+
+   *#852 - Contextual Offer Continuation*: Bare-affirmative responses
+   (=E2=80=9Cyes=E2=80=9D, =E2=80=9Csure=E2=80=9D) correctly continue soft-=
+offer workflows.
+   -
+
+   *#838 - Unified Formality Framework*: Consistent formality calibration
+   across all interaction channels.
+   -
+
+   *#853 - SessionStart Hook*: Automated session start checks for agent
+   session logs, mailbox, and briefing freshness.
+   -
+
+   *#849 - User-Scoped Keychain Isolation*: Security fix ensuring
+   integration credentials are properly scoped per user.
+
+------------------------------
+Bug Fixes (Post-Gate Testing)
+
+CXO testing on March 1-3 surfaced and resolved these issues:
+Issue Bug Fix
+#871 Legacy POC header visible in templates Removed header, compacted
+greeting area
+#875 Business errors returned as HTTP 422 instead of 200 Restored 200 OK
+for business-logic errors
+#878 Workflow polling on synchronous handlers (60s timeout) Added
+async_work_started flag to prevent spurious polling
+#879 create_issue missing assignees parameter Added assignees passthrough
+to GitHub router
+#876 26 raw exception messages leaked to users Routed all handler errors
+through UserFriendlyErrorService
+#880 Calendar/Slack settings 401 Unauthorized Added credentials: 'include't=
+o
+16 fetch() calls
+#870 Flaky test_verbosity_gradienttest Seeded random for deterministic
+template selection
+------------------------------
+Additional ChangesDocumentation
+
+   -
+
+   Consolidated briefings to docs/briefing/ (removed knowledge/ duplicates)
+   -
+
+   Removed piper-education/ tree (content migrated to
+   docs/internal/development/)
+   -
+
+   Added Pattern-061: Human-AI Collaboration Referee
+   -
+
+   Added Period 4 retrospective documents
+   -
+
+   Added alpha tester and collaborator profiles
+   -
+
+   Updated staggered audit calendar to weekly docs cadence
+   -
+
+   Added daily omnibus logs (Feb 6 =E2=80=93 Mar 2)
+
+Housekeeping
+
+   -
+
+   Removed dead ROUTERS list and unused methods from RouterInitializer
+   (#719)
+   -
+
+   Fixed setup request routing to interactive onboarding (#814)
+   -
+
+   Removed shadowing __init__.py files from test directories (#868)
+   -
+
+   Updated CLAUDE.md with subagent commit-verification guideline
+
+------------------------------
+Database Migrations
+
+*New migrations* (run alembic upgrade head):
+
+   1.
+
+   a715_add_conversation_lifecycle_columns.py =E2=80=94 Adds lifecycle stat=
+e
+   tracking to conversations
+   2.
+
+   a866_create_repositories_and_links_tables.py =E2=80=94 Creates repositor=
+ies and
+   project-repository link tables
+   3.
+
+   a867_add_repository_metadata_columns.py =E2=80=94 Adds metadata columns =
+to
+   repositories
+
+------------------------------
+Files Changed
+
+*244 files changed* =E2=80=94 34,982 additions, 8,290 deletions
+New Services
+
+   -
+
+   services/intent_service/lens_inference.py =E2=80=94 Conversational lens =
+tracking
+   -
+
+   services/intent_service/orchestrator.py =E2=80=94 Multi-intent orchestra=
+tion
+   -
+
+   services/intent_service/soft_invocation.py =E2=80=94 Soft workflow invoc=
+ation
+   -
+
+   services/slot_filling/ =E2=80=94 Complete slot filling framework (6 file=
+s)
+   -
+
+   services/personality/formality.py =E2=80=94 Unified formality framework
+   -
+
+   services/infrastructure/github_repo_validator.py =E2=80=94 GitHub API va=
+lidation
+   -
+
+   web/api/routes/repositories.py =E2=80=94 Repository CRUD endpoints
+
+Modified Services
+
+   -
+
+   services/intent/intent_service.py =E2=80=94 Major: glue integration, err=
+or
+   handling overhaul
+   -
+
+   services/intent_service/canonical_handlers.py =E2=80=94 Lens-aware handl=
+er
+   updates
+   -
+
+   services/intent_service/conversation_context.py =E2=80=94 Enhanced conte=
+xt
+   tracking
+   -
+
+   services/intent_service/pre_classifier.py =E2=80=94 Multi-intent detecti=
+on
+   -
+
+   services/onboarding/portfolio_handler.py =E2=80=94 Narrative bridge, rep=
+o linking
+   -
+
+   services/database/repositories.py =E2=80=94 Repository and conversation
+   lifecycle support
+   -
+
+   services/domain/models.py =E2=80=94 Repository entity, conversation life=
+cycle
+   fields
+
+New Test Files (402+ new tests)
+
+   -
+
+   12 new test files for lens tracking, multi-intent, soft invocation
+   -
+
+   8 new test files for slot filling
+   -
+
+   Test files for repository management, conversation lifecycle, security
+   -
+
+   Integration and E2E test additions
+
+------------------------------
+Upgrade Instructions
+
+# Pull latest changes
+git pull origin main
+# Update dependencies
+pip install -r requirements.txt
+# Run new migrations
+python -m alembic upgrade head
+# Start server
+python main.py
+
+------------------------------
+Issues ResolvedM0 Conversational Glue Sprint
+Issue Title Tests
+#766 Narrative System (onboarding tone) =E2=80=94
+#763 Conversational Lens Tracking 152
+#765 Natural Slot Filling 124
+#764 Multi-Intent Orchestration 47
+#767 Soft Workflow Invocation 79
+#779 Sprint Completion Gate (3 gates passed) =E2=80=94
+#762 M0 GLUE Epic (all children closed) =E2=80=94Repository Management
+Issue Title
+#866 Repository as first-class entity
+#861 Project integration settings page
+#860 Setup wizard repo linking
+#863 Portfolio onboarding repo linking
+#862 Conversational repo management handler
+#867 GitHub API validation for repo linksBug Fixes & Infrastructure
+Issue Title
+#871 Legacy POC header in templates
+#875 Business errors returned as HTTP 422
+#878 Workflow polling on sync handlers
+#879 create_issue missing assignees
+#876 26 raw exception message leaks
+#880 Calendar/Slack settings 401
+#870 Flaky test_verbosity_gradient
+#858 Conversation lifecycle state machine
+#852 Contextual offer continuation
+#838 Unified formality framework
+#853 SessionStart hook
+#849 User-scoped keychain isolation
+#814 Setup request routing
+#868 Shadowing *init*.py removal
+#719 Dead router code removal
+
+*Total*: 27 issues resolved
+------------------------------
+Testing Notes
+
+   -
+
+   *6,146 tests passing*, 7 skipped (pre-existing)
+   -
+
+   402+ new tests added in M0 sprint
+   -
+
+   Sprint completion gate verified: persistence audit, anti-flattening,
+   multi-tenancy
+   -
+
+   Post-gate CXO testing completed March 1-3 with all bugs resolved
+
+------------------------------
+Contributors
+
+   -
+
+   Lead Developer =E2=80=94 Implementation
+   -
+
+   xian (PM, working with CXO, PPM, Chief Architect) =E2=80=94 Design, test=
+ing,
+   sprint management
+
+------------------------------
+See Also
+
+   -
+
+   PDR-002 v3.1 <../../docs/internal/planning/conversational-glue/> =E2=80=
+=94
+   Conversational Glue design
+   -
+
+   Sprint Completion Gate (#779)
+   <https://github.com/mediajunkie/piper-morgan-product/issues/779> =E2=80=
+=94 Gate
+   verification evidence
+   -
+
+   Alpha Quickstart <../ALPHA_QUICKSTART.md> =E2=80=94 Setup guide
+
+------------------------------
+
+*Released: March 4, 2026*
+--=20
+Christian Crumlish <https://crumlish.me/>
+Member of Collective, Alt-18F <https://18f.gsa.org/>-in-Exile
+Benevolent Monarch, At Swim-Two-Birds <https://atswimtwobirds.com/> Music
+Community, Design in Product <http://designinproduct.net/>
+Consulting, dinp.xyz
+he / him / his / they ok
+<https://www.designinproduct.com>
+New record!
+NO ONE DOES IT SOLO ONLY
+by Layers of Meta <https://layersofmeta.com>
+[image: https://layersofmeta.com] <https://layersofmeta.com>
+layersofmeta.com
+
+--0000000000007156ed064d01c2ec
+Content-Type: text/html; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div><h1 id=3D"gmail-release-notes-v0-8-6" style=3D"color:=
+rgb(29,29,31);font-family:&quot;SF Pro Display&quot;,Inter,&quot;Helvetica =
+Neue&quot;,sans-serif;letter-spacing:-0.01em;line-height:1.22"><font size=
+=3D"2"><span style=3D"font-family:&quot;SF Pro Text&quot;,Inter,&quot;Helve=
+tica Neue&quot;,sans-serif;letter-spacing:normal;font-weight:normal"></span=
+></font></h1><div>Hello good alpha testers and alpha-test curious folks. I =
+filled a gap that has been bugging me for a while. While connecting up all =
+this theoretically useful stuff, I wasn&#39;t able to actually talk to Pipe=
+r like even the crappiest ChatGPT wrapper, so the &quot;zeroth&quot; sprint=
+ of the MVP track that I hope gets us from alpha to beta was to wire up tha=
+t &quot;conversational glue.&quot;</div><div><font size=3D"2"><span style=
+=3D"font-family:&quot;SF Pro Text&quot;,Inter,&quot;Helvetica Neue&quot;,sa=
+ns-serif;letter-spacing:normal;font-weight:normal"><br></span></font></div>=
+<div><font size=3D"2"><span style=3D"font-family:&quot;SF Pro Text&quot;,In=
+ter,&quot;Helvetica Neue&quot;,sans-serif;letter-spacing:normal;font-weight=
+:normal">I&#39;ve done a lot of testing but it&#39;s never enough. Anything=
+ you find is gold for me, even &quot;I couldn&#39;t update it or get it to =
+run.&quot; T</span></font><span style=3D"font-family:&quot;SF Pro Text&quot=
+;,Inter,&quot;Helvetica Neue&quot;,sans-serif">hanks again for the encourag=
+ement!</span></div><div><span style=3D"font-family:&quot;SF Pro Text&quot;,=
+Inter,&quot;Helvetica Neue&quot;,sans-serif"><br></span></div><div><span st=
+yle=3D"font-family:&quot;SF Pro Text&quot;,Inter,&quot;Helvetica Neue&quot;=
+,sans-serif">TLDR, do this=C2=A0in the root of your local copy of the=C2=A0=
+</span><span style=3D"font-family:&quot;SF Mono&quot;,Menlo,Monaco,monospac=
+e">piper-morgan-product</span><span style=3D"font-family:&quot;SF Pro Text&=
+quot;,Inter,&quot;Helvetica Neue&quot;,sans-serif">=C2=A0repository:</span>=
+</div><div><span style=3D"font-family:&quot;SF Mono&quot;,Menlo,Monaco,mono=
+space">
+git pull origin main</span><span style=3D"font-family:&quot;SF Mono&quot;,M=
+enlo,Monaco,monospace">
+pip install -r requirements.txt</span><span style=3D"font-family:&quot;SF M=
+ono&quot;,Menlo,Monaco,monospace">
+python -m alembic upgrade head</span><span style=3D"font-family:&quot;SF Mo=
+no&quot;,Menlo,Monaco,monospace">
+python main.py</span><span style=3D"font-family:&quot;SF Pro Text&quot;,Int=
+er,&quot;Helvetica Neue&quot;,sans-serif"></span></div><div><br></div><div>=
+<br></div>to <br>1. Pull latest changes<br>2 Update dependencies<br>3. Run =
+new migrations<br><div>4. Start server</div><div><span style=3D"font-family=
+:&quot;SF Pro Text&quot;,Inter,&quot;Helvetica Neue&quot;,sans-serif"><br><=
+/span></div><div><span style=3D"font-family:&quot;SF Pro Text&quot;,Inter,&=
+quot;Helvetica Neue&quot;,sans-serif">=C2=A0 =C2=A0 =C2=A0--xian</span><spa=
+n style=3D"font-family:&quot;SF Mono&quot;,Menlo,Monaco,monospace">
+</span></div><div><font size=3D"2"><span style=3D"font-family:&quot;SF Pro =
+Text&quot;,Inter,&quot;Helvetica Neue&quot;,sans-serif;letter-spacing:norma=
+l;font-weight:normal"><br></span></font></div><div><font size=3D"2"><span s=
+tyle=3D"font-family:&quot;SF Pro Text&quot;,Inter,&quot;Helvetica Neue&quot=
+;,sans-serif;letter-spacing:normal;font-weight:normal">p.s.: Check out <a h=
+ref=3D"https://klatch.ing">Klatch</a> - my side project has a side project.=
+<br></span></font></div><div><div><font size=3D"2"><span style=3D"font-fami=
+ly:&quot;SF Pro Text&quot;,Inter,&quot;Helvetica Neue&quot;,sans-serif">p.p=
+.s: Here are the release=C2=A0notes:</span></font></div><div></div></div><h=
+1 id=3D"gmail-release-notes-v0-8-6" style=3D"color:rgb(29,29,31);font-famil=
+y:&quot;SF Pro Display&quot;,Inter,&quot;Helvetica Neue&quot;,sans-serif;le=
+tter-spacing:-0.01em;line-height:1.22"><font size=3D"2"><strong style=3D"fo=
+nt-family:&quot;SF Pro Text&quot;,Inter,&quot;Helvetica Neue&quot;,sans-ser=
+if;letter-spacing:normal">Release Date</strong><span style=3D"font-family:&=
+quot;SF Pro Text&quot;,Inter,&quot;Helvetica Neue&quot;,sans-serif;font-wei=
+ght:normal;letter-spacing:normal">: March 4, 2026</span></font></h1><p styl=
+e=3D"line-height:1.68;color:rgb(29,29,31);font-family:&quot;SF Pro Text&quo=
+t;,Inter,&quot;Helvetica Neue&quot;,sans-serif"><strong>Previous Version</s=
+trong>: v0.8.5.3<span class=3D"gmail-Apple-converted-space">=C2=A0</span></=
+p><p style=3D"line-height:1.68;color:rgb(29,29,31);font-family:&quot;SF Pro=
+ Text&quot;,Inter,&quot;Helvetica Neue&quot;,sans-serif"><strong>Sprint</st=
+rong>: M0 =E2=80=94 Conversational Glue</p><hr style=3D"border-right:medium=
+ none currentcolor;border-bottom:medium none currentcolor;border-left:mediu=
+m none currentcolor;font-family:&quot;SF Pro Text&quot;,Inter,&quot;Helveti=
+ca Neue&quot;,sans-serif"><h2 id=3D"gmail-summary" style=3D"color:rgb(29,29=
+,31);font-family:&quot;SF Pro Display&quot;,Inter,&quot;Helvetica Neue&quot=
+;,sans-serif;letter-spacing:-0.01em;line-height:1.22"><font size=3D"2">Summ=
+ary</font></h2><p style=3D"line-height:1.68;color:rgb(29,29,31);font-family=
+:&quot;SF Pro Text&quot;,Inter,&quot;Helvetica Neue&quot;,sans-serif">This =
+release delivers the M0 Conversational Glue sprint, transforming Piper from=
+ =E2=80=9Cchatbot with features=E2=80=9D into a conversational colleague. U=
+sers can now converse naturally with Piper =E2=80=94 workflows emerge from =
+conversation; commands are shortcuts, not requirements. The release also in=
+cludes repository management, conversation lifecycle tracking, security har=
+dening, and 8 bug fixes from post-gate CXO testing.</p><p style=3D"line-hei=
+ght:1.68;color:rgb(29,29,31);font-family:&quot;SF Pro Text&quot;,Inter,&quo=
+t;Helvetica Neue&quot;,sans-serif"><strong>Reference</strong>: PDR-002 v3.1=
+ (Conversational Glue)</p><hr style=3D"border-right:medium none currentcolo=
+r;border-bottom:medium none currentcolor;border-left:medium none currentcol=
+or;font-family:&quot;SF Pro Text&quot;,Inter,&quot;Helvetica Neue&quot;,san=
+s-serif"><h2 id=3D"gmail-what-s-new" style=3D"color:rgb(29,29,31);font-fami=
+ly:&quot;SF Pro Display&quot;,Inter,&quot;Helvetica Neue&quot;,sans-serif;l=
+etter-spacing:-0.01em;line-height:1.22"><font size=3D"2">What=E2=80=99s New=
+</font></h2><h3 id=3D"gmail-conversational-glue-m0-sprint" style=3D"color:r=
+gb(29,29,31);font-family:&quot;SF Pro Display&quot;,Inter,&quot;Helvetica N=
+eue&quot;,sans-serif;letter-spacing:-0.01em;line-height:1.22"><font size=3D=
+"2">Conversational Glue (M0 Sprint)</font></h3><p style=3D"line-height:1.68=
+;color:rgb(29,29,31);font-family:&quot;SF Pro Text&quot;,Inter,&quot;Helvet=
+ica Neue&quot;,sans-serif">Five core features that make Piper conversationa=
+l:</p><ul style=3D"color:rgb(29,29,31);font-family:&quot;SF Pro Text&quot;,=
+Inter,&quot;Helvetica Neue&quot;,sans-serif"><li style=3D"line-height:1.68"=
+><p style=3D"line-height:1.68"><strong>#766 - Narrative System</strong>: Pi=
+per adapts tone to relationship stage (first meeting =E2=86=92 warm introdu=
+ction, returning user =E2=86=92 concise colleague). Eliminates the repeated=
+ =E2=80=9CIs that your main project?=E2=80=9D question during onboarding.</=
+p></li><li style=3D"line-height:1.68"><p style=3D"line-height:1.68"><strong=
+>#763 - Conversational Lens Tracking</strong>: Piper remembers what you=E2=
+=80=99re talking about. Follow-up queries like =E2=80=9Cwhat about next wee=
+k?=E2=80=9D resolve correctly based on conversational context (&gt;90% foll=
+ow-up resolution). 152 new tests.</p></li><li style=3D"line-height:1.68"><p=
+ style=3D"line-height:1.68"><strong>#765 - Natural Slot Filling</strong>: W=
+hen Piper needs information to complete a task, it asks naturally instead o=
+f interrogating. Lens-aware prompt phrasing adapts to conversational contex=
+t. 124 new tests.</p></li><li style=3D"line-height:1.68"><p style=3D"line-h=
+eight:1.68"><strong>#764 - Multi-Intent Orchestration</strong>: Handle comp=
+ound queries like =E2=80=9Ccheck my calendar and create an issue for the AP=
+I bug=E2=80=9D coherently, with natural topic transitions (=E2=80=9CAs for =
+your calendar=E2=80=A6=E2=80=9D). 47 new tests.</p></li><li style=3D"line-h=
+eight:1.68"><p style=3D"line-height:1.68"><strong>#767 - Soft Workflow Invo=
+cation</strong>: Piper offers workflows conversationally (=E2=80=9CSounds l=
+ike you might want to set up a meeting=E2=80=A6=E2=80=9D) instead of requir=
+ing explicit commands. Graceful decline handling. 79 new tests.</p></li></u=
+l><h3 id=3D"gmail-repository-management" style=3D"color:rgb(29,29,31);font-=
+family:&quot;SF Pro Display&quot;,Inter,&quot;Helvetica Neue&quot;,sans-ser=
+if;letter-spacing:-0.01em;line-height:1.22"><font size=3D"2">Repository Man=
+agement</font></h3><ul style=3D"color:rgb(29,29,31);font-family:&quot;SF Pr=
+o Text&quot;,Inter,&quot;Helvetica Neue&quot;,sans-serif"><li style=3D"line=
+-height:1.68"><p style=3D"line-height:1.68"><strong>#866 - Repository Entit=
+y</strong>: Repository as a first-class domain entity with many-to-many Pro=
+ject links.</p></li><li style=3D"line-height:1.68"><p style=3D"line-height:=
+1.68"><strong>#861 - Settings UI</strong>: Project integration and reposito=
+ry management page.</p></li><li style=3D"line-height:1.68"><p style=3D"line=
+-height:1.68"><strong>#860 - Setup Wizard</strong>: Project-repo linking st=
+ep in onboarding.</p></li><li style=3D"line-height:1.68"><p style=3D"line-h=
+eight:1.68"><strong>#863 - Portfolio Onboarding</strong>: Repo-linking step=
+ during portfolio setup.</p></li><li style=3D"line-height:1.68"><p style=3D=
+"line-height:1.68"><strong>#862 - Conversational Repo Management</strong>: =
+Natural language handler for repo operations.</p></li><li style=3D"line-hei=
+ght:1.68"><p style=3D"line-height:1.68"><strong>#867 - GitHub Validation</s=
+trong>: API validation for repository link operations.</p></li></ul><h3 id=
+=3D"gmail-conversation-lifecycle" style=3D"color:rgb(29,29,31);font-family:=
+&quot;SF Pro Display&quot;,Inter,&quot;Helvetica Neue&quot;,sans-serif;lett=
+er-spacing:-0.01em;line-height:1.22"><font size=3D"2">Conversation Lifecycl=
+e</font></h3><ul style=3D"color:rgb(29,29,31);font-family:&quot;SF Pro Text=
+&quot;,Inter,&quot;Helvetica Neue&quot;,sans-serif"><li style=3D"line-heigh=
+t:1.68"><p style=3D"line-height:1.68"><strong>#715/#858 - Conversation Stat=
+e Machine</strong>: Conversations now track lifecycle state (active, stale,=
+ archived) with proper database columns and repository support.</p></li></u=
+l><h3 id=3D"gmail-supporting-infrastructure" style=3D"color:rgb(29,29,31);f=
+ont-family:&quot;SF Pro Display&quot;,Inter,&quot;Helvetica Neue&quot;,sans=
+-serif;letter-spacing:-0.01em;line-height:1.22"><font size=3D"2">Supporting=
+ Infrastructure</font></h3><ul style=3D"color:rgb(29,29,31);font-family:&qu=
+ot;SF Pro Text&quot;,Inter,&quot;Helvetica Neue&quot;,sans-serif"><li style=
+=3D"line-height:1.68"><p style=3D"line-height:1.68"><strong>#852 - Contextu=
+al Offer Continuation</strong>: Bare-affirmative responses (=E2=80=9Cyes=E2=
+=80=9D, =E2=80=9Csure=E2=80=9D) correctly continue soft-offer workflows.</p=
+></li><li style=3D"line-height:1.68"><p style=3D"line-height:1.68"><strong>=
+#838 - Unified Formality Framework</strong>: Consistent formality calibrati=
+on across all interaction channels.</p></li><li style=3D"line-height:1.68">=
+<p style=3D"line-height:1.68"><strong>#853 - SessionStart Hook</strong>: Au=
+tomated session start checks for agent session logs, mailbox, and briefing =
+freshness.</p></li><li style=3D"line-height:1.68"><p style=3D"line-height:1=
+.68"><strong>#849 - User-Scoped Keychain Isolation</strong>: Security fix e=
+nsuring integration credentials are properly scoped per user.</p></li></ul>=
+<hr style=3D"border-right:medium none currentcolor;border-bottom:medium non=
+e currentcolor;border-left:medium none currentcolor;font-family:&quot;SF Pr=
+o Text&quot;,Inter,&quot;Helvetica Neue&quot;,sans-serif"><h2 id=3D"gmail-b=
+ug-fixes-post-gate-testing" style=3D"color:rgb(29,29,31);font-family:&quot;=
+SF Pro Display&quot;,Inter,&quot;Helvetica Neue&quot;,sans-serif;letter-spa=
+cing:-0.01em;line-height:1.22"><font size=3D"2">Bug Fixes (Post-Gate Testin=
+g)</font></h2><p style=3D"line-height:1.68;color:rgb(29,29,31);font-family:=
+&quot;SF Pro Text&quot;,Inter,&quot;Helvetica Neue&quot;,sans-serif">CXO te=
+sting on March 1-3 surfaced and resolved these issues:</p><table style=3D"w=
+idth:706px;border-collapse:collapse;color:rgb(29,29,31);font-family:&quot;S=
+F Pro Text&quot;,Inter,&quot;Helvetica Neue&quot;,sans-serif"><thead><tr><t=
+h style=3D"text-align:left;vertical-align:top;padding:8px 10px;width:220.04=
+7px;color:var(--muted)">Issue</th><th style=3D"text-align:left;vertical-ali=
+gn:top;padding:8px 10px;width:220.047px;color:var(--muted)">Bug</th><th sty=
+le=3D"text-align:left;vertical-align:top;padding:8px 10px;width:205.922px;c=
+olor:var(--muted)">Fix</th></tr></thead><tbody><tr><td style=3D"vertical-al=
+ign:top;padding:8px 10px">#871</td><td style=3D"vertical-align:top;padding:=
+8px 10px">Legacy POC header visible in templates</td><td style=3D"vertical-=
+align:top;padding:8px 10px">Removed header, compacted greeting area</td></t=
+r><tr><td style=3D"vertical-align:top;padding:8px 10px">#875</td><td style=
+=3D"vertical-align:top;padding:8px 10px">Business errors returned as HTTP 4=
+22 instead of 200</td><td style=3D"vertical-align:top;padding:8px 10px">Res=
+tored 200 OK for business-logic errors</td></tr><tr><td style=3D"vertical-a=
+lign:top;padding:8px 10px">#878</td><td style=3D"vertical-align:top;padding=
+:8px 10px">Workflow polling on synchronous handlers (60s timeout)</td><td s=
+tyle=3D"vertical-align:top;padding:8px 10px">Added<span class=3D"gmail-Appl=
+e-converted-space">=C2=A0</span><code style=3D"font-family:&quot;SF Mono&qu=
+ot;,Menlo,Monaco,monospace;color:var(--inline-code-text);border-radius:6px;=
+padding:2px 6px">async_work_started</code><span class=3D"gmail-Apple-conver=
+ted-space">=C2=A0</span>flag to prevent spurious polling</td></tr><tr><td s=
+tyle=3D"vertical-align:top;padding:8px 10px">#879</td><td style=3D"vertical=
+-align:top;padding:8px 10px"><code style=3D"font-family:&quot;SF Mono&quot;=
+,Menlo,Monaco,monospace;color:var(--inline-code-text);border-radius:6px;pad=
+ding:2px 6px">create_issue</code><span class=3D"gmail-Apple-converted-space=
+">=C2=A0</span>missing assignees parameter</td><td style=3D"vertical-align:=
+top;padding:8px 10px">Added assignees passthrough to GitHub router</td></tr=
+><tr><td style=3D"vertical-align:top;padding:8px 10px">#876</td><td style=
+=3D"vertical-align:top;padding:8px 10px">26 raw exception messages leaked t=
+o users</td><td style=3D"vertical-align:top;padding:8px 10px">Routed all ha=
+ndler errors through<span class=3D"gmail-Apple-converted-space">=C2=A0</spa=
+n><code style=3D"font-family:&quot;SF Mono&quot;,Menlo,Monaco,monospace;col=
+or:var(--inline-code-text);border-radius:6px;padding:2px 6px">UserFriendlyE=
+rrorService</code></td></tr><tr><td style=3D"vertical-align:top;padding:8px=
+ 10px">#880</td><td style=3D"vertical-align:top;padding:8px 10px">Calendar/=
+Slack settings 401 Unauthorized</td><td style=3D"vertical-align:top;padding=
+:8px 10px">Added<span class=3D"gmail-Apple-converted-space">=C2=A0</span><c=
+ode style=3D"font-family:&quot;SF Mono&quot;,Menlo,Monaco,monospace;color:v=
+ar(--inline-code-text);border-radius:6px;padding:2px 6px">credentials: &#39=
+;include&#39;</code>to 16 fetch() calls</td></tr><tr><td style=3D"vertical-=
+align:top;padding:8px 10px">#870</td><td style=3D"vertical-align:top;paddin=
+g:8px 10px">Flaky<span class=3D"gmail-Apple-converted-space">=C2=A0</span><=
+code style=3D"font-family:&quot;SF Mono&quot;,Menlo,Monaco,monospace;color:=
+var(--inline-code-text);border-radius:6px;padding:2px 6px">test_verbosity_g=
+radient</code>test</td><td style=3D"vertical-align:top;padding:8px 10px">Se=
+eded random for deterministic template selection</td></tr></tbody></table><=
+hr style=3D"border-right:medium none currentcolor;border-bottom:medium none=
+ currentcolor;border-left:medium none currentcolor;font-family:&quot;SF Pro=
+ Text&quot;,Inter,&quot;Helvetica Neue&quot;,sans-serif"><h2 id=3D"gmail-ad=
+ditional-changes" style=3D"color:rgb(29,29,31);font-family:&quot;SF Pro Dis=
+play&quot;,Inter,&quot;Helvetica Neue&quot;,sans-serif;letter-spacing:-0.01=
+em;line-height:1.22"><font size=3D"2">Additional Changes</font></h2><h3 id=
+=3D"gmail-documentation" style=3D"color:rgb(29,29,31);font-family:&quot;SF =
+Pro Display&quot;,Inter,&quot;Helvetica Neue&quot;,sans-serif;letter-spacin=
+g:-0.01em;line-height:1.22"><font size=3D"2">Documentation</font></h3><ul s=
+tyle=3D"color:rgb(29,29,31);font-family:&quot;SF Pro Text&quot;,Inter,&quot=
+;Helvetica Neue&quot;,sans-serif"><li style=3D"line-height:1.68"><p style=
+=3D"line-height:1.68">Consolidated briefings to<span class=3D"gmail-Apple-c=
+onverted-space">=C2=A0</span><code style=3D"font-family:&quot;SF Mono&quot;=
+,Menlo,Monaco,monospace;color:var(--inline-code-text);border-radius:6px;pad=
+ding:2px 6px">docs/briefing/</code><span class=3D"gmail-Apple-converted-spa=
+ce">=C2=A0</span>(removed<span class=3D"gmail-Apple-converted-space">=C2=A0=
+</span><code style=3D"font-family:&quot;SF Mono&quot;,Menlo,Monaco,monospac=
+e;color:var(--inline-code-text);border-radius:6px;padding:2px 6px">knowledg=
+e/</code><span class=3D"gmail-Apple-converted-space">=C2=A0</span>duplicate=
+s)</p></li><li style=3D"line-height:1.68"><p style=3D"line-height:1.68">Rem=
+oved<span class=3D"gmail-Apple-converted-space">=C2=A0</span><code style=3D=
+"font-family:&quot;SF Mono&quot;,Menlo,Monaco,monospace;color:var(--inline-=
+code-text);border-radius:6px;padding:2px 6px">piper-education/</code><span =
+class=3D"gmail-Apple-converted-space">=C2=A0</span>tree (content migrated t=
+o<span class=3D"gmail-Apple-converted-space">=C2=A0</span><code style=3D"fo=
+nt-family:&quot;SF Mono&quot;,Menlo,Monaco,monospace;color:var(--inline-cod=
+e-text);border-radius:6px;padding:2px 6px">docs/internal/development/</code=
+>)</p></li><li style=3D"line-height:1.68"><p style=3D"line-height:1.68">Add=
+ed Pattern-061: Human-AI Collaboration Referee</p></li><li style=3D"line-he=
+ight:1.68"><p style=3D"line-height:1.68">Added Period 4 retrospective docum=
+ents</p></li><li style=3D"line-height:1.68"><p style=3D"line-height:1.68">A=
+dded alpha tester and collaborator profiles</p></li><li style=3D"line-heigh=
+t:1.68"><p style=3D"line-height:1.68">Updated staggered audit calendar to w=
+eekly docs cadence</p></li><li style=3D"line-height:1.68"><p style=3D"line-=
+height:1.68">Added daily omnibus logs (Feb 6 =E2=80=93 Mar 2)</p></li></ul>=
+<h3 id=3D"gmail-housekeeping" style=3D"color:rgb(29,29,31);font-family:&quo=
+t;SF Pro Display&quot;,Inter,&quot;Helvetica Neue&quot;,sans-serif;letter-s=
+pacing:-0.01em;line-height:1.22"><font size=3D"2">Housekeeping</font></h3><=
+ul style=3D"color:rgb(29,29,31);font-family:&quot;SF Pro Text&quot;,Inter,&=
+quot;Helvetica Neue&quot;,sans-serif"><li style=3D"line-height:1.68"><p sty=
+le=3D"line-height:1.68">Removed dead<span class=3D"gmail-Apple-converted-sp=
+ace">=C2=A0</span><code style=3D"font-family:&quot;SF Mono&quot;,Menlo,Mona=
+co,monospace;color:var(--inline-code-text);border-radius:6px;padding:2px 6p=
+x">ROUTERS</code><span class=3D"gmail-Apple-converted-space">=C2=A0</span>l=
+ist and unused methods from<span class=3D"gmail-Apple-converted-space">=C2=
+=A0</span><code style=3D"font-family:&quot;SF Mono&quot;,Menlo,Monaco,monos=
+pace;color:var(--inline-code-text);border-radius:6px;padding:2px 6px">Route=
+rInitializer</code><span class=3D"gmail-Apple-converted-space">=C2=A0</span=
+>(#719)</p></li><li style=3D"line-height:1.68"><p style=3D"line-height:1.68=
+">Fixed setup request routing to interactive onboarding (#814)</p></li><li =
+style=3D"line-height:1.68"><p style=3D"line-height:1.68">Removed shadowing<=
+span class=3D"gmail-Apple-converted-space">=C2=A0</span><code style=3D"font=
+-family:&quot;SF Mono&quot;,Menlo,Monaco,monospace;color:var(--inline-code-=
+text);border-radius:6px;padding:2px 6px">__init__.py</code><span class=3D"g=
+mail-Apple-converted-space">=C2=A0</span>files from test directories (#868)=
+</p></li><li style=3D"line-height:1.68"><p style=3D"line-height:1.68">Updat=
+ed CLAUDE.md with subagent commit-verification guideline</p></li></ul><hr s=
+tyle=3D"border-right:medium none currentcolor;border-bottom:medium none cur=
+rentcolor;border-left:medium none currentcolor;font-family:&quot;SF Pro Tex=
+t&quot;,Inter,&quot;Helvetica Neue&quot;,sans-serif"><h2 id=3D"gmail-databa=
+se-migrations" style=3D"color:rgb(29,29,31);font-family:&quot;SF Pro Displa=
+y&quot;,Inter,&quot;Helvetica Neue&quot;,sans-serif;letter-spacing:-0.01em;=
+line-height:1.22"><font size=3D"2">Database Migrations</font></h2><p style=
+=3D"line-height:1.68;color:rgb(29,29,31);font-family:&quot;SF Pro Text&quot=
+;,Inter,&quot;Helvetica Neue&quot;,sans-serif"><strong>New migrations</stro=
+ng><span class=3D"gmail-Apple-converted-space">=C2=A0</span>(run<span class=
+=3D"gmail-Apple-converted-space">=C2=A0</span><code style=3D"font-family:&q=
+uot;SF Mono&quot;,Menlo,Monaco,monospace;color:var(--inline-code-text);bord=
+er-radius:6px;padding:2px 6px">alembic upgrade head</code>):</p><ol style=
+=3D"color:rgb(29,29,31);font-family:&quot;SF Pro Text&quot;,Inter,&quot;Hel=
+vetica Neue&quot;,sans-serif"><li style=3D"line-height:1.68"><p style=3D"li=
+ne-height:1.68"><code style=3D"font-family:&quot;SF Mono&quot;,Menlo,Monaco=
+,monospace;color:var(--inline-code-text);border-radius:6px;padding:2px 6px"=
+>a715_add_conversation_lifecycle_columns.py</code><span class=3D"gmail-Appl=
+e-converted-space">=C2=A0</span>=E2=80=94 Adds lifecycle state tracking to =
+conversations</p></li><li style=3D"line-height:1.68"><p style=3D"line-heigh=
+t:1.68"><code style=3D"font-family:&quot;SF Mono&quot;,Menlo,Monaco,monospa=
+ce;color:var(--inline-code-text);border-radius:6px;padding:2px 6px">a866_cr=
+eate_repositories_and_links_tables.py</code><span class=3D"gmail-Apple-conv=
+erted-space">=C2=A0</span>=E2=80=94 Creates repositories and project-reposi=
+tory link tables</p></li><li style=3D"line-height:1.68"><p style=3D"line-he=
+ight:1.68"><code style=3D"font-family:&quot;SF Mono&quot;,Menlo,Monaco,mono=
+space;color:var(--inline-code-text);border-radius:6px;padding:2px 6px">a867=
+_add_repository_metadata_columns.py</code><span class=3D"gmail-Apple-conver=
+ted-space">=C2=A0</span>=E2=80=94 Adds metadata columns to repositories</p>=
+</li></ol><hr style=3D"border-right:medium none currentcolor;border-bottom:=
+medium none currentcolor;border-left:medium none currentcolor;font-family:&=
+quot;SF Pro Text&quot;,Inter,&quot;Helvetica Neue&quot;,sans-serif"><h2 id=
+=3D"gmail-files-changed" style=3D"color:rgb(29,29,31);font-family:&quot;SF =
+Pro Display&quot;,Inter,&quot;Helvetica Neue&quot;,sans-serif;letter-spacin=
+g:-0.01em;line-height:1.22"><font size=3D"2">Files Changed</font></h2><p st=
+yle=3D"line-height:1.68;color:rgb(29,29,31);font-family:&quot;SF Pro Text&q=
+uot;,Inter,&quot;Helvetica Neue&quot;,sans-serif"><strong>244 files changed=
+</strong><span class=3D"gmail-Apple-converted-space">=C2=A0</span>=E2=80=94=
+ 34,982 additions, 8,290 deletions</p><h3 id=3D"gmail-new-services" style=
+=3D"color:rgb(29,29,31);font-family:&quot;SF Pro Display&quot;,Inter,&quot;=
+Helvetica Neue&quot;,sans-serif;letter-spacing:-0.01em;line-height:1.22"><f=
+ont size=3D"2">New Services</font></h3><ul style=3D"color:rgb(29,29,31);fon=
+t-family:&quot;SF Pro Text&quot;,Inter,&quot;Helvetica Neue&quot;,sans-seri=
+f"><li style=3D"line-height:1.68"><p style=3D"line-height:1.68"><code style=
+=3D"font-family:&quot;SF Mono&quot;,Menlo,Monaco,monospace;color:var(--inli=
+ne-code-text);border-radius:6px;padding:2px 6px">services/intent_service/le=
+ns_inference.py</code><span class=3D"gmail-Apple-converted-space">=C2=A0</s=
+pan>=E2=80=94 Conversational lens tracking</p></li><li style=3D"line-height=
+:1.68"><p style=3D"line-height:1.68"><code style=3D"font-family:&quot;SF Mo=
+no&quot;,Menlo,Monaco,monospace;color:var(--inline-code-text);border-radius=
+:6px;padding:2px 6px">services/intent_service/orchestrator.py</code><span c=
+lass=3D"gmail-Apple-converted-space">=C2=A0</span>=E2=80=94 Multi-intent or=
+chestration</p></li><li style=3D"line-height:1.68"><p style=3D"line-height:=
+1.68"><code style=3D"font-family:&quot;SF Mono&quot;,Menlo,Monaco,monospace=
+;color:var(--inline-code-text);border-radius:6px;padding:2px 6px">services/=
+intent_service/soft_invocation.py</code><span class=3D"gmail-Apple-converte=
+d-space">=C2=A0</span>=E2=80=94 Soft workflow invocation</p></li><li style=
+=3D"line-height:1.68"><p style=3D"line-height:1.68"><code style=3D"font-fam=
+ily:&quot;SF Mono&quot;,Menlo,Monaco,monospace;color:var(--inline-code-text=
+);border-radius:6px;padding:2px 6px">services/slot_filling/</code><span cla=
+ss=3D"gmail-Apple-converted-space">=C2=A0</span>=E2=80=94 Complete slot fil=
+ling framework (6 files)</p></li><li style=3D"line-height:1.68"><p style=3D=
+"line-height:1.68"><code style=3D"font-family:&quot;SF Mono&quot;,Menlo,Mon=
+aco,monospace;color:var(--inline-code-text);border-radius:6px;padding:2px 6=
+px">services/personality/formality.py</code><span class=3D"gmail-Apple-conv=
+erted-space">=C2=A0</span>=E2=80=94 Unified formality framework</p></li><li=
+ style=3D"line-height:1.68"><p style=3D"line-height:1.68"><code style=3D"fo=
+nt-family:&quot;SF Mono&quot;,Menlo,Monaco,monospace;color:var(--inline-cod=
+e-text);border-radius:6px;padding:2px 6px">services/infrastructure/github_r=
+epo_validator.py</code><span class=3D"gmail-Apple-converted-space">=C2=A0</=
+span>=E2=80=94 GitHub API validation</p></li><li style=3D"line-height:1.68"=
+><p style=3D"line-height:1.68"><code style=3D"font-family:&quot;SF Mono&quo=
+t;,Menlo,Monaco,monospace;color:var(--inline-code-text);border-radius:6px;p=
+adding:2px 6px">web/api/routes/repositories.py</code><span class=3D"gmail-A=
+pple-converted-space">=C2=A0</span>=E2=80=94 Repository CRUD endpoints</p><=
+/li></ul><h3 id=3D"gmail-modified-services" style=3D"color:rgb(29,29,31);fo=
+nt-family:&quot;SF Pro Display&quot;,Inter,&quot;Helvetica Neue&quot;,sans-=
+serif;letter-spacing:-0.01em;line-height:1.22"><font size=3D"2">Modified Se=
+rvices</font></h3><ul style=3D"color:rgb(29,29,31);font-family:&quot;SF Pro=
+ Text&quot;,Inter,&quot;Helvetica Neue&quot;,sans-serif"><li style=3D"line-=
+height:1.68"><p style=3D"line-height:1.68"><code style=3D"font-family:&quot=
+;SF Mono&quot;,Menlo,Monaco,monospace;color:var(--inline-code-text);border-=
+radius:6px;padding:2px 6px">services/intent/intent_service.py</code><span c=
+lass=3D"gmail-Apple-converted-space">=C2=A0</span>=E2=80=94 Major: glue int=
+egration, error handling overhaul</p></li><li style=3D"line-height:1.68"><p=
+ style=3D"line-height:1.68"><code style=3D"font-family:&quot;SF Mono&quot;,=
+Menlo,Monaco,monospace;color:var(--inline-code-text);border-radius:6px;padd=
+ing:2px 6px">services/intent_service/canonical_handlers.py</code><span clas=
+s=3D"gmail-Apple-converted-space">=C2=A0</span>=E2=80=94 Lens-aware handler=
+ updates</p></li><li style=3D"line-height:1.68"><p style=3D"line-height:1.6=
+8"><code style=3D"font-family:&quot;SF Mono&quot;,Menlo,Monaco,monospace;co=
+lor:var(--inline-code-text);border-radius:6px;padding:2px 6px">services/int=
+ent_service/conversation_context.py</code><span class=3D"gmail-Apple-conver=
+ted-space">=C2=A0</span>=E2=80=94 Enhanced context tracking</p></li><li sty=
+le=3D"line-height:1.68"><p style=3D"line-height:1.68"><code style=3D"font-f=
+amily:&quot;SF Mono&quot;,Menlo,Monaco,monospace;color:var(--inline-code-te=
+xt);border-radius:6px;padding:2px 6px">services/intent_service/pre_classifi=
+er.py</code><span class=3D"gmail-Apple-converted-space">=C2=A0</span>=E2=80=
+=94 Multi-intent detection</p></li><li style=3D"line-height:1.68"><p style=
+=3D"line-height:1.68"><code style=3D"font-family:&quot;SF Mono&quot;,Menlo,=
+Monaco,monospace;color:var(--inline-code-text);border-radius:6px;padding:2p=
+x 6px">services/onboarding/portfolio_handler.py</code><span class=3D"gmail-=
+Apple-converted-space">=C2=A0</span>=E2=80=94 Narrative bridge, repo linkin=
+g</p></li><li style=3D"line-height:1.68"><p style=3D"line-height:1.68"><cod=
+e style=3D"font-family:&quot;SF Mono&quot;,Menlo,Monaco,monospace;color:var=
+(--inline-code-text);border-radius:6px;padding:2px 6px">services/database/r=
+epositories.py</code><span class=3D"gmail-Apple-converted-space">=C2=A0</sp=
+an>=E2=80=94 Repository and conversation lifecycle support</p></li><li styl=
+e=3D"line-height:1.68"><p style=3D"line-height:1.68"><code style=3D"font-fa=
+mily:&quot;SF Mono&quot;,Menlo,Monaco,monospace;color:var(--inline-code-tex=
+t);border-radius:6px;padding:2px 6px">services/domain/models.py</code><span=
+ class=3D"gmail-Apple-converted-space">=C2=A0</span>=E2=80=94 Repository en=
+tity, conversation lifecycle fields</p></li></ul><h3 id=3D"gmail-new-test-f=
+iles-402-new-tests" style=3D"color:rgb(29,29,31);font-family:&quot;SF Pro D=
+isplay&quot;,Inter,&quot;Helvetica Neue&quot;,sans-serif;letter-spacing:-0.=
+01em;line-height:1.22"><font size=3D"2">New Test Files (402+ new tests)</fo=
+nt></h3><ul style=3D"color:rgb(29,29,31);font-family:&quot;SF Pro Text&quot=
+;,Inter,&quot;Helvetica Neue&quot;,sans-serif"><li style=3D"line-height:1.6=
+8"><p style=3D"line-height:1.68">12 new test files for lens tracking, multi=
+-intent, soft invocation</p></li><li style=3D"line-height:1.68"><p style=3D=
+"line-height:1.68">8 new test files for slot filling</p></li><li style=3D"l=
+ine-height:1.68"><p style=3D"line-height:1.68">Test files for repository ma=
+nagement, conversation lifecycle, security</p></li><li style=3D"line-height=
+:1.68"><p style=3D"line-height:1.68">Integration and E2E test additions</p>=
+</li></ul><hr style=3D"border-right:medium none currentcolor;border-bottom:=
+medium none currentcolor;border-left:medium none currentcolor;font-family:&=
+quot;SF Pro Text&quot;,Inter,&quot;Helvetica Neue&quot;,sans-serif"><h2 id=
+=3D"gmail-upgrade-instructions" style=3D"color:rgb(29,29,31);font-family:&q=
+uot;SF Pro Display&quot;,Inter,&quot;Helvetica Neue&quot;,sans-serif;letter=
+-spacing:-0.01em;line-height:1.22"><font size=3D"2">Upgrade Instructions</f=
+ont></h2><pre style=3D"color:var(--code-text);border-radius:8px;padding:14p=
+x;overflow-x:clip;word-break:break-word"><code class=3D"gmail-language-bash=
+" style=3D"font-family:&quot;SF Mono&quot;,Menlo,Monaco,monospace;backgroun=
+d:none;color:inherit;border-radius:6px;padding:0px;white-space:inherit;word=
+-break:inherit;display:block"><span class=3D"gmail-hl-comment" style=3D"col=
+or:var(--token-comment)"># Pull latest changes</span>
+git pull origin main
+
+<span class=3D"gmail-hl-comment" style=3D"color:var(--token-comment)"># Upd=
+ate dependencies</span>
+pip install -r requirements.txt
+
+<span class=3D"gmail-hl-comment" style=3D"color:var(--token-comment)"># Run=
+ new migrations</span>
+python -m alembic upgrade head
+
+<span class=3D"gmail-hl-comment" style=3D"color:var(--token-comment)"># Sta=
+rt server</span>
+python main.py
+</code></pre><hr style=3D"border-right:medium none currentcolor;border-bott=
+om:medium none currentcolor;border-left:medium none currentcolor;font-famil=
+y:&quot;SF Pro Text&quot;,Inter,&quot;Helvetica Neue&quot;,sans-serif"><h2 =
+id=3D"gmail-issues-resolved" style=3D"color:rgb(29,29,31);font-family:&quot=
+;SF Pro Display&quot;,Inter,&quot;Helvetica Neue&quot;,sans-serif;letter-sp=
+acing:-0.01em;line-height:1.22"><font size=3D"2">Issues Resolved</font></h2=
+><h3 id=3D"gmail-m0-conversational-glue-sprint" style=3D"color:rgb(29,29,31=
+);font-family:&quot;SF Pro Display&quot;,Inter,&quot;Helvetica Neue&quot;,s=
+ans-serif;letter-spacing:-0.01em;line-height:1.22"><font size=3D"2">M0 Conv=
+ersational Glue Sprint</font></h3><table style=3D"width:706px;border-collap=
+se:collapse;color:rgb(29,29,31);font-family:&quot;SF Pro Text&quot;,Inter,&=
+quot;Helvetica Neue&quot;,sans-serif"><thead><tr><th style=3D"text-align:le=
+ft;vertical-align:top;padding:8px 10px;width:220.047px;color:var(--muted)">=
+Issue</th><th style=3D"text-align:left;vertical-align:top;padding:8px 10px;=
+width:220.047px;color:var(--muted)">Title</th><th style=3D"text-align:left;=
+vertical-align:top;padding:8px 10px;width:205.922px;color:var(--muted)">Tes=
+ts</th></tr></thead><tbody><tr><td style=3D"vertical-align:top;padding:8px =
+10px">#766</td><td style=3D"vertical-align:top;padding:8px 10px">Narrative =
+System (onboarding tone)</td><td style=3D"vertical-align:top;padding:8px 10=
+px">=E2=80=94</td></tr><tr><td style=3D"vertical-align:top;padding:8px 10px=
+">#763</td><td style=3D"vertical-align:top;padding:8px 10px">Conversational=
+ Lens Tracking</td><td style=3D"vertical-align:top;padding:8px 10px">152</t=
+d></tr><tr><td style=3D"vertical-align:top;padding:8px 10px">#765</td><td s=
+tyle=3D"vertical-align:top;padding:8px 10px">Natural Slot Filling</td><td s=
+tyle=3D"vertical-align:top;padding:8px 10px">124</td></tr><tr><td style=3D"=
+vertical-align:top;padding:8px 10px">#764</td><td style=3D"vertical-align:t=
+op;padding:8px 10px">Multi-Intent Orchestration</td><td style=3D"vertical-a=
+lign:top;padding:8px 10px">47</td></tr><tr><td style=3D"vertical-align:top;=
+padding:8px 10px">#767</td><td style=3D"vertical-align:top;padding:8px 10px=
+">Soft Workflow Invocation</td><td style=3D"vertical-align:top;padding:8px =
+10px">79</td></tr><tr><td style=3D"vertical-align:top;padding:8px 10px">#77=
+9</td><td style=3D"vertical-align:top;padding:8px 10px">Sprint Completion G=
+ate (3 gates passed)</td><td style=3D"vertical-align:top;padding:8px 10px">=
+=E2=80=94</td></tr><tr><td style=3D"vertical-align:top;padding:8px 10px">#7=
+62</td><td style=3D"vertical-align:top;padding:8px 10px">M0 GLUE Epic (all =
+children closed)</td><td style=3D"vertical-align:top;padding:8px 10px">=E2=
+=80=94</td></tr></tbody></table><h3 id=3D"gmail-repository-management-1" st=
+yle=3D"color:rgb(29,29,31);font-family:&quot;SF Pro Display&quot;,Inter,&qu=
+ot;Helvetica Neue&quot;,sans-serif;letter-spacing:-0.01em;line-height:1.22"=
+><font size=3D"2">Repository Management</font></h3><table style=3D"width:70=
+6px;border-collapse:collapse;color:rgb(29,29,31);font-family:&quot;SF Pro T=
+ext&quot;,Inter,&quot;Helvetica Neue&quot;,sans-serif"><thead><tr><th style=
+=3D"text-align:left;vertical-align:top;padding:8px 10px;width:333px;color:v=
+ar(--muted)">Issue</th><th style=3D"text-align:left;vertical-align:top;padd=
+ing:8px 10px;width:333px;color:var(--muted)">Title</th></tr></thead><tbody>=
+<tr><td style=3D"vertical-align:top;padding:8px 10px">#866</td><td style=3D=
+"vertical-align:top;padding:8px 10px">Repository as first-class entity</td>=
+</tr><tr><td style=3D"vertical-align:top;padding:8px 10px">#861</td><td sty=
+le=3D"vertical-align:top;padding:8px 10px">Project integration settings pag=
+e</td></tr><tr><td style=3D"vertical-align:top;padding:8px 10px">#860</td><=
+td style=3D"vertical-align:top;padding:8px 10px">Setup wizard repo linking<=
+/td></tr><tr><td style=3D"vertical-align:top;padding:8px 10px">#863</td><td=
+ style=3D"vertical-align:top;padding:8px 10px">Portfolio onboarding repo li=
+nking</td></tr><tr><td style=3D"vertical-align:top;padding:8px 10px">#862</=
+td><td style=3D"vertical-align:top;padding:8px 10px">Conversational repo ma=
+nagement handler</td></tr><tr><td style=3D"vertical-align:top;padding:8px 1=
+0px">#867</td><td style=3D"vertical-align:top;padding:8px 10px">GitHub API =
+validation for repo links</td></tr></tbody></table><h3 id=3D"gmail-bug-fixe=
+s-infrastructure" style=3D"color:rgb(29,29,31);font-family:&quot;SF Pro Dis=
+play&quot;,Inter,&quot;Helvetica Neue&quot;,sans-serif;letter-spacing:-0.01=
+em;line-height:1.22"><font size=3D"2">Bug Fixes &amp; Infrastructure</font>=
+</h3><table style=3D"width:706px;border-collapse:collapse;color:rgb(29,29,3=
+1);font-family:&quot;SF Pro Text&quot;,Inter,&quot;Helvetica Neue&quot;,san=
+s-serif"><thead><tr><th style=3D"text-align:left;vertical-align:top;padding=
+:8px 10px;width:333px;color:var(--muted)">Issue</th><th style=3D"text-align=
+:left;vertical-align:top;padding:8px 10px;width:333px;color:var(--muted)">T=
+itle</th></tr></thead><tbody><tr><td style=3D"vertical-align:top;padding:8p=
+x 10px">#871</td><td style=3D"vertical-align:top;padding:8px 10px">Legacy P=
+OC header in templates</td></tr><tr><td style=3D"vertical-align:top;padding=
+:8px 10px">#875</td><td style=3D"vertical-align:top;padding:8px 10px">Busin=
+ess errors returned as HTTP 422</td></tr><tr><td style=3D"vertical-align:to=
+p;padding:8px 10px">#878</td><td style=3D"vertical-align:top;padding:8px 10=
+px">Workflow polling on sync handlers</td></tr><tr><td style=3D"vertical-al=
+ign:top;padding:8px 10px">#879</td><td style=3D"vertical-align:top;padding:=
+8px 10px">create_issue missing assignees</td></tr><tr><td style=3D"vertical=
+-align:top;padding:8px 10px">#876</td><td style=3D"vertical-align:top;paddi=
+ng:8px 10px">26 raw exception message leaks</td></tr><tr><td style=3D"verti=
+cal-align:top;padding:8px 10px">#880</td><td style=3D"vertical-align:top;pa=
+dding:8px 10px">Calendar/Slack settings 401</td></tr><tr><td style=3D"verti=
+cal-align:top;padding:8px 10px">#870</td><td style=3D"vertical-align:top;pa=
+dding:8px 10px">Flaky test_verbosity_gradient</td></tr><tr><td style=3D"ver=
+tical-align:top;padding:8px 10px">#858</td><td style=3D"vertical-align:top;=
+padding:8px 10px">Conversation lifecycle state machine</td></tr><tr><td sty=
+le=3D"vertical-align:top;padding:8px 10px">#852</td><td style=3D"vertical-a=
+lign:top;padding:8px 10px">Contextual offer continuation</td></tr><tr><td s=
+tyle=3D"vertical-align:top;padding:8px 10px">#838</td><td style=3D"vertical=
+-align:top;padding:8px 10px">Unified formality framework</td></tr><tr><td s=
+tyle=3D"vertical-align:top;padding:8px 10px">#853</td><td style=3D"vertical=
+-align:top;padding:8px 10px">SessionStart hook</td></tr><tr><td style=3D"ve=
+rtical-align:top;padding:8px 10px">#849</td><td style=3D"vertical-align:top=
+;padding:8px 10px">User-scoped keychain isolation</td></tr><tr><td style=3D=
+"vertical-align:top;padding:8px 10px">#814</td><td style=3D"vertical-align:=
+top;padding:8px 10px">Setup request routing</td></tr><tr><td style=3D"verti=
+cal-align:top;padding:8px 10px">#868</td><td style=3D"vertical-align:top;pa=
+dding:8px 10px">Shadowing<span class=3D"gmail-Apple-converted-space">=C2=A0=
+</span><strong>init</strong>.py removal</td></tr><tr><td style=3D"vertical-=
+align:top;padding:8px 10px">#719</td><td style=3D"vertical-align:top;paddin=
+g:8px 10px">Dead router code removal</td></tr></tbody></table><p style=3D"l=
+ine-height:1.68;color:rgb(29,29,31);font-family:&quot;SF Pro Text&quot;,Int=
+er,&quot;Helvetica Neue&quot;,sans-serif"><strong>Total</strong>: 27 issues=
+ resolved</p><hr style=3D"border-right:medium none currentcolor;border-bott=
+om:medium none currentcolor;border-left:medium none currentcolor;font-famil=
+y:&quot;SF Pro Text&quot;,Inter,&quot;Helvetica Neue&quot;,sans-serif"><h2 =
+id=3D"gmail-testing-notes" style=3D"color:rgb(29,29,31);font-family:&quot;S=
+F Pro Display&quot;,Inter,&quot;Helvetica Neue&quot;,sans-serif;letter-spac=
+ing:-0.01em;line-height:1.22"><font size=3D"2">Testing Notes</font></h2><ul=
+ style=3D"color:rgb(29,29,31);font-family:&quot;SF Pro Text&quot;,Inter,&qu=
+ot;Helvetica Neue&quot;,sans-serif"><li style=3D"line-height:1.68"><p style=
+=3D"line-height:1.68"><strong>6,146 tests passing</strong>, 7 skipped (pre-=
+existing)</p></li><li style=3D"line-height:1.68"><p style=3D"line-height:1.=
+68">402+ new tests added in M0 sprint</p></li><li style=3D"line-height:1.68=
+"><p style=3D"line-height:1.68">Sprint completion gate verified: persistenc=
+e audit, anti-flattening, multi-tenancy</p></li><li style=3D"line-height:1.=
+68"><p style=3D"line-height:1.68">Post-gate CXO testing completed March 1-3=
+ with all bugs resolved</p></li></ul><hr style=3D"border-right:medium none =
+currentcolor;border-bottom:medium none currentcolor;border-left:medium none=
+ currentcolor;font-family:&quot;SF Pro Text&quot;,Inter,&quot;Helvetica Neu=
+e&quot;,sans-serif"><h2 id=3D"gmail-contributors" style=3D"color:rgb(29,29,=
+31);font-family:&quot;SF Pro Display&quot;,Inter,&quot;Helvetica Neue&quot;=
+,sans-serif;letter-spacing:-0.01em;line-height:1.22"><font size=3D"2">Contr=
+ibutors</font></h2><ul style=3D"color:rgb(29,29,31);font-family:&quot;SF Pr=
+o Text&quot;,Inter,&quot;Helvetica Neue&quot;,sans-serif"><li style=3D"line=
+-height:1.68"><p style=3D"line-height:1.68">Lead Developer =E2=80=94 Implem=
+entation</p></li><li style=3D"line-height:1.68"><p style=3D"line-height:1.6=
+8">xian (PM, working with CXO, PPM, Chief Architect) =E2=80=94 Design, test=
+ing, sprint management</p></li></ul><hr style=3D"border-right:medium none c=
+urrentcolor;border-bottom:medium none currentcolor;border-left:medium none =
+currentcolor;font-family:&quot;SF Pro Text&quot;,Inter,&quot;Helvetica Neue=
+&quot;,sans-serif"><h2 id=3D"gmail-see-also" style=3D"color:rgb(29,29,31);f=
+ont-family:&quot;SF Pro Display&quot;,Inter,&quot;Helvetica Neue&quot;,sans=
+-serif;letter-spacing:-0.01em;line-height:1.22"><font size=3D"2">See Also</=
+font></h2><ul style=3D"color:rgb(29,29,31);font-family:&quot;SF Pro Text&qu=
+ot;,Inter,&quot;Helvetica Neue&quot;,sans-serif"><li style=3D"line-height:1=
+.68"><p style=3D"line-height:1.68"><a href=3D"../../docs/internal/planning/=
+conversational-glue/" style=3D"color:var(--link)">PDR-002 v3.1</a><span cla=
+ss=3D"gmail-Apple-converted-space">=C2=A0</span>=E2=80=94 Conversational Gl=
+ue design</p></li><li style=3D"line-height:1.68"><p style=3D"line-height:1.=
+68"><a href=3D"https://github.com/mediajunkie/piper-morgan-product/issues/7=
+79" style=3D"color:var(--link)">Sprint Completion Gate (#779)</a><span clas=
+s=3D"gmail-Apple-converted-space">=C2=A0</span>=E2=80=94 Gate verification =
+evidence</p></li><li style=3D"line-height:1.68"><p style=3D"line-height:1.6=
+8"><a href=3D"../ALPHA_QUICKSTART.md" style=3D"color:var(--link)">Alpha Qui=
+ckstart</a><span class=3D"gmail-Apple-converted-space">=C2=A0</span>=E2=80=
+=94 Setup guide</p></li></ul><hr style=3D"border-right:medium none currentc=
+olor;border-bottom:medium none currentcolor;border-left:medium none current=
+color;font-family:&quot;SF Pro Text&quot;,Inter,&quot;Helvetica Neue&quot;,=
+sans-serif"><p style=3D"line-height:1.68;color:rgb(29,29,31);font-family:&q=
+uot;SF Pro Text&quot;,Inter,&quot;Helvetica Neue&quot;,sans-serif"><em>Rele=
+ased: March 4, 2026</em></p></div><div><div dir=3D"ltr" class=3D"gmail_sign=
+ature" data-smartmail=3D"gmail_signature"><div dir=3D"ltr"><div dir=3D"ltr"=
+><font color=3D"#444444">--=C2=A0</font></div><div dir=3D"ltr"><div><div><d=
+iv style=3D"color:rgb(34,34,34)"><a href=3D"https://crumlish.me/" style=3D"=
+color:rgb(17,85,204)" target=3D"_blank">Christian Crumlish</a><br></div><di=
+v><div dir=3D"ltr"><div dir=3D"ltr"><div style=3D"color:rgb(34,34,34)"><fon=
+t color=3D"#073763">Member of Collective, Alt-<a href=3D"https://18f.gsa.or=
+g/" style=3D"color:rgb(17,85,204)" target=3D"_blank">18F</a>-in-Exile</font=
+></div><div style=3D"color:rgb(34,34,34)"><span style=3D"color:rgb(7,55,99)=
+">Benevolent Monarch,=C2=A0<a href=3D"https://atswimtwobirds.com/" style=3D=
+"color:rgb(17,85,204)" target=3D"_blank">At Swim-Two-Birds</a>=C2=A0Music</=
+span></div><div style=3D"color:rgb(34,34,34)"><font color=3D"#222222">Commu=
+nity,=C2=A0</font><a href=3D"http://designinproduct.net/" style=3D"color:rg=
+b(17,85,204)" target=3D"_blank"><font color=3D"#0b5394">Design in Product</=
+font></a></div><div><font color=3D"#222222" style=3D"color:rgb(34,34,34)">C=
+onsulting,=C2=A0</font><a href=3D"http://dinp.xyz/" style=3D"color:rgb(34,3=
+4,34)" target=3D"_blank"><font color=3D"#3d85c6">dinp.xyz</font></a><br><fo=
+nt color=3D"#073763">he / him / his / they ok</font><font color=3D"#444444"=
+><br></font></div></div></div></div></div></div></div><div dir=3D"ltr"><a h=
+ref=3D"https://www.designinproduct.com" style=3D"color:rgb(17,85,204)" targ=
+et=3D"_blank"><img width=3D"96" height=3D"96" src=3D"https://ci3.googleuser=
+content.com/mail-sig/AIorK4w4vsupf5_Yy5RzB5f29pn2HYSQhsG9Yg5eg3p30sEStTQgPY=
+qN7gLF0yfxPoAf2T616__-dRg_Z-2h"></a></div><div dir=3D"ltr"><div dir=3D"ltr"=
+><div dir=3D"ltr"><div dir=3D"ltr"><font color=3D"#444444">New record!=C2=
+=A0<br>NO ONE DOES IT SOLO ONLY=C2=A0<br>by <a href=3D"https://layersofmeta=
+.com" target=3D"_blank">Layers of Meta</a><br><a href=3D"https://layersofme=
+ta.com" target=3D"_blank"><img width=3D"200" height=3D"200" alt=3D"https://=
+layersofmeta.com" src=3D"https://ci3.googleusercontent.com/mail-sig/AIorK4w=
+YFUQMC7W4HzSmQOYLwSdeSBz7nbsVoLo9fkb5UkcWNDgd1AC68Vxgtqv27Cc0ZNjr9EYdy8nM_S=
+Le"></a><br></font></div><div><font color=3D"#444444"><a href=3D"http://lay=
+ersofmeta.com" target=3D"_blank">layersofmeta.com</a></font></div></div></d=
+iv></div></div></div></div></div>
+
+--0000000000007156ed064d01c2ec--
