@@ -5,6 +5,9 @@ Verifies that SoftInvocationDetector and WorkflowOfferService select
 the correct message tier based on formality_baseline.
 """
 
+from dataclasses import dataclass
+from unittest.mock import patch
+
 import pytest
 
 from services.intent_service.soft_invocation import (
@@ -13,6 +16,30 @@ from services.intent_service.soft_invocation import (
     WorkflowOffer,
     WorkflowOfferService,
 )
+
+
+@dataclass
+class _MockWorkflowEntry:
+    description: str = ""
+
+
+# #923: Mock registry with all workflow types so pattern tests aren't gated
+_ALL_WORKFLOW_TYPES = {
+    wf_type: _MockWorkflowEntry(description=wf_type)
+    for wf_type in [
+        "meeting", "project_setup", "status_check",
+        "standup", "review", "priority_check", "reminder",
+    ]
+}
+
+
+@pytest.fixture(autouse=True)
+def _mock_registry():
+    with patch(
+        "services.intent_service.workflow_dispatcher.get_registered_workflows",
+        return_value=_ALL_WORKFLOW_TYPES,
+    ):
+        yield
 
 
 @pytest.fixture

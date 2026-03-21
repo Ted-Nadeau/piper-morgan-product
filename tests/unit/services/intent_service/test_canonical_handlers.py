@@ -66,6 +66,15 @@ def mock_plugin_registry():
 class TestGetDynamicCapabilities:
     """Test suite for _get_dynamic_capabilities() method"""
 
+    @pytest.fixture(autouse=True)
+    def _isolate_workflow_registry(self):
+        """#923: Isolate from workflow registry side effects in other tests."""
+        with patch(
+            "services.intent_service.workflow_dispatcher.get_registered_workflows",
+            return_value={},
+        ):
+            yield
+
     def test_returns_expected_structure(self, canonical_handlers, mock_plugin_registry):
         """
         Test that _get_dynamic_capabilities() returns the expected dict structure
@@ -102,12 +111,11 @@ class TestGetDynamicCapabilities:
             # Act
             result = canonical_handlers._get_dynamic_capabilities()
 
-        # Assert - Core capabilities should be present
+        # Assert - Core capabilities should be present (#923: now conversational)
         core = result["core"]
-        assert "development coordination" in core
-        assert "issue tracking" in core
-        assert "strategic planning" in core
-        assert len(core) == 3
+        assert "conversational PM guidance" in core
+        assert "strategic thinking and prioritization" in core
+        assert len(core) == 2
 
     def test_includes_active_plugins(self, canonical_handlers, mock_plugin_registry):
         """
@@ -157,6 +165,7 @@ class TestGetDynamicCapabilities:
     def test_capabilities_list_includes_all(self, canonical_handlers, mock_plugin_registry):
         """
         Test that capabilities_list includes core capabilities plus integration names.
+        #923: Also includes workflow capabilities from dispatcher registry.
         """
         # Arrange
         with patch(
@@ -169,17 +178,16 @@ class TestGetDynamicCapabilities:
         # Assert
         capabilities_list = result["capabilities_list"]
 
-        # Should contain core capabilities
-        assert "development coordination" in capabilities_list
-        assert "issue tracking" in capabilities_list
-        assert "strategic planning" in capabilities_list
+        # #923: Should contain core conversational capabilities
+        assert "conversational PM guidance" in capabilities_list
+        assert "strategic thinking and prioritization" in capabilities_list
 
         # Should contain integration summaries
         assert "slack integration" in capabilities_list
         assert "github integration" in capabilities_list
 
-        # Total should be 3 core + 2 integrations = 5
-        assert len(capabilities_list) == 5
+        # Total should be 2 core + 0 workflows + 2 integrations = 4
+        assert len(capabilities_list) == 4
 
     def test_handles_registry_unavailable(self, canonical_handlers):
         """
@@ -201,14 +209,14 @@ class TestGetDynamicCapabilities:
         assert "integrations" in result
         assert "capabilities_list" in result
 
-        # Core capabilities should be present
-        assert len(result["core"]) == 3
+        # #923: Core conversational capabilities should be present
+        assert len(result["core"]) == 2
 
         # Integrations should be empty list (not None)
         assert result["integrations"] == []
 
-        # Capabilities list should only have core
-        assert len(result["capabilities_list"]) == 3
+        # Capabilities list should only have core (no workflows, no integrations)
+        assert len(result["capabilities_list"]) == 2
 
     def test_handles_plugin_metadata_error(self, canonical_handlers, mock_plugin_registry):
         """
@@ -249,9 +257,9 @@ class TestGetDynamicCapabilities:
         integrations = result["integrations"]
         assert len(integrations) == 0  # No plugins included due to error
 
-        # Core capabilities should still be present
-        assert len(result["core"]) == 3
-        assert len(result["capabilities_list"]) == 3
+        # #923: Core conversational capabilities should still be present
+        assert len(result["core"]) == 2
+        assert len(result["capabilities_list"]) == 2
 
     def test_empty_plugin_registry(self, canonical_handlers):
         """
@@ -269,10 +277,10 @@ class TestGetDynamicCapabilities:
             # Act
             result = canonical_handlers._get_dynamic_capabilities()
 
-        # Assert
-        assert len(result["core"]) == 3
+        # Assert — #923: core is now 2 conversational capabilities
+        assert len(result["core"]) == 2
         assert len(result["integrations"]) == 0
-        assert len(result["capabilities_list"]) == 3
+        assert len(result["capabilities_list"]) == 2
 
     def test_plugin_returns_none(self, canonical_handlers):
         """
@@ -295,9 +303,10 @@ class TestGetDynamicCapabilities:
             result = canonical_handlers._get_dynamic_capabilities()
 
         # Assert - Should have core but no integrations (plugins returned None)
-        assert len(result["core"]) == 3
+        # #923: core is now 2 conversational capabilities
+        assert len(result["core"]) == 2
         assert len(result["integrations"]) == 0
-        assert len(result["capabilities_list"]) == 3
+        assert len(result["capabilities_list"]) == 2
 
 
 class TestLastActivityDetection:

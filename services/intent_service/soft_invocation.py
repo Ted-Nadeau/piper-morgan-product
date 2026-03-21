@@ -312,6 +312,10 @@ class SoftInvocationDetector:
         """
         Check if a message implies a workflow need.
 
+        Only offers workflows that have registered entry points in the
+        dispatcher registry (#923). Patterns that match unregistered
+        workflow types are logged but not surfaced as offers.
+
         Args:
             message: User's message text
             active_lens: Current conversational lens value (#822).
@@ -322,7 +326,8 @@ class SoftInvocationDetector:
                 None defaults to "balanced" tier.
 
         Returns:
-            SoftInvocationResult with offer if pattern matched
+            SoftInvocationResult with offer if pattern matched AND
+            workflow type is registered in the dispatcher.
         """
         if not message or len(message) < 10:
             return SoftInvocationResult(
@@ -335,9 +340,26 @@ class SoftInvocationDetector:
         # Resolve formality tier once for this detection pass
         tier = formality_label(formality_baseline) if formality_baseline is not None else "balanced"
 
+        # #923: Only offer workflow types that have registered entry points
+        from services.intent_service.workflow_dispatcher import get_registered_workflows
+
+        registered = get_registered_workflows()
+
         for compiled_patterns, workflow_type, offer_msgs, decline_msgs in _SOFT_TRIGGER_PATTERNS:
             for pattern in compiled_patterns:
                 if pattern.search(clean):
+                    # #923: Skip offers for unregistered workflow types
+                    if workflow_type not in registered:
+                        logger.debug(
+                            "soft_invocation_suppressed",
+                            workflow_type=workflow_type,
+                            pattern=pattern.pattern,
+                            reason="no_registered_entry_point",
+                            registered_types=list(registered.keys()),
+                            message_preview=message[:50],
+                        )
+                        continue
+
                     # #822: Boost confidence when lens matches workflow type
                     confidence = 0.7
                     if active_lens and workflow_type in _LENS_WORKFLOW_AFFINITY.get(

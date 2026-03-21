@@ -6,6 +6,53 @@
   const chatWindow = document.getElementById("chat-window");
   let sessionId = null;
 
+  // Issue #924: Chat avatar support
+  const AVATAR_COLORS = [
+    '#e74c3c', '#e67e22', '#f1c40f', '#2ecc71', '#1abc9c',
+    '#3498db', '#9b59b6', '#e91e63', '#00bcd4', '#ff5722'
+  ];
+
+  /**
+   * Get a deterministic color from a username string.
+   * Same username always gets the same color across sessions.
+   */
+  function getAvatarColor(name) {
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+      hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+  }
+
+  /**
+   * Create an avatar element for a chat message.
+   * @param {boolean} isUser - Whether this is a user avatar
+   * @returns {HTMLElement} Avatar element
+   */
+  function createAvatar(isUser) {
+    const avatar = document.createElement('div');
+    avatar.className = 'chat-avatar';
+
+    if (isUser) {
+      avatar.classList.add('user-avatar');
+      const username = (window.currentUser && window.currentUser.username) || '?';
+      const initial = username.charAt(0).toUpperCase();
+      avatar.textContent = initial;
+      avatar.style.backgroundColor = getAvatarColor(username);
+      avatar.setAttribute('aria-label', username);
+    } else {
+      avatar.classList.add('piper-avatar');
+      const img = document.createElement('img');
+      img.src = '/assets/piper-avatar.svg';
+      img.alt = 'Piper';
+      img.width = 32;
+      img.height = 32;
+      avatar.appendChild(img);
+    }
+
+    return avatar;
+  }
+
   // Storage keys for session persistence
   const STORAGE_KEYS = {
     SESSION_ID: 'piper_chat_session_id',
@@ -205,7 +252,12 @@
       }
     }
 
-    msgContainer.appendChild(msgDiv);
+    // Issue #924: Wrap message in a row with avatar
+    const msgRow = document.createElement('div');
+    msgRow.className = `message-row ${isUser ? 'user-row' : 'bot-row'}`;
+    msgRow.appendChild(createAvatar(isUser));
+    msgRow.appendChild(msgDiv);
+    msgContainer.appendChild(msgRow);
 
     // Add hover timestamp tooltip (Issue #564)
     if (typeof TimestampUtils !== 'undefined') {

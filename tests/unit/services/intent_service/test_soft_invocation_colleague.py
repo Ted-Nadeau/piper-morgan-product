@@ -15,6 +15,9 @@ Scenarios:
 6. Throttled → no repeated offers
 """
 
+from dataclasses import dataclass
+from unittest.mock import patch
+
 import pytest
 
 from services.intent_service.soft_invocation import (
@@ -23,6 +26,30 @@ from services.intent_service.soft_invocation import (
     detect_offer_response,
 )
 from services.trust.proactivity_gate import TrustStage
+
+
+@dataclass
+class _MockWorkflowEntry:
+    description: str = ""
+
+
+# #923: Mock registry with all workflow types so colleague tests aren't gated
+_ALL_WORKFLOW_TYPES = {
+    wf_type: _MockWorkflowEntry(description=wf_type)
+    for wf_type in [
+        "meeting", "project_setup", "status_check",
+        "standup", "review", "priority_check", "reminder",
+    ]
+}
+
+
+@pytest.fixture(autouse=True)
+def _mock_registry():
+    with patch(
+        "services.intent_service.workflow_dispatcher.get_registered_workflows",
+        return_value=_ALL_WORKFLOW_TYPES,
+    ):
+        yield
 
 
 @pytest.fixture

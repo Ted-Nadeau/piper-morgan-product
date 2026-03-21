@@ -16,6 +16,7 @@ Tests verify:
 - pending_offer includes active_lens context (#820)
 """
 
+from dataclasses import dataclass
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -26,6 +27,30 @@ from services.intent_service.orchestrator import IntentOrchestrator
 from services.intent_service.pre_classifier import MultiIntentResult
 from services.intent_service.soft_invocation import SoftInvocationDetector, WorkflowOfferService
 from services.shared_types import IntentCategory
+
+
+@dataclass
+class _MockWorkflowEntry:
+    description: str = ""
+
+
+# #923: Mock registry with all workflow types so integration tests aren't gated
+_ALL_WORKFLOW_TYPES = {
+    wf_type: _MockWorkflowEntry(description=wf_type)
+    for wf_type in [
+        "meeting", "project_setup", "status_check",
+        "standup", "review", "priority_check", "reminder",
+    ]
+}
+
+
+@pytest.fixture(autouse=True)
+def _mock_registry():
+    with patch(
+        "services.intent_service.workflow_dispatcher.get_registered_workflows",
+        return_value=_ALL_WORKFLOW_TYPES,
+    ):
+        yield
 
 
 def _make_intent(category: IntentCategory, action: str) -> Intent:

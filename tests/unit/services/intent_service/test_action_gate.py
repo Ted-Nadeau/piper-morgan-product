@@ -227,7 +227,8 @@ class TestContextAssembler:
 
         assert "capabilities" in result
         assert isinstance(result["capabilities"], list)
-        assert "development coordination" in result["capabilities"]
+        # #923: Capabilities are now registry-derived, not hardcoded
+        assert "conversational PM guidance" in result["capabilities"]
 
     @pytest.mark.asyncio
     async def test_gather_identity_returns_integrations(self):
