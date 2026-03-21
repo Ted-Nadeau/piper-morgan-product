@@ -27,8 +27,13 @@ class _MockWorkflowEntry:
 _ALL_WORKFLOW_TYPES = {
     wf_type: _MockWorkflowEntry(description=wf_type)
     for wf_type in [
-        "meeting", "project_setup", "status_check",
-        "standup", "review", "priority_check", "reminder",
+        "meeting",
+        "project_setup",
+        "status_check",
+        "standup",
+        "review",
+        "priority_check",
+        "reminder",
     ]
 }
 
