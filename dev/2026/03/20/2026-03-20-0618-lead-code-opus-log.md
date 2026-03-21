@@ -148,6 +148,40 @@ Filed as **#924**. Implemented:
 
 ---
 
+## PM Decisions Captured
+
+1. **Smoke tests**: Qualified pass. Queries 1, 2, 4 passed. Query 3 revealed new bug category → filed #923.
+2. **#922**: Closed with evidence (had been closed without evidence — corrected).
+3. **#923 (capability awareness gap)**: Filed, audited, implemented, and closed same session. Registry-driven capability awareness.
+4. **M1 order of operations**: Approved tier structure (architecture → quality → capabilities → PM-led).
+5. **#911 (floor inversion)**: Closed as substantially complete (Phases 1-2). PM approved deferring Phases 3-4 to #925.
+6. **#924 (chat avatars)**: Approved and implemented. Dolphin logo for Piper, colored initial for user.
+7. **#908**: Audit cascade complete. Plan ready for morning execution.
+
+## Issues Opened This Session
+
+- **#923** — Capability awareness gap (filed and closed)
+- **#924** — Chat avatars (filed and closed)
+- **#925** — Floor inversion Phase 3-4 follow-up (deferred)
+
+## Issues Closed This Session
+
+- **#922** — Conversation continuity (evidence added)
+- **#911** — Floor inversion (Phases 1-2 complete)
+- **#923** — Capability awareness gap (implemented)
+- **#924** — Chat avatars (implemented)
+
+## Next Session Plan
+
+Execute #908 (canonical handlers signal generic responses) per audit cascade plan:
+- Phase 1: Add `is_generic_response` flag to handler return dicts
+- Phase 2: Update safety net detection to check flag first
+- Phase 3: Tests
+
+After #908: proceed to #909 (remove hardcoded username), then #910 (pre-existing test failure).
+
+---
+
 ## 9:02 AM — Session Resumed (Post-Compaction)
 
 PM provided M1 open items TSV. 14 issues open. Proposed order of operations:
@@ -246,6 +280,81 @@ Soft invocation is the critical gate. By filtering offers at detection time (Pha
 - Updated 4 test files with registry mock fixtures (autouse)
 - Updated capability assertions across 3 test files
 - **Results: 2633 passed, 1 pre-existing failure, 3 skipped, 0 new failures**
+
+---
+
+## 10:15 AM — Audit Cascade: #911 Floor Inversion
+
+### Finding: Mostly Done Already
+
+| Phase | Categories | Status |
+|-------|-----------|--------|
+| Phase 1 | GUIDANCE, UNKNOWN | ✅ Complete |
+| Phase 2 | IDENTITY (adjacent), DISCOVERY, TRUST, MEMORY, CONVERSATION (non-greeting) | ✅ Complete |
+| Phase 3 | STATUS, PRIORITY (data-heavy) | ⏳ Pending — safety net active (generic → floor fallback) |
+| Phase 4 | CONVERSATION greeting refactor | ⏳ Pending — has side effects (onboarding) |
+
+**Action Gate** exists in `intent_service.py` (not a separate file). `_should_route_to_floor()` and `_requires_canonical_handler()` implement the routing.
+
+**Context Assembler** handles IDENTITY/DISCOVERY, TRUST, MEMORY categories. Guidance has its own context assembly.
+
+**Remaining work**: STATUS and PRIORITY could be routed to floor with data context, but currently the safety net (check for generic canonical response → fallback to floor) covers the worst cases. The canonical handlers for STATUS/PRIORITY make GitHub API calls and return structured data — floor routing would need that data assembled into context.
+
+**Assessment**: This is in a **good-enough state for M1**. The safety net catches generic responses. The remaining migration (STATUS/PRIORITY to floor-first) is an optimization, not a bug fix. Can we defer the remaining phases to post-M1?
+
+---
+
+## 10:30 AM — Audit Cascade: #908 Generic Response Signaling
+
+### Context Shift
+
+With #911 Phases 1-2 complete and #923's registry gate in place, the scope of #908 has narrowed. The categories most likely to produce generic responses (GUIDANCE, DISCOVERY, TRUST, MEMORY, CONVERSATION non-greeting) are **already floor-routed**. They never hit the generic detection path.
+
+### Current State
+
+- `_GENERIC_CANONICAL_SIGNATURES`: 7 hardcoded strings (all GUIDANCE-related)
+- `_is_generic_canonical_response()`: substring matching
+- Safety net catches generic canonical responses → routes to floor
+- Only fires for Action Gate pass-through categories: PORTFOLIO, EXECUTION, STATUS, PRIORITY, TEMPORAL, CONVERSATION.greeting, IDENTITY.core, GUIDANCE.setup
+
+### What Remains Vulnerable
+
+Categories still using canonical handlers that might return generic templates:
+- **STATUS** (no projects configured) → template like "Here's your detailed project status:"
+- **PRIORITY** (no priorities configured) → template like "Here are your priorities in detail:"
+- **GUIDANCE.setup** → setup-specific template
+- **TEMPORAL-calendar** (no calendar configured) → calendar-not-configured message
+
+### Implementation Plan
+
+**Pragmatic approach**: Add `is_generic_response` flag to canonical handler return dicts, but only for the handlers that are known to produce generic templates. Keep the signature list as fallback.
+
+**Phase 1: Add flag to handler returns**
+- Create helper function `_canonical_response(message, intent, *, is_generic=False, **kwargs)` to build canonical return dicts consistently
+- Update STATUS, PRIORITY, and GUIDANCE.setup handlers to use it with `is_generic=True` where appropriate
+- Detection logic checks flag first, falls back to signature list
+
+**Phase 2: Update safety net**
+- `_is_generic_canonical_response()` checks `result.get("is_generic_response", False)` first
+- Falls back to signature matching for handlers not yet updated
+- Log when signature fallback fires (telemetry for remaining migration)
+
+**Phase 3: Tests**
+- Test flag detection
+- Test signature fallback still works
+- Test that generic STATUS/PRIORITY routes to floor
+
+### Integration Points
+- `services/intent_service/canonical_handlers.py` — handler return dicts
+- `services/intent/intent_service.py` — `_is_generic_canonical_response()` method
+- Tests for both
+
+### Risk Assessment
+- **Low risk**: additive change, backward compatible (flag defaults to False)
+- **Low blast radius**: existing signature list remains as fallback
+- **Known complexity**: STATUS and PRIORITY handlers have multiple code paths — need to identify which paths produce generic vs. data-backed responses
+
+---
 
 ### Files modified (13)
 - `config/PIPER.md` — Reconciled with runtime truth
