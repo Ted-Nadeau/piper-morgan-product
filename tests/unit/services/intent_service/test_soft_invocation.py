@@ -15,7 +15,8 @@ Tests cover:
 - Accept/decline detection
 """
 
-from unittest.mock import MagicMock
+from dataclasses import dataclass
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -29,6 +30,44 @@ from services.intent_service.soft_invocation import (
     detect_offer_response,
 )
 from services.trust.proactivity_gate import ProactivityGate, TrustStage
+
+
+@dataclass
+class _MockWorkflowEntry:
+    description: str = ""
+
+
+# #923: All 7 workflow types registered for pattern-matching tests.
+# In production, only registered types are offered. These tests verify
+# the regex patterns themselves, so we mock the registry to allow all.
+_ALL_WORKFLOW_TYPES = {
+    wf_type: _MockWorkflowEntry(description=wf_type)
+    for wf_type in [
+        "meeting",
+        "project_setup",
+        "status_check",
+        "standup",
+        "review",
+        "priority_check",
+        "reminder",
+    ]
+}
+
+
+@pytest.fixture(autouse=True)
+def _mock_registry():
+    """Mock the dispatcher registry so pattern tests aren't gated."""
+    with patch(
+        "services.intent_service.soft_invocation.get_registered_workflows",
+        return_value=_ALL_WORKFLOW_TYPES,
+        create=True,
+    ):
+        # Also need to patch where it's imported inside detect()
+        with patch(
+            "services.intent_service.workflow_dispatcher.get_registered_workflows",
+            return_value=_ALL_WORKFLOW_TYPES,
+        ):
+            yield
 
 
 @pytest.fixture
@@ -704,3 +743,74 @@ class TestCompositeKeys:
         """No user_id falls back to 'anonymous' composite key for throttling."""
         key = offer_service._key("sess1")
         assert key == "anonymous:sess1"
+
+
+# --- #923: Registry Gate Tests ---
+
+
+class TestRegistryGate:
+    """
+    #923: Soft invocation only offers workflow types that have registered
+    entry points in the dispatcher. Unregistered types are suppressed.
+    """
+
+    def test_registered_type_offered(self):
+        """Meeting (registered) should produce an offer."""
+        only_meeting = {"meeting": _MockWorkflowEntry(description="Meeting scheduling")}
+        with patch(
+            "services.intent_service.workflow_dispatcher.get_registered_workflows",
+            return_value=only_meeting,
+        ):
+            d = SoftInvocationDetector()
+            result = d.detect("I need to get the team together on Tuesday")
+            assert result.has_offer
+            assert result.offer.workflow_type == "meeting"
+
+    def test_unregistered_type_suppressed(self):
+        """Priority check (not registered) should NOT produce an offer."""
+        only_meeting = {"meeting": _MockWorkflowEntry(description="Meeting scheduling")}
+        with patch(
+            "services.intent_service.workflow_dispatcher.get_registered_workflows",
+            return_value=only_meeting,
+        ):
+            d = SoftInvocationDetector()
+            result = d.detect("I'm so overwhelmed with too many things to do")
+            assert not result.has_offer
+
+    def test_empty_registry_suppresses_all(self):
+        """With no registered workflows, no offers should be made."""
+        with patch(
+            "services.intent_service.workflow_dispatcher.get_registered_workflows",
+            return_value={},
+        ):
+            d = SoftInvocationDetector()
+            # meeting pattern
+            r1 = d.detect("I need to get the team together on Tuesday")
+            assert not r1.has_offer
+            # priority pattern
+            r2 = d.detect("I'm overwhelmed with too many priorities")
+            assert not r2.has_offer
+
+    def test_adding_workflow_enables_offers(self):
+        """When a workflow type is added to registry, offers start appearing."""
+        registry = {"meeting": _MockWorkflowEntry(), "reminder": _MockWorkflowEntry()}
+        with patch(
+            "services.intent_service.workflow_dispatcher.get_registered_workflows",
+            return_value=registry,
+        ):
+            d = SoftInvocationDetector()
+            result = d.detect("I keep forgetting to follow up on this task")
+            assert result.has_offer
+            assert result.offer.workflow_type == "reminder"
+
+    def test_removing_workflow_disables_offers(self):
+        """When a workflow type is removed from registry, offers stop."""
+        # meeting is normally in the default registry, but simulate removal
+        no_meeting = {"reminder": _MockWorkflowEntry()}
+        with patch(
+            "services.intent_service.workflow_dispatcher.get_registered_workflows",
+            return_value=no_meeting,
+        ):
+            d = SoftInvocationDetector()
+            result = d.detect("We need to schedule a meeting about this")
+            assert not result.has_offer

@@ -60,33 +60,46 @@ class CanonicalHandlers:
 
     def _get_dynamic_capabilities(self) -> Dict[str, list]:
         """
-        Issue #493: Get dynamic capabilities from PluginRegistry.
+        #923: Get dynamic capabilities from dispatcher registry + PluginRegistry.
+
+        Capabilities are derived from runtime sources — not hardcoded lists.
+        This ensures IDENTITY/DISCOVERY responses match what Piper can actually do.
 
         Returns a dict with:
-        - core: Core PM capabilities (always present)
+        - core: Core PM capabilities (conversational, always present)
+        - workflows: Registered workflow capabilities from dispatcher
         - integrations: Active integrations from plugins
         - capabilities_list: Flat list for API response
         """
-        # Core capabilities always available
+        # Conversational capabilities always available
         core_capabilities = [
-            "development coordination",
-            "issue tracking",
-            "strategic planning",
+            "conversational PM guidance",
+            "strategic thinking and prioritization",
         ]
 
-        # Get active integrations from plugin registry
+        # #923: Workflow capabilities from dispatcher registry
+        workflow_capabilities = []
+        try:
+            from services.intent_service.workflow_dispatcher import get_registered_workflows
+
+            registered = get_registered_workflows()
+            for wf_type, entry in registered.items():
+                desc = entry.description or wf_type.replace("_", " ")
+                workflow_capabilities.append(desc)
+        except Exception as e:
+            logger.warning(f"Could not get workflow capabilities: {e}")
+
+        # Integration capabilities from plugin registry
         integrations = []
         try:
             registry = get_plugin_registry()
             plugin_status = registry.get_status_all()
 
             for name, status in plugin_status.items():
-                # Include plugin if configured or active
                 is_configured = status.get("configured", False)
                 is_active = status.get("active", False) or status.get("status") == "active"
 
                 if is_configured or is_active:
-                    # Get plugin metadata for description
                     plugin = registry.get_plugin(name)
                     if plugin:
                         metadata = plugin.get_metadata()
@@ -102,11 +115,13 @@ class CanonicalHandlers:
 
         # Build flat capabilities list for API response
         capabilities_list = core_capabilities.copy()
+        capabilities_list.extend(workflow_capabilities)
         for integration in integrations:
             capabilities_list.append(f"{integration['name']} integration")
 
         return {
             "core": core_capabilities,
+            "workflows": workflow_capabilities,
             "integrations": integrations,
             "capabilities_list": capabilities_list,
         }

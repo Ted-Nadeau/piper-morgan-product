@@ -145,3 +145,119 @@ Filed as **#924**. Implemented:
 - `aria-label` on user avatar for accessibility
 
 **Test results:** 149 passed, 1 pre-existing failure (#910), no new failures.
+
+---
+
+## 9:02 AM — Session Resumed (Post-Compaction)
+
+PM provided M1 open items TSV. 14 issues open. Proposed order of operations:
+- **Tier 1** (architecture): #923 → #911 → #907
+- **Tier 2** (quality): #908 → #909 → #910 → #898
+- **Tier 3** (capabilities): #902 → #904 → #903 → #883
+- **Tier 4** (PM-led): #706, #717, #375
+
+PM approved. Proceeding with full audit cascade on each step. PM authorized autonomous execution with discretion to stop and confer on larger factors.
+
+### Next: Audit Cascade on #923 — Capability Awareness Gap
+
+---
+
+## 9:15 AM — Audit Cascade: #923 Capability Awareness Gap
+
+### Finding: Five Sources of Truth (Worse Than Thought)
+
+| # | Source | Claims | Reality | Dynamic? |
+|---|--------|--------|---------|----------|
+| 1 | PIPER.md "System Capabilities" | 28 capabilities across 7 areas | Slack, Notion, Calendar mostly unimplemented | No |
+| 2 | PIPER.md "Available Integrations" | GitHub, Slack, Calendar, Notion, MCP | Only GitHub confirmed active | No |
+| 3 | Soft invocation detector | 7 workflow types | Only `meeting` has entry point | No |
+| 4 | Workflow dispatcher registry | `meeting` only | Truth — this is what's real | Yes |
+| 5 | ContextAssembler + canonical handlers | "development coordination, issue tracking, strategic planning" + PluginRegistry | Partially dynamic (plugins yes, core list hardcoded) | Partially |
+
+### Root Cause Chain
+
+```
+PIPER.md says "Task Management: Set priorities and deadlines"
+  → LLM reads this as real capability
+    → User asks "What's blocking the milestone?"
+      → LLM offers to set up priority list (because PIPER.md said it could)
+        → User accepts
+          → No dispatcher entry for "priority_check"
+            → Falls through to floor
+              → Floor says "What specific challenge?" (non-sequitur)
+```
+
+### Implementation Plan
+
+**Phase A: Clean PIPER.md** — Remove aspirational capabilities. Only describe what's real.
+- Strip Slack, Notion sections (not implemented)
+- Calendar: mark as "when configured"
+- Task Management: narrow to what actually works
+- Remove "Available Integrations" redundant section or reconcile
+
+**Phase B: Gate soft invocation on dispatcher registry** — The detector should only offer workflow types that have registered entry points. If `priority_check` isn't in the registry, don't offer it.
+
+**Phase C: Make ContextAssembler registry-aware** — Replace hardcoded `["development coordination", "issue tracking", "strategic planning"]` with data derived from dispatcher registry + plugin registry.
+
+**Phase D: Refine floor addendum** — The "NEVER say you can't do that" instruction is harmful when Piper genuinely can't. Distinguish between:
+- Things Piper can execute (workflows) → offer them
+- Things Piper can discuss (PM advice) → engage conversationally
+- Things Piper can't do → be honest
+
+**Phase E: Tests** — Verify alignment between all sources.
+
+### Key Design Decision
+
+Soft invocation is the critical gate. By filtering offers at detection time (Phase B), we prevent the entire downstream chain without touching the LLM or the floor. This is the **minimum viable fix** — everything else is defense in depth.
+
+---
+
+## 9:45 AM — #923 Implementation Complete
+
+### Phases A-E executed successfully
+
+**Phase A: Clean PIPER.md**
+- Stripped aspirational capabilities (Slack, Notion, detailed Calendar, detailed Task Management)
+- Added capability accuracy warning: "Every capability listed here MUST have a working implementation"
+- Kept: Conversational PM guidance, GitHub, Meeting scheduling (when configured), Document analysis
+- Removed "Available Integrations" duplicate section for Slack/Notion/MCP
+- Replaced "Learning Capabilities" with "Conversational Strengths" (honest about what these are)
+- Removed prescriptive "Default System Behaviors" section
+
+**Phase B: Gate soft invocation on dispatcher registry**
+- `SoftInvocationDetector.detect()` now checks `get_registered_workflows()` before offering
+- Unregistered workflow types → `soft_invocation_suppressed` log event (telemetry preserved)
+- Only `meeting` currently offered (the only registered type); 6 other types suppressed
+- Key behavior: adding a workflow to the registry automatically enables offers
+
+**Phase C: ContextAssembler + canonical_handlers registry-aware**
+- Replaced hardcoded `["development coordination", "issue tracking", "strategic planning"]`
+- Now: `["conversational PM guidance", "strategic thinking and prioritization frameworks"]` + workflow entries from dispatcher registry
+- Dynamic: when meeting workflow is registered, capabilities include "Meeting scheduling via slot-filling"
+
+**Phase D: Floor addendum refined**
+- Removed "Never say you can't help" — harmful blanket instruction
+- Removed "Do NOT say 'I don't have that capability yet' — ever"
+- Added "Do NOT promise to do things you're unsure you can execute"
+- Added "Do NOT offer to 'set up' or 'configure' features the user hasn't asked about"
+
+**Phase E: Tests**
+- 5 new registry gate tests (TestRegistryGate class)
+- Updated 4 test files with registry mock fixtures (autouse)
+- Updated capability assertions across 3 test files
+- **Results: 2633 passed, 1 pre-existing failure, 3 skipped, 0 new failures**
+
+### Files modified (13)
+- `config/PIPER.md` — Reconciled with runtime truth
+- `services/intent_service/soft_invocation.py` — Registry gate in detect()
+- `services/intent_service/context_assembler.py` — Registry-derived capabilities
+- `services/intent_service/canonical_handlers.py` — Registry-derived capabilities
+- `services/intent_service/conversational_floor.py` — Refined floor addendum
+- `tests/unit/services/intent_service/test_soft_invocation.py` — Registry mock + gate tests
+- `tests/unit/services/intent_service/test_formality_soft_invocation.py` — Registry mock
+- `tests/unit/services/intent_service/test_soft_invocation_integration.py` — Registry mock
+- `tests/unit/services/intent_service/test_soft_invocation_colleague.py` — Registry mock
+- `tests/unit/services/intent_service/test_canonical_handlers.py` — Updated assertions
+- `tests/unit/services/intent_service/test_discovery_intent.py` — Updated assertions
+- `tests/unit/services/intent_service/test_action_gate.py` — Updated assertions
+- `dev/2026/03/20/2026-03-20-0618-lead-code-opus-log.md` — This log

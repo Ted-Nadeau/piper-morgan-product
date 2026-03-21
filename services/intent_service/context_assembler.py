@@ -70,12 +70,30 @@ class ContextAssembler:
         """
         Gather Piper's capabilities and plugin status for identity-adjacent questions.
 
-        Mirrors data from CanonicalHandlers._get_dynamic_capabilities() and
-        _get_system_health() but returns raw dicts for floor consumption.
+        #923: Capabilities are derived from the workflow dispatcher registry
+        and plugin registry — not hardcoded. This ensures the LLM's awareness
+        of what Piper can do stays in sync with runtime truth.
         """
         context: Dict[str, Any] = {}
 
-        # Capabilities from plugin registry
+        # #923: Build capabilities from dispatcher registry + conversational strengths
+        capabilities = [
+            "conversational PM guidance",
+            "strategic thinking and prioritization frameworks",
+        ]
+        try:
+            from services.intent_service.workflow_dispatcher import get_registered_workflows
+
+            registered = get_registered_workflows()
+            for wf_type, entry in registered.items():
+                desc = entry.description or wf_type.replace("_", " ")
+                capabilities.append(desc)
+        except Exception as e:
+            logger.warning("context_assembler_registry_error", error=str(e))
+
+        context["capabilities"] = capabilities
+
+        # Integrations from plugin registry (dynamic, reflects runtime state)
         try:
             from services.plugins import get_plugin_registry
 
@@ -93,19 +111,9 @@ class ContextAssembler:
                     }
                 )
 
-            context["capabilities"] = [
-                "development coordination",
-                "issue tracking",
-                "strategic planning",
-            ]
             context["integrations"] = integrations
         except Exception as e:
             logger.warning("context_assembler_identity_capabilities_error", error=str(e))
-            context["capabilities"] = [
-                "development coordination",
-                "issue tracking",
-                "strategic planning",
-            ]
 
         return context
 

@@ -207,10 +207,10 @@ class TestDiscoveryHandlerResponse:
 
             result = await handler._handle_discovery_query(intent, "test-session")
 
+        # #923: Core capabilities are now conversational, not hardcoded
         core = result["intent"]["context"]["core"]
-        assert "development coordination" in core
-        assert "issue tracking" in core
-        assert "strategic planning" in core
+        assert "conversational PM guidance" in core
+        assert "strategic thinking and prioritization" in core
 
     @pytest.mark.asyncio
     async def test_discovery_with_integrations(self, handler):
