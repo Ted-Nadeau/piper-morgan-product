@@ -478,3 +478,63 @@ class TestPreClassifier:
         intent = PreClassifier.pre_classify("what do you remember about me")
         assert intent is not None
         assert intent.category == IntentCategory.MEMORY
+
+    # Issue #898: Classifier edge case fixes
+
+    @pytest.mark.smoke
+    def test_analysis_risk_patterns(self):
+        """Issue #898 Q23: Risk queries should route to ANALYSIS, not GUIDANCE."""
+        risk_queries = [
+            "What risks should I be aware of?",
+            "What risks do we face?",
+            "Identify risks in the project",
+        ]
+        for query in risk_queries:
+            intent = PreClassifier.pre_classify(query)
+            assert intent is not None, f"'{query}' should match ANALYSIS patterns"
+            assert intent.category == IntentCategory.ANALYSIS, (
+                f"'{query}' got {intent.category.value}, expected analysis"
+            )
+
+    @pytest.mark.smoke
+    def test_milestone_routes_to_status(self):
+        """Issue #898 Q25: Milestone queries should route to STATUS, not PRIORITY."""
+        intent = PreClassifier.pre_classify("What's the next milestone?")
+        assert intent is not None
+        assert intent.category == IntentCategory.STATUS
+
+    @pytest.mark.smoke
+    def test_priority_next_patterns_not_greedy(self):
+        """Issue #898: Priority 'next' patterns should not catch 'next milestone'."""
+        # "What's next?" → PRIORITY (action query)
+        intent = PreClassifier.pre_classify("What's next?")
+        assert intent is not None
+        assert intent.category == IntentCategory.PRIORITY
+
+        # "What should I work on next?" → PRIORITY
+        intent = PreClassifier.pre_classify("What should I work on next?")
+        assert intent is not None
+        assert intent.category == IntentCategory.PRIORITY
+
+        # "What's the next milestone?" → STATUS (not PRIORITY)
+        intent = PreClassifier.pre_classify("What's the next milestone?")
+        assert intent is not None
+        assert intent.category == IntentCategory.STATUS
+
+    @pytest.mark.smoke
+    def test_blocker_analysis_patterns(self):
+        """Issue #901/#898 Q43: Blocker queries should route to ANALYSIS."""
+        intent = PreClassifier.pre_classify("What's blocking the milestone?")
+        assert intent is not None
+        assert intent.category == IntentCategory.ANALYSIS
+
+        intent = PreClassifier.pre_classify("What's blocking the sprint?")
+        assert intent is not None
+        assert intent.category == IntentCategory.ANALYSIS
+
+    @pytest.mark.smoke
+    def test_feature_info_routes_to_query(self):
+        """Issue #901/#898 Q27: Feature info queries should route to QUERY."""
+        intent = PreClassifier.pre_classify("Tell me more about the GitHub integration")
+        assert intent is not None
+        assert intent.category == IntentCategory.QUERY
