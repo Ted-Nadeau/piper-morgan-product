@@ -19,7 +19,6 @@ import pytest
 from services.intent_service.pre_classifier import PreClassifier
 from services.intent_service.temporal_utils import parse_reminder_time
 
-
 # ---------------------------------------------------------------------------
 # Pre-classifier pattern tests
 # ---------------------------------------------------------------------------
@@ -41,9 +40,7 @@ class TestReminderPreClassifierPatterns:
         ],
     )
     def test_reminder_patterns_match(self, message):
-        result = PreClassifier._matches_patterns(
-            message.lower(), PreClassifier.REMINDER_PATTERNS
-        )
+        result = PreClassifier._matches_patterns(message.lower(), PreClassifier.REMINDER_PATTERNS)
         assert result is True, f"Pattern should match: {message}"
 
     @pytest.mark.parametrize(
@@ -56,9 +53,7 @@ class TestReminderPreClassifierPatterns:
         ],
     )
     def test_non_reminder_messages_do_not_match(self, message):
-        result = PreClassifier._matches_patterns(
-            message.lower(), PreClassifier.REMINDER_PATTERNS
-        )
+        result = PreClassifier._matches_patterns(message.lower(), PreClassifier.REMINDER_PATTERNS)
         assert result is False, f"Pattern should NOT match: {message}"
 
 
@@ -163,23 +158,17 @@ class TestReminderTextExtraction:
         assert text == "deploy the fix"
 
     def test_dont_forget(self):
-        text = self.handlers._extract_reminder_text(
-            "don't let me forget to submit the report"
-        )
+        text = self.handlers._extract_reminder_text("don't let me forget to submit the report")
         assert text == "submit the report"
 
     def test_strips_time_suffix(self):
         """Time expressions should be stripped from the todo text."""
-        text = self.handlers._extract_reminder_text(
-            "remind me to review PRs tomorrow"
-        )
+        text = self.handlers._extract_reminder_text("remind me to review PRs tomorrow")
         assert text == "review prs"
         assert "tomorrow" not in (text or "")
 
     def test_strips_in_n_hours(self):
-        text = self.handlers._extract_reminder_text(
-            "remind me to check the deploy in 2 hours"
-        )
+        text = self.handlers._extract_reminder_text("remind me to check the deploy in 2 hours")
         assert text == "check the deploy"
 
     def test_empty_after_strip(self):
@@ -232,9 +221,7 @@ class TestReminderHandler:
             new_callable=AsyncMock,
             return_value=mock_todo,
         ) as mock_create:
-            result = await todo_handlers.handle_create_reminder(
-                intent, "session-1", uuid4()
-            )
+            result = await todo_handlers.handle_create_reminder(intent, "session-1", uuid4())
 
             assert mock_create.called
             call_kwargs = mock_create.call_args
@@ -255,9 +242,7 @@ class TestReminderHandler:
             context={"original_message": "remind me to"},
         )
 
-        result = await todo_handlers.handle_create_reminder(
-            intent, "session-1", uuid4()
-        )
+        result = await todo_handlers.handle_create_reminder(intent, "session-1", uuid4())
         assert "didn't catch" in result.lower() or "try" in result.lower()
 
 
@@ -276,18 +261,14 @@ class TestReminderContextSurfacing:
 
         assembler = ContextAssembler()
 
-        with patch(
-            "services.intent_service.todo_handlers.TodoIntentHandlers"
-        ) as MockHandlers:
+        with patch("services.intent_service.todo_handlers.TodoIntentHandlers") as MockHandlers:
             mock_instance = MagicMock()
             mock_instance.get_due_reminders = AsyncMock(
                 return_value=["review PRs", "check deployment"]
             )
             MockHandlers.return_value = mock_instance
 
-            context = await assembler.gather_context(
-                "CONVERSATION", user_id=str(uuid4())
-            )
+            context = await assembler.gather_context("CONVERSATION", user_id=str(uuid4()))
 
             assert "due_reminders" in context
             assert len(context["due_reminders"]) == 2
@@ -300,15 +281,11 @@ class TestReminderContextSurfacing:
 
         assembler = ContextAssembler()
 
-        with patch(
-            "services.intent_service.todo_handlers.TodoIntentHandlers"
-        ) as MockHandlers:
+        with patch("services.intent_service.todo_handlers.TodoIntentHandlers") as MockHandlers:
             mock_instance = MagicMock()
             mock_instance.get_due_reminders = AsyncMock(return_value=[])
             MockHandlers.return_value = mock_instance
 
-            context = await assembler.gather_context(
-                "CONVERSATION", user_id=str(uuid4())
-            )
+            context = await assembler.gather_context("CONVERSATION", user_id=str(uuid4()))
 
             assert "due_reminders" not in context

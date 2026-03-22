@@ -101,9 +101,7 @@ class TodoIntentHandlers:
         from datetime import datetime
 
         try:
-            todos = await self.todo_service.list_todos(
-                user_id=user_id, include_completed=False
-            )
+            todos = await self.todo_service.list_todos(user_id=user_id, include_completed=False)
             now = datetime.now()
             due = []
             for todo in todos:
@@ -160,9 +158,7 @@ class TodoIntentHandlers:
             logger.error("Todo creation failed", error=str(e), user_id=user_id, exc_info=True)
             return "I had trouble saving that todo — it may be a temporary issue. You can try again, or rephrase with 'add todo: [your task]'."
 
-    async def handle_create_reminder(
-        self, intent: Intent, session_id: str, user_id: UUID
-    ) -> str:
+    async def handle_create_reminder(self, intent: Intent, session_id: str, user_id: UUID) -> str:
         """
         Issue #903: Handle "remind me to X" — creates a time-annotated todo.
 
@@ -171,9 +167,7 @@ class TodoIntentHandlers:
         """
         from services.intent_service.temporal_utils import parse_reminder_time
 
-        original_message = intent.original_message or intent.context.get(
-            "original_message", ""
-        )
+        original_message = intent.original_message or intent.context.get("original_message", "")
 
         # Extract reminder text (strip "remind me to/about", "set a reminder to", etc.)
         text = self._extract_reminder_text(original_message)

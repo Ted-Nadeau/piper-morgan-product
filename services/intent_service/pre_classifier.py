@@ -1084,9 +1084,7 @@ class PreClassifier:
             )
 
         # Issue #903: Check Reminder patterns (Query #32) before todo patterns
-        if PreClassifier._matches_patterns(
-            clean_for_matching, PreClassifier.REMINDER_PATTERNS
-        ):
+        if PreClassifier._matches_patterns(clean_for_matching, PreClassifier.REMINDER_PATTERNS):
             return Intent(
                 category=IntentCategory.EXECUTION,
                 action="create_reminder",

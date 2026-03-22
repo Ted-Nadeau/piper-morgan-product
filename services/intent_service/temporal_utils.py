@@ -203,9 +203,7 @@ def parse_reminder_time(message: str) -> Tuple[Optional[datetime], str]:
         days_ahead = (target_day - now.weekday()) % 7
         if days_ahead == 0:
             days_ahead = 7  # "next Monday" when it's Monday → next week
-        dt = (now + timedelta(days=days_ahead)).replace(
-            hour=9, minute=0, second=0, microsecond=0
-        )
+        dt = (now + timedelta(days=days_ahead)).replace(hour=9, minute=0, second=0, microsecond=0)
         return (dt, f"next {day_match.group(1).capitalize()}")
 
     # --- Fallback: tomorrow morning at 9 AM ---
