@@ -43,7 +43,7 @@ class TestCLIStandupIntegration:
             # Mock conversation queries service
             mock_queries = MagicMock()
             mock_queries.get_greeting = AsyncMock(
-                return_value="Good morning, Christian! Ready for our daily standup?"
+                return_value="Good morning! Ready for our daily standup?"
             )
             mock_queries.get_help = AsyncMock(
                 return_value="I can help you with project management, daily operations, and development support."
@@ -92,7 +92,7 @@ class TestCLIStandupIntegration:
             # Mock conversation queries service
             mock_queries = MagicMock()
             mock_queries.get_greeting = AsyncMock(
-                return_value="Good morning, Christian! Ready for our daily standup?"
+                return_value="Good morning! Ready for our daily standup?"
             )
             mock_conversation_queries.return_value = mock_queries
 
@@ -101,7 +101,7 @@ class TestCLIStandupIntegration:
             greeting = await standup.get_greeting()
 
             # Verify greeting
-            assert greeting == "Good morning, Christian! Ready for our daily standup?"
+            assert greeting == "Good morning! Ready for our daily standup?"
             mock_queries.get_greeting.assert_called_once()
 
     @pytest.mark.asyncio

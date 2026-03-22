@@ -17,7 +17,7 @@ from services.intelligence.spatial.notion_spatial import NotionSpatialIntelligen
 
 
 class TestPMWorkflowScenarios:
-    """Test actual PM scenarios that Christian would use"""
+    """Test actual PM workflow scenarios for alpha users"""
 
     @pytest.fixture
     async def notion_adapter(self):

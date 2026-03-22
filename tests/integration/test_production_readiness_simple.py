@@ -15,7 +15,7 @@ from services.intelligence.spatial.notion_spatial import NotionSpatialIntelligen
 
 
 class TestPMWorkflowScenarios:
-    """Test actual PM scenarios that Christian would use"""
+    """Test actual PM workflow scenarios for alpha users"""
 
     async def test_pm_workflow_scenario_1(self):
         """
