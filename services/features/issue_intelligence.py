@@ -61,7 +61,7 @@ class IssueIntelligenceCanonicalQueryEngine:
         github_integration: Any,
         canonical_handlers: CanonicalHandlers,
         session_manager: Any,
-        user_id: str = "xian",
+        user_id: str = None,  # Issue #909: No hardcoded default
     ):
         """Initialize with required dependencies"""
         self.github_integration = github_integration

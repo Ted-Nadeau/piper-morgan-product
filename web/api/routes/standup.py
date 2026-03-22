@@ -73,7 +73,7 @@ class StandupRequest(BaseModel):
     )
 
     class Config:
-        json_schema_extra = {"example": {"mode": "trifecta", "format": "slack", "user_id": "xian"}}
+        json_schema_extra = {"example": {"mode": "trifecta", "format": "slack", "user_id": "user-001"}}
 
 
 class StandupData(BaseModel):
@@ -110,7 +110,7 @@ class StandupResponse(BaseModel):
             "example": {
                 "success": True,
                 "standup": {
-                    "user_id": "xian",
+                    "user_id": "user-001",
                     "generated_at": "2025-10-19T14:30:00",
                     "yesterday_accomplishments": ["Completed Phase Z"],
                     "today_priorities": ["Start Phase 2 API"],
@@ -122,7 +122,7 @@ class StandupResponse(BaseModel):
                 "metadata": {
                     "mode": "standard",
                     "format": "json",
-                    "user_id": "xian",
+                    "user_id": "user-001",
                     "timestamp": "2025-10-19T14:30:00.123456",
                 },
                 "performance_metrics": {
