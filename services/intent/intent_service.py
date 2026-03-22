@@ -1078,24 +1078,14 @@ class IntentService:
                     formality_baseline=formality_baseline,
                 )
 
-            # Create workflow with timeout protection (Bug #166)
-            workflow = await self._create_workflow_with_timeout(intent)
-            if workflow is None:
-                # Timeout occurred
-                return IntentProcessingResult(
-                    success=False,
-                    message="Request timeout - workflow creation took too long",
-                    intent_data={
-                        "category": intent.category.value,
-                        "action": intent.action,
-                        "confidence": intent.confidence,
-                        "context": intent.context,
-                    },
-                    error="Operation timed out after 30 seconds",
-                    error_type="TimeoutError",
-                )
-
-            self.logger.info(f"Workflow created with ID: {workflow.id}")
+            # Issue #883: Lazy workflow creation — workflows are no longer pre-created
+            # for every intent. Instead, handlers that need async work can create
+            # a workflow on demand via self._create_workflow_with_timeout(intent).
+            # Currently no handlers use async workflows, so this is a no-op.
+            # The workflow parameter is set to None; handlers that used workflow_id
+            # now receive None and pass it through harmlessly.
+            workflow = None
+            workflow_id = None  # For fallback error path
 
             # Handle QUERY intents with domain services
             # Issue #586: Pass user_id for timezone-aware calendar queries
@@ -1220,7 +1210,7 @@ class IntentService:
                     "confidence": intent.confidence,
                     "context": intent.context,
                 },
-                workflow_id=workflow.id,
+                workflow_id=workflow_id,
                 error=f"No handler for category: {intent.category.value}",
                 error_type="UnhandledCategoryError",
                 suggestions=suggestions,
@@ -2003,16 +1993,19 @@ class IntentService:
         Routes to appropriate domain service based on intent action.
         Issue #516: Added document search routing to Notion
         Issue #586: Added user_id parameter for timezone-aware calendar queries
+        Issue #883: workflow may be None (lazy creation)
         """
         self.logger.info(f"Processing QUERY intent: {intent.action}")
+        # Issue #883: Extract workflow_id safely (None when no async work needed)
+        workflow_id = getattr(workflow, "id", None)
 
         # Issue #516: Document search via Notion (Canonical Query #20)
         if intent.action in ["search_documents", "find_documents", "search_notion"]:
-            return await self._handle_search_documents_notion(intent, workflow.id, session_id)
+            return await self._handle_search_documents_notion(intent, workflow_id, session_id)
 
         # Issue #522: Document update via Notion (Canonical Query #40)
         elif intent.action in ["update_document", "edit_document", "update_document_query"]:
-            return await self._handle_update_document_notion(intent, workflow.id, session_id)
+            return await self._handle_update_document_notion(intent, workflow_id, session_id)
 
         # Issue #518, #519: GitHub queries (Canonical Queries #41, #42, #45, #60)
         elif intent.action in [
@@ -2021,41 +2014,41 @@ class IntentService:
             "show_closed_prs",
             "shipped_query",
         ]:
-            return await self._handle_shipped_this_week(intent, workflow.id)
+            return await self._handle_shipped_this_week(intent, workflow_id)
 
         elif intent.action in ["stale_prs", "old_prs", "show_stale_prs", "stale_prs_query"]:
-            return await self._handle_stale_prs(intent, workflow.id)
+            return await self._handle_stale_prs(intent, workflow_id)
 
         elif intent.action in ["review_issue", "show_issue", "get_issue", "review_issue_query"]:
-            return await self._handle_review_issue_query(intent, workflow.id)
+            return await self._handle_review_issue_query(intent, workflow_id)
 
         elif intent.action in ["close_issue", "close_issue_query"]:
-            return await self._handle_close_issue_query(intent, workflow.id)
+            return await self._handle_close_issue_query(intent, workflow_id)
 
         elif intent.action in ["reopen_issue", "reopen_issue_query"]:
-            return await self._handle_reopen_issue_query(intent, workflow.id)
+            return await self._handle_reopen_issue_query(intent, workflow_id)
 
         elif intent.action in ["comment_issue", "add_comment", "comment_issue_query"]:
-            return await self._handle_comment_issue_query(intent, workflow.id)
+            return await self._handle_comment_issue_query(intent, workflow_id)
 
         # Issue #845: Issue listing / count queries
         elif intent.action in ["list_issues", "list_issues_query"]:
-            return await self._handle_list_issues_query(intent, workflow.id)
+            return await self._handle_list_issues_query(intent, workflow_id)
 
         # Issue #851: PR listing queries
         elif intent.action in ["list_prs", "list_prs_query", "list_pull_requests"]:
-            return await self._handle_list_prs_query(intent, workflow.id)
+            return await self._handle_list_prs_query(intent, workflow_id)
 
         # Issue #518: Calendar queries (Canonical Queries #34, #35, #61)
         # Issue #586: Pass user_id for timezone-aware queries
         elif intent.action in ["meeting_time", "how_much_time_in_meetings", "calendar_analysis"]:
-            return await self._handle_meeting_time_query(intent, workflow.id, user_id)
+            return await self._handle_meeting_time_query(intent, workflow_id, user_id)
 
         elif intent.action in ["recurring_meetings", "review_recurring_meetings", "audit_meetings"]:
-            return await self._handle_recurring_meetings_query(intent, workflow.id, user_id)
+            return await self._handle_recurring_meetings_query(intent, workflow_id, user_id)
 
         elif intent.action in ["week_calendar", "week_ahead", "whats_my_week_like"]:
-            return await self._handle_week_calendar_query(intent, workflow.id, user_id)
+            return await self._handle_week_calendar_query(intent, workflow_id, user_id)
 
         # Issue #518: Productivity query (Canonical Query #51)
         elif intent.action in [
@@ -2064,11 +2057,11 @@ class IntentService:
             "weekly_metrics",
             "accomplishments",
         ]:
-            return await self._handle_productivity_query(intent, workflow.id, session_id)
+            return await self._handle_productivity_query(intent, workflow_id, session_id)
 
         # Issue #521: Contextual Intelligence queries (Canonical Queries #29, #30)
         elif intent.action in ["changes_query", "what_changed", "show_changes", "changes_since"]:
-            return await self._handle_changes_query(intent, workflow.id, session_id)
+            return await self._handle_changes_query(intent, workflow_id, session_id)
 
         elif intent.action in [
             "attention_query",
@@ -2078,7 +2071,7 @@ class IntentService:
         ]:
             # Issue #849: Thread user_id for user-scoped calendar auth
             return await self._handle_attention_query(
-                intent, workflow.id, session_id, user_id=user_id
+                intent, workflow_id, session_id, user_id=user_id
             )
 
         # Issue #904: Todo list/next queries (pre-classifier routes as QUERY)
@@ -2092,14 +2085,14 @@ class IntentService:
 
         # Handle specific query actions that were broken in August 22 refactor
         elif intent.action in ["show_standup", "get_standup"]:
-            return await self._handle_standup_query(intent, workflow.id, session_id)
+            return await self._handle_standup_query(intent, workflow_id, session_id)
 
         elif intent.action in ["list_projects", "show_projects"]:
-            return await self._handle_projects_query(intent, workflow.id)
+            return await self._handle_projects_query(intent, workflow_id)
 
         else:
             # Phase 3C: Generic query handler using QueryRouter
-            return await self._handle_generic_query(intent, workflow.id, session_id)
+            return await self._handle_generic_query(intent, workflow_id, session_id)
 
     async def _handle_standup_query(
         self, intent: Intent, workflow_id: str, session_id: str
@@ -5038,8 +5031,11 @@ class IntentService:
         GREAT-4D Phase 1: Replaces Phase 3C placeholder.
         Issue #284: Added ActionMapper to handle classifier/handler name mismatches.
         Issue #744: Added user_id parameter for todo operations (multi-tenancy).
+        Issue #883: workflow may be None (lazy creation).
         """
         self.logger.info(f"Processing EXECUTION intent: {intent.action}")
+        # Issue #883: Extract workflow_id safely
+        workflow_id = getattr(workflow, "id", None)
 
         # Issue #284: Map classifier action to handler method name
         mapped_action = ActionMapper.map_action(intent.action)
@@ -5047,10 +5043,10 @@ class IntentService:
 
         # Route based on mapped action
         if mapped_action in ["create_issue", "create_ticket"]:
-            return await self._handle_create_issue(intent, workflow.id, session_id)
+            return await self._handle_create_issue(intent, workflow_id, session_id)
 
         elif mapped_action in ["update_issue", "update_ticket"]:
-            return await self._handle_update_issue(intent, workflow.id)
+            return await self._handle_update_issue(intent, workflow_id)
 
         # Issue #285: Todo operations routing
         # Issue #744: Convert user_id string to UUID for multi-tenancy support
@@ -5061,7 +5057,7 @@ class IntentService:
                     success=False,
                     message="I need you to be logged in to manage todos. Please log in and try again.",
                     intent_data={"category": intent.category.value, "action": intent.action},
-                    workflow_id=workflow.id,
+                    workflow_id=workflow_id,
                     error="User not authenticated",
                     error_type="AuthenticationRequired",
                 )
@@ -5091,7 +5087,7 @@ class IntentService:
                         "category": intent.category.value,
                         "action": intent.action,
                     },
-                    workflow_id=workflow.id,
+                    workflow_id=workflow_id,
                     error="User not authenticated",
                     error_type="AuthenticationRequired",
                 )
@@ -5115,7 +5111,7 @@ class IntentService:
                     success=False,
                     message="I need you to be logged in to show your todos. Please log in and try again.",
                     intent_data={"category": intent.category.value, "action": intent.action},
-                    workflow_id=workflow.id,
+                    workflow_id=workflow_id,
                     error="User not authenticated",
                     error_type="AuthenticationRequired",
                 )
@@ -5555,22 +5551,25 @@ class IntentService:
 
         GREAT-4D Phase 2: Replaces Phase 3C placeholder.
         Issue #515: Added analyze_document routing to Notion
+        Issue #883: workflow may be None (lazy creation).
         """
         self.logger.info(f"Processing ANALYSIS intent: {intent.action}")
+        # Issue #883: Extract workflow_id safely
+        workflow_id = getattr(workflow, "id", None)
 
         # Route based on action
         # Issue #515: Document analysis via Notion (Canonical Query #17)
         if intent.action in ["analyze_document", "analyze_file"]:
-            return await self._handle_analyze_document_notion(intent, workflow.id, session_id)
+            return await self._handle_analyze_document_notion(intent, workflow_id, session_id)
 
         elif intent.action in ["analyze_commits", "analyze_code"]:
-            return await self._handle_analyze_commits(intent, workflow.id)
+            return await self._handle_analyze_commits(intent, workflow_id)
 
         elif intent.action in ["generate_report", "create_report"]:
-            return await self._handle_generate_report(intent, workflow.id)
+            return await self._handle_generate_report(intent, workflow_id)
 
         elif intent.action in ["analyze_data", "evaluate_metrics"]:
-            return await self._handle_analyze_data(intent, workflow.id)
+            return await self._handle_analyze_data(intent, workflow_id)
 
         else:
             # Issue #916: No specialized handler for this analysis action.
@@ -6138,17 +6137,20 @@ class IntentService:
 
         Routes to appropriate synthesis service based on intent action.
         Follows EXECUTION/ANALYSIS pattern for consistency.
+        Issue #883: workflow may be None (lazy creation).
 
         GREAT-4D Phase 4: Completes intent handler coverage.
         """
         self.logger.info(f"Processing SYNTHESIS intent: {intent.action}")
+        # Issue #883: Extract workflow_id safely
+        workflow_id = getattr(workflow, "id", None)
 
         # Route based on action
         if intent.action in ["generate_content", "create_content"]:
-            return await self._handle_generate_content(intent, workflow.id)
+            return await self._handle_generate_content(intent, workflow_id)
 
         elif intent.action in ["summarize", "create_summary"]:
-            return await self._handle_summarize(intent, workflow.id)
+            return await self._handle_summarize(intent, workflow_id)
 
         else:
             # Route unhandled synthesis actions through conversational floor
@@ -8035,15 +8037,18 @@ Content to summarize:
         Follows EXECUTION/ANALYSIS pattern for consistency.
 
         GREAT-4D Phase 5: Completes intent handler coverage.
+        Issue #883: workflow may be None (lazy creation).
         """
         self.logger.info(f"Processing STRATEGY intent: {intent.action}")
+        # Issue #883: Extract workflow_id safely
+        workflow_id = getattr(workflow, "id", None)
 
         # Route based on action
         if intent.action in ["strategic_planning", "create_plan"]:
-            return await self._handle_strategic_planning(intent, workflow.id)
+            return await self._handle_strategic_planning(intent, workflow_id)
 
         elif intent.action in ["prioritize", "set_priorities"]:
-            return await self._handle_prioritization(intent, workflow.id)
+            return await self._handle_prioritization(intent, workflow_id)
 
         else:
             # Route unhandled strategy actions through conversational floor
@@ -9233,12 +9238,15 @@ Content to summarize:
         Follows EXECUTION/ANALYSIS pattern for consistency.
 
         GREAT-4D Phase 6: Completes intent handler coverage.
+        Issue #883: workflow may be None (lazy creation).
         """
         self.logger.info(f"Processing LEARNING intent: {intent.action}")
+        # Issue #883: Extract workflow_id safely
+        workflow_id = getattr(workflow, "id", None)
 
         # Route based on action
         if intent.action in ["learn_pattern", "detect_pattern"]:
-            return await self._handle_learn_pattern(intent, workflow.id)
+            return await self._handle_learn_pattern(intent, workflow_id)
 
         else:
             # Route unhandled learning actions through conversational floor
