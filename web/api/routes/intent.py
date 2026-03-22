@@ -341,11 +341,10 @@ async def process_intent(
             "auth_expired": getattr(request.state, "auth_expired", False),
         }
 
-        # Issue #878: Strip workflow_id unless the handler actually started async work.
-        # Most handlers are synchronous — they return a result immediately, but the
-        # scaffolding passes workflow_id through, causing the frontend to poll for 60s
-        # then show a timeout error. Only handlers that set async_work_started=True
-        # (currently just _handle_generic_query) should trigger frontend polling.
+        # Issue #878/#883: Strip workflow_id unless the handler started async work.
+        # Issue #883: Workflows are no longer pre-created. workflow_id is None by
+        # default. This guard remains for future handlers that create workflows
+        # on demand and set async_work_started=True.
         if not result.async_work_started:
             response["workflow_id"] = None
 
