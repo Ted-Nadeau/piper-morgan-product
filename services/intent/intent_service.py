@@ -3350,17 +3350,73 @@ class IntentService:
 
             issue_number = int(match.group(1))
 
-            # Close the issue
+            # Issue #902: Check if this is a confirmed close (user already saw
+            # the issue and confirmed). Pattern: "yes, close #123" or "confirm close #123"
+            confirmed = bool(
+                re.search(
+                    r"\b(yes|confirm|confirmed|sure|go ahead|do it)\b",
+                    original_message.lower(),
+                )
+            )
+
+            if not confirmed:
+                # First request: fetch issue details and ask for confirmation
+                try:
+                    issue_details = await github_router.get_issue(
+                        "piper-morgan-product", issue_number
+                    )
+                    title = issue_details.get("title", f"Issue #{issue_number}")
+                    state = issue_details.get("state", "unknown")
+
+                    if state == "closed":
+                        return IntentProcessingResult(
+                            success=True,
+                            message=f"Issue #{issue_number}: {title} is already closed.",
+                            intent_data={
+                                "category": intent.category.value,
+                                "action": intent.action,
+                                "confidence": intent.confidence,
+                                "issue_number": issue_number,
+                                "already_closed": True,
+                            },
+                            workflow_id=workflow_id,
+                            requires_clarification=False,
+                        )
+
+                    return IntentProcessingResult(
+                        success=True,
+                        message=(
+                            f"Are you sure you want to close issue #{issue_number}: "
+                            f"**{title}**?\n\n"
+                            f"Say 'yes, close #{issue_number}' to confirm."
+                        ),
+                        intent_data={
+                            "category": intent.category.value,
+                            "action": intent.action,
+                            "confidence": intent.confidence,
+                            "issue_number": issue_number,
+                            "pending_confirmation": True,
+                        },
+                        workflow_id=workflow_id,
+                        requires_clarification=True,
+                    )
+                except Exception as fetch_err:
+                    self.logger.warning(
+                        f"Could not fetch issue #{issue_number} for confirmation: {fetch_err}"
+                    )
+                    # Fall through to close without preview if fetch fails
+
+            # Confirmed close (or fallback if fetch failed)
             updated_issue = await github_router.update_issue(
                 "piper-morgan-product", issue_number, state="closed"
             )
 
-            # Get issue title for confirmation
+            # Get issue title for success message
             title = updated_issue.get("title", f"Issue #{issue_number}")
             url = updated_issue.get("html_url", "")
 
             message_lines = [
-                f"Successfully closed issue #{issue_number}: {title}",
+                f"Closed issue #{issue_number}: {title}",
             ]
 
             if url:
@@ -3505,17 +3561,69 @@ class IntentService:
 
             issue_number = int(match.group(1))
 
-            # Reopen the issue
+            # Issue #902: Confirmation UX (mirrors close handler)
+            confirmed = bool(
+                re.search(
+                    r"\b(yes|confirm|confirmed|sure|go ahead|do it)\b",
+                    original_message.lower(),
+                )
+            )
+
+            if not confirmed:
+                try:
+                    issue_details = await github_router.get_issue(
+                        "piper-morgan-product", issue_number
+                    )
+                    title = issue_details.get("title", f"Issue #{issue_number}")
+                    state = issue_details.get("state", "unknown")
+
+                    if state == "open":
+                        return IntentProcessingResult(
+                            success=True,
+                            message=f"Issue #{issue_number}: {title} is already open.",
+                            intent_data={
+                                "category": intent.category.value,
+                                "action": intent.action,
+                                "confidence": intent.confidence,
+                                "issue_number": issue_number,
+                                "already_open": True,
+                            },
+                            workflow_id=workflow_id,
+                            requires_clarification=False,
+                        )
+
+                    return IntentProcessingResult(
+                        success=True,
+                        message=(
+                            f"Reopen issue #{issue_number}: **{title}**?\n\n"
+                            f"Say 'yes, reopen #{issue_number}' to confirm."
+                        ),
+                        intent_data={
+                            "category": intent.category.value,
+                            "action": intent.action,
+                            "confidence": intent.confidence,
+                            "issue_number": issue_number,
+                            "pending_confirmation": True,
+                        },
+                        workflow_id=workflow_id,
+                        requires_clarification=True,
+                    )
+                except Exception as fetch_err:
+                    self.logger.warning(
+                        f"Could not fetch issue #{issue_number} for confirmation: {fetch_err}"
+                    )
+
+            # Confirmed reopen (or fallback if fetch failed)
             updated_issue = await github_router.update_issue(
                 "piper-morgan-product", issue_number, state="open"
             )
 
-            # Get issue title for confirmation
+            # Get issue title for success message
             title = updated_issue.get("title", f"Issue #{issue_number}")
             url = updated_issue.get("html_url", "")
 
             message_lines = [
-                f"Successfully reopened issue #{issue_number}: {title}",
+                f"Reopened issue #{issue_number}: {title}",
             ]
 
             if url:

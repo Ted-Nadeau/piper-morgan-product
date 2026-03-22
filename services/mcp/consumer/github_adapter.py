@@ -128,6 +128,47 @@ class GitHubMCPSpatialAdapter(BaseSpatialAdapter):
             logger.error(f"Error calling GitHub API: {e}")
             return None
 
+    async def _patch_github_api(
+        self, endpoint: str, data: Dict[str, Any]
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Make GitHub API PATCH call.
+
+        Issue #902: Added for update operations (close/reopen issues, edit titles, etc.).
+        Mirrors _post_github_api but uses PATCH method.
+        """
+        try:
+            if not self._session:
+                logger.warning("GitHub API session not configured")
+                return None
+
+            url = f"{self._github_api_base}/{endpoint}"
+            async with self._session.patch(url, json=data) as response:
+                if response.status == 200:
+                    return await response.json()
+                elif response.status == 401:
+                    logger.error("GitHub API authentication failed")
+                    return None
+                elif response.status == 403:
+                    logger.error("GitHub API rate limit exceeded")
+                    return None
+                elif response.status == 404:
+                    logger.error(f"GitHub resource not found: {endpoint}")
+                    return None
+                elif response.status == 422:
+                    error_body = await response.text()
+                    logger.error(
+                        f"GitHub API validation error: {response.status} — {error_body}"
+                    )
+                    return None
+                else:
+                    logger.error(f"GitHub API error: {response.status}")
+                    return None
+
+        except Exception as e:
+            logger.error(f"Error calling GitHub API PATCH: {e}")
+            return None
+
     async def create_issue(
         self,
         repo_name: str,
@@ -152,6 +193,55 @@ class GitHubMCPSpatialAdapter(BaseSpatialAdapter):
         result = await self._post_github_api(endpoint, data)
         if result is None:
             raise RuntimeError("Failed to create GitHub issue — API returned no response")
+        return result
+
+    async def update_issue(
+        self,
+        repo_name: str,
+        issue_number: int,
+        title: Optional[str] = None,
+        body: Optional[str] = None,
+        state: Optional[str] = None,
+        labels: Optional[List[str]] = None,
+        assignees: Optional[List[str]] = None,
+    ) -> Dict[str, Any]:
+        """
+        Update a GitHub issue via the REST API.
+
+        Issue #902: Completes the issue lifecycle — create, update, close, reopen.
+        Previously missing, causing AttributeError when router delegated
+        update_issue to MCP adapter.
+
+        Args:
+            repo_name: Repository name (without owner prefix)
+            issue_number: Issue number to update
+            title: New title (optional)
+            body: New body (optional)
+            state: "open" or "closed" (optional)
+            labels: New label list (optional, replaces existing)
+            assignees: New assignee list (optional, replaces existing)
+        """
+        endpoint = f"repos/mediajunkie/{repo_name}/issues/{issue_number}"
+        data: Dict[str, Any] = {}
+        if title is not None:
+            data["title"] = title
+        if body is not None:
+            data["body"] = body
+        if state is not None:
+            data["state"] = state
+        if labels is not None:
+            data["labels"] = labels
+        if assignees is not None:
+            data["assignees"] = assignees
+
+        if not data:
+            raise ValueError("update_issue called with no fields to update")
+
+        result = await self._patch_github_api(endpoint, data)
+        if result is None:
+            raise RuntimeError(
+                f"Failed to update GitHub issue #{issue_number} — API returned no response"
+            )
         return result
 
     async def add_comment(

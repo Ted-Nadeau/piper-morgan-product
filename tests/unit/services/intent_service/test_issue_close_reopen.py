@@ -93,6 +93,51 @@ class TestPreClassifierReopenPatterns:
         assert result is True
 
 
+class TestPreClassifierConfirmationPatterns:
+    """Issue #902: Verify confirmation patterns for close/reopen classify correctly."""
+
+    @pytest.mark.parametrize(
+        "message",
+        [
+            "yes, close #123",
+            "confirm close #456",
+            "sure, close #789",
+        ],
+    )
+    def test_close_confirmation_patterns_match(self, message):
+        result = PreClassifier._matches_patterns(
+            message,
+            [
+                r"\bclose issue\s*#?\d+\b",
+                r"\bclose.*completed.*issue\b",
+                r"\bclose.*issue\b",
+                r"\b(yes|confirm|sure),?\s*close\s*#?\d+\b",
+            ],
+        )
+        assert result is True
+
+    @pytest.mark.parametrize(
+        "message",
+        [
+            "yes, reopen #123",
+            "confirm reopen #456",
+            "sure, reopen #789",
+        ],
+    )
+    def test_reopen_confirmation_patterns_match(self, message):
+        result = PreClassifier._matches_patterns(
+            message,
+            [
+                r"\breopen\s+issue\s*#?\d+\b",
+                r"\bre-open\s+issue\s*#?\d+\b",
+                r"\breopen\s+.*issue\b",
+                r"\bre-open\s+.*issue\b",
+                r"\b(yes|confirm|sure),?\s*reopen\s*#?\d+\b",
+            ],
+        )
+        assert result is True
+
+
 # ---------------------------------------------------------------------------
 # Reopen handler tests
 # ---------------------------------------------------------------------------
@@ -102,12 +147,13 @@ class TestReopenIssueHandler:
     """Test _handle_reopen_issue_query handler."""
 
     @pytest.mark.asyncio
-    async def test_reopens_issue_with_state_open(self, intent_service):
-        """Verify the handler passes state='open' to update_issue."""
+    async def test_reopens_issue_with_confirmed_message(self, intent_service):
+        """Verify confirmed reopen passes state='open' to update_issue."""
         intent = Intent(
             category=IntentCategory.QUERY,
             action="reopen_issue_query",
-            context={"original_message": "reopen issue #42"},
+            # Issue #902: "yes" triggers confirmed path
+            context={"original_message": "yes, reopen #42"},
         )
 
         mock_updated_issue = {
@@ -129,7 +175,7 @@ class TestReopenIssueHandler:
             result = await intent_service._handle_reopen_issue_query(intent, "workflow-id")
 
             assert result.success is True
-            assert "Successfully reopened issue #42" in result.message
+            assert "Reopened issue #42" in result.message
             assert "Add search feature" in result.message
             assert result.intent_data["issue_number"] == 42
 
@@ -137,6 +183,67 @@ class TestReopenIssueHandler:
             mock_router.update_issue.assert_awaited_once_with(
                 "piper-morgan-product", 42, state="open"
             )
+
+    @pytest.mark.asyncio
+    async def test_unconfirmed_reopen_asks_for_confirmation(self, intent_service):
+        """Issue #902: Unconfirmed reopen shows issue title and asks to confirm."""
+        intent = Intent(
+            category=IntentCategory.QUERY,
+            action="reopen_issue_query",
+            context={"original_message": "reopen issue #42"},
+        )
+
+        mock_issue = {
+            "number": 42,
+            "title": "Add search feature",
+            "state": "closed",
+        }
+
+        with patch(
+            "services.integrations.github.github_integration_router.GitHubIntegrationRouter"
+        ) as MockRouter:
+            mock_router = MagicMock()
+            mock_router.config_service.is_configured.return_value = True
+            mock_router.initialize = AsyncMock()
+            mock_router.get_issue = AsyncMock(return_value=mock_issue)
+            MockRouter.return_value = mock_router
+
+            result = await intent_service._handle_reopen_issue_query(intent, "workflow-id")
+
+            assert "Add search feature" in result.message
+            assert "confirm" in result.message.lower() or "reopen #42" in result.message
+            assert result.requires_clarification is True
+            # update_issue should NOT be called yet
+            mock_router.update_issue.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_reopen_already_open_issue(self, intent_service):
+        """Issue #902: Reopen on already-open issue returns informative message."""
+        intent = Intent(
+            category=IntentCategory.QUERY,
+            action="reopen_issue_query",
+            context={"original_message": "reopen issue #42"},
+        )
+
+        mock_issue = {
+            "number": 42,
+            "title": "Add search feature",
+            "state": "open",
+        }
+
+        with patch(
+            "services.integrations.github.github_integration_router.GitHubIntegrationRouter"
+        ) as MockRouter:
+            mock_router = MagicMock()
+            mock_router.config_service.is_configured.return_value = True
+            mock_router.initialize = AsyncMock()
+            mock_router.get_issue = AsyncMock(return_value=mock_issue)
+            MockRouter.return_value = mock_router
+
+            result = await intent_service._handle_reopen_issue_query(intent, "workflow-id")
+
+            assert "already open" in result.message.lower()
+            mock_router.update_issue.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_reopen_missing_issue_number(self, intent_service):
@@ -191,7 +298,8 @@ class TestReopenIssueHandler:
         intent = Intent(
             category=IntentCategory.QUERY,
             action="reopen_issue_query",
-            context={"original_message": "reopen issue #42"},
+            # Confirmed so it reaches the update_issue call
+            context={"original_message": "yes, reopen issue #42"},
         )
 
         with patch(
@@ -218,14 +326,16 @@ class TestReopenIssueHandler:
 
 
 class TestCloseIssueHandlerStillWorks:
-    """Verify close handler is unbroken by the reopen changes."""
+    """Verify close handler works with confirmation UX."""
 
     @pytest.mark.asyncio
-    async def test_close_still_passes_state_closed(self, intent_service):
+    async def test_confirmed_close_passes_state_closed(self, intent_service):
+        """Issue #902: Confirmed close passes state='closed' to update_issue."""
         intent = Intent(
             category=IntentCategory.QUERY,
             action="close_issue_query",
-            context={"original_message": "close issue #123"},
+            # "yes" triggers confirmed path
+            context={"original_message": "yes, close #123"},
         )
 
         mock_updated_issue = {
@@ -247,10 +357,70 @@ class TestCloseIssueHandlerStillWorks:
             result = await intent_service._handle_close_issue_query(intent, "workflow-id")
 
             assert result.success is True
-            assert "Successfully closed issue #123" in result.message
+            assert "Closed issue #123" in result.message
             mock_router.update_issue.assert_awaited_once_with(
                 "piper-morgan-product", 123, state="closed"
             )
+
+    @pytest.mark.asyncio
+    async def test_unconfirmed_close_asks_for_confirmation(self, intent_service):
+        """Issue #902: Unconfirmed close shows issue title and asks to confirm."""
+        intent = Intent(
+            category=IntentCategory.QUERY,
+            action="close_issue_query",
+            context={"original_message": "close issue #123"},
+        )
+
+        mock_issue = {
+            "number": 123,
+            "title": "Fix authentication bug",
+            "state": "open",
+        }
+
+        with patch(
+            "services.integrations.github.github_integration_router.GitHubIntegrationRouter"
+        ) as MockRouter:
+            mock_router = MagicMock()
+            mock_router.config_service.is_configured.return_value = True
+            mock_router.initialize = AsyncMock()
+            mock_router.get_issue = AsyncMock(return_value=mock_issue)
+            MockRouter.return_value = mock_router
+
+            result = await intent_service._handle_close_issue_query(intent, "workflow-id")
+
+            assert "Fix authentication bug" in result.message
+            assert "close #123" in result.message.lower()
+            assert result.requires_clarification is True
+            mock_router.update_issue.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_close_already_closed_issue(self, intent_service):
+        """Issue #902: Close on already-closed issue returns informative message."""
+        intent = Intent(
+            category=IntentCategory.QUERY,
+            action="close_issue_query",
+            context={"original_message": "close issue #123"},
+        )
+
+        mock_issue = {
+            "number": 123,
+            "title": "Fix authentication bug",
+            "state": "closed",
+        }
+
+        with patch(
+            "services.integrations.github.github_integration_router.GitHubIntegrationRouter"
+        ) as MockRouter:
+            mock_router = MagicMock()
+            mock_router.config_service.is_configured.return_value = True
+            mock_router.initialize = AsyncMock()
+            mock_router.get_issue = AsyncMock(return_value=mock_issue)
+            MockRouter.return_value = mock_router
+
+            result = await intent_service._handle_close_issue_query(intent, "workflow-id")
+
+            assert "already closed" in result.message.lower()
+            mock_router.update_issue.assert_not_called()
 
 
 # ---------------------------------------------------------------------------

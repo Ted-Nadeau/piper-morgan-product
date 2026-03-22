@@ -663,11 +663,11 @@ class TestCloseIssueResults:
 
     @pytest.mark.asyncio
     async def test_formats_close_confirmation_correctly(self, intent_service):
-        """Test close confirmation is formatted properly"""
+        """Test confirmed close is formatted properly (Issue #902: needs 'yes')."""
         intent = Intent(
             category=IntentCategory.QUERY,
             action="close_issue_query",
-            context={"original_message": "close issue #123"},
+            context={"original_message": "yes, close issue #123"},
         )
 
         mock_updated_issue = {
@@ -689,7 +689,7 @@ class TestCloseIssueResults:
             result = await intent_service._handle_close_issue_query(intent, "workflow-id")
 
             assert result.success is True
-            assert "Successfully closed issue #123" in result.message
+            assert "Closed issue #123" in result.message
             assert "Fix authentication bug" in result.message
             assert result.intent_data["issue_number"] == 123
 
