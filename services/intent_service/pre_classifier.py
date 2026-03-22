@@ -989,6 +989,8 @@ class PreClassifier:
                     r"\bclose issue\s*#?\d+\b",
                     r"\bclose.*completed.*issue\b",
                     r"\bclose.*issue\b",
+                    # Issue #902: Confirmation patterns ("yes, close #123")
+                    r"\b(yes|confirm|sure),?\s*close\s*#?\d+\b",
                 ]
             ):
                 action = "close_issue_query"
@@ -999,6 +1001,8 @@ class PreClassifier:
                     r"\bre-open\s+issue\s*#?\d+\b",
                     r"\breopen\s+.*issue\b",
                     r"\bre-open\s+.*issue\b",
+                    # Issue #902: Confirmation patterns ("yes, reopen #123")
+                    r"\b(yes|confirm|sure),?\s*reopen\s*#?\d+\b",
                 ]
             ):
                 action = "reopen_issue_query"
