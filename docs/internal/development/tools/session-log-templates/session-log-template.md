@@ -20,6 +20,10 @@
 
 ## Session Completion
 
+### Session Completion Checklist
+- [ ] Open items tracker updated (if CoS role)
+- [ ] Session log saved to outputs
+
 ### Work Summary
 - **Completed**: [What got done]
 - **Blocked**: [What's stuck]

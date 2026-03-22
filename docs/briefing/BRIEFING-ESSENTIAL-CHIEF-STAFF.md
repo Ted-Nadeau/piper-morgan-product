@@ -55,6 +55,7 @@
 > **🎯 For current sprint objectives and active issues, see `docs/briefing/BRIEFING-CURRENT-STATE.md`**
 
 **Standing Responsibilities**:
+- Review and update `cos-open-items-tracker.md` at session start and session end
 - Track open items across agent sessions (carry forward or close)
 - Monitor sprint phase transitions
 - Coordinate design guidance requests between roles (e.g., UX memos to CXO/PPM)
@@ -98,6 +99,7 @@ Request additional detail for:
 ## References
 
 - **Current state**: `docs/briefing/BRIEFING-CURRENT-STATE.md`
+- **Open items tracker**: `cos-open-items-tracker.md` (living document, updated every CoS session)
 - **Roadmap**: `docs/internal/planning/roadmap/roadmap.md`
 - **Pattern catalog**: `docs/internal/architecture/current/patterns/`
 - **Omnibus logs**: `docs/omnibus-logs/` (daily synthesis)
@@ -105,6 +107,6 @@ Request additional detail for:
 
 ---
 
-*Last Updated: March 13, 2026*
+*Last Updated: March 21, 2026*
 *Owner: xian*
 *Note: This describes stable role context. For current project state, see BRIEFING-CURRENT-STATE.md*
