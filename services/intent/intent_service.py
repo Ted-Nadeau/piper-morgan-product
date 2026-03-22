@@ -5080,6 +5080,34 @@ class IntentService:
                 },
             )
 
+        # Issue #903: Reminder creation
+        elif mapped_action == "create_reminder":
+            todo_user_id = UUID(user_id) if user_id else None
+            if not todo_user_id:
+                return IntentProcessingResult(
+                    success=False,
+                    message="I need you to be logged in to set reminders. Please log in and try again.",
+                    intent_data={
+                        "category": intent.category.value,
+                        "action": intent.action,
+                    },
+                    workflow_id=workflow.id,
+                    error="User not authenticated",
+                    error_type="AuthenticationRequired",
+                )
+            message = await self.todo_handlers.handle_create_reminder(
+                intent, session_id, user_id=todo_user_id
+            )
+            return IntentProcessingResult(
+                success=True,
+                message=message,
+                intent_data={
+                    "category": intent.category.value,
+                    "action": intent.action,
+                    "confidence": intent.confidence,
+                },
+            )
+
         elif mapped_action == "list_todos":
             todo_user_id = UUID(user_id) if user_id else None
             if not todo_user_id:

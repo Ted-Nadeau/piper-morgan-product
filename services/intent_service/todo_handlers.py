@@ -91,6 +91,34 @@ class TodoIntentHandlers:
         """Initialize with TodoManagementService."""
         self.todo_service = TodoManagementService()
 
+    async def get_due_reminders(self, user_id: UUID) -> List[str]:
+        """
+        Issue #903: Get reminders that are due now or overdue.
+
+        Returns a list of reminder text strings for surfacing at greeting time.
+        Queries todos where reminder_date <= now and status != completed.
+        """
+        from datetime import datetime
+
+        try:
+            todos = await self.todo_service.list_todos(
+                user_id=user_id, include_completed=False
+            )
+            now = datetime.now()
+            due = []
+            for todo in todos:
+                if (
+                    hasattr(todo, "reminder_date")
+                    and todo.reminder_date
+                    and todo.reminder_date <= now
+                    and not todo.completed
+                ):
+                    due.append(todo.text)
+            return due
+        except Exception as e:
+            logger.warning("Failed to fetch due reminders", error=str(e))
+            return []
+
     async def handle_create_todo(self, intent: Intent, session_id: str, user_id: UUID) -> str:
         """
         Handle: "add todo: Review PR #285"
@@ -131,6 +159,111 @@ class TodoIntentHandlers:
         except Exception as e:
             logger.error("Todo creation failed", error=str(e), user_id=user_id, exc_info=True)
             return "I had trouble saving that todo — it may be a temporary issue. You can try again, or rephrase with 'add todo: [your task]'."
+
+    async def handle_create_reminder(
+        self, intent: Intent, session_id: str, user_id: UUID
+    ) -> str:
+        """
+        Issue #903: Handle "remind me to X" — creates a time-annotated todo.
+
+        Extracts the reminder text and time from the message, creates a todo
+        with reminder_date set, and confirms with the parsed time.
+        """
+        from services.intent_service.temporal_utils import parse_reminder_time
+
+        original_message = intent.original_message or intent.context.get(
+            "original_message", ""
+        )
+
+        # Extract reminder text (strip "remind me to/about", "set a reminder to", etc.)
+        text = self._extract_reminder_text(original_message)
+        if not text:
+            return (
+                "I didn't catch what you'd like to be reminded about. "
+                "Try: 'remind me to review PRs tomorrow' or "
+                "'remind me to check in with the team in 2 hours'."
+            )
+
+        # Parse time from message
+        reminder_dt, time_label = parse_reminder_time(original_message)
+
+        try:
+            todo = await self.todo_service.create_todo(
+                user_id=user_id,
+                text=text,
+                priority="medium",
+                reminder_date=reminder_dt,
+                due_date=reminder_dt,
+            )
+
+            logger.info(
+                "Reminder created",
+                todo_id=str(todo.id),
+                text=text,
+                reminder_date=str(reminder_dt),
+                time_label=time_label,
+                user_id=user_id,
+            )
+
+            # Format confirmation with time
+            time_display = time_label
+            if reminder_dt:
+                time_display = reminder_dt.strftime("%A, %B %-d at %-I:%M %p")
+
+            return (
+                f"Got it — I'll remind you to **{text}** "
+                f"({time_label}).\n\n"
+                f"📅 Scheduled for: {time_display}"
+            )
+
+        except Exception as e:
+            logger.error(
+                "Reminder creation failed",
+                error=str(e),
+                user_id=user_id,
+                exc_info=True,
+            )
+            return (
+                "I had trouble saving that reminder. "
+                "You can try again, or use 'add todo: [your task]' as a fallback."
+            )
+
+    def _extract_reminder_text(self, message: str) -> Optional[str]:
+        """
+        Issue #903: Extract the actionable text from a reminder request.
+
+        Strips command phrases like "remind me to", "set a reminder to", etc.
+        """
+        import re
+
+        # Order matters — try most specific patterns first
+        patterns = [
+            r"(?:please\s+)?remind\s+me\s+(?:to|about)\s+(.+)",
+            r"(?:please\s+)?set\s+(?:a\s+)?reminder\s+(?:to|for|about)\s+(.+)",
+            r"(?:please\s+)?create\s+(?:a\s+)?reminder\s+(?:to|for|about)\s+(.+)",
+            r"don'?t\s+let\s+me\s+forget\s+(?:to\s+)?(.+)",
+            r"(?:i\s+)?need\s+to\s+remember\s+to\s+(.+)",
+        ]
+
+        message_lower = message.lower().strip()
+        for pattern in patterns:
+            match = re.search(pattern, message_lower)
+            if match:
+                text = match.group(1).strip()
+                # Strip trailing time expressions so the todo text is clean
+                text = re.sub(
+                    r"\s+(?:tomorrow|tonight|this afternoon|this evening|"
+                    r"next week|next (?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)|"
+                    r"in \d+ (?:minutes?|mins?|hours?|hrs?|days?)|"
+                    r"at \d{1,2}(?::\d{2})?\s*(?:am|pm)?)\s*$",
+                    "",
+                    text,
+                    flags=re.IGNORECASE,
+                ).strip()
+                if text:
+                    return text
+
+        return None
 
     async def handle_list_todos(self, intent: Intent, session_id: str, user_id: UUID) -> str:
         """Handle: "show my todos" or "list todos" - shows active todos from database.

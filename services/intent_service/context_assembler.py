@@ -52,8 +52,10 @@ class ContextAssembler:
                 ctx = await self._gather_memory_context(user_id, session_id)
                 context.update(ctx)
             elif category == "CONVERSATION":
-                # Chitchat/farewell/thanks — minimal context needed
-                pass
+                # Issue #903: Surface due reminders for greeting context
+                ctx = await self._gather_reminder_context(user_id)
+                if ctx:
+                    context.update(ctx)
             else:
                 # For any other category routed to floor, gather basic context
                 pass
@@ -224,3 +226,31 @@ class ContextAssembler:
                 logger.warning("context_assembler_memory_persistent_error", error=str(e))
 
         return context
+
+    async def _gather_reminder_context(self, user_id: str = None) -> Dict[str, Any]:
+        """
+        Issue #903: Check for due reminders to surface at greeting time.
+
+        Queries todos with reminder_date <= now that are still active.
+        Returns context that the floor can weave into the greeting.
+        """
+        if not user_id:
+            return {}
+
+        try:
+            from uuid import UUID
+
+            from services.intent_service.todo_handlers import TodoIntentHandlers
+
+            handlers = TodoIntentHandlers()
+            due_reminders = await handlers.get_due_reminders(UUID(user_id))
+
+            if due_reminders:
+                return {
+                    "due_reminders": due_reminders,
+                    "reminder_count": len(due_reminders),
+                }
+        except Exception as e:
+            logger.warning("context_assembler_reminder_error", error=str(e))
+
+        return {}

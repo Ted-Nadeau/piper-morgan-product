@@ -470,6 +470,20 @@ class PreClassifier:
         r"\bcomplete\s+todo\b",
     ]
 
+    # Issue #903: Reminder patterns - Query #32
+    REMINDER_PATTERNS = [
+        # "remind me to X" / "remind me about X"
+        r"\bremind\s+me\s+(?:to|about)\b",
+        # "set a reminder to X" / "set reminder for X"
+        r"\bset\s+(?:a\s+)?reminder\b",
+        # "reminder to X" / "create a reminder"
+        r"\bcreate\s+(?:a\s+)?reminder\b",
+        # "don't let me forget to X"
+        r"\bdon'?t\s+let\s+me\s+forget\b",
+        # "I need to remember to X"
+        r"\bneed\s+to\s+remember\s+to\b",
+    ]
+
     # Issue #522: Document update query patterns - Query #40
     DOCUMENT_QUERY_PATTERNS = [
         # Update document patterns
@@ -1065,6 +1079,17 @@ class PreClassifier:
             return Intent(
                 category=IntentCategory.QUERY,
                 action="productivity_query",
+                confidence=1.0,
+                context={"original_message": message},
+            )
+
+        # Issue #903: Check Reminder patterns (Query #32) before todo patterns
+        if PreClassifier._matches_patterns(
+            clean_for_matching, PreClassifier.REMINDER_PATTERNS
+        ):
+            return Intent(
+                category=IntentCategory.EXECUTION,
+                action="create_reminder",
                 confidence=1.0,
                 context={"original_message": message},
             )
