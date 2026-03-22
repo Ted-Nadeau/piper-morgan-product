@@ -157,9 +157,7 @@ class GitHubMCPSpatialAdapter(BaseSpatialAdapter):
                     return None
                 elif response.status == 422:
                     error_body = await response.text()
-                    logger.error(
-                        f"GitHub API validation error: {response.status} — {error_body}"
-                    )
+                    logger.error(f"GitHub API validation error: {response.status} — {error_body}")
                     return None
                 else:
                     logger.error(f"GitHub API error: {response.status}")
