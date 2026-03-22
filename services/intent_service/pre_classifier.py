@@ -266,6 +266,12 @@ class PreClassifier:
         r"\bcurrent assignments\b",
         r"\bwhat'?s assigned\b",
         r"\bshow.*assignments\b",
+        # Issue #898 Q25: Milestone queries are project status, not priority
+        r"\bnext milestone\b",
+        r"\bwhat'?s the (?:next|upcoming) milestone\b",
+        r"\bmilestone status\b",
+        r"\bmilestone progress\b",
+        r"\bupcoming milestones?\b",
     ]
 
     # Issue #521: Contextual Intelligence query patterns
@@ -483,6 +489,7 @@ class PreClassifier:
 
     # Issue #901: Analysis patterns — blockers, risks, impact assessment
     # "What's blocking the milestone?" should be ANALYSIS, not STATUS
+    # Issue #898 Q23: Risk/threat awareness queries should be ANALYSIS, not GUIDANCE
     ANALYSIS_PATTERNS = [
         r"\bwhat'?s blocking\b",
         r"\bwhat is blocking\b",
@@ -494,6 +501,13 @@ class PreClassifier:
         r"\brisk assessment\b",
         r"\bimpact analysis\b",
         r"\bbottleneck.*(?:analysis|report)\b",
+        # Issue #898 Q23: Risk/threat queries
+        r"\bwhat risks\b",
+        r"\bwhat.*risk(?:s)?\s+(?:should|do|are)\b",
+        r"\bidentify.*risks?\b",
+        r"\brisk(?:s)?\s+(?:i|we)\s+should\b",
+        r"\bthreats?\s+(?:to|should|i)\b",
+        r"\bwhat.*threaten\b",
     ]
 
     PRIORITY_PATTERNS = [
@@ -541,8 +555,12 @@ class PreClassifier:
         r"\bcritical work\b",
         r"\bmost critical\b",
         # Next action queries
+        # Issue #898 Q25: "what.*next" was too greedy — matched "next milestone"
+        # Narrowed to avoid matching "next [noun]" (milestone, sprint, release)
         r"\bwhat should i do first\b",
-        r"\bwhat.*next\b",
+        r"\bwhat should i do next\b",
+        r"\bwhat.*(?:do|work on|tackle|handle)\s+next\b",
+        r"\bwhat(?:'s| is) next\b",
         r"\bwhat.*first\b",
         r"\bwhich project.*focus\b",
         r"\bwhich task.*focus\b",
@@ -553,7 +571,7 @@ class PreClassifier:
     GUIDANCE_PATTERNS = [
         # GREAT-4A: Removed focus patterns (moved to PRIORITY)
         r"\bwhere should i focus\b",
-        r"\bwhat'?s next\b",
+        # Issue #898: Moved "\bwhat'?s next\b" to PRIORITY_PATTERNS — it's an action query
         r"\bguidance\b",
         r"\brecommendation\b",
         r"\badvice\b",
