@@ -57,7 +57,10 @@ ls mailboxes/lead/inbox/
 # See docs/briefing/BRIEFING-CURRENT-STATE.md for sprint status
 # See docs/briefing/PROJECT.md for project overview
 
-# 4. Check your branch (never develop on main)
+# 4. Read cross-project brief
+# See docs/briefs/cross-pollination/current.md for insights from sibling projects
+
+# 5. Check your branch (never develop on main)
 git branch  # Should show claude/* branch, not main
 ```
 
@@ -167,6 +170,7 @@ Load detailed protocols only when needed:
 |------|------|
 | Current sprint/epic | `docs/briefing/BRIEFING-CURRENT-STATE.md` |
 | Project overview | `docs/briefing/PROJECT.md` |
+| Cross-project context | `docs/briefs/cross-pollination/current.md` |
 | Debugging a bug | `docs/agent-protocols/debugging-protocol.md` |
 | E2E bug investigation | `docs/agent-protocols/e2e-investigation-protocol.md` |
 | Closing an issue | `docs/agent-protocols/issue-closure-protocol.md` |
