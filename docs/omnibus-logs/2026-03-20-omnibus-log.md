@@ -23,6 +23,8 @@
 
 **6:42 AM**: **Documentation Management** scans repo for uncommitted files (~35 items), categorizes and commits omnibus, skill, and cloud session logs.
 
+**7:46 AM**: **Lead Developer** begins investigating capability awareness gap with PM. Discovers three disconnected systems describing Piper's capabilities (PIPER.md, soft invocation detector, dispatcher registry) — none coordinated. PM approves filing as new issue, not #922.
+
 **7:48 AM**: **CIO** starts session in Claude Project. Reads Piper autobiography, begins Piper Alpha plan revision.
 
 **8:03 AM**: **Lead Developer** adds implementation evidence to #922 (conversation continuity, closed Mar 19 without evidence).
@@ -37,7 +39,7 @@
 
 **8:39 AM**: **Documentation Management** discovers BlogPostContent.tsx schema mismatch — interface uses RSS field names (`pubDate`/`thumbnail`) vs actual (`publishedAt`/`featuredImage`), causing "Invalid Date" on 146 posts. PM directs: log for web team, don't fix inline.
 
-**8:50 AM**: **Lead Developer** files #923 (Capability Awareness Gap) — discovers 3 disconnected sources of truth for Piper capabilities (PIPER.md, soft invocation detector, dispatcher registry). Designs reconciliation rather than adding a 4th source.
+**8:50 AM**: **Lead Developer** files #923 (Capability Awareness Gap). Initial discovery at 7:46 identified 3 disconnected systems; deeper audit reveals 5 sources of truth (PIPER.md splits into two: System Capabilities + Available Integrations; ContextAssembler + canonical handlers is a 5th). Designs registry-driven reconciliation.
 
 **8:50 – 9:30 AM**: **Documentation Management** backfills imageSlug for 6 posts, downloads 10 Medium CDN images. Updates CSV to 269/269 complete.
 
@@ -62,7 +64,7 @@
 ### Core Themes
 - Three independent workstreams ran in parallel: website operations (Documentation Management), M1 capability audits (Lead Developer), and Piper Alpha strategic planning (CIO)
 - Lead Developer's audit cascade methodology prevented scope creep — #923 identified as architectural, #911 as optimization-ready, #908 scoped down
-- Capability architecture breakthrough: #923 discovered 3 disconnected sources of truth, resolved via registry-driven reconciliation rather than adding a 4th
+- Capability architecture breakthrough: #923 initial discovery of 3 disconnected systems deepened to 5 sources of truth on audit; resolved via registry-driven reconciliation
 - Documentation Management created `/create-omnibus` skill to institutionalize format and prevent recurring drift
 
 ### Technical Accomplishments
@@ -81,7 +83,7 @@
 
 ### Session Learnings
 - Audit cascade discipline prevents scope creep: iterative verification (exists? complete? fixable?) correctly triaged #923 as architectural, #911 as deferrable, #908 as narrowed
-- Registry-driven capability awareness reconciled 3 disconnected sources of truth into coherent alignment — LLM offers now match what the system can fulfill
+- Registry-driven capability awareness reconciled 5 sources of truth (3 initially discovered, 2 more surfaced on deeper audit) — LLM offers now match what the system can fulfill
 - `/create-omnibus` skill creation addresses systemic format drift by institutionalizing format via runbook rather than relying on agent memory
 - CIO's Mac filesystem and `gh` CLI discoveries open new operational patterns for Claude Project agents (mailbox delivery, GitHub file operations)
 - Medium CDN rate-limiting (429 after ~22 requests) is the bottleneck for blog image localization — requires delays between requests or spreading across sessions
@@ -89,5 +91,9 @@
 ---
 
 **Sources**: `dev/2026/03/20/2026-03-20-0608-docs-code-opus-log.md`, `dev/2026/03/20/2026-03-20-0618-lead-code-opus-log.md`, `dev/2026/03/20/2026-03-20-0748-cio-opus-log.md`
+
+---
+
+**Provenance**: This omnibus log was the first prototype of an automated synthesis workflow using Claude Dispatch (March 21, 2026). The process involved Dispatch performing Phase 1 (log gathering/audit) and Phase 2 (synthesis following Methodology 20), with the Documentation Management agent providing QA review. Four iterations were required to reach methodology compliance — v1–v2 had worktree persistence failures, v3 passed format review with corrections needed (header fields, actor naming, chronological ordering, entry length, source count accuracy), v4 approved by Docs with minor nits. Spot-checks against source logs caught a missing 7:46 AM entry and a nuanced 3-vs-5 source count issue, both patched in this final version. This workflow is being evaluated as a pilot for reducing manual orchestration overhead in the daily omnibus process.
 
 *Omnibus Log | March 20, 2026 | 3 parallel sessions | Standard format*

@@ -22,13 +22,11 @@ There's no boss saying "take the weekend off." No team that needs you to rest so
 
 Just you, your project, and this persistent background question: "Could I be working on this right now?"
 
-I'd been working on Piper Morgan essentially nonstop since late May. Seven months of sustained effort. Not every day, not every hour, but the mental space it occupied was constant. Even rest days involved thinking about next steps, mentally drafting plans, staying close to the work.
+I'd been working on Piper Morgan essentially nonstop since late May. Seven months of sustained effort. Not every day, not every hour, but the mental space it occupied was constant, even when on the backburner. Even rest days involved thinking about next steps, mentally drafting plans, staying close to the work.
 
-The implicit assumption had been: constant pressure creates momentum. Stepping away means starting over. The project only moves forward if you're always pushing.
+The implicit assumption had been: constant pressure creates momentum. Stepping away means starting over. The project only moves forward if you're always pushing. But you can't run a project that way. It's too brittle. It's too stressfu;.
 
-[PLACEHOLDER: Your experience with this pattern - how long you sustained intense focus on projects before Piper, whether you've learned this lesson about breaks before, what past projects taught you about sustainability]
-
-But Thursday presented a unique convergence. v0.8.2 deployed to production. [PLACEHOLDER: Personal context about the album release party - what that project represented, how it felt to have both creative endeavors culminating simultaneously]. The first real opportunity to step away without guilt.
+But Thursday presented a unique convergence. v0.8.2 deployed to production. The next day, an album release party for my [band](https://layersofmeta.com/)'s debut record, the culmination of a multi-year effort, and the first real opportunity to step away without guilt.
 
 So I stopped. Completely.
 
@@ -44,7 +42,7 @@ Three specific things made the break possible:
 
 **The process maturity**: The work had systematic structure. Workstreams were defined. Role responsibilities were clear. The methodology was documented. The project wasn't dependent on constant improvisation or keeping everything in my head.
 
-[PLACEHOLDER: Your reflection on what it felt like to have built this infrastructure - whether you'd intentionally built it for this purpose or whether sustainability emerged as a side effect of other goals]
+None of that was designed up front to enable this, but it emerged iteratively from addressing smaller frustrations, increasingly systematically.
 
 Without these three elements, the break would have been impossible. Or rather, technically possible but mentally impossible. The cognitive load of worrying about what was breaking, what needed attention, what I'd forget—that would have made "resting" exhausting.
 
@@ -52,7 +50,7 @@ Without these three elements, the break would have been impossible. Or rather, t
 
 Friday through Sunday, I didn't open the laptop. Didn't check session logs. Didn't think about architecture decisions or bug priorities or feature sequencing.
 
-[PLACEHOLDER: What you actually did during those three days - what filled the mental space that Piper usually occupied, whether it was harder or easier than expected to let go]
+Instead I got up on stage and fronted a band, sang and played songs by myself and my friends, and then fell into an exhaustion coma.
 
 This was different from regular days off. Regular days off still had the project in peripheral vision. The background knowledge that I could check in if needed. The assumption that I'd be back tomorrow.
 
@@ -76,7 +74,7 @@ I picked up the Executive session exactly where it had paused. Read through what
 
 Fifty-five minutes later, six workstreams documented, 3,000 words synthesized, clear picture of project state. The Weekly Ship was complete.
 
-[PLACEHOLDER: How that resumption felt - whether anything surprised you, what was easier or harder than expected, whether the break changed your perspective on the work]
+It was like I'd never stepped away.
 
 The frictionless resumption proved something important: the infrastructure we'd built wasn't just for forward progress. It was for continuity across gaps.
 
@@ -92,9 +90,9 @@ The documentation converted "trying to remember" into "reading what happened." O
 
 This is why documentation-as-you-go is valuable even for solo projects. You're not writing docs for other people. You're writing docs for future-you who will have forgotten everything.
 
-[PLACEHOLDER: Your philosophy on documentation - how it's evolved over your career, whether you've always documented this way or learned it through painful experience]
+I've always been suspicious of documentation for its own sake, documentation read by no one, but I am a great believer in minimum valuable documentation, and I have come to realize that the LLMs _will_ read the docs _if you make them_.
 
-And in this case, "future-you" was only three days away. But those three days made me a stranger to the project. I'd been immersed Thursday afternoon. By Monday evening, I'd completely context-switched. The documentation bridged that gap.
+And in this case, "future-me" was only three days away. But those three days made me a stranger to the project. I'd been immersed Thursday afternoon. By Monday evening, I'd completely context-switched. The documentation bridged that gap.
 
 ## The sustainable rhythm
 
@@ -124,8 +122,6 @@ Solo founders often skip all this. Why write docs when everything's in your head
 
 The answer: because future-you is a different person. Because breaks are necessary for long-term sustainability. Because the project should be able to survive you being unavailable for a few days.
 
-[PLACEHOLDER: Whether you've seen this pattern in other solo founder projects - what happens when the documentation doesn't exist, what the long-term sustainability costs are]
-
 The documentation infrastructure we built for Piper Morgan wasn't originally about enabling breaks. It was about capturing learning, preventing knowledge loss, supporting multi-agent coordination.
 
 But it had this secondary benefit: it made the project survivable across gaps in attention. It made breaks possible without breaking momentum.
@@ -148,6 +144,6 @@ That combination opens up possibilities that pure intensity never could.
 
 ---
 
-*Next on Building Piper Morgan: [PLACEHOLDER: What comes next in your narrative - likely the Dec 16+ material once we review those logs].*
+*Next on Building Piper Morgan: The Deliberate Pause, about another more recent outbreath, when it's time to reflect before plunging back into the maelstrom, from this month (March 5 to March 10).*
 
 *How do you create space for breaks in your own long-term projects? What infrastructure have you built that enables you to stop without losing momentum?*

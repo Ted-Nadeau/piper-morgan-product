@@ -93,5 +93,5 @@ advisors/*/outbox/*.tmp
 external/ted-multichat/
 .beads/
 
-# Agent mailboxes (local workflow tooling)
-mailboxes/
+# Agent mailboxes — track active inboxes/sent, ignore archived reads
+mailboxes/*/read/
