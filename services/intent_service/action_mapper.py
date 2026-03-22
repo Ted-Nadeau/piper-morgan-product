@@ -85,6 +85,9 @@ class ActionMapper:
         "list_completed_todos": "list_todos",  # Issue #904: handler detects completed flag from message
         "list_todos_query": "list_todos",
         "next_todo_query": "next_todo",
+        # Todo Reminders (Issue #903)
+        "create_reminder": "create_reminder",
+        "set_reminder": "create_reminder",
         # Todo Completion
         "complete_todo": "complete_todo",
         "finish_todo": "complete_todo",
