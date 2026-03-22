@@ -492,9 +492,9 @@ class TestPreClassifier:
         for query in risk_queries:
             intent = PreClassifier.pre_classify(query)
             assert intent is not None, f"'{query}' should match ANALYSIS patterns"
-            assert intent.category == IntentCategory.ANALYSIS, (
-                f"'{query}' got {intent.category.value}, expected analysis"
-            )
+            assert (
+                intent.category == IntentCategory.ANALYSIS
+            ), f"'{query}' got {intent.category.value}, expected analysis"
 
     @pytest.mark.smoke
     def test_milestone_routes_to_status(self):
