@@ -178,8 +178,10 @@ class CanonicalHandlers:
                 return await self._handle_conversation_query(intent, session_id, user_id=user_id)
             else:
                 # Fallback to conversation
+                # Issue #908: Flag as generic — handler doesn't know what to do
                 return {
                     "message": "I'm here to help with your questions!",
+                    "is_generic_response": True,
                     "intent": {
                         "category": IntentCategoryEnum.CONVERSATION.value,
                         "action": "fallback_response",
@@ -191,8 +193,10 @@ class CanonicalHandlers:
 
         except Exception as e:
             logger.error(f"Canonical handler failed: {e}")
+            # Issue #908: Flag as generic — error response is not user-specific
             return {
                 "message": "I'm having trouble processing that right now. You could try rephrasing, or ask me something else — I'm still here to help.",
+                "is_generic_response": True,
                 "intent": {
                     "category": IntentCategoryEnum.CONVERSATION.value,
                     "action": "error_fallback",
@@ -1282,12 +1286,14 @@ General AI assistants are great for general tasks. I'm specifically designed to 
             user_context = await user_context_service.get_user_context(session_id, user_id)
         except Exception as e:
             logger.error(f"Failed to load user context: {e}")
+            # Issue #908: Flag as generic — config error is not user-specific
             return {
                 "message": "I'm having trouble accessing your configuration right now. "
                 "Your PIPER.md file may be missing or unreadable. "
                 "Would you like help setting it up?",
                 "error": "config_unavailable",
                 "action_required": "setup_piper_config",
+                "is_generic_response": True,
                 "intent": {
                     "category": IntentCategoryEnum.STATUS.value,
                     "action": "provide_status",
@@ -1307,9 +1313,11 @@ General AI assistants are great for general tasks. I'm specifically designed to 
         if not projects:
             # ADR-059: Onboarding session start disabled (onboarding on ice).
             # Instead of offering interactive onboarding, give a simple floor response.
+            # Issue #908: Flag as generic — no project data means template response
             return {
                 "message": "You don't have any active projects configured yet. "
                 "You can tell me about your projects anytime and I'll help you track them.",
+                "is_generic_response": True,
                 "intent": {
                     "category": IntentCategoryEnum.STATUS.value,
                     "action": "provide_status",
@@ -1669,12 +1677,14 @@ General AI assistants are great for general tasks. I'm specifically designed to 
             user_context = await user_context_service.get_user_context(session_id, user_id)
         except Exception as e:
             logger.error(f"Failed to load user context: {e}")
+            # Issue #908: Flag as generic — config error is not user-specific
             return {
                 "message": "I'm having trouble accessing your configuration right now. "
                 "Your PIPER.md file may be missing or unreadable. "
                 "Would you like help setting it up?",
                 "error": "config_unavailable",
                 "action_required": "setup_piper_config",
+                "is_generic_response": True,
                 "intent": {
                     "category": IntentCategoryEnum.PRIORITY.value,
                     "action": "provide_priority",
@@ -1698,10 +1708,12 @@ General AI assistants are great for general tasks. I'm specifically designed to 
 
         # Check if we have priority data
         if not priorities:
+            # Issue #908: Flag as generic — no priority data means template response
             return {
                 "message": "You don't have any priorities configured in your PIPER.md yet. "
                 "Would you like me to help you set up your priority list?",
                 "action_required": "configure_priorities",
+                "is_generic_response": True,
                 "intent": {
                     "category": IntentCategoryEnum.PRIORITY.value,
                     "action": "provide_priority",

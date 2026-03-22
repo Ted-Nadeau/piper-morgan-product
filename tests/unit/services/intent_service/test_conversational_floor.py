@@ -348,32 +348,126 @@ class TestConversationalFloorForUnhandledExecution:
 
 
 class TestGenericCanonicalResponseDetection:
-    """Issue #907: Detect when canonical handlers return generic template responses."""
+    """Issue #907/#908: Detect when canonical handlers return generic template responses."""
 
-    def test_detects_generic_guidance_response(self):
-        """The GUIDANCE handler's generic priority template should be detected."""
+    def _make_service(self):
+        """Create a minimal IntentService for detection method testing."""
         from services.intent.intent_service import IntentService
 
         service = IntentService.__new__(IntentService)
+        # Provide a logger for the signature fallback logging
+        import structlog
+
+        service.logger = structlog.get_logger()
+        return service
+
+    # --- Issue #908: Structural flag detection ---
+
+    def test_detects_generic_via_flag(self):
+        """Handlers that set is_generic_response=True should be detected."""
+        service = self._make_service()
+        result = {
+            "message": "Some response text",
+            "is_generic_response": True,
+        }
+        assert service._is_generic_canonical_response(result, result["message"]) is True
+
+    def test_flag_false_does_not_trigger(self):
+        """Explicit is_generic_response=False should not trigger detection."""
+        service = self._make_service()
+        result = {
+            "message": "Your project Piper Morgan has 3 open issues.",
+            "is_generic_response": False,
+        }
+        assert (
+            service._is_generic_canonical_response(result, result["message"]) is False
+        )
+
+    def test_missing_flag_does_not_trigger(self):
+        """Results without the flag should not trigger flag detection."""
+        service = self._make_service()
+        result = {
+            "message": "Your project Piper Morgan has 3 open issues.",
+        }
+        assert (
+            service._is_generic_canonical_response(result, result["message"]) is False
+        )
+
+    def test_status_no_projects_flagged(self):
+        """STATUS handler with no projects returns is_generic_response=True."""
+        result = {
+            "message": "You don't have any active projects configured yet. "
+            "You can tell me about your projects anytime and I'll help you track them.",
+            "is_generic_response": True,
+        }
+        service = self._make_service()
+        assert service._is_generic_canonical_response(result, result["message"]) is True
+
+    def test_priority_no_data_flagged(self):
+        """PRIORITY handler with no priorities returns is_generic_response=True."""
+        result = {
+            "message": "You don't have any priorities configured in your PIPER.md yet. "
+            "Would you like me to help you set up your priority list?",
+            "is_generic_response": True,
+        }
+        service = self._make_service()
+        assert service._is_generic_canonical_response(result, result["message"]) is True
+
+    def test_config_error_flagged(self):
+        """Config error responses should be detected as generic."""
+        result = {
+            "message": "I'm having trouble accessing your configuration right now. "
+            "Your PIPER.md file may be missing or unreadable. "
+            "Would you like help setting it up?",
+            "is_generic_response": True,
+            "error": "config_unavailable",
+        }
+        service = self._make_service()
+        assert service._is_generic_canonical_response(result, result["message"]) is True
+
+    def test_handler_fallback_flagged(self):
+        """The handle() method's unknown-category fallback is generic."""
+        result = {
+            "message": "I'm here to help with your questions!",
+            "is_generic_response": True,
+        }
+        service = self._make_service()
+        assert service._is_generic_canonical_response(result, result["message"]) is True
+
+    # --- Issue #907: Signature fallback detection (backward compat) ---
+
+    def test_detects_generic_guidance_via_signature_fallback(self):
+        """The GUIDANCE handler's generic priority template should be detected via signature."""
+        service = self._make_service()
         generic_msg = (
             "Based on your current priorities and the time of day:\n"
             "**Right Now**: Flexible time - consider strategic planning.\n"
             "**Today's Key Focus**: your key priorities"
         )
-        assert service._is_generic_canonical_response(generic_msg) is True
+        result = {"message": generic_msg}  # No flag — tests fallback path
+        assert service._is_generic_canonical_response(result, generic_msg) is True
 
     def test_does_not_flag_specific_responses(self):
         """Specific, useful canonical responses should NOT be caught."""
-        from services.intent.intent_service import IntentService
-
-        service = IntentService.__new__(IntentService)
+        service = self._make_service()
         specific_msg = "I'm Piper Morgan, an AI product management assistant."
-        assert service._is_generic_canonical_response(specific_msg) is False
+        result = {"message": specific_msg}
+        assert (
+            service._is_generic_canonical_response(result, specific_msg) is False
+        )
 
     def test_does_not_flag_empty_or_none(self):
         """Empty/None responses should not crash."""
-        from services.intent.intent_service import IntentService
+        service = self._make_service()
+        assert service._is_generic_canonical_response({"message": ""}, "") is False
+        assert service._is_generic_canonical_response({"message": None}, None) is False
 
-        service = IntentService.__new__(IntentService)
-        assert service._is_generic_canonical_response("") is False
-        assert service._is_generic_canonical_response(None) is False
+    def test_flag_takes_priority_over_signature(self):
+        """If flag is True, we don't even need to check signatures."""
+        service = self._make_service()
+        # Message doesn't match any signature, but flag is set
+        result = {
+            "message": "Some completely novel template text.",
+            "is_generic_response": True,
+        }
+        assert service._is_generic_canonical_response(result, result["message"]) is True

@@ -966,9 +966,9 @@ class IntentService:
                 # Issue #907: Safety net — detect generic template responses from canonical
                 # handlers. Categories not yet migrated to Action Gate (STATUS, PRIORITY,
                 # TEMPORAL-calendar) still fall back to floor on generic response.
-                # Phase 5 will remove this safety net.
+                # Issue #908: Now checks structural flag first, then signature fallback.
                 response_message = canonical_result["message"]
-                if self._is_generic_canonical_response(response_message):
+                if self._is_generic_canonical_response(canonical_result, response_message):
                     self.logger.info(
                         "canonical_generic_detected_routing_to_floor",
                         category=intent.category.value,
@@ -9575,17 +9575,14 @@ Content to summarize:
     # Issue #907: Known generic template signatures from canonical handlers.
     # When a handler returns one of these, the response doesn't actually address
     # the user's query — route to the conversational floor instead.
+    # Issue #908: This signature list is now a FALLBACK. Handlers should set
+    # is_generic_response=True in their return dict. Signatures catch handlers
+    # that haven't been updated yet.
     _GENERIC_CANONICAL_SIGNATURES = [
         # GUIDANCE handler: standard priority template
         "Based on your current priorities and the time of day:",
         # GUIDANCE handler: granular variant
         "Here's comprehensive guidance for your focus:",
-        # Issue #911 Phase 2: IDENTITY, DISCOVERY, CONVERSATION, and GUIDANCE
-        # now route through the Action Gate to the floor directly.
-        # These signatures are only needed for categories NOT yet migrated:
-        # STATUS, PRIORITY, TEMPORAL-calendar.
-        # Phase 5 will remove this safety net entirely.
-        #
         # GUIDANCE consolidated variants (time-based generic)
         "Focus: Deep work",
         "Focus: Team coordination",
@@ -9594,20 +9591,40 @@ Content to summarize:
         "Focus: Strategic planning",
     ]
 
-    def _is_generic_canonical_response(self, response_message: str) -> bool:
+    def _is_generic_canonical_response(
+        self, canonical_result: dict, response_message: str
+    ) -> bool:
         """
         Issue #907: Detect generic template responses from canonical handlers.
+        Issue #908: Check structural flag first, fall back to signature matching.
 
-        Some canonical handlers (e.g., GUIDANCE) return template responses that
-        apply to ANY query in their category, regardless of what the user actually
-        asked. These should route to the conversational floor instead.
+        Handlers that have been updated set is_generic_response=True in their
+        return dict. For handlers not yet updated, we fall back to substring
+        matching against known template signatures.
+
+        Args:
+            canonical_result: The full dict returned by the canonical handler
+            response_message: The "message" field from the handler result
 
         Returns:
-            True if the response is a known generic template
+            True if the response is generic (either flagged or signature-matched)
         """
+        # Issue #908 Phase 1: Check structural flag first
+        if canonical_result.get("is_generic_response", False):
+            return True
+
+        # Issue #907 fallback: Signature matching for handlers not yet updated
         if not response_message:
             return False
-        return any(sig in response_message for sig in self._GENERIC_CANONICAL_SIGNATURES)
+        if any(sig in response_message for sig in self._GENERIC_CANONICAL_SIGNATURES):
+            self.logger.info(
+                "generic_response_signature_fallback",
+                message_prefix=response_message[:80],
+                note="Handler should set is_generic_response=True instead",
+            )
+            return True
+
+        return False
 
     # ---- Issue #911 Phase 2: Action Gate ----
 
