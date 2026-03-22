@@ -73,7 +73,9 @@ class StandupRequest(BaseModel):
     )
 
     class Config:
-        json_schema_extra = {"example": {"mode": "trifecta", "format": "slack", "user_id": "user-001"}}
+        json_schema_extra = {
+            "example": {"mode": "trifecta", "format": "slack", "user_id": "user-001"}
+        }
 
 
 class StandupData(BaseModel):
