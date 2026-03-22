@@ -22,24 +22,48 @@ class TestGetGitHubRepositories:
 
     @pytest.mark.asyncio
     async def test_returns_401_when_not_connected(self):
-        """Should return 401 when no token configured"""
+        """Should return 401 when no token configured.
+
+        The function has two token sources: keychain and env vars.
+        Both must return None for the 401 path to trigger.
+        """
         mock_keychain = MagicMock()
         mock_keychain.get_api_key.return_value = None
 
         mock_user = MagicMock()
         mock_user.sub = "test-user-123"
 
-        with patch(
-            "services.infrastructure.keychain_service.KeychainService",
-            return_value=mock_keychain,
+        # Patch at source (local import) AND block env var fallback
+        with (
+            patch(
+                "services.infrastructure.keychain_service.KeychainService",
+                return_value=mock_keychain,
+            ),
+            patch.dict(
+                "os.environ",
+                {"GITHUB_TOKEN": "", "GH_TOKEN": ""},
+                clear=False,
+            ),
         ):
-            from fastapi import HTTPException
+            # Clear any cached env values
+            import os
 
-            with pytest.raises(HTTPException) as exc_info:
-                await get_github_repositories(current_user=mock_user)
+            old_github = os.environ.pop("GITHUB_TOKEN", None)
+            old_gh = os.environ.pop("GH_TOKEN", None)
 
-            assert exc_info.value.status_code == 401
-            assert "not connected" in str(exc_info.value.detail).lower()
+            try:
+                from fastapi import HTTPException
+
+                with pytest.raises(HTTPException) as exc_info:
+                    await get_github_repositories(current_user=mock_user)
+
+                assert exc_info.value.status_code == 401
+                assert "not connected" in str(exc_info.value.detail).lower()
+            finally:
+                if old_github:
+                    os.environ["GITHUB_TOKEN"] = old_github
+                if old_gh:
+                    os.environ["GH_TOKEN"] = old_gh
 
     @pytest.mark.asyncio
     async def test_returns_repository_list_when_connected(self):
