@@ -379,9 +379,7 @@ class TestGenericCanonicalResponseDetection:
             "message": "Your project Piper Morgan has 3 open issues.",
             "is_generic_response": False,
         }
-        assert (
-            service._is_generic_canonical_response(result, result["message"]) is False
-        )
+        assert service._is_generic_canonical_response(result, result["message"]) is False
 
     def test_missing_flag_does_not_trigger(self):
         """Results without the flag should not trigger flag detection."""
@@ -389,9 +387,7 @@ class TestGenericCanonicalResponseDetection:
         result = {
             "message": "Your project Piper Morgan has 3 open issues.",
         }
-        assert (
-            service._is_generic_canonical_response(result, result["message"]) is False
-        )
+        assert service._is_generic_canonical_response(result, result["message"]) is False
 
     def test_status_no_projects_flagged(self):
         """STATUS handler with no projects returns is_generic_response=True."""
@@ -452,9 +448,7 @@ class TestGenericCanonicalResponseDetection:
         service = self._make_service()
         specific_msg = "I'm Piper Morgan, an AI product management assistant."
         result = {"message": specific_msg}
-        assert (
-            service._is_generic_canonical_response(result, specific_msg) is False
-        )
+        assert service._is_generic_canonical_response(result, specific_msg) is False
 
     def test_does_not_flag_empty_or_none(self):
         """Empty/None responses should not crash."""

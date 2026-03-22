@@ -9591,9 +9591,7 @@ Content to summarize:
         "Focus: Strategic planning",
     ]
 
-    def _is_generic_canonical_response(
-        self, canonical_result: dict, response_message: str
-    ) -> bool:
+    def _is_generic_canonical_response(self, canonical_result: dict, response_message: str) -> bool:
         """
         Issue #907: Detect generic template responses from canonical handlers.
         Issue #908: Check structural flag first, fall back to signature matching.
