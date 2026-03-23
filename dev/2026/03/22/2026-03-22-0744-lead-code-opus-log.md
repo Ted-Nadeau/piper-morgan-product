@@ -135,4 +135,21 @@ Both delivered to inboxes.
 4. #375 preference detection manual testing
 5. CXO user acceptance testing against gate
 
+## 5:58 PM — E2E + AAXT Research (PM Request)
+
+PM asked to devise E2E automated testing routines and explore AAXT (automated agent-experience testing).
+
+### E2E Infrastructure Audit Findings
+
+Existing infrastructure is solid:
+- **E2E tests** in `tests/e2e/` — 7 files using httpx AsyncClient with ASGI transport (no network)
+- **Canonical retest script** (`canonical-retest-884.py`) — hits live server at :8001, tests 63 queries, classifies failures into 5 modes
+- **CI pipeline** — smoke gate → full suite → intent interface tests → classification accuracy → performance regression
+- **Database** — real PostgreSQL on :5433, transaction rollback isolation
+- **Fixtures** — `e2e_client()`, `e2e_test_user()`, `e2e_auth_headers()` — all async-first
+
+### AAXT Research
+
+Research agent dispatched for: DeepEval, Promptfoo, LangSmith eval, LLM-as-judge patterns, multi-turn conversation testing. Results pending.
+
 ---
