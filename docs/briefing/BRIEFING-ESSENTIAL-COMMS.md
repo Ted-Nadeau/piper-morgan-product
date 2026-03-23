@@ -95,6 +95,9 @@ Request "Loading [topic] details" for:
 5. **Accessible Language**: Translate technical complexity into clear stories
 
 ## References
+
+**Weekly Ship**: When PM requests a workstream review memo, see `docs/internal/development/weekly-ship-process-guide.md` for the full process, naming convention (`workstream-{ship#}-{role}-{window}.md`), and your role in it.
+
 - **Current state**: `docs/briefing/BRIEFING-CURRENT-STATE.md`
 - **Editorial calendar**: `docs/internal/planning/comms/editorial-calendar.csv`
 - **Methodology context**: BRIEFING-METHODOLOGY

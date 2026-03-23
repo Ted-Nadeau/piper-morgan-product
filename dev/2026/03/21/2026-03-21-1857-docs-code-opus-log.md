@@ -69,6 +69,27 @@ Feedback sent to PM for Dispatch v4 iteration. This is effectively an eval loop 
 
 Rate limit cleared (24+ hours since last attempt). Kicked off download of remaining 94 Medium CDN images with 5s throttle. Running in background.
 
+### ~7:20 PM — Dispatch v4 Omnibus Review
+
+Reviewed Dispatch's v4 omnibus for Mar 20. Approved — strong improvement from v3. Caught one factual error (5 vs 3 sources of truth for capability awareness), Dispatch corrected. Final version committed to `docs/omnibus-logs/2026-03-20-omnibus-log.md`.
+
+### ~9:00 PM — Retro Omnibus Commits + Mailbox Infrastructure
+
+Committed retro omnibus logs (5 files in `docs/omnibus-logs/retro/`), mailbox infrastructure (DIRECTORY.md, DELIVERY-LOG.md, inbox manifests, memos), .gitignore update (track inboxes/sent, ignore read/).
+
+### ~9:15 PM — Retro Omnibus Evaluation
+
+Received Dispatch's eval request memo. Read all 10 files (5 retro + 5 original) + Methodology 20 + spot-checked against 5 source logs. Wrote comprehensive evaluation to `docs/omnibus-logs/retro/eval-docs-retro-omnibus-2026-03-21.md`.
+
+Key findings:
+- Retro versions have consistently better methodology compliance (headers, sources, structure)
+- Automation over-compresses HIGH-COMPLEXITY days (113-191 lines vs 600 budget)
+- One format misclassification (Jan 15: STANDARD should be HIGH-COMPLEXITY)
+- Minor factual errors (wrong day-of-week, timestamp ordering)
+- Recommendation: Deploy as first draft for MINIMAL/STANDARD days; needs calibration for complex days
+
+Scores: Retro wins 1, Original wins 2, Ties 2.
+
 ---
 
 ## Tasks
@@ -76,9 +97,47 @@ Rate limit cleared (24+ hours since last attempt). Kicked off download of remain
 - [x] Create session log (this file)
 - [x] CoS infrastructure memo — proposals 2 & 3 applied, 1 & 4 queued
 - [x] Omnibus-log process experiment — eval of Dispatch v3 completed
-- [x] CDN image downloads — running in background
-- [ ] Review Dispatch v4 omnibus when ready
+- [x] CDN image downloads — 94/94 complete
+- [x] Review Dispatch v4 omnibus when ready — approved with corrections
+- [x] CDN images — 94/94 downloaded, all 269 localized, 0 CDN dependencies
+- [x] Retro omnibus eval — completed `docs/omnibus-logs/retro/eval-docs-retro-omnibus-2026-03-21.md`
+- [x] CURRENT-STATE refresh (Proposal 1) — completed earlier this session
+- [x] Weekly Ship process research — read 7 key docs tracing evolution from v2.1 to v4.1
+- [x] Mail delivery sweep #1 (9:48 PM) — 5 memos delivered (3 CIO PA memos, 1 docs response, 1 PPM reroute)
+- [x] Mail delivery sweep #2 (10:21 PM) — 6 reply memos routed + 9 delivered to web roles
+- [x] Mail delivery sweep #3 (11:11 PM) — 1 CoS reassurance memo to CIO
+- [x] Workstream memo collection — received 6 role conversations, de-duped, standardized naming to `workstream-035-{role}-mar13-19.md`, delivered to exec inbox
+- [x] Observed full Weekly Ship #035 process end-to-end (PM → 6 roles → CoS synthesis → draft)
 - [ ] Remote control feature debugging (lower priority)
-- [ ] Publishing flow discussion
-- [ ] CURRENT-STATE refresh (Proposal 1)
-- [ ] Weekly Ship process doc (Proposal 4)
+- [ ] Publishing flow discussion (deferred to tomorrow)
+- [ ] Weekly Ship process doc (Proposal 4) — research complete, writing deferred
+
+---
+
+### 9:48 PM — Mail Delivery Sweep #1
+
+5 pending memos across 4 web role inboxes. Delivered all. Fixed 1 misrouted memo (PPM failure gap in spec inbox → rerouted to CXO read + lead/arch inbox).
+
+### 10:21 PM — Mail Delivery Sweep #2
+
+6 new reply memos from dev/active/ (PA stakeholder responses + HOSR Agent 360 follow-ups). Routed to 5 inboxes, delivered 9 to web roles. All web inboxes cleared.
+
+### 11:11 PM — Mail Delivery Sweep #3
+
+1 CoS reassurance memo (exec → CIO). Delivered.
+
+### 11:21 PM — Weekly Ship Process Observation
+
+PM began narrating the workstream review process. Shared transcripts from all 6 role conversations (CXO, CIO, Architect, Comms, HOSR, PPM). Key observations:
+- Every role had date bleed in workstream memos requiring audit
+- Memo naming inconsistent across roles — standardized to `workstream-035-{role}-mar13-19.md`
+- CoS initially propagated a Comms error (wrong Ship #034 title) — PM caught it
+- Full process: PM visits roles → roles write memos → PM gathers/standardizes → CoS synthesizes → PM reviews/corrects → CoS drafts Ship
+
+### 11:47 PM — Workstream Memo Standardization
+
+De-duped 2 pairs (CIO identical copies, PPM kept corrected version). Renamed all 6 to convention. Moved to exec inbox.
+
+### ~12:15 AM — Ship #035 Draft Complete
+
+CoS produced "Pour the Floor" draft (1,394 words, ~15% over target — PM approved overage for dense week). PM downloaded to dev/active/. Publishing: LinkedIn Wednesday, website TBD.

@@ -140,6 +140,9 @@ Product Relevance classifications:
 - **Converged**: Pattern already implemented as product feature
 
 ## References
+
+**Weekly Ship**: When PM requests a workstream review memo, see `docs/internal/development/weekly-ship-process-guide.md` for the full process, naming convention (`workstream-{ship#}-{role}-{window}.md`), and your role in it.
+
 - **Current state**: `docs/briefing/BRIEFING-CURRENT-STATE.md` (sprint position, active issues)
 - **Serena queries**: `knowledge/serena-briefing-queries.md` (live system state)
 - **Pattern catalog**: `docs/internal/architecture/current/patterns/` (63 patterns)

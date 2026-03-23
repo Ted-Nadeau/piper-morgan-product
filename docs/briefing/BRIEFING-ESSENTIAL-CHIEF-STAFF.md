@@ -98,6 +98,8 @@ Request additional detail for:
 
 ## References
 
+**Weekly Ship**: You own the synthesis process. See `docs/internal/development/weekly-ship-process-guide.md` for the full guide. Pilot with Ship #036.
+
 - **Current state**: `docs/briefing/BRIEFING-CURRENT-STATE.md`
 - **Open items tracker**: `cos-open-items-tracker.md` (living document, updated every CoS session)
 - **Roadmap**: `docs/internal/planning/roadmap/roadmap.md`

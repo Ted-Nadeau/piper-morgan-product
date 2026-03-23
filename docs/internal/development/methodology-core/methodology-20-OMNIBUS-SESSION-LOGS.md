@@ -1,5 +1,5 @@
 # Methodology 20: Omnibus Session Log Creation
-*Living document - Last updated: February 23, 2026*
+*Living document - Last updated: March 21, 2026*
 
 ## Purpose
 Omnibus logs synthesize multiple parallel session logs into a single **unified chronological narrative**, revealing the multi-agent "dance" of collaboration and the complete story of a day's work.
@@ -67,45 +67,79 @@ When you write:
 
 ---
 
-## Format Selection: Standard vs High-Complexity Days
+## Format Selection
 
-## Format Selection: Standard vs High-Complexity Days
+Four format tiers, determined by session count and interaction pattern:
+
+### Minimal Day (<150 lines)
+**Use when**: 1 session only
+
+**Characteristics**:
+- Single agent working alone
+- Brief timeline + compact executive summary
+
+**Format**: Minimal marker with timeline and summary (see Mar 18, 2026 omnibus as reference)
 
 ### Standard Day (<300 lines)
-**Use when**: One or more agents collaborate primarily on a **single goal or work segment**
+**Use when**: 2-3 sessions with largely independent tracks
 
 **Characteristics**:
 - Straightforward implementation or bug fixes
-- Single feature development
-- 1-2 parallel agents with minimal coordination
+- Single feature development or 2-3 parallel agents with minimal coordination
 - No major architectural discoveries
 
 **Format**: Terse timeline + compact executive summary (see Oct 19, 2025 omnibus log as reference)
 
 ### High-Complexity Day (<600 lines)
-**Use when**: Multiple **parallel activities** with distinct goals requiring coordination
+**Use when**: 4+ agent sessions OR 3+ parallel work streams with distinct objectives
+
+High-Complexity days have two sub-types. Identifying the sub-type determines how to allocate the line budget:
+
+#### HIGH-COMPLEXITY: COORDINATION (450-600 lines)
+**Use when**: Agents interact with each other or through PM — roundtables, consensus-building, handoff chains, PM redirects that reshape the day's direction.
 
 **Characteristics**:
-- 3+ parallel work streams with different objectives
-- Major architectural discoveries or decisions
-- Methodology breakthroughs requiring documentation
-- Complex multi-agent coordination with handoffs
-- Foundation-level refactoring spanning multiple systems
+- Cross-agent discussion threads (roundtables, reviews, feedback loops)
+- PM redirects that pivot work direction
+- Handoff chains where one agent's output feeds another's input
+- Consensus-building across multiple roles
+- Same-day implementation of collaboratively-derived decisions
 
-**Format**: Phase-grouped timeline + comprehensive executive summary (see Nov 1, 2025 omnibus log as reference)
+**Expansion rule**: Every coordination moment gets its own timeline entry. The interplay between agents IS the story. Timeline should be 250-300 lines with 100+ entries. Executive summary 150-200 lines.
 
-**CRITICAL**: Must justify complexity in opening paragraph. If day doesn't meet criteria, use Standard Day format.
+**Example**: Mar 19, 2026 (9 agents, roundtable + implementation), Mar 14, 2026 (8 agents, floor roundtable → same-day implementation)
+
+#### HIGH-COMPLEXITY: EXECUTION (350-500 lines)
+**Use when**: Many agents work in parallel on independent tracks with minimal cross-agent interaction.
+
+**Characteristics**:
+- 4+ agents working simultaneously but independently
+- PM orchestrating assignments, not mediating discussion
+- Each agent has distinct deliverables on separate tracks
+- Coordination is logistical (who does what) not strategic (what should we do)
+
+**Expansion rule**: Focus on discoveries, pivots, outcomes, and PM decisions — not granular solo progress. More agents doesn't mean more interleaving if they're working independently. Timeline should be 200-250 lines. Executive summary 100-150 lines.
+
+**The distinguishing question**: "Did agents interact with each other or through PM to shape the day's direction, or did they work independently on assigned tracks?" The answer determines sub-type.
+
+**CRITICAL**: Must justify complexity AND sub-type in opening paragraph. If day doesn't meet criteria, use Standard Day format.
 
 ### Line Count Limits (ENFORCE STRICTLY)
+- **Minimal Day**: MAX 150 lines
 - **Standard Day**: MAX 300 lines
-- **High-Complexity Day**: MAX 600 lines
+- **High-Complexity: Coordination**: TARGET 450-600 lines (under 400 = likely under-compressed)
+- **High-Complexity: Execution**: TARGET 350-500 lines (under 300 = likely under-compressed)
 - **Over 600 lines**: Requires PM approval - source logs have details, omnibus must stay terse
 
 **Space Allocation Strategy**:
 - **STANDARD Days** (300 lines): Aim for ~60 lines timeline + ~200 lines executive summary
   - Single goal/agent focus means timeline can be brief, summary carries the narrative
-- **HIGH-COMPLEXITY Days** (600 lines): Aim for ~250 lines timeline + ~280 lines executive summary
-  - Multiple parallel streams need timeline visibility; executive summary adds thematic analysis
+- **HIGH-COMPLEXITY: COORDINATION** (450-600 lines): Aim for ~250-300 lines timeline + ~150-200 lines executive summary
+  - Cross-agent interaction IS the story; timeline needs maximum visibility
+  - 100+ individual entries showing the coordination dance
+- **HIGH-COMPLEXITY: EXECUTION** (350-500 lines): Aim for ~200-250 lines timeline + ~100-150 lines executive summary
+  - Parallel independent work needs coverage but not granular solo progress
+  - Focus timeline entries on discoveries, pivots, outcomes, PM decisions
 - These are guidelines, not strict rules - adjust based on complexity patterns, but deviation should be intentional, not accidental
 
 ### Terse Timeline Rule (APPLIES TO BOTH FORMATS)
@@ -544,6 +578,7 @@ Before finalizing an omnibus log:
 *Last updated: February 23, 2026*
 
 **Update History**:
+- **Mar 21, 2026**: Expanded day-type taxonomy from 3 tiers (Standard, High-Complexity, Day Off) to 4 tiers (Minimal, Standard, High-Complexity: Coordination, High-Complexity: Execution). Added MINIMAL format tier for 1-session days. Split HIGH-COMPLEXITY into two sub-types based on whether agents interacted (Coordination) or worked independently (Execution), with distinct line budgets and expansion rules for each. Emerged from Dispatch automation pilot — retrospective omnibus eval revealed that identical calibration rules produced padding on Execution days but genuine richness on Coordination days. Updated space allocation strategy, line count limits, and format selection criteria.
 - **Feb 23, 2026**: Timeline requirements clarification — added "Why This Work Matters" framing, explicit "Timeline IS / IS NOT" examples, Sessions Table Substitution anti-pattern, strengthened validation checklist with timeline-specific requirements. Addresses format drift where agents substituted session tables for unified timelines.
 - **Jan 9, 2026**: Logging continuity gap detection and git forensics recovery (Phase 3 step 5, new pitfall section, validation checklist item)
 - **Jan 1, 2026**: HIGH-COMPLEXITY day rigor enhancements (space allocation strategy, compression ratio awareness, detail preservation guidance, red flag detection)

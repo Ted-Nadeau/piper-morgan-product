@@ -203,6 +203,8 @@ Examples of methodology → product convergence:
 
 ## References
 
+**Weekly Ship**: When PM requests a workstream review memo, see `docs/internal/development/weekly-ship-process-guide.md` for the full process, naming convention (`workstream-{ship#}-{role}-{window}.md`), and your role in it.
+
 - **Current state**: `docs/briefing/BRIEFING-CURRENT-STATE.md`
 - **Roadmap**: `roadmap-v12_3.md`
 - **PDR template**: `PDR-001-ftux-as-first-recognition.md`

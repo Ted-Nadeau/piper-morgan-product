@@ -180,6 +180,8 @@ Request additional detail for:
 
 ## References
 
+**Weekly Ship**: When PM requests a workstream review memo, see `docs/internal/development/weekly-ship-process-guide.md` for the full process, naming convention (`workstream-{ship#}-{role}-{window}.md`), and your role in it.
+
 - **Current state**: `docs/briefing/BRIEFING-CURRENT-STATE.md`
 - **UX foundations**: `piper-morgan-ux-foundations-and-open-questions.md`
 - **Roadmap**: `roadmap-v12_3.md`

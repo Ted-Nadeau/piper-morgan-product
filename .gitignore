@@ -90,8 +90,13 @@ advisors/*/outbox/*.tmp
 # Git worktrees for multi-agent isolation
 # Each agent gets an isolated worktree in .trees/<prompt-id>-<session>/
 .trees/
+.claude/worktrees/
 external/ted-multichat/
 .beads/
+
+# Serena auto-generated files
+.serena/project.yml
+.serena/memories/working-docs/
 
 # Agent mailboxes — track active inboxes/sent, ignore archived reads
 mailboxes/*/read/
