@@ -150,6 +150,21 @@ Existing infrastructure is solid:
 
 ### AAXT Research
 
-Research agent dispatched for: DeepEval, Promptfoo, LangSmith eval, LLM-as-judge patterns, multi-turn conversation testing. Results pending.
+Research complete. Key findings:
+- **DeepEval** is best fit — multi-turn conversation eval, pytest-native, has `ConversationCompletenessMetric`, `RoleAdherenceMetric`, `KnowledgeRetentionMetric`
+- **Promptfoo** for fast PR-level regression (YAML configs, GitHub Actions native)
+- **LLM-as-judge** is established pattern — one dimension per judge call, binary when possible, chain-of-thought scoring
+- **Agent-as-a-Judge** (ICML 2025 paper) evaluates entire trajectories, not just final output — perfect for multi-turn conversations
+- **Anthropic Bloom** provides behavioral evaluation patterns for personality consistency testing
+
+### Synthesis
+
+Wrote comprehensive proposal: `dev/active/proposal-e2e-aaxt-testing-2026-03-22.md`
+
+Two tracks:
+1. **E2E Routines** (4 routines, ~3 days): task lifecycle smoke tests, automated canonical suite, floor regression, capability boundary tests
+2. **AAXT** (6 phases, starts with 5 golden scenarios + DeepEval): flow, task completion, recovery, voice, capability honesty, trust awareness
+
+Recommended start: E2E Routine 1 (task lifecycle) + AAXT Phase 1 (5 golden scenarios) — ~4-5 days total, immediate value.
 
 ---
