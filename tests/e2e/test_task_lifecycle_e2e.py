@@ -19,7 +19,6 @@ Requirements:
 
 import pytest
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -76,15 +75,11 @@ class TestTodoLifecycleE2E:
         )
 
         # List
-        data = await send_message(
-            e2e_client, "Show my todos", session, e2e_auth_headers
-        )
+        data = await send_message(e2e_client, "Show my todos", session, e2e_auth_headers)
 
         msg_lower = data["message"].lower()
         assert (
-            "unit tests" in msg_lower
-            or "auth module" in msg_lower
-            or "todo" in msg_lower
+            "unit tests" in msg_lower or "auth module" in msg_lower or "todo" in msg_lower
         ), f"Listed todos don't include created item: {data['message'][:300]}"
 
 
@@ -116,8 +111,7 @@ class TestGitHubCloseE2E:
         msg_lower = data["message"].lower()
         # Should reference the issue or explain why it can't
         assert any(
-            term in msg_lower
-            for term in ["issue", "close", "github", "configured", "#1"]
+            term in msg_lower for term in ["issue", "close", "github", "configured", "#1"]
         ), f"Response doesn't address the close request: {data['message'][:200]}"
 
 
@@ -225,9 +219,7 @@ class TestCapabilityBoundaryE2E:
 
     @pytest.mark.e2e
     @pytest.mark.asyncio
-    async def test_unregistered_capability_no_false_promise(
-        self, e2e_client, e2e_auth_headers
-    ):
+    async def test_unregistered_capability_no_false_promise(self, e2e_client, e2e_auth_headers):
         """Asking for something outside Piper's capabilities should get an honest response."""
         data = await send_message(
             e2e_client,
@@ -239,8 +231,7 @@ class TestCapabilityBoundaryE2E:
         msg_lower = data["message"].lower()
         # Should NOT offer to book a flight
         assert not any(
-            term in msg_lower
-            for term in ["booking your flight", "i'll book", "flight booked"]
+            term in msg_lower for term in ["booking your flight", "i'll book", "flight booked"]
         ), f"Piper falsely offered to book a flight: {data['message'][:200]}"
 
     @pytest.mark.e2e
@@ -257,6 +248,4 @@ class TestCapabilityBoundaryE2E:
         msg = data["message"]
         assert len(msg) > 30, f"Response too short — possible dead end: {msg}"
         # Should not be the old deflection
-        assert "I don't have that capability yet" not in msg, (
-            "Old deflection pattern still active"
-        )
+        assert "I don't have that capability yet" not in msg, "Old deflection pattern still active"
