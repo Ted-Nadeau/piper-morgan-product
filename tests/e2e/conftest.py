@@ -88,7 +88,29 @@ async def e2e_test_user(e2e_db_session):
 
     yield user_id, username, password
 
-    # Cleanup: remove projects first (foreign key), then user
+    # Cleanup: remove dependent rows in FK order, then user.
+    # Issue #927: Schema chain is todo_items → items (via list_id) → lists → users.
+    # items.list_id → lists.id, lists.owner_id → users.id
+    await e2e_db_session.execute(
+        text(
+            "DELETE FROM todo_items WHERE id IN "
+            "(SELECT i.id FROM items i "
+            " JOIN lists l ON i.list_id = l.id "
+            " WHERE l.owner_id = CAST(:uid AS uuid))"
+        ),
+        {"uid": user_id},
+    )
+    await e2e_db_session.execute(
+        text(
+            "DELETE FROM items WHERE list_id IN "
+            "(SELECT id FROM lists WHERE owner_id = CAST(:uid AS uuid))"
+        ),
+        {"uid": user_id},
+    )
+    await e2e_db_session.execute(
+        text("DELETE FROM lists WHERE owner_id = CAST(:uid AS uuid)"),
+        {"uid": user_id},
+    )
     await e2e_db_session.execute(
         text("DELETE FROM projects WHERE owner_id = :uid"),
         {"uid": user_id},
