@@ -4,9 +4,13 @@
 
 This directory contains Architecture Decision Records (ADRs) that document significant architectural decisions, their context, rationale, and consequences.
 
-**Total ADRs**: 58 records (000-057)
+**Total ADRs**: 61 records (000-060)
 
 ## Recent ADRs
+
+- **[ADR-060: Floor-First Routing](adr-060-floor-first-routing.md)** (Mar 2026) - Invert routing: floor handles everything, handlers prove specificity
+- **[ADR-059: Workflow Dispatcher & Offer Consolidation](adr-059-workflow-dispatcher-offer-consolidation.md)** (Mar 2026) - Unified dispatch replacing per-handler workflow management
+- **[ADR-058: Multi-Tenancy Isolation](adr-058-multi-tenancy-isolation.md)** (Mar 2026) - User data isolation patterns
 
 - **[ADR-057: CommandRegistry - Unified Command Discovery](adr-057-command-registry.md)** (Jan 2026) - Central registry for command parity across interfaces (#551)
 - **[ADR-056: Consciousness Expression Patterns](adr-056-consciousness-expression-patterns.md)** (Jan 2026) - Template-based personality consistency
@@ -42,6 +46,6 @@ See [adr-000-meta-platform.md](adr-000-meta-platform.md) for the standard ADR te
 
 ---
 
-**Last Updated**: January 22, 2026
+**Last Updated**: March 23, 2026
 **Maintained By**: Documentation Team
 **Purpose**: Directory navigation and content overview

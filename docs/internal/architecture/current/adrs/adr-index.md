@@ -1,7 +1,7 @@
 # Architectural Decision Records (ADR) Index
 
-**Last Updated**: March 3, 2026
-**Total ADRs**: 61 (000-058, excluding field-mapping-report)
+**Last Updated**: March 23, 2026
+**Total ADRs**: 63 (000-060, excluding field-mapping-report and this index)
 **Status**: Active
 
 ## Overview
@@ -50,6 +50,8 @@ This index provides a complete catalog of all Architectural Decision Records (AD
 - [ADR-044: Lightweight RBAC vs Traditional](adr-044-lightweight-rbac-vs-traditional.md) - Security architecture for role-based access control
 - [ADR-057: CommandRegistry](adr-057-command-registry.md) - Unified command discovery and routing
 - [ADR-058: Multi-Tenancy Isolation](adr-058-multi-tenancy-isolation.md) - Multi-tenancy isolation architecture
+- [ADR-059: Workflow Dispatcher & Offer Consolidation](adr-059-workflow-dispatcher-offer-consolidation.md) - Unified dispatch replacing per-handler workflow management
+- [ADR-060: Floor-First Routing](adr-060-floor-first-routing.md) - Invert routing: floor handles everything, handlers prove specificity
 
 ### Testing & Quality Assurance
 

@@ -151,6 +151,18 @@ CIO identified and named the pattern during Ship #031 weekly review. Recognized 
 ### Formalization (March 1, 2026)
 Documented as Pattern-062 with full protocol and anti-patterns.
 
+### Intent-Routing Manifestation (March 12, 2026)
+Canonical retest (#884) revealed that individually correct components (classifier, handlers, adapters) were never composed correctly. Auth threading missing across 17 call sites, analysis handler existed but was never wired to OrchestrationEngine, adapter methods incomplete. Implementation pass rate jumped from 53.7% to 81.1% through wiring fixes alone — no classifier or AI changes needed.
+
+### Product-Architecture Manifestation (March 14, 2026)
+Four-role roundtable ("Are We Doing It Backwards?") independently diagnosed the same composition gap at the product level: the intent classifier worked correctly, the handlers worked correctly, but the composition of "classifier + handlers + no fallback" produced a broken experience for unmatched queries. Piper was worse than a generic LLM wrapper for anything outside pre-built handlers. Led to ADR-060 (Floor-First Routing Architecture).
+
+### Contract Gap Manifestation (March 16, 2026)
+PM QA testing exposed 5 bugs sharing one structural root cause: the classification layer was extended independently of the handling layer, and stubs absorbed the gap silently. Lead Dev formalized this as "Extension Without Integration" (Pattern-063) — a sub-pattern of Assembly Assumption operating at the layer-contract level. Led to the Action Registry (34 pairs) as the structural fix.
+
+### Pattern Elevation Note
+Assembly Assumption has now manifested at four scales: code composition (M0 wiring pass), intent routing (canonical retest), product architecture (floor inversion), and layer contracts (extension without integration). Each scale required a different mitigation (wiring pass, canonical retest, floor-first routing, action registry) but the structural cause is identical: independently correct components with unverified composition.
+
 ## Success Metrics
 
 - **Integration gaps found per wiring pass**: Track over time. A decreasing trend means planning is improving; zero means either the team has internalized composition thinking or the wiring pass isn't rigorous enough.
@@ -172,5 +184,7 @@ The Assembly Assumption is a known problem in systems engineering and hardware d
 ---
 
 *Pattern created: March 1, 2026*
+*Evolution updated: March 21, 2026*
 *Origin: M0 sprint wiring pass discovery*
 *Author: CIO, with PM review*
+*PM sign-off: March 21, 2026*

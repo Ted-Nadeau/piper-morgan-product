@@ -4,7 +4,7 @@
 
 This directory contains Product Decision Records (PDRs) that document significant product decisions, their context, rationale, and implications for design and implementation.
 
-**Total PDRs**: 3 records (001-002, 101)
+**Total PDRs**: 6 records (001-004, 101)
 
 ## What is a PDR?
 
@@ -25,8 +25,11 @@ Core product decisions that shape everything else. These establish patterns, pri
 
 | PDR | Title | Status | Date |
 |-----|-------|--------|------|
-| [PDR-001](PDR-001-ftux-as-first-recognition.md) | First Contact is First Recognition | Draft v2 | Jan 4, 2026 |
+| [PDR-001](PDR-001-ftux-as-first-recognition-v3.md) | First Contact is First Recognition | Draft v3 | Jan 4, 2026 |
 | [PDR-002](PDR-002-conversational-glue.md) | Conversational Glue | Draft v1 | Jan 4, 2026 |
+| &nbsp; | [PDR-002 Appendix: Layer 2 Vision](PDR-002-appendix-layer-2-vision.md) | Appendix | Jan 2026 |
+| [PDR-003](PDR-003-entity-concept-model.md) | Entity Concept Model | Approved | Mar 8, 2026 |
+| [PDR-004](PDR-004-experience-philosophy.md) | Experience Philosophy | Approved | Mar 22, 2026 |
 
 ### Tier 1xx: Feature/Capability
 Major feature decisions that build on foundational PDRs. These define significant capabilities Piper should offer.
@@ -170,6 +173,6 @@ PDRs may reference and build on each other:
 
 ---
 
-**Last Updated**: January 4, 2026
+**Last Updated**: March 23, 2026
 **Maintained By**: Principal Product Manager
 **Purpose**: Directory navigation, PDR index, and creation guidance

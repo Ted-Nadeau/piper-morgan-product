@@ -4,7 +4,7 @@
 **Audience**: Agents, developers, architects, and internal contributors
 **Public Documentation**: See [README.md](README.md) for pmorgan.tech public site
 
-**Last Updated**: March 9, 2026
+**Last Updated**: March 23, 2026
 **Status**: ✅ **Complete Internal Navigation System** - Role-based access for development teams
 
 ---
@@ -20,7 +20,12 @@
 - [Lead Developer](briefing/BRIEFING-ESSENTIAL-LEAD-DEV.md) - 2.5K tokens
 - [Chief Architect](briefing/BRIEFING-ESSENTIAL-ARCHITECT.md) - 2.5K tokens
 - [Chief of Staff](briefing/BRIEFING-ESSENTIAL-CHIEF-STAFF.md) - 2.5K tokens
+- [CXO](briefing/BRIEFING-ESSENTIAL-CXO.md) - 2.5K tokens
+- [CIO](briefing/BRIEFING-ESSENTIAL-CIO.md) - 2.5K tokens
+- [PPM](briefing/BRIEFING-ESSENTIAL-PPM.md) - 2.5K tokens
+- [HoSR](briefing/BRIEFING-ESSENTIAL-HOSR.md) - 2.5K tokens
 - [Communications](briefing/BRIEFING-ESSENTIAL-COMMS.md) - 2.5K tokens
+- [Documentation](briefing/BRIEFING-ESSENTIAL-DOCS.md) - 2.5K tokens
 - [Coding Agent](briefing/BRIEFING-ESSENTIAL-AGENT.md) - 2K tokens
 - [LLM Support](briefing/BRIEFING-ESSENTIAL-LLM.md) - 1K tokens
 
@@ -43,18 +48,18 @@ Each essential briefing includes triggers for loading detailed documentation as 
 
 - **[Architecture Hub](internal/architecture/current/)** - Current architectural decisions
 - **[Domain Models](internal/architecture/current/models/)** - Hub-and-spoke model documentation
-- **[ADRs](internal/architecture/current/adrs/)** - Architectural Decision Records (61)
-- **[Patterns](internal/architecture/current/patterns/)** - Established architectural patterns (61)
+- **[ADRs](internal/architecture/current/adrs/)** - Architectural Decision Records (63)
+- **[Patterns](internal/architecture/current/patterns/)** - Established architectural patterns (63)
 - **[Pattern Families](internal/architecture/current/patterns/PATTERN-FAMILIES.md)** - 8 pattern families index
 - **[Technical Evolution](internal/architecture/evolution/)** - Architecture development history
 - **[Canonical Queries](internal/architecture/current/canonical-queries.md)** - Reference list of canonical query types (IDENTITY, TEMPORAL, STATUS, PRIORITY, GUIDANCE)
-  - See also: [ADR-039 Investigation Appendix](internal/architecture/current/adrs/adr-039-appendix-investigation.md) for routing analysis
   - Test matrix: To be created (validation coverage for all 25 canonical query patterns)
 - **Product Design Records (PDRs)** (`internal/product/pdr/`):
   - [PDR-001: FTUX as First Recognition](internal/product/pdr/PDR-001-ftux-as-first-recognition-v3.md)
   - [PDR-002: Conversational Glue](internal/product/pdr/PDR-002-conversational-glue.md)
   - [PDR-002 Appendix: Layer 2 Vision](internal/product/pdr/PDR-002-appendix-layer-2-vision.md)
   - [PDR-003: Entity Concept Model](internal/product/pdr/PDR-003-entity-concept-model.md) — Product, Project, Repository relationships (APPROVED Mar 8, 2026)
+  - [PDR-004: Experience Philosophy](internal/product/pdr/PDR-004-experience-philosophy.md) — Four principles governing Piper's experience design (Mar 22, 2026)
   - [PDR-101: Multi-Entity Conversation](internal/product/pdr/PDR-101-multi-entity-conversation.md)
 
 ### 🧠 MUX Object Model (Grammar & Consciousness)
@@ -89,8 +94,11 @@ The MUX track establishes Piper's unified object model: **"Entities experience M
 
 - **[Development Tools](internal/development/tools/)** - Setup guides and development workflows
 - **[Active Work](internal/development/active/)** - Current development status
-- **[Methodology](internal/development/methodology-core/)** - Development methodologies (20 core patterns)
+- **[Methodology](internal/development/methodology-core/)** - Development methodologies (23 core patterns)
 - **[Methodology Index](internal/development/methodology-core/INDEX.md)** - Comprehensive methodology navigation
+- **[Weekly Ship Process Guide](internal/development/weekly-ship-process-guide.md)** - Ship production process (v1.1)
+- **[Colleague Test](internal/development/colleague-test.md)** - Quality rubric for agent responses
+- **[Agent 360: Session-Start Overhead](internal/development/agent-360-finding-session-start-overhead-2026-03-21.md)** - HOSR finding on briefing staleness
 - **[Gameplan Template](internal/development/methodology-core/gameplan-template.md)** - Issue implementation gameplan template (v9.3)
 - **[Sprint Gate Template](internal/development/sprint-gate-template-v1.md)** - Sprint completion gate checklist template (v1)
 - **[Testing Procedures](internal/development/testing/)** - E2E bug protocol, testing guides, and procedures
@@ -105,7 +113,9 @@ The MUX track establishes Piper's unified object model: **"Entities experience M
 ### 📚 Researchers & Historians
 
 - **[Session Logs Archive](../dev/2025/)** - Chronological development history (dev/2025/MM/DD/ structure)
-- **[Omnibus Logs](omnibus-logs/)** - Daily session consolidations (261 logs through Feb 22, 2026)
+- **[Omnibus Logs](omnibus-logs/)** - Daily session consolidations (288 logs through Mar 22, 2026)
+- **[Retro Omnibus Evaluations](omnibus-logs/retro/)** - Dispatch automation pilot iterations and evaluations
+- **[Cross-Pollination Briefs](briefs/cross-pollination/)** - Inter-project intelligence (Klatch ↔ Piper Morgan)
 - **[Development Logs](internal/development/active/)** - Active development work and status files
 
 ### 👥 External Users
@@ -196,6 +206,9 @@ The MUX track establishes Piper's unified object model: **"Entities experience M
 │   ├── gap-analysis.md       # Gap analysis
 │   ├── design-spec.md        # Design specification
 │   └── implementation-guide.md # Implementation guide
+├── comms/                    # Communications planning
+│   ├── editorial-calendar.csv # Publication tracker (305 entries)
+│   └── publishing-workflow-target.md # Blog-first target state
 ├── audits/                   # Planning audits (NEW Feb 2026)
 ├── mobile-skunkworks/        # Mobile PoC planning
 ├── roadmap/                  # Long-term strategic planning
@@ -247,9 +260,9 @@ Weekly/monthly session consolidations - 100+ consolidated logs for historical re
 
 #### ADRs & Decisions
 
-- **Active ADRs**: `docs/internal/architecture/current/adrs/` (61 decisions)
-- **Patterns**: `docs/internal/architecture/current/patterns/` (62 patterns)
-- **PDRs**: `docs/internal/product/pdr/` (5 product design records)
+- **Active ADRs**: `docs/internal/architecture/current/adrs/` (63 decisions)
+- **Patterns**: `docs/internal/architecture/current/patterns/` (63 patterns)
+- **PDRs**: `docs/internal/product/pdr/` (6 product design records)
 
 ### 🎨 Assets (`assets/` and `docs/assets/`)
 
@@ -381,8 +394,8 @@ Weekly/monthly session consolidations - 100+ consolidated logs for historical re
 ### For Research & Analysis
 
 - **[Omnibus Logs](omnibus-logs/)** - Strategic insights and weekly summaries (100+ logs)
-- **[ADRs](internal/architecture/current/adrs/)** - Architectural decision records (48+)
-- **[Patterns Catalog](internal/architecture/current/patterns/)** - Implementation patterns (33)
+- **[ADRs](internal/architecture/current/adrs/)** - Architectural decision records (63)
+- **[Patterns Catalog](internal/architecture/current/patterns/)** - Implementation patterns (63)
 - **[Session Logs](../dev/)** - Historical development sessions by date
 
 ---

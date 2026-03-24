@@ -2,7 +2,7 @@
 
 > **Living document** — updated at the end of every exec session.
 > This is the canonical list of tracked items. Session logs may contain discussion but this file is the source of truth.
-> Last updated: 2026-03-22, 5:16 PM (exec session)
+> Last updated: 2026-03-22, 7:04 PM (exec session end)
 
 ---
 
@@ -13,7 +13,7 @@
 | 1 | Ship #035 review | PM | Mar 21 | Draft complete | "Pour the Floor" — publishes Wed Mar 25 |
 | 2 | Agent 360 synthesis | HOSR | Mar 19 | 9/9 collected | HOSR synthesis in progress |
 | 3 | Floor inversion (#911) | Lead Dev | Mar 15 | Phases 1-2 done | Phases 3-4 deferred post-M1 (#925) |
-| 4 | Docs: Ship process guide | Docs | Mar 19 | Queued | Synthesis notes delivered Mar 22 |
+| 4 | Docs: Ship process guide | Docs | Mar 19 | v1.0 delivered, reviewed | Pilot for Ship #036 confirmed |
 | 5 | Comms: Ship #034 title correction | PM/Comms | Mar 21 | PM handling | Blog CSV + Comms records |
 | 6 | Automated omnibus pilot | PM/Docs | Mar 20 | In evaluation | Claude Dispatch |
 | 7 | Cross-Pollination Hub | PM | Mar 21 | Launched | designinproduct.com/internal/ |
@@ -56,6 +56,7 @@
 | CIO audit exec review | Mar 22 | Substantive assessment delivered; recommendations triaged |
 | Docs synthesis notes | Mar 22 | Step-by-step Ship process + 5 pitfalls memo sent to Docs |
 | HOSR handoff template review | Mar 22 | v1.0 assessed as solid; 2 minor observations delivered |
+| Docs Ship guide review | Mar 22 | v1.0 reviewed; 2 additions, pilot confirmed for Ship #036 |
 | Dominique follow-up | Mar 22 | PM followed up ~week ago, no reply, holding — removed from active |
 | Ship #034 published | Mar 18 | "Measure First, Then Act" on LinkedIn |
 | Ship #035 drafted | Mar 22 | "Pour the Floor" — 1,394 words |

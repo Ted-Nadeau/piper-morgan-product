@@ -3,7 +3,7 @@
 _Consolidated from pattern-catalog.md and PATTERN-INDEX.md_
 _Format: ADR-style numbered patterns_
 
-**Total Patterns**: 62 patterns (001-061) + template (000)
+**Total Patterns**: 63 patterns (001-062) + template (000)
 
 ## Pattern Categories
 
@@ -90,6 +90,7 @@ _Development methodology, quality assurance, and workflow management patterns_
 - [Pattern-059: Leadership Caucus](pattern-059-leadership-caucus.md) - Facilitated multi-advisor alignment for cross-cutting decisions (COORDINATION PATTERN)
 - [Pattern-060: Cascade Investigation](pattern-060-cascade-investigation.md) - Treat every bug fix as a trigger for category-wide audit (INVESTIGATION PATTERN)
 - [Pattern-061: Human-AI Collaboration Referee](pattern-061-human-ai-collaboration-referee.md) - Structured facilitation for human-AI decision processes (COORDINATION PATTERN)
+- [Pattern-062: Assembly Assumption](pattern-062-assembly-assumption.md) - Multi-role convergence on shared artifacts (COORDINATION PATTERN)
 
 ### Grammar Application Patterns
 

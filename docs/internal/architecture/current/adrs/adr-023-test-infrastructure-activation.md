@@ -55,7 +55,7 @@ Implement smart test execution with 4 execution modes (smoke, fast, full, covera
 ## References
 - [Test Infrastructure Guide](../../../development/active/pending-review/TEST-GUIDE.md)
 - [Excellence Flywheel Methodology](../../../development/methodology-core/methodology-00-EXCELLENCE-FLYWHEEL.md)
-- [Smart Test Execution Script](../../../scripts/run_tests.sh)
+- [Smart Test Execution Script](../../../../../scripts/run_tests.sh)
 
 ---
 
