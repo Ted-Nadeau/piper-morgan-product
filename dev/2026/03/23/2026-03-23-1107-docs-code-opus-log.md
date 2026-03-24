@@ -72,14 +72,73 @@ Began reviewing dev/active/ working documents in small batches with PM.
 
 ### 9:20 PM — Session Resumed
 
-PM evening session. Agenda:
-1. 3/22 omnibus log (+ possible Dispatch cycling)
-2. Finish dev/active/ cleanup (Group 6 from this morning)
-3. Mail delivery
-4. Today's doc audit
-5. Resume publishing discussion
+PM evening session. Agenda: omnibus, dev/active cleanup, mail delivery, doc audit.
 
-PM is finalizing 3/22 session logs. Waiting for those before starting omnibus work.
+### 9:37 PM — Mar 22 Omnibus Synthesized
+
+Read all 5 session logs (Lead Dev, Docs, CoS, PPM, CXO). Classified as HIGH-COMPLEXITY: EXECUTION — 5 agents working largely in parallel with end-of-day memo convergence. 206 lines, 16 commits. Under 350 target but intentionally — day was efficient parallel execution, not dense coordination.
+
+### 9:40 PM — Mail Delivery (3 sweeps)
+
+**Sweep 1** (9:40 PM): Housekeeping — moved 5 already-delivered-but-untracked memos to read/. 1 new delivery: Lead→CXO nav gut-check. PM flagged mail tracking discipline gap — I had failed to move delivered memos to read/ on prior confirmation.
+
+**Sweep 2** (9:56 PM): Ingested 2 fresh replies (Arch product model validation, CXO nav response). Routed to Lead + PPM (CC). Delivered.
+
+**Sweep 3** (10:06 PM): Ingested 2 PPM replies (product model confirmation, nav two-models). Routed to Lead + CXO + Arch. All delivered. Lead unblocked on #717.
+
+Total: 8 delivered, 5 housekeeping moves to read/.
+
+### 10:13 PM — dev/active/ Cleanup (Groups 6B-6E)
+
+**6B Deliverables filed**: methodology-22 → methodology-core/, pattern-062 → patterns/, colleague-test → development/, agent-360 finding → development/, PDR-004 → pdr/, Ship #035 draft → comms/drafts/.
+
+**6C Active docs**: Deduped exec-open-items-tracker (kept newer copy). Filed CIO cross-pollination response to cio/sent/. PA briefing, PA plan, m1-open, ethics draft, E2E proposal all staying active.
+
+**6D Data**: Agent-log CSVs staying in dev/active/.
+
+**6E Misplaced**: agent-360 questionnaire → hosr/sent/, exec agent360 response → hosr/read/.
+
+### 10:15 PM — Weekly Docs Audit (#931)
+
+Full audit executed. Key findings and fixes:
+
+**NAVIGATION.md** updated (stale since Mar 9):
+- Added 5 missing role briefings (CXO, CIO, PPM, HoSR, Docs)
+- Added new docs: Ship process guide, Colleague Test, Agent 360 findings, PDR-004, cross-pollination briefs, retro omnibus, comms planning
+- Updated all artifact counts
+
+**Index/README corrections**: Pattern 62→63, Methodology 21→22, ADR 58→61+index, PDR 3→6
+
+**Broken link audit**: 110 links checked, 2 broken, both fixed (NAVIGATION.md phantom appendix, ADR-023 path depth)
+
+**Items for PM review**: BRIEFING-CURRENT-STATE needs M1 refresh, 86 stale issues, 4 unlabeled issues, 121 TODOs in services/
+
+Comment posted to #931 with full findings and metrics snapshot.
+
+### ~11:00 PM — Session Wrap
+
+Committed and pushed: `ae590b2b`
+
+---
+
+## Session Summary (Full Day)
+
+**Duration**: 11:07 AM – ~11:00 PM (two sessions with gap)
+
+**Completed**:
+- Git sync, repo status audit, 71 files committed (morning)
+- Mar 22 omnibus synthesized (206 lines, 5 sessions)
+- Mail delivery: 3 sweeps, 8 delivered, 5 housekeeping moves
+- dev/active/ cleanup: 6 deliverables filed, 6 workstream memos archived, duplicates removed, misplaced files corrected
+- Weekly docs audit (#931): NAVIGATION.md refreshed, 5 READMEs/indexes updated, 2 broken links fixed, counts corrected across all artifact categories
+- Dispatch omnibus update memo received (pending evaluation)
+
+**Carry forward**:
+- Dispatch retro eval request (v4 Dec 1, v3 Mar 14) — received, not yet started
+- BRIEFING-CURRENT-STATE refresh (M1 Tiers 1-3 complete, gate #926)
+- Publishing workflow discussion continuation
+- Stale GitHub issues triage (86 issues >30 days)
+- Formalize dev/active/ cleanup as a skill
 
 ---
 
