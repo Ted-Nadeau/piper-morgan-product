@@ -9,11 +9,11 @@
 
 ## STATUS BANNER
 
-**Current Position**: 4.4.2 - M1 Sprint Active (Foundation)
+**Current Position**: 4.4.2 - M1 Sprint Active (Foundation) — Approaching Gate
 **Version**: v0.8.6 (pyproject.toml source of truth)
-**Last Updated**: March 21, 2026
-**Current Focus**: M1 Sprint — Wiring fixes, floor-first routing, canonical handler completion
-**Next Phase**: M1 gate closure → M2 (MVP Activation)
+**Last Updated**: March 24, 2026
+**Current Focus**: M1 gate closure — Tiers 1-3 complete, gate #926 filed, PM-led items remaining
+**Next Phase**: M1 gate execution → M2 (MVP Activation)
 
 ---
 
@@ -29,7 +29,7 @@
    4.3. ✅ MUX: Modeled User Experience - COMPLETE Jan 27
    4.4. 🎯 MVP: Minimum Valuable Product (M0-M6) ← CURRENT
         ✅ M0: Conversational Glue — COMPLETE (v0.8.6, shipped Mar 4)
-        🎯 M1: Foundation — IN PROGRESS (~80%)
+        🎯 M1: Foundation — APPROACHING GATE (~95%)
 5. Beta testing on 0.9
 6. Launch 1.0
 ```
@@ -37,6 +37,10 @@
 ---
 
 ## Recent Progress
+
+### Mar 22-23 (M1 Tier 3 Complete + Product Concept)
+- **Mar 22**: **M1 Tier 3 complete** — 4 capability issues closed in single Lead Dev session (#902 GitHub close/reopen, #903 reminders, #904 todo completion, #883 lazy workflow deferral). 76 new tests, 1325 total passing. Gate #926 filed. CXO + PPM independently reviewed gate criteria (fresh-account testing, Colleague Test rubric, 9 smoke queries). E2E + AAXT testing proposal written, 4 issues filed (#927-#930). **PDR-004 Experience Philosophy** ratified. Docs: agent-log CSV migration (877 sessions indexed), Ship process guide v1.1, publishing workflow one-pager.
+- **Mar 23**: **#717 Product concept closed** — 4-role coordination chain (Architect validates schema, CXO recommends nav Option B, PPM revises to both-models approach, Lead consolidates and writes product-concept-model.md). Weekly docs audit: NAVIGATION.md refreshed, 5 indexes corrected, 2 broken links fixed. dev/active/ cleaned (deliverables filed to docs/).
 
 ### Mar 17-21 (Documentation + Automation)
 - **Mar 17**: Briefing architecture repaired (8/12 files fixed — root cause: hardcoded counts instead of CURRENT-STATE refs). Publish-to-blog skill battle-tested (v0.2). Medium repatriation completed: 268/268 posts (100%) local. #922 conversation continuity bug filed.
@@ -98,7 +102,7 @@ GUIDANCE, TRUST, MEMORY, PORTFOLIO, UNKNOWN
 - Multi-Agent Coordination (029, 059, 010, 021, 037) - orchestration
 - Core Architecture, Data & Query, AI & Intelligence, Integration & Platform
 
-**ADRs**: 61 architectural decision records (ADR-059 and ADR-060 are newest)
+**ADRs**: 63 architectural decision records (ADR-059 through ADR-060 newest, plus adr-039 appendix removed)
 
 **Skills**: 9 skills
 - create-session-log, check-mailbox, close-issue-properly, audit-cascade, discovered-work-capture
@@ -126,26 +130,29 @@ GUIDANCE, TRUST, MEMORY, PORTFOLIO, UNKNOWN
 - #924 chat avatars (filed + closed)
 - ADR-059 (Workflow Dispatcher) + ADR-060 (Floor-First Routing) approved and implemented
 
-**Remaining M1 issues** (3 open with M1 label):
-- #902 CANONICAL-GITHUB-CLOSE
-- #903 CANONICAL-REMINDERS
-- #904 CANONICAL-TODO-COMPLETE
+**M1 Tier Status**:
+- **Tier 1** (Architecture): ✅ Complete (#923 capability registry, #911 floor inversion, #907 conversational floor)
+- **Tier 2** (Quality): ✅ Complete (#908 generic signaling, #909/#910/#898 audited and closed)
+- **Tier 3** (Capabilities): ✅ Complete (#902 close/reopen, #903 reminders, #904 todo completion, #883 lazy workflow)
+- **Tier 4** (PM-led): 🎯 In progress (#706 objects discovery — PM consolidation, #375 preference QA, #717 ✅ closed)
+- **Gate**: #926 filed, CXO + PPM reviewed, 9 smoke queries defined
 
-**Other open issues** (not M1-gated but tracked):
+**Remaining for M1 closure** (3 items):
+- #706 Objects & Views Discovery — PM-led consolidation of existing material
+- #375 Preference Detection — manual testing with running server
+- #926 Sprint Completion Gate — run gates, collect evidence, sign-offs
+
+**Other open issues** (not M1-gated):
 - #925 Floor inversion Phase 3-4 (STATUS/PRIORITY floor-first)
 - #921 Framework upgrade (FastAPI/Starlette/httpx)
-- #910 Pre-existing test failure
-- #909 Hardcoded user name removal
-- #908 Generic response signaling
-- #898 Classifier edge cases (9 misroutes)
-- #883 ARCH-LAZY-WORKFLOW
+- #927-#930 E2E + AAXT testing track (filed Mar 22)
 
 ### MVP Milestones Overview
 
 | Milestone | Focus | Status |
 |-----------|-------|--------|
 | M0 | Conversational Glue | ✅ COMPLETE (v0.8.6) |
-| M1 | MVP Foundation | ~80% (3 canonical issues remain) |
+| M1 | MVP Foundation | ~95% (gate #926 filed, 3 PM-led items remain) |
 | M2 | MVP Activation | 4% |
 | M3-M6 | Advanced Features | Backlog |
 | DIST | Distribution | 0% (after M6) |
@@ -154,14 +161,19 @@ GUIDANCE, TRUST, MEMORY, PORTFOLIO, UNKNOWN
 
 ## Open Items by Priority
 
-### Ready for Implementation
-- M1 remaining canonical handler issues (#902, #903, #904)
+### Ready for Action
+- #926 M1 Sprint Completion Gate — run gates, collect evidence
+- #706 Objects & Views Discovery — PM consolidation
+- #375 Preference Detection — manual QA
 - #925 Floor inversion Phase 3-4
 
 ### Planning/Strategy
 - IA Conference talk (April 17, Philadelphia) — 16-slide deck drafted
-- Omnibus automation workflow (Dispatch pilot validated, calibration needed for HIGH-COMPLEXITY days)
-- Weekly Ship process documentation (CoS Proposal 4)
+- Omnibus automation workflow (Dispatch pilot — Docs evaluating v3/v4 retro iterations)
+- Weekly Ship process guide completed (v1.1, CoS piloting with Ship #036)
+- Publishing workflow: blog-first migration planned (one-pager at `docs/internal/planning/comms/publishing-workflow-target.md`)
+- E2E + AAXT testing: 4 issues filed (#927-#930), proposal written
+- #717 Product concept: ✅ closed, design doc ready for M2
 
 ### Deferred
 - #557 WebSocket (deferred to M2 per Architect)
@@ -171,14 +183,17 @@ GUIDANCE, TRUST, MEMORY, PORTFOLIO, UNKNOWN
 
 ---
 
-## Metrics Snapshot (March 21, 2026)
+## Metrics Snapshot (March 24, 2026)
 
 ### Quality
 - **Pattern Count**: 63 (001-062)
-- **ADR Count**: 61 (through ADR-060)
+- **ADR Count**: 63 (through ADR-060, includes meta and field-mapping)
+- **PDR Count**: 6 (001-004, 101)
+- **Methodology Count**: 23 (00-22)
 - **Skill Count**: 9
-- **Test Suite**: ~6,190 tests (228 skipped — onboarding on ice per ADR-059)
-- **Omnibus Logs**: Through Mar 20 (continuous daily coverage, 286 total)
+- **Test Suite**: ~6,538 tests collected, 1,325 intent service tests passing
+- **Omnibus Logs**: Through Mar 23 (continuous daily coverage, 290 total)
+- **Agent Sessions Indexed**: 877 (Jul 2025 – Mar 2026, 17 roles)
 
 ### Infrastructure (new since Mar 10)
 - **Mailbox v3**: 10-role infrastructure with `/deliver-mail` skill
@@ -216,10 +231,8 @@ GUIDANCE, TRUST, MEMORY, PORTFOLIO, UNKNOWN
 - Action Registry gates which intents trigger handlers vs floor
 
 ### Known Issues
-- #922 Conversation continuity (affirmations/follow-ups misrouted — ADR-059 addresses)
-- #925 STATUS/PRIORITY still routed to canonical handlers instead of floor
-- #910 Pre-existing test failure (test_expired_token_returns_401)
-- #898 9 classifier edge cases
+- #925 STATUS/PRIORITY still routed to canonical handlers instead of floor (Phase 3-4)
+- #927-#930 E2E + AAXT testing track (filed, not yet started)
 
 ---
 
@@ -227,9 +240,10 @@ GUIDANCE, TRUST, MEMORY, PORTFOLIO, UNKNOWN
 
 **Roadmap**: `docs/internal/planning/roadmap/roadmap.md` (v14.3)
 **Patterns**: `docs/internal/architecture/current/patterns/` (63 patterns)
-**ADRs**: `docs/internal/architecture/current/adrs/` (61 ADRs, newest: ADR-059, ADR-060)
+**ADRs**: `docs/internal/architecture/current/adrs/` (63 ADRs, newest: ADR-059, ADR-060)
+**PDRs**: `docs/internal/product/pdr/` (6 PDRs, newest: PDR-004 Experience Philosophy)
 **Skills**: `.claude/skills/` (9 skills)
-**Omnibus Logs**: `docs/omnibus-logs/` (continuous through Mar 20)
+**Omnibus Logs**: `docs/omnibus-logs/` (continuous through Mar 23, 290 total)
 **Mailbox Directory**: `mailboxes/DIRECTORY.md`
 **Wiki**: `https://github.com/mediajunkie/piper-morgan-product/wiki`
 **CITATIONS**: `docs/references/CITATIONS.md` (updated Mar 3)
@@ -237,5 +251,5 @@ GUIDANCE, TRUST, MEMORY, PORTFOLIO, UNKNOWN
 
 ---
 
-*Last Updated: March 21, 2026*
-*Source: Omnibus logs Mar 10-20, GitHub issue list, session log, Serena symbolic index*
+*Last Updated: March 24, 2026*
+*Source: Omnibus logs Mar 10-23, GitHub issue list, session logs, weekly audit #931*

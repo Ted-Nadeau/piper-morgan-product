@@ -1,0 +1,35 @@
+Agent role,Sun Feb 1,Mon Feb 2,Tue Feb 3,Wed Feb 4,Thu Feb 5,Fri Feb 6,Sat Feb 7,Sun Feb 8,Mon Feb 9,Tue Feb 10,Wed Feb 11,Thu Feb 12,Fri Feb 13,Sat Feb 14,Sun Feb 15,Mon Feb 16,Tue Feb 17,Wed Feb 18,Thu Feb 19,Fri Feb 20,Sat Feb 21,Sun Feb 22,Mon Feb 23,Tue Feb 24,Wed Feb 25,Thu Feb 26,Fri Feb 27,Sat Feb 28,Sun Mar 1,Mon Mar 2,Tue Mar 3,Wed Mar 4
+Special Assignments,2026-02-01-1242-spec-code-opus-log,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,figure out how to require pull requests to main!
+Comms Chief,,,,,2026-02-05-1018-comms-opus-log,2026-02-06-0805-comms-opus-log,,2026-02-08-0749-comms-opus-log,,,,,,,,,,,,,,2026-02-22-1454-comms-opus-log,,,,2026-02-26-1321-comms-opus-log,,,,,,
+Chief of Staff,2026-02-01-0823-exec-opus-log,2026-02-02-1130-exec-opus-log,2026-02-03-1645-exec-opus-log,2026-02-04-2122-exec-opus-log,2026-02-05-1858-exec-opus-log,2026-02-06-0829-exec-opus-log,"2026-02-07-1323-exec-opus-log
+2026-02-07-1546-exec-opus-log",2026-02-08-1044-exec-opus-log,,,,,,,,,,,2026-02-19-1339-exec-opus-log,2026-02-20-1750-exec-opus-log,,2026-02-22-0750-exec-opus-log,,2026-02-24-0717-exec-opus-log,2026-02-25-0525-exec-opus-log,2026-02-26-1250-exec-opus-log,,,,,,
+CXO,2026-02-01-1727-cxo-opus-log,,,,,2026-02-06-0747-cxo-opus-log,,2026-02-08-1221-cxo-opus-log,,,,,,,,,,,,,2026-02-21-1201-cxo-opus-log,2026-02-22-1445-cxo-opus-log,,,,2026-02-26-1255-cxo-opus-log,,,,,,
+CIO,,,,2026-02-04-2118-cio-opus-log,2026-02-05-1320-cio-opus-log,2026-02-06-0804-cio-opus-log,,2026-02-08-1604-cio-opus-log,,,,,,,,,,,,2026-02-20-1802-cio-opus-log,,,,,2026-02-25-0530-cio-opus-log,,,,,,,
+HoSR,,,2026-02-03-1655-hosr-opus-log,,,2026-02-06-0758-hosr-opus-log,2026-02-07-1807-hosr-opus-log,,,,,,,,,,,,,,,2026-02-22-1458-hosr-opus-log,,,,,,,,,,
+Chief Architect,2026-02-01-1731-arch-opus-log,,2026-02-03-1652-arch-opus-log,,,2026-02-06-0757-arch-opus-log,,,,,,,"Notion MCP ? impact on our model? or if too generic, do we make our own that way? same with GitHub and other plug-ins",,,,,,,,2026-02-21-0729-arch-opus-log,,,,2026-02-25-0528-arch-opus-log,,,,"double check we discussed: Notion MCP ? impact on our model? or if too generic, do we make our own that way? same with GitHub and other plug-ins on or about 2/13",,,
+PPM,2026-02-01-0851-ppm-opus-log,,,,,,,,,,,,,,,,,,,2026-02-20-1818-ppm-opus-log,2026-02-21-1045-ppm-opus-log,,,,,2026-02-26-1300-ppm-opus-log,,,,,,
+Mobile Product (consultant),,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+Exec Coach,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+Docs mgr,2026-02-01-0821-docs-code-opus-log,2026-02-02-1055-docs-code-opus-log,2026-02-03-1123-docs-code-opus-log,2026-02-04-1725-docs-code-opus-log,2026-02-05-1012-docs-code-opus-log,2026-02-06-0736-docs-code-opus-log,2026-02-07-1321-docs-code-opus-log,2026-02-08-1041-docs-code-opus-log,,,,,,,,,,,2026-02-19-1025-docs-code-opus-log,2026-02-20-0822-docs-code-opus-log,2026-02-21-0717-docs-code-opus-log,2026-02-22-0702-docs-code-opus-log,2026-02-23-0955-docs-code-opus-log,2026-02-24-0630-docs-code-opus-log,2026-02-25-0521-docs-code-opus-log,2026-02-26-1009-docs-code-opus-log,2026-02-27-1800-docs-code-opus-log,,,,,
+Lead Dev,2026-02-01-0656-lead-code-opus-log,2026-02-02-1119-lead-code-opus-log,2026-02-03-1202-lead-code-opus-log,,2026-02-05-2121-lead-code-opus-log,2026-02-06-0730-lead-code-opus-log,,,,,,,,,,,,,2026-02-19-0700-lead-code-opus-log,,2026-02-21-1024-lead-code-opus-log,,,2026-02-24-1743-lead-code-opus-log,2026-02-25-0523-lead-code-opus-log,2026-02-26-0843-lead-code-opus-log,2026-02-27-0847-lead-code-opus-log,,,,,
+Programmer,,,,,,,,,,,,,,,,,,,,,,,,,2026-02-25-1430-prog-a-code-opus-log; 2026-02-25-1430-prog-b-code-opus-log,,,,,,,
+Vibe coder,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+SecOps,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+Researcher,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+Unicorn web designer,,,,,,,,,"deliver new design and content
+investigate aug 4 missing from index (others too?)",,,,,,,,,,,,,,,,,,,,"deliver new design and content
+investigate aug 4 missing from index (others too?)",,,
+xian,,"continue testing with Lead
+publish post
+make M0 issues
+https://medium.com/building-piper-morgan/the-mvp-rubric-3432bdf60783","
+deliver mail to Arch",,,,,,"send release notes to:
+Ted
+Jake
+Michelle - especially if she responds
+Rebecca
+Beatrice
+Komal",,,,,,,,"update knowledge from sweep
+finish leadership chat","logs
+publish ship",,,,,,,,,,,,,,
+ted,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
