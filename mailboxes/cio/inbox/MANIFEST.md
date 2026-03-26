@@ -7,3 +7,4 @@
 | 2026-03-19 15:50 | hosr | agent-360-questionnaire-draft-v0.1.md | Quarterly feedback questionnaire for all agent roles — delivered |
 | 2026-03-19 15:51 | arch | memo-arch-llm-floor-roundtable-2026-03-14.md | Architect roundtable on LLM floor — delivered (pre-v3) |
 | 2026-03-19 15:51 | cxo | memo-cxo-floor-problem-roundtable-2026-03-14.md | CXO floor problem roundtable — delivered (pre-v3) |
+| 2026-03-26 12:53 | dispatch | memo-dispatch-to-cio-papm-digest-2026-03-26.md | Introduction from Dispatch + Play Acting PM digest for Piper Alpha planning |

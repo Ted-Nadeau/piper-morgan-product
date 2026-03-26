@@ -5,3 +5,4 @@
 | 2026-03-19 15:34 | exec | memo-cos-to-docs-infrastructure-2026-03-19.md | Four proposed changes to improve CoS session continuity and CURRENT-STATE accuracy |
 | 2026-03-21 19:50 | dispatch | memo-dispatch-to-docs-retro-omnibus-eval-2026-03-21.md | Evaluate 5 retrospective automated omnibus logs against originals; write findings to retro/ |
 | 2026-03-23 12:31 | dispatch | memo-dispatch-to-docs-omnibus-update-2026-03-23.md | March 21 v2 status, methodology taxonomy update, evaluate HIGH-COMPLEXITY v3/v4 retro iterations |
+| 2026-03-25 19:30 | dispatch | memo-dispatch-to-docs-untracked-files-2026-03-25.md | Housekeeping: commit untracked Mar 22-23 cloud logs + cross-pollination briefs; omnibus eval reminder |

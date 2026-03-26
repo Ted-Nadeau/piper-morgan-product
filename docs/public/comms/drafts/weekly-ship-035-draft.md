@@ -1,4 +1,4 @@
-# Piper Morgan Weekly Ship #035: Pour the Floor
+# Weekly Ship #035: Pour the Floor
 
 *March 13–19, 2026*
 
