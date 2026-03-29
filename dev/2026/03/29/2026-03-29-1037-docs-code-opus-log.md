@@ -57,3 +57,13 @@ Updated to Mar 29: M1 gate verification phase (all issues closed, Gates 3-4 veri
 PM confirmed knowledge upload complete. Prepped second blog-canonical publish: HTML conversion, hashId generated, publish script written. Discovered hardcoded `../piper-morgan-product/` paths in script — local agent fixed to use relative paths. Image compressed (1.6MB → 142KB webp). Published at https://pipermorgan.ai/blog/wiring-vs-wizardry.
 
 **Lesson for skill refinement**: publish scripts must use `$PWD` / relative paths, not hardcoded sibling directory names.
+
+### 2:50 PM — Blog-First Display Fixes
+
+Both blog-canonical posts had display issues: missing images, "Invalid Date", "View original on Medium" link showing. Root cause: CSV column misalignment (18-column editorial calendar vs 13-column website CSV), plus Medium RSS fetch overwriting blog-first entries. Local agent fixed:
+- CSV: column alignment corrected for both posts
+- JSON: featuredImage pointed to local webp (was Medium CDN), added `source: "blog-first"` field
+- **Code fix**: BlogPostContent.tsx — "View original on Medium" link now conditional on `post.guid` (blog-first posts don't have one)
+- **Code fix**: sync-csv-to-json.js — extractHashId() guards against undefined guid
+
+These are real blog-first workflow bugs that the skill refinement needs to address: the website was built for Medium-first, and the data pipeline has assumptions about field positions and sources.
