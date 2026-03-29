@@ -9,11 +9,11 @@
 
 ## STATUS BANNER
 
-**Current Position**: 4.4.2 - M1 Sprint Active (Foundation) — Approaching Gate
+**Current Position**: 4.4.2 - M1 Sprint Active (Foundation) — Gate Verification Phase
 **Version**: v0.8.6 (pyproject.toml source of truth)
-**Last Updated**: March 24, 2026
-**Current Focus**: M1 gate closure — Tiers 1-3 complete, gate #926 filed, PM-led items remaining
-**Next Phase**: M1 gate execution → M2 (MVP Activation)
+**Last Updated**: March 29, 2026
+**Current Focus**: M1 gate closure — all issues closed, Gates 3-4 verified, Gates 1-2 await PM manual testing
+**Next Phase**: M1 gate execution (14 manual scenarios) → M2 (MVP Activation)
 
 ---
 
@@ -29,7 +29,7 @@
    4.3. ✅ MUX: Modeled User Experience - COMPLETE Jan 27
    4.4. 🎯 MVP: Minimum Valuable Product (M0-M6) ← CURRENT
         ✅ M0: Conversational Glue — COMPLETE (v0.8.6, shipped Mar 4)
-        🎯 M1: Foundation — APPROACHING GATE (~95%)
+        🎯 M1: Foundation — GATE VERIFICATION (all issues closed, Gates 3-4 verified)
 5. Beta testing on 0.9
 6. Launch 1.0
 ```
@@ -37,6 +37,13 @@
 ---
 
 ## Recent Progress
+
+### Mar 24-28 (M1 Gate Verification + First Blog-Canonical Publish)
+- **Mar 24**: **4-agent EXECUTION day**. Lead Dev closes #706 (Objects & Views Discovery — 3 formal deliverables) and verifies Gates 3+4. Gate 3: 4/5 architectural integrity criteria pass (G3.5 deferred to #927/#929). Gate 4: 6,310 tests passing, 0 failures. #375 folded into #926 Gate 1. Comms identifies 6-act blog narrative arc (Mar 13-22) from 10 omnibus logs, drafts Acts 1-2. CXO formalizes product header response (Option A, visible header). Docs: TODO triage (107 analyzed, 5 issues filed #932-#936, #746 reopened), Dispatch retro eval approved.
+- **Mar 25**: Day off (PM at day job).
+- **Mar 26**: Brief Docs session — 26 untracked files committed, CXO header response routed, Mar 24 omnibus synthesized. Session cut short by Anthropic service disruption.
+- **Mar 27**: Day off (service disruptions).
+- **Mar 28**: **Recovery + milestone day**. PPM confirms all 5 #717 decisions final (Lead Dev fully unblocked). CIO completes PA (Piper Alpha) Phase 0 — briefing v0.2 + onboarding prompt ready for launch. Docs recovers 4-day gap (omnibus logs, session logs, mail, stash recovery). **First blog-canonical publish**: "Discovery is the Bottleneck" published to pipermorgan.ai → Medium → LinkedIn. Editorial calendar: 15 entries updated/added, altText/caption columns added. 12 new content pieces in pipeline (5 narratives, 7 insights).
 
 ### Mar 22-23 (M1 Tier 3 Complete + Product Concept)
 - **Mar 22**: **M1 Tier 3 complete** — 4 capability issues closed in single Lead Dev session (#902 GitHub close/reopen, #903 reminders, #904 todo completion, #883 lazy workflow deferral). 76 new tests, 1325 total passing. Gate #926 filed. CXO + PPM independently reviewed gate criteria (fresh-account testing, Colleague Test rubric, 9 smoke queries). E2E + AAXT testing proposal written, 4 issues filed (#927-#930). **PDR-004 Experience Philosophy** ratified. Docs: agent-log CSV migration (877 sessions indexed), Ship process guide v1.1, publishing workflow one-pager.
@@ -112,47 +119,37 @@ GUIDANCE, TRUST, MEMORY, PORTFOLIO, UNKNOWN
 
 ## What's Next: M1 Completion → M2
 
-### M1 — IN PROGRESS (~80%)
+### M1 — GATE VERIFICATION PHASE
 
-**Completed M1 work** (Mar 12-16 sprint):
-- #884 canonical retest (diagnostic baseline: 81.1% impl pass rate)
-- #888/#889 workflow hijack fixes (escape commands, timeout, offer-first)
-- #886 contextual fallbacks (8 CXO-authored messages)
-- #901 classifier keywords (5 disambiguation fixes)
-- #902 fuzzy close/reopen
-- #904 todo completion lifecycle
-- #907 conversational floor (LLM with assembled context)
-- #911 floor inversion Phase 1 (GUIDANCE routing)
-- #913 continuation rate (Phase 2 fixes)
-- #914-#920 various wiring and infrastructure fixes
-- #922 diagnosed (conversation continuity — ADR-059 implemented)
-- #923 capability awareness gap (filed + closed)
-- #924 chat avatars (filed + closed)
-- ADR-059 (Workflow Dispatcher) + ADR-060 (Floor-First Routing) approved and implemented
+**All M1 issues closed.** Gates 3-4 verified. Gates 1-2 await PM manual testing.
 
 **M1 Tier Status**:
-- **Tier 1** (Architecture): ✅ Complete (#923 capability registry, #911 floor inversion, #907 conversational floor)
-- **Tier 2** (Quality): ✅ Complete (#908 generic signaling, #909/#910/#898 audited and closed)
-- **Tier 3** (Capabilities): ✅ Complete (#902 close/reopen, #903 reminders, #904 todo completion, #883 lazy workflow)
-- **Tier 4** (PM-led): 🎯 In progress (#706 objects discovery — PM consolidation, #375 preference QA, #717 ✅ closed)
-- **Gate**: #926 filed, CXO + PPM reviewed, 9 smoke queries defined
+- **Tier 1** (Architecture): ✅ Complete
+- **Tier 2** (Quality): ✅ Complete
+- **Tier 3** (Capabilities): ✅ Complete
+- **Tier 4** (PM-led): ✅ Complete (#706 closed Mar 24, #375 folded into #926 Gate 1, #717 closed Mar 23)
 
-**Remaining for M1 closure** (3 items):
-- #706 Objects & Views Discovery — PM-led consolidation of existing material
-- #375 Preference Detection — manual testing with running server
-- #926 Sprint Completion Gate — run gates, collect evidence, sign-offs
+**Gate Status**:
+- **Gate 1** (Conversation Quality): 🔲 PM manual testing (9 smoke queries + preference detection)
+- **Gate 2** (Task Lifecycle): 🔲 PM manual testing (5 scenarios)
+- **Gate 3** (Architectural Integrity): ✅ 4/5 verified Mar 24 (G3.5 deferred to #927/#929)
+- **Gate 4** (Bug Debt + Test Health): ✅ 3/3 verified Mar 24 (6,310 tests, 0 failures)
+
+**Remaining for M1 closure** (1 session):
+- #926 Sprint Completion Gate — PM at keyboard, 14 manual test scenarios (Gates 1+2)
 
 **Other open issues** (not M1-gated):
 - #925 Floor inversion Phase 3-4 (STATUS/PRIORITY floor-first)
 - #921 Framework upgrade (FastAPI/Starlette/httpx)
 - #927-#930 E2E + AAXT testing track (filed Mar 22)
+- #932-#936 Security + infrastructure (from TODO triage Mar 24)
 
 ### MVP Milestones Overview
 
 | Milestone | Focus | Status |
 |-----------|-------|--------|
 | M0 | Conversational Glue | ✅ COMPLETE (v0.8.6) |
-| M1 | MVP Foundation | ~95% (gate #926 filed, 3 PM-led items remain) |
+| M1 | MVP Foundation | ~98% (all issues closed, Gates 1-2 manual testing remains) |
 | M2 | MVP Activation | 4% |
 | M3-M6 | Advanced Features | Backlog |
 | DIST | Distribution | 0% (after M6) |
@@ -162,18 +159,16 @@ GUIDANCE, TRUST, MEMORY, PORTFOLIO, UNKNOWN
 ## Open Items by Priority
 
 ### Ready for Action
-- #926 M1 Sprint Completion Gate — run gates, collect evidence
-- #706 Objects & Views Discovery — PM consolidation
-- #375 Preference Detection — manual QA
+- #926 M1 Sprint Completion Gate — PM manual testing session (14 scenarios)
 - #925 Floor inversion Phase 3-4
 
 ### Planning/Strategy
+- **Piper Alpha (PA)**: Phase 0 complete — briefing v0.2 + onboarding prompt ready for launch (CIO, Mar 28)
+- **Publishing workflow**: Blog-first validated end-to-end (Mar 28). `/update-calendar` skill and publish-to-blog refinements in progress.
 - IA Conference talk (April 17, Philadelphia) — 16-slide deck drafted
-- Omnibus automation workflow (Dispatch pilot — Docs evaluating v3/v4 retro iterations)
-- Weekly Ship process guide completed (v1.1, CoS piloting with Ship #036)
-- Publishing workflow: blog-first migration planned (one-pager at `docs/internal/planning/comms/publishing-workflow-target.md`)
 - E2E + AAXT testing: 4 issues filed (#927-#930), proposal written
 - #717 Product concept: ✅ closed, design doc ready for M2
+- Content pipeline: 12 new pieces (5 narratives scheduled Apr 1-15, 7 insights in backlog)
 
 ### Deferred
 - #557 WebSocket (deferred to M2 per Architect)
@@ -183,23 +178,25 @@ GUIDANCE, TRUST, MEMORY, PORTFOLIO, UNKNOWN
 
 ---
 
-## Metrics Snapshot (March 24, 2026)
+## Metrics Snapshot (March 29, 2026)
 
 ### Quality
 - **Pattern Count**: 63 (001-062)
 - **ADR Count**: 63 (through ADR-060, includes meta and field-mapping)
 - **PDR Count**: 6 (001-004, 101)
 - **Methodology Count**: 23 (00-22)
-- **Skill Count**: 9
-- **Test Suite**: ~6,538 tests collected, 1,325 intent service tests passing
-- **Omnibus Logs**: Through Mar 23 (continuous daily coverage, 290 total)
-- **Agent Sessions Indexed**: 877 (Jul 2025 – Mar 2026, 17 roles)
+- **Skill Count**: 10 (narrative-verification added)
+- **Test Suite**: ~6,538 tests collected, 6,310 passing (Gate 4 verified Mar 24)
+- **Omnibus Logs**: Through Mar 28 (continuous daily coverage)
+- **Agent Sessions Indexed**: 877+ (Jul 2025 – Mar 2026, 17 roles)
 
 ### Infrastructure (new since Mar 10)
 - **Mailbox v3**: 10-role infrastructure with `/deliver-mail` skill
-- **Blog Pipeline**: 269/269 posts (100% local, 0 CDN), `/publish-to-blog` skill v0.2
+- **Blog Pipeline**: 269/269 posts (100% local, 0 CDN), `/publish-to-blog` skill v0.2, first blog-canonical publish completed Mar 28
 - **Omnibus Automation**: Dispatch pilot validated, `/create-omnibus` skill created
 - **Agent 360**: First deployment complete (9/9 response rate), 7 cross-cutting themes identified
+- **Editorial Calendar**: 320 entries, altText/caption columns added, 12 new content pieces in pipeline
+- **PA (Piper Alpha)**: Phase 0 complete — briefing v0.2, onboarding prompt, ready for launch
 
 ### Version History (Recent)
 | Version | Date | Milestone |
@@ -243,13 +240,14 @@ GUIDANCE, TRUST, MEMORY, PORTFOLIO, UNKNOWN
 **ADRs**: `docs/internal/architecture/current/adrs/` (63 ADRs, newest: ADR-059, ADR-060)
 **PDRs**: `docs/internal/product/pdr/` (6 PDRs, newest: PDR-004 Experience Philosophy)
 **Skills**: `.claude/skills/` (9 skills)
-**Omnibus Logs**: `docs/omnibus-logs/` (continuous through Mar 23, 290 total)
+**Omnibus Logs**: `docs/omnibus-logs/` (continuous through Mar 28)
 **Mailbox Directory**: `mailboxes/DIRECTORY.md`
+**Publishing Workflow**: `docs/internal/planning/comms/publishing-workflow-target.md`
 **Wiki**: `https://github.com/mediajunkie/piper-morgan-product/wiki`
 **CITATIONS**: `docs/references/CITATIONS.md` (updated Mar 3)
 **Glossary**: `knowledge/piper-morgan-glossary-v1.1.md`
 
 ---
 
-*Last Updated: March 24, 2026*
-*Source: Omnibus logs Mar 10-23, GitHub issue list, session logs, weekly audit #931*
+*Last Updated: March 29, 2026*
+*Source: Omnibus logs Mar 10-28, GitHub issue list, session logs, weekly audit #931*
