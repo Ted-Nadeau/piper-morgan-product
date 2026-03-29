@@ -248,7 +248,7 @@ CoS to maintain simple tracking:
 |------------|----------------|----------|--------|
 | Pattern Sweep | Feb 3, 2026 | Mar 17, 2026 | ✅ Complete |
 | Methodology | TBD | Feb 17, 2026 | ⏳ Schedule |
-| Documentation | Mar 10, 2026 | Mar 17, 2026 | ✅ Complete (#882) |
+| Documentation | Mar 29, 2026 | Apr 14, 2026 | ✅ Complete (#931) |
 | Role Health | Jan 31, 2026 (informal) | Feb 17, 2026 | ✅ Methodology defined |
 
 **Note**: Role Health Check methodology formalized Jan 31, 2026. First formal audit Feb 17, 2026.
