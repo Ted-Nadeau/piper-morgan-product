@@ -48,3 +48,28 @@ Reconstructed all lost March 26 session work:
 4. **Mail moved to read/** — PPM (CXO header response), CIO (Dispatch PAPM digest), Docs (Dispatch untracked files)
 5. **Blog drafts moved** — 6 drafts from dev/active/ to docs/public/comms/drafts/
 6. **dev/active/ cleaned** — removed duplicate CXO header responses
+
+### 7:15 PM — Stash Recovery (PM Local Machine)
+
+PM had stash@{0} from pre-March 26 containing real work. Guided PM through:
+1. `git reset HEAD .` + `git checkout -- .` to undo failed stash pop
+2. `git stash branch stash-recovery stash@{0}` — clean apply on original base
+3. Selective commit (excluded __pycache__, .claude/worktrees/, redis dump)
+4. Push to origin/stash-recovery
+
+### 7:30 PM — Stash Analysis & Selective Merge
+
+Cherry-pick of full stash commit caused 7 conflicts because stash base was old (pre-Mar 12). Analysis revealed:
+- **Added files**: New dev/active items (mnemosyne session log, card deck spec, design session log, piper alpha v0.2 briefing, commit-policy). Worth keeping.
+- **Deleted files**: Duplicates already cleaned up on our branch. No action needed.
+- **Modified files**: ALL stale — briefing files and roadmap from March 10, superseded by our March 24 versions. Skipped entirely.
+
+Took surgical approach: `git checkout origin/stash-recovery -- [specific new files]` instead of cherry-pick.
+
+### 7:35 PM — Methodology Refresh
+
+PM correctly flagged process drift on omnibus logs. Re-read full Methodology 20 (587 lines). Key finding: Mar 24 omnibus at 131 lines is non-compliant for HIGH-COMPLEXITY: EXECUTION (target 350-500). Flagged for PM decision — is it truly HIGH-COMPLEXITY (4 sessions triggers it) or Standard Day with coincidentally 4 independent sessions?
+
+### 7:40 PM — Mar 27 Day-Off Marker
+
+Created day-off omnibus marker. PM confirmed no work happened Mar 27 (Anthropic tooling disruptions).
