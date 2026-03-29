@@ -1,0 +1,32 @@
+<p>We'd spent a week implementing canonical queries. Eight queries in Phase A. Eight more in Phase B. Coverage climbed from 5% to 31% to 47%. Tests passed. Handlers worked. The infrastructure was solid.</p>
+<p>Then the Lead Developer reviewed the roadmap and wrote a single line that reframed everything:</p>
+<blockquote><p>"19 canonical queries work but users can't discover them."</p></blockquote>
+<p>Nineteen queries. Working. Tested. Deployed. And users couldn't find them.</p>
+<p>The missing link? Something I think of as &ldquo;conversational glue&rdquo;: the ability to converse and extracting meaning. Greet, make small talk, and pick up on requests all in the same flow.</p>
+<h2>The implementation trap</h2>
+<p>It's easy to measure implementation. Issues closed, tests written, coverage percentages. These numbers go up. Progress feels real.</p>
+<p>But implementation isn't the same as usefulness. A feature that works but can't be found might as well not exist.</p>
+<p>We'd fallen into the implementation trap. Every day brought more capability without improving the user experience, just increasing the confusion about what Piper could actually do.</p>
+<h2>What discovery means</h2>
+<p>Discovery isn't documentation. Users don't read docs before asking questions. They ask questions and expect the system to understand.</p>
+<p>Discovery isn't a help command. &ldquo;What can you do?&rdquo; returns a list. Lists don't teach. They overwhelm.</p>
+<p>Discovery is conversational glue—the ability for natural dialogue to reveal capabilities at the moment they're relevant. A user says &ldquo;I'm overwhelmed with tasks&rdquo; and the system responds in a way that naturally surfaces &ldquo;I can show you what needs attention&rdquo; or &ldquo;Want me to prioritize your todos?&rdquo;</p>
+<p>The 19 working queries were islands. Each one accessible if you knew exactly what to ask. No bridges between them. No paths from confusion to clarity.</p>
+<h2>The pivot</h2>
+<p>This realization changed the roadmap. More query handlers wouldn't help. We needed:</p>
+<ol>
+<li><strong>Conversational bridges</strong>: Responses that naturally introduce related capabilities</li>
+<li><strong>Context-aware suggestions</strong>: Recognizing user states that indicate unmet needs</li>
+<li><strong>Graceful discovery</strong>: Revealing functionality through dialogue, not menus</li>
+</ol>
+<p>The technical work wasn't wasted. Those 19 queries were still foundation. But the next phase wasn't Phase C of canonical queries—it was Epic #488, the discovery-oriented architecture.</p>
+<p>This wasn't the first time we had discovered a missing layer in our foundation. When this happens I always stop building until I trust the architecture again.</p>
+<h2>The universal lesson</h2>
+<p>Every product team faces this eventually. You build features. You ship features. Usage doesn't match expectations.</p>
+<p>The instinct is to build more features. Add capability. Expand scope.</p>
+<p>Sometimes the answer is: stop building and start revealing. The capabilities exist. The paths to them don't.</p>
+<p>This is harder than implementation. Implementation has clear completion criteria. Discovery is fuzzier. How do you know when users can find what they need?</p>
+<p>You know when they stop asking &ldquo;what can you do?&rdquo; and start asking specific questions.</p>
+<hr />
+<p><em>Next on Building Piper Morgan: &ldquo;Wiring vs Wizardry&rdquo; when the gap isn't cutting-edge tech, but just connecting the existing dots.</em></p>
+<p><em>Have you ever discovered that your users couldn't find the features you'd already built?</em></p>
