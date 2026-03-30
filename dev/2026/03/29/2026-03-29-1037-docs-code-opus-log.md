@@ -67,3 +67,48 @@ Both blog-canonical posts had display issues: missing images, "Invalid Date", "V
 - **Code fix**: sync-csv-to-json.js — extractHashId() guards against undefined guid
 
 These are real blog-first workflow bugs that the skill refinement needs to address: the website was built for Medium-first, and the data pipeline has assumptions about field positions and sources.
+
+### 5:49 PM — Publishing Workflow Improvements
+
+PM asked for stack-ranked improvement plan. Delivered 4 items:
+1. `/update-calendar` skill v1.0 — PM never touches CSV again
+2. `/publish-to-blog` skill v0.3 — relative paths, 13-col website CSV, remote execution mode, `/update-calendar` integration, known issues documented
+3. Blog-first publish checklist — reference card for PM
+4. Web team memo addendum — cross-repo access discussion topic (GitHub Action, submodule, or API options)
+
+PM noted new Claude co-work space can see all projects — potential solution for cross-repo access in future.
+
+### 7:58 PM — Session Wrap
+
+PM confirmed knowledge base fully synced. Wrote handoff prompt for potential successor session. Compiled full backlog for PM review.
+
+---
+
+## Session Summary
+
+**Duration**: 10:37 AM – 8:00 PM (9.5 hours with PM gym break)
+
+**Completed**:
+- Mar 28 omnibus synthesized (STANDARD, 3 sessions, 130 lines)
+- #931 weekly docs audit closed with full evidence + completion matrix
+- Staggered audit calendar updated (next due: Apr 14)
+- BRIEFING-CURRENT-STATE refreshed to Mar 29 (M1 gate verification phase)
+- "Wiring vs. Wizardry" published to pipermorgan.ai → Medium → LinkedIn (2nd blog-canonical publish)
+- Blog-first display bugs diagnosed and fixed (CSV parser field count, Medium link conditional, image paths)
+- 4 workflow improvements delivered (update-calendar skill, publish-to-blog v0.3, publish checklist, web team memo)
+- Handoff prompt written for potential successor session
+
+**Issues closed**: #931
+**Issues filed**: None
+
+**Carry forward**:
+- Mar 29 omnibus (today — 1 session, Minimal format)
+- Publish "Are We Doing It Backwards?" (April 1)
+- Unpublished insight pieces summary document
+- Weekly Ship on the blog
+- GitHub label taxonomy review
+- Sprint metadata visibility for agents
+- Formalize dev/active/ cleanup as skill
+- Cross-repo access discussion (PM has co-work space that may help)
+
+**Milestone**: Second blog-canonical publish + publishing workflow paved with 4 new artifacts.
