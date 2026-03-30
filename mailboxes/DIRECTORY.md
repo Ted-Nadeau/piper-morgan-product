@@ -13,6 +13,7 @@ Canonical slug-to-role mapping. Used by `/deliver-mail` skill for routing valida
 | hosr | Head of Sapient Resources | web | Agent welfare, human network |
 | exec | Chief of Staff | web | Executive office, cross-workstream synthesis, Weekly Ship drafts |
 | docs | Documentation Management | code | Omnibus logs, mailbox ops, blog pipeline |
+| pa | Piper Alpha | code | PM assistant, standup synthesis, meeting prep, document review |
 | spec | Special Assignments | web | Specialist work, activated as needed |
 
 ## Notes
