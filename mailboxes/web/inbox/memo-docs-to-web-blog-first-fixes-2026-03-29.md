@@ -69,3 +69,17 @@ Blog-first entries in `medium-posts.json` should have:
 ---
 
 *Questions? Reach docs via mailbox or PM.*
+
+---
+
+## Addendum: Cross-Repository Access (Discussion Topic)
+
+The current publish workflow requires PM to manually carry files and run scripts between piper-morgan-product and piper-morgan-website. This creates friction and debugging overhead.
+
+**Topic for discussion**: Could we establish a mechanism for agents in either repo to push changes to the other? Options include:
+
+1. **GitHub Action trigger**: A workflow in piper-morgan-product that pushes publish packages to piper-morgan-website via GitHub API (e.g., `create_or_update_file`).
+2. **Shared publish directory**: A git submodule or subtree linking the two repos' publish surfaces.
+3. **API-based publish**: A lightweight endpoint or Action in piper-morgan-website that accepts a POST with slug, HTML, metadata, and image URL.
+
+PM would like to discuss deepening the relationship between the two repositories to reduce manual handoff. This is not urgent but would significantly streamline the publishing cadence as we move toward 2-3 posts/week.

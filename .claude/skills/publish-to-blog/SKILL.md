@@ -4,9 +4,9 @@ description: Publish a finished blog post from this repo to the pipermorgan.ai w
   repo. Use when PM says "publish this post", "push to the blog", or when a draft
   is marked ready in the editorial calendar. Bridges piper-morgan → piper-morgan-website.
 scope: role-specific
-version: 0.2
+version: 0.3
 created: 2026-03-16
-updated: 2026-03-17
+updated: 2026-03-29
 ---
 
 # publish-to-blog
@@ -17,297 +17,184 @@ Publish a finished markdown blog post to the pipermorgan.ai website repository.
 
 Use this skill when:
 - PM says a draft is ready to publish to the blog
-- A piece in the editorial calendar has status `ready`
+- A piece in the editorial calendar has status `ready` or `queued` with today's pubDate
 - PM asks to "push to the blog" or "publish this post"
 
 ## Prerequisites
 
-- The website repo must be cloned at `../piper-morgan-website` (relative to this repo root)
 - The draft markdown file must exist in this repo (typically `docs/public/comms/drafts/`)
-- The cartoon/featured image must be available (either in this repo or the website's `public/assets/blog-images/`)
-- **Image conversion**: `cwebp` must be installed for PNG→webp conversion. macOS `sips` cannot output webp format. Install via `brew install webp` if needed.
+- The cartoon/featured image must be available in `dev/active/` (PM provides)
+- The PM has provided: alt text, caption, and the next post title (for footer teaser)
+
+### Environment Note
+
+The website repo (`piper-morgan-website`) may not be accessible from this environment (e.g., Claude Code web). In that case, generate a **publish package** (script + HTML + metadata) that PM runs locally. See "Remote Execution Mode" below.
 
 ## Procedure
 
-### Step 1: Identify the Post
+### Step 1: Gather Inputs from PM
 
-Confirm with PM:
-1. Which draft file? (path in this repo)
-2. Title (may differ from draft filename)
+Confirm or look up:
+1. Which draft file? (check `docs/public/comms/drafts/`)
+2. Title and dateline
 3. Category: `building` or `insight`
-4. Cartoon/image slug (e.g., `robot-assembly`)
-5. Any final title changes?
+4. Image file location in `dev/active/`
+5. Alt text and caption
+6. Next post title (for footer teaser — check editorial calendar)
 
-### Step 2: Pre-Flight Check — Is This Post Already on Medium?
+### Step 2: Pre-Flight — Is This Post Already on Medium?
 
-**This step prevents hashId mismatches.** Most of our backlog was published to Medium first. If the post exists on Medium, we must use its real hashId.
-
-```bash
-cd ../piper-morgan-website
-
-# Search for the post title in medium-posts.json
-python3 -c "
-import json
-posts = json.load(open('src/data/medium-posts.json'))
-matches = [p for p in posts if 'SEARCH_TERM' in p.get('title','').lower()]
-for p in matches:
-    print(f\"Title: {p['title']}\")
-    print(f\"URL: {p.get('url','')}\")
-    print(f\"HashId: {p['url'].split('/')[-1].split('?')[0].split('-')[-1] if 'medium.com' in p.get('url','') else 'N/A'}\")
-"
-```
-
-**If found on Medium**: Extract the hashId from the Medium URL (the last segment after the final hyphen, e.g., `168e71571f6b` from `four-voices-one-spec-168e71571f6b`). Use this as the hashId in all subsequent steps.
-
-**If NOT found on Medium**: Generate a unique hashId:
+**Blog-first posts** (not yet on Medium): Generate a hashId:
 ```bash
 python3 -c "import uuid; print(uuid.uuid4().hex[:12])"
 ```
 
-### Step 3: Verify the Website Repo
+**Backlog posts** (already on Medium): The hashId MUST match the Medium URL. Extract from the last segment after the final hyphen (e.g., `978f3ec50a57` from `discovery-is-the-bottleneck-978f3ec50a57`).
+
+### Step 3: Convert Markdown to HTML
+
+Strip the H1 title and dateline (metadata handles these). Handle:
+- Headers (h2, h3)
+- Paragraphs with inline formatting (bold, italic, code)
+- Blockquotes
+- Ordered and unordered lists
+- Horizontal rules
+- Smart quotes (`"` → `&ldquo;`/`&rdquo;`)
+
+Save to `dev/active/publish-package/{slug}-content.html`.
+
+### Step 4: Generate Publish Script
+
+Create `dev/active/publish-package/publish-{slug}.sh`.
+
+**CRITICAL — Path Rules:**
+- Use **relative paths from the script's working directory** (`$PWD`)
+- NEVER hardcode `../piper-morgan-product/` — the local directory name varies
+- Reference files in this repo as `dev/active/...`, `docs/public/...` etc.
+- Reference the website repo as `../piper-morgan-website`
+
+The script should:
+
+1. **Verify website repo** exists at `../piper-morgan-website`
+2. **Find and convert image**: Look in `dev/active/` for the image file. Use `sips -Z 1200` to resize, then `cwebp` to convert to webp. Fall back to PNG if cwebp unavailable.
+3. **Add to blog-metadata.csv** (13 columns):
+   ```
+   slug,hashId,title,chatDate,imageSlug.webp,workDate,pubDate,category,cluster,featured,extra,imageAlt,imageCaption
+   ```
+   Use Python csv writer with newline check (never `echo >>`).
+4. **Add blog content** to `src/data/blog-content.json` — read HTML from the content file in this repo's publish-package directory.
+5. **Run sync and fetch**: `node scripts/sync-csv-to-json.js && node scripts/fetch-blog-posts.js`
+6. **Verify** the post appears in `src/data/medium-posts.json` with local URL.
+7. **Commit and push** the website repo.
+
+### Step 5: Update Editorial Calendar (This Repo)
+
+Use the `/update-calendar` skill or manually update `docs/internal/planning/comms/editorial-calendar.csv`:
+- status → `published`
+- pubDate → today
+- canonicalSite → `distributed`
+- blogURL → `https://pipermorgan.ai/blog/{slug}`
+- blogPath → `/blog/{slug}`
+- altText → from PM
+- caption → from PM
+
+### Step 6: Commit This Repo
 
 ```bash
-cd ../piper-morgan-website
-git stash  # if needed
-git checkout main
+git add dev/active/publish-package/ docs/internal/planning/comms/editorial-calendar.csv docs/public/comms/drafts/
+git commit -m "docs: publish package for {title} + CSV update"
+```
+
+Merge to main so PM can pull:
+```bash
+git checkout main && git merge {branch} --no-edit && git push origin main
+git checkout {branch}
+```
+
+### Step 7: PM Runs Locally
+
+PM pulls and runs:
+```bash
 git pull origin main
+bash dev/active/publish-package/publish-{slug}.sh
 ```
 
-### Step 4: Prepare the Image
+### Step 8: Verify Deployment
 
-If the image isn't already in the website repo:
+After PM reports the script succeeded, verify:
+- `https://pipermorgan.ai/blog/{slug}` loads with content and image
+- Blog index shows the post with thumbnail
+- Blog index links to `/blog/{slug}` not Medium URL
 
-```bash
-# Convert to webp using cwebp (NOT sips — sips can't write webp)
-cwebp /path/to/image.png -o ../piper-morgan-website/public/assets/blog-images/{slug}.webp
+If the blog index links to Medium, the `fetch-blog-posts.js` script is overwriting `source: "blog-first"` entries. This is a known issue tracked in a memo to the web team.
 
-# If cwebp is not installed:
-brew install webp
+### Step 9: Syndicate
 
-# Fallback: use PNG directly (less optimal but works)
-cp /path/to/image.png ../piper-morgan-website/public/assets/blog-images/{slug}.png
+PM does manually:
+1. **Medium**: Paste content, publish, set canonical URL to `https://pipermorgan.ai/blog/{slug}`
+2. **LinkedIn**: Cross-post (may adjust title)
+3. PM provides URLs → Docs updates CSV via `/update-calendar`
+
+### Step 10: Post-Publish CSV Update
+
+When PM provides syndication URLs:
+```
+/update-calendar
+```
+Add mediumURL, liPubDate, linkedinURL to the row.
+
+## Remote Execution Mode
+
+When the website repo is not accessible (Claude Code web, cloud environments):
+
+1. Prepare the **publish package** in `dev/active/publish-package/`:
+   - `{slug}-content.html` — converted HTML
+   - `publish-{slug}.sh` — self-contained script using relative paths
+2. Merge to main so PM can pull
+3. PM runs the script locally
+4. PM reports back with verification + syndication URLs
+
+## Website CSV Format (13 columns)
+
+The website's `data/blog-metadata.csv` has a DIFFERENT schema from our editorial calendar (18 columns):
+
+```
+slug,hashId,title,chatDate,imageSlug,workDate,pubDate,category,cluster,featured,extra,imageAlt,imageCaption
 ```
 
-### Step 5: Add to blog-metadata.csv
+**Do NOT confuse with our editorial calendar format.** The publish script writes to the website CSV; the `/update-calendar` skill writes to ours.
 
-The website's source of truth is `data/blog-metadata.csv`. Add a row.
+## Known Issues (as of v0.3)
 
-**IMPORTANT**: Do NOT use `echo >>` to append — it may not add a newline before the new row, causing CSV corruption. Instead, use Python or verify the file ends with a newline first:
-
-```bash
-cd ../piper-morgan-website
-
-# Safe append: ensure newline before adding
-python3 -c "
-import csv, os
-filepath = 'data/blog-metadata.csv'
-# Read to check if file ends with newline
-with open(filepath, 'rb') as f:
-    f.seek(-1, 2)
-    if f.read(1) != b'\n':
-        with open(filepath, 'a') as fa:
-            fa.write('\n')
-# Now append the row
-with open(filepath, 'a', newline='') as f:
-    writer = csv.writer(f)
-    writer.writerow(['{slug}', '{hashId}', '{title}', '{chatDate}', '{imageSlug}.webp', '{workDate}', '{pubDate}', '{category}', '', '', ''])
-"
-```
-
-Fields:
-- `slug`: URL-safe title (lowercase, hyphens, no special chars)
-- `hashId`: From Step 2 (real Medium hashId if exists, otherwise generated)
-- `title`: Display title
-- `chatDate`: Date of the source chat session (M/D/YYYY)
-- `imageSlug`: Filename of the featured image in blog-images/
-- `workDate`: When the piece was written (YYYY-MM-DD)
-- `pubDate`: Today's date (YYYY-MM-DD) — the canonical publication date
-- `category`: `building` or `insight`
-- `cluster`: Episode/cluster name if applicable (can be empty)
-- `featured`: `true` if this should be featured, otherwise empty
-
-### Step 6: Add Blog Content
-
-Convert the markdown draft to HTML and add to `src/data/blog-content.json`:
-
-```bash
-cd ../piper-morgan-website
-
-# Convert markdown to HTML and add to blog-content.json
-python3 << 'PYEOF'
-import json, re
-
-# Read the markdown draft
-with open('/path/to/draft.md') as f:
-    md = f.read()
-
-# Basic markdown → HTML conversion
-# (Handles headers, paragraphs, bold, italic, lists, blockquotes, code blocks)
-lines = md.split('\n')
-html_parts = []
-in_code_block = False
-in_list = False
-
-for line in lines:
-    stripped = line.strip()
-    if stripped.startswith('```'):
-        in_code_block = not in_code_block
-        html_parts.append('<pre><code>' if in_code_block else '</code></pre>')
-        continue
-    if in_code_block:
-        html_parts.append(line)
-        continue
-    if not stripped:
-        if in_list:
-            html_parts.append('</ul>')
-            in_list = False
-        continue
-    # Headers
-    if stripped.startswith('# '):
-        html_parts.append(f'<h1>{stripped[2:]}</h1>')
-    elif stripped.startswith('## '):
-        html_parts.append(f'<h2>{stripped[3:]}</h2>')
-    elif stripped.startswith('### '):
-        html_parts.append(f'<h3>{stripped[4:]}</h3>')
-    elif stripped.startswith('> '):
-        html_parts.append(f'<blockquote><p>{stripped[2:]}</p></blockquote>')
-    elif stripped.startswith('- ') or stripped.startswith('* '):
-        if not in_list:
-            html_parts.append('<ul>')
-            in_list = True
-        html_parts.append(f'<li>{stripped[2:]}</li>')
-    else:
-        # Inline formatting
-        text = stripped
-        text = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', text)
-        text = re.sub(r'\*(.+?)\*', r'<em>\1</em>', text)
-        text = re.sub(r'`(.+?)`', r'<code>\1</code>', text)
-        html_parts.append(f'<p>{text}</p>')
-
-if in_list:
-    html_parts.append('</ul>')
-
-html = '\n\n'.join(html_parts)
-
-# Add to blog-content.json
-with open('src/data/blog-content.json') as f:
-    content = json.load(f)
-
-content['{hashId}'] = {'content': html}
-
-with open('src/data/blog-content.json', 'w') as f:
-    json.dump(content, f, indent=2)
-
-print('Done — added content for {hashId}')
-PYEOF
-```
-
-Then run the sync script:
-```bash
-node scripts/sync-csv-to-json.js
-```
-
-### Step 7: Run fetch-blog-posts.js
-
-This merges RSS (Medium posts) with CSV metadata and blog-first posts:
-
-```bash
-node scripts/fetch-blog-posts.js
-```
-
-Verify the post appears correctly in `src/data/medium-posts.json`:
-```bash
-python3 -c "
-import json
-posts = json.load(open('src/data/medium-posts.json'))
-match = [p for p in posts if '{slug}' in p.get('slug','') or '{slug}' in p.get('url','')]
-for p in match:
-    print(f\"Title: {p['title']}\")
-    print(f\"URL: {p['url']}\")
-    print(f\"Slug: {p.get('slug','')}\")
-"
-```
-
-**Expected**: URL should be `/blog/{slug}` (local), not a Medium URL.
-
-### Step 8: Update Editorial Calendar (This Repo)
-
-Back in piper-morgan, update `docs/internal/planning/comms/editorial-calendar.csv`:
-- Set `status` to `published`
-- Set `pubDate` to today
-- Set `canonicalSite` to `distributed`
-- Set `blogPath` to the slug (e.g., `/blog/{slug}`)
-- Set `blogURL` to `https://pipermorgan.ai/blog/{slug}`
-
-### Step 9: Commit Both Repos
-
-```bash
-# Website repo
-cd ../piper-morgan-website
-git add data/blog-metadata.csv src/data/medium-posts.json src/data/blog-content.json public/assets/blog-images/
-git commit -m "Add blog post: {title}"
-git push origin main
-
-# This repo
-cd ../piper-morgan
-git add docs/internal/planning/comms/editorial-calendar.csv
-git commit -m "editorial calendar: mark {title} as published"
-```
-
-### Step 10: Verify Deployment
-
-```bash
-# Watch the deploy workflow
-cd ../piper-morgan-website
-gh run list --limit 3
-
-# Wait for both workflows to complete:
-# 1. "Deploy Piper Morgan Website to GitHub Pages" (builds the site)
-# 2. "pages build and deployment" (publishes to GitHub Pages)
-gh run watch {run-id}
-```
-
-Then verify: `https://pipermorgan.ai/blog/{slug}` loads with correct content and image.
-
-### Step 11: Syndicate (After Blog is Live)
-
-Once the blog post is live on pipermorgan.ai:
-1. **Medium**: Copy content to Medium, publish, add Medium URL to editorial calendar
-2. **LinkedIn**: Cross-post if relevant, add LinkedIn URL to editorial calendar
+1. **fetch-blog-posts.js overwrites blog-first URLs**: After Medium syndication, running the fetch script replaces local `/blog/{slug}` URLs with Medium URLs. Web team memo filed (Mar 29). Workaround: web team needs to respect `source: "blog-first"` entries.
+2. **Image discovery**: PM saves images with varying names in `dev/active/`. The publish script should try multiple filename patterns.
+3. **Large file hook**: Images over 500KB are rejected by pre-commit. Always compress with `sips -Z 1200` before committing.
 
 ## Anti-Patterns to Avoid
 
 | Don't Do This | Why | Do This Instead |
 |---------------|-----|-----------------|
+| Hardcode `../piper-morgan-product/` in scripts | Local dir name varies (`piper`, `piper-morgan`, etc.) | Use relative paths from `$PWD` |
 | Publish to Medium first | Blog should be canonical | Blog first, then syndicate |
-| Skip the pre-flight Medium check | HashId mismatch breaks slug mapping | Always check if post exists on Medium first |
-| Use `echo >>` to append CSV rows | May not add newline, corrupts CSV | Use Python csv writer with newline check |
-| Generate random hashId for Medium posts | Won't match RSS data, slug won't apply | Extract real hashId from Medium URL |
-| Use `sips` for webp conversion | macOS sips can't write webp format | Use `cwebp` (install via `brew install webp`) |
-| Skip the editorial calendar update | Source of truth drifts | Always update CSV in both repos |
-| Commit to website without pulling first | Merge conflicts | Always pull before adding |
-| Forget the image | Broken post on site | Verify image exists before committing |
-| Push without verifying deploy | May not know about build failures | Watch the GitHub Actions workflow |
+| Generate random hashId for Medium posts | Won't match RSS data | Extract real hashId from Medium URL |
+| Use `echo >>` to append CSV rows | May corrupt CSV | Use Python csv writer with newline check |
+| Use `sips` for webp conversion | macOS sips can't write webp | Use `cwebp` (install via `brew install webp`) |
+| Assume 11-column website CSV | Now 13 columns (imageAlt, imageCaption added) | Always use 13-column format |
+| Skip the editorial calendar update | Source of truth drifts | Use `/update-calendar` skill |
+| Push without merging to main | PM can't pull the publish package | Always merge to main before telling PM to run |
 
 ## Quality Checklist
 
 After publishing:
 - [ ] Blog post accessible at `https://pipermorgan.ai/blog/{slug}`
 - [ ] Featured image loads correctly
-- [ ] Blog index links to local post (not Medium URL)
-- [ ] Editorial calendar updated with blogURL and status=published
+- [ ] Blog index shows post with thumbnail
+- [ ] Blog index links to local `/blog/{slug}` (not Medium URL)
+- [ ] Editorial calendar updated (this repo) via `/update-calendar`
 - [ ] Website repo committed and pushed
-- [ ] This repo's editorial calendar committed
-- [ ] Deploy workflow completed successfully (both build + pages)
-
-## Future Improvements
-
-- [ ] Automate hashId lookup from Medium URL in medium-posts.json
-- [ ] Script to sync editorial-calendar.csv ↔ blog-metadata.csv
-- [ ] Lightweight CMS UI for editing/publishing from browser
-- [ ] Webhook or CI trigger for deploy after commit
-- [ ] Better markdown → HTML conversion (install `markdown` Python package or use pandoc)
+- [ ] Deploy workflow completed (GitHub Pages)
+- [ ] After syndication: Medium and LinkedIn URLs added to calendar
 
 ---
 
-*v0.2 — Updated with lessons from first real use (Mar 17, 2026). Key fixes: pre-flight Medium check, safe CSV append, cwebp dependency, deployment verification.*
+*v0.3 — Updated with lessons from first two blog-canonical publishes (Mar 28-29, 2026). Key changes: relative paths in scripts, 13-column website CSV, remote execution mode, `/update-calendar` integration, known issues documented, image discovery patterns.*
