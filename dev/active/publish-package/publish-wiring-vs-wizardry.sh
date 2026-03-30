@@ -27,7 +27,7 @@ echo "✓ Website repo ready"
 
 echo ""
 echo "=== Step 2: Convert and copy image ==="
-IMAGE_SOURCE="../piper-morgan-product/dev/active/ai-wiring-compressed.png"
+IMAGE_SOURCE="dev/active/ai-wiring-compressed.png"
 if [ -f "$IMAGE_SOURCE" ]; then
     if command -v cwebp &> /dev/null; then
         cwebp "$IMAGE_SOURCE" -o "public/assets/blog-images/${IMAGE_SLUG}.webp"
@@ -39,7 +39,7 @@ if [ -f "$IMAGE_SOURCE" ]; then
 else
     echo "⚠ Image not found at $IMAGE_SOURCE"
     echo "  Trying alternate locations..."
-    for alt in "../piper-morgan-product/dev/active/ai-wiring.png" "../piper-morgan-product/dev/active/wiring-vs-wizardry.png"; do
+    for alt in "dev/active/ai-wiring.png" "dev/active/wiring-vs-wizardry.png"; do
         if [ -f "$alt" ]; then
             echo "  Found at $alt"
             if command -v cwebp &> /dev/null; then
@@ -74,7 +74,7 @@ echo "=== Step 4: Add blog content ==="
 python3 << 'PYEOF'
 import json
 
-html_path = '../piper-morgan-product/dev/active/publish-package/wiring-vs-wizardry-content.html'
+html_path = 'dev/active/publish-package/wiring-vs-wizardry-content.html'
 with open(html_path) as f:
     html = f.read()
 
