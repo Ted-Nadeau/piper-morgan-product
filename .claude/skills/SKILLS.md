@@ -15,7 +15,8 @@ This directory contains formalized Agent Skills - self-contained procedural inst
 | [close-issue-properly](./close-issue-properly/SKILL.md) | Cross-role | Close GitHub issues with evidence, updated descriptions, audit-ready records | 1.0 |
 | [audit-cascade](./audit-cascade/SKILL.md) | Cross-role | Systematic audit-and-correct between phases; implements Pattern-049 | 1.0 |
 | [discovered-work-capture](./discovered-work-capture/SKILL.md) | Cross-role | Capture discovered issues immediately; prevents invisible work | 1.0 |
-| [publish-to-blog](./publish-to-blog/SKILL.md) | Role-specific | Publish finished blog post to pipermorgan.ai; bridge editorial calendar to website repo | 0.1 |
+| [publish-to-blog](./publish-to-blog/SKILL.md) | Role-specific | Publish finished blog post to pipermorgan.ai; bridge editorial calendar to website repo | 0.4 |
+| [cleanup-dev-active](./cleanup-dev-active/SKILL.md) | Cross-role | Triage and archive stale files from dev/active/; prevents working directory bloat | 1.0 |
 
 ---
 

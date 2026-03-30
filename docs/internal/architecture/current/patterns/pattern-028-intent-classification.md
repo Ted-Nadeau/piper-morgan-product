@@ -106,9 +106,9 @@ async def route_query(self, query: QueryModel) -> QueryResponse:
 
 ## Related Patterns
 
-- [Pattern-006: Query Router](pattern-006-query-router.md)
-- [Pattern-017: Multi-Agent Coordination](pattern-017-multi-agent-coordination.md)
-- [Pattern-029: Plugin Interface](pattern-029-plugin-interface.md)
+- [Pattern-006: Verification First](pattern-006-verification-first.md)
+- [Pattern-017: Background Task Error Handling](pattern-017-background-task-error-handling.md)
+- [Pattern-029: Multi-Agent Coordination](pattern-029-multi-agent-coordination.md)
 
 ## Current Implementation (October 2025)
 

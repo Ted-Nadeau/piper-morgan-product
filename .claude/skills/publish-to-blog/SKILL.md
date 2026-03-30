@@ -4,9 +4,9 @@ description: Publish a finished blog post from this repo to the pipermorgan.ai w
   repo. Use when PM says "publish this post", "push to the blog", or when a draft
   is marked ready in the editorial calendar. Bridges piper-morgan → piper-morgan-website.
 scope: role-specific
-version: 0.3
+version: 0.4
 created: 2026-03-16
-updated: 2026-03-29
+updated: 2026-03-30
 ---
 
 # publish-to-blog
@@ -26,9 +26,15 @@ Use this skill when:
 - The cartoon/featured image must be available in `dev/active/` (PM provides)
 - The PM has provided: alt text, caption, and the next post title (for footer teaser)
 
-### Environment Note
+## Mode Detection
 
-The website repo (`piper-morgan-website`) may not be accessible from this environment (e.g., Claude Code web). In that case, generate a **publish package** (script + HTML + metadata) that PM runs locally. See "Remote Execution Mode" below.
+Check if the website repo is accessible:
+```bash
+ls ../piper-morgan-website/data/blog-metadata.csv 2>/dev/null
+```
+
+- **Direct mode** (file exists): Write directly to the website repo. This is the default on local machines where both repos are checked out.
+- **Remote mode** (file not found): Generate a publish package for PM to run locally. See "Remote Execution Mode" below.
 
 ## Procedure
 
@@ -63,31 +69,51 @@ Strip the H1 title and dateline (metadata handles these). Handle:
 
 Save to `dev/active/publish-package/{slug}-content.html`.
 
-### Step 4: Generate Publish Script
+### Step 4: Prepare Image
 
-Create `dev/active/publish-package/publish-{slug}.sh`.
+1. Find image in `dev/active/` (try multiple filename patterns)
+2. Resize: `sips -Z 1200 "{image}"` (keeps aspect ratio, max 1200px)
+3. Convert to webp: `cwebp -q 80 "{image}" -o "{slug}.webp"` (install via `brew install webp`)
+4. Copy to website repo: `cp {slug}.webp ../piper-morgan-website/public/assets/blog-images/`
 
-**CRITICAL — Path Rules:**
-- Use **relative paths from the script's working directory** (`$PWD`)
-- NEVER hardcode `../piper-morgan-product/` — the local directory name varies
-- Reference files in this repo as `dev/active/...`, `docs/public/...` etc.
-- Reference the website repo as `../piper-morgan-website`
+### Step 5: Update Website Repo (Direct Mode)
 
-The script should:
+**5a. Add to blog-metadata.csv** (13 columns, this exact order):
+```
+slug,hashId,title,chatDate,imageSlug,imageAlt,imageCaption,workDate,pubDate,category,cluster,featured,notes
+```
+Use Python csv writer (never `echo >>`).
 
-1. **Verify website repo** exists at `../piper-morgan-website`
-2. **Find and convert image**: Look in `dev/active/` for the image file. Use `sips -Z 1200` to resize, then `cwebp` to convert to webp. Fall back to PNG if cwebp unavailable.
-3. **Add to blog-metadata.csv** (13 columns):
-   ```
-   slug,hashId,title,chatDate,imageSlug.webp,workDate,pubDate,category,cluster,featured,extra,imageAlt,imageCaption
-   ```
-   Use Python csv writer with newline check (never `echo >>`).
-4. **Add blog content** to `src/data/blog-content.json` — read HTML from the content file in this repo's publish-package directory.
-5. **Run sync and fetch**: `node scripts/sync-csv-to-json.js && node scripts/fetch-blog-posts.js`
-6. **Verify** the post appears in `src/data/medium-posts.json` with local URL.
-7. **Commit and push** the website repo.
+**5b. Add blog content** to `src/data/blog-content.json`:
+```python
+import json
+content = json.load(open('../piper-morgan-website/src/data/blog-content.json'))
+content[hashId] = {
+    "title": title,
+    "subtitle": "",
+    "content": html_content
+}
+json.dump(content, open('../piper-morgan-website/src/data/blog-content.json', 'w'), indent=2)
+```
 
-### Step 5: Update Editorial Calendar (This Repo)
+**5c. Run sync and fetch**:
+```bash
+cd ../piper-morgan-website
+node scripts/sync-csv-to-json.js
+node scripts/fetch-blog-posts.js
+```
+
+**5d. Verify** the post appears in `src/data/medium-posts.json` with local URL `/blog/{slug}`.
+
+**5e. Commit and push** the website repo:
+```bash
+cd ../piper-morgan-website
+git add data/blog-metadata.csv src/data/blog-content.json src/data/medium-posts.json public/assets/blog-images/{imageSlug}
+git commit -m "Add blog post: {title}"
+git push origin main
+```
+
+### Step 6: Update Editorial Calendar (This Repo)
 
 Use the `/update-calendar` skill or manually update `docs/internal/planning/comms/editorial-calendar.csv`:
 - status → `published`
@@ -98,35 +124,19 @@ Use the `/update-calendar` skill or manually update `docs/internal/planning/comm
 - altText → from PM
 - caption → from PM
 
-### Step 6: Commit This Repo
+### Step 7: Commit This Repo
 
 ```bash
 git add dev/active/publish-package/ docs/internal/planning/comms/editorial-calendar.csv docs/public/comms/drafts/
-git commit -m "docs: publish package for {title} + CSV update"
-```
-
-Merge to main so PM can pull:
-```bash
-git checkout main && git merge {branch} --no-edit && git push origin main
-git checkout {branch}
-```
-
-### Step 7: PM Runs Locally
-
-PM pulls and runs:
-```bash
-git pull origin main
-bash dev/active/publish-package/publish-{slug}.sh
+git commit -m "docs: publish {title} to blog + CSV update"
 ```
 
 ### Step 8: Verify Deployment
 
-After PM reports the script succeeded, verify:
+After GitHub Pages deploys (usually 2-3 minutes after push):
 - `https://pipermorgan.ai/blog/{slug}` loads with content and image
 - Blog index shows the post with thumbnail
-- Blog index links to `/blog/{slug}` not Medium URL
-
-If the blog index links to Medium, the `fetch-blog-posts.js` script is overwriting `source: "blog-first"` entries. This is a known issue tracked in a memo to the web team.
+- Blog index links to `/blog/{slug}` (not Medium URL)
 
 ### Step 9: Syndicate
 
@@ -149,39 +159,40 @@ When the website repo is not accessible (Claude Code web, cloud environments):
 
 1. Prepare the **publish package** in `dev/active/publish-package/`:
    - `{slug}-content.html` — converted HTML
-   - `publish-{slug}.sh` — self-contained script using relative paths
+   - `publish-{slug}.sh` — self-contained script (see v0.3 for script template)
 2. Merge to main so PM can pull
 3. PM runs the script locally
 4. PM reports back with verification + syndication URLs
 
+**CRITICAL — Path Rules for scripts:**
+- Use **relative paths from the script's working directory** (`$PWD`)
+- NEVER hardcode `../piper-morgan-product/` — the local directory name varies
+- Reference the website repo as `../piper-morgan-website`
+
 ## Website CSV Format (13 columns)
 
-The website's `data/blog-metadata.csv` has a DIFFERENT schema from our editorial calendar (18 columns):
-
 ```
-slug,hashId,title,chatDate,imageSlug,workDate,pubDate,category,cluster,featured,extra,imageAlt,imageCaption
+slug,hashId,title,chatDate,imageSlug,imageAlt,imageCaption,workDate,pubDate,category,cluster,featured,notes
 ```
 
-**Do NOT confuse with our editorial calendar format.** The publish script writes to the website CSV; the `/update-calendar` skill writes to ours.
+**Do NOT confuse with our editorial calendar format (18 columns).** The website CSV and our editorial calendar have different schemas.
 
-## Known Issues (as of v0.3)
+## Known Issues (as of v0.4)
 
-1. **fetch-blog-posts.js overwrites blog-first URLs**: After Medium syndication, running the fetch script replaces local `/blog/{slug}` URLs with Medium URLs. Web team memo filed (Mar 29). Workaround: web team needs to respect `source: "blog-first"` entries.
-2. **Image discovery**: PM saves images with varying names in `dev/active/`. The publish script should try multiple filename patterns.
-3. **Large file hook**: Images over 500KB are rejected by pre-commit. Always compress with `sips -Z 1200` before committing.
+1. **Blog-first dedup** (FIXED v0.4): `fetch-blog-posts.js` now detects syndicated duplicates of blog-first posts by slug matching and removes them. No longer overwrites blog-first URLs.
+2. **Image discovery**: PM saves images with varying names in `dev/active/`. Try multiple filename patterns.
+3. **Large file hook**: Images over 500KB may be rejected by pre-commit. Always compress with `sips -Z 1200` before committing.
 
 ## Anti-Patterns to Avoid
 
 | Don't Do This | Why | Do This Instead |
 |---------------|-----|-----------------|
-| Hardcode `../piper-morgan-product/` in scripts | Local dir name varies (`piper`, `piper-morgan`, etc.) | Use relative paths from `$PWD` |
 | Publish to Medium first | Blog should be canonical | Blog first, then syndicate |
 | Generate random hashId for Medium posts | Won't match RSS data | Extract real hashId from Medium URL |
-| Use `echo >>` to append CSV rows | May corrupt CSV | Use Python csv writer with newline check |
-| Use `sips` for webp conversion | macOS sips can't write webp | Use `cwebp` (install via `brew install webp`) |
-| Assume 11-column website CSV | Now 13 columns (imageAlt, imageCaption added) | Always use 13-column format |
+| Use `echo >>` to append CSV rows | May corrupt CSV | Use Python csv writer |
+| Use `sips` for webp conversion | macOS sips can't write webp | Use `cwebp` (brew install webp) |
+| Assume wrong CSV column order | imageAlt/imageCaption are columns 6-7 | Always check actual header |
 | Skip the editorial calendar update | Source of truth drifts | Use `/update-calendar` skill |
-| Push without merging to main | PM can't pull the publish package | Always merge to main before telling PM to run |
 
 ## Quality Checklist
 
@@ -197,4 +208,4 @@ After publishing:
 
 ---
 
-*v0.3 — Updated with lessons from first two blog-canonical publishes (Mar 28-29, 2026). Key changes: relative paths in scripts, 13-column website CSV, remote execution mode, `/update-calendar` integration, known issues documented, image discovery patterns.*
+*v0.4 — Direct mode added (both repos local). Blog-first dedup fix in fetch-blog-posts.js (no longer a known issue). CSV column order corrected (imageAlt/imageCaption at positions 6-7, notes not extra). Remote execution mode preserved as fallback. Steps 4-7 collapsed in direct mode.*

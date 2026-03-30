@@ -231,9 +231,9 @@ class GitHubIntegrationRouter:
 
 ### Related ADRs
 
-- [ADR-038: Spatial Intelligence Architecture Patterns](adr-038-spatial-intelligence-patterns.md) - Three valid spatial patterns (Granular, Embedded, Delegated MCP)
-- [ADR-052: Tool-Based MCP Standardization](adr-052-tool-based-mcp-standardization.md) - Tool-based MCP as canonical protocol approach
-- [ADR-029: Domain Service Mediation Architecture](adr-029-domain-service-mediation-architecture.md) - How domain services interact with routers
+- [ADR-038: Spatial Intelligence Architecture Patterns](../adrs/adr-038-spatial-intelligence-patterns.md) - Three valid spatial patterns (Granular, Embedded, Delegated MCP)
+- [ADR-052: Tool-Based MCP Standardization](../adrs/adr-052-tool-based-mcp-standardization.md) - Tool-based MCP as canonical protocol approach
+- [ADR-029: Domain Service Mediation Architecture](../adrs/adr-029-domain-service-mediation-architecture.md) - How domain services interact with routers
 
 ### Alternatives
 

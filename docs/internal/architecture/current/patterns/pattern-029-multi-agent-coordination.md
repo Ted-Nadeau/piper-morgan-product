@@ -154,7 +154,7 @@ class CrossValidation:
 
 ## Related Patterns
 - [Pattern-028: Intent Classification](pattern-028-intent-classification.md)
-- [Pattern-017: Cross-Validation Protocol](pattern-017-cross-validation-protocol.md)
+- [Pattern-017: Background Task Error Handling](pattern-017-background-task-error-handling.md)
 - [Pattern-030: Plugin Interface](pattern-030-plugin-interface.md)
 
 ### Differentiation: Pattern-029 vs Pattern-059

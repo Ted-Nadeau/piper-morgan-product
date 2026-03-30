@@ -6,7 +6,7 @@
 
 ## Context
 
-> **⚠️ Disambiguation Note**: This pattern covers development workflow session logging and tracking. For database/user application sessions, see [Pattern-013: Database Session Management Pattern](pattern-013-database-session-management.md).
+> **⚠️ Disambiguation Note**: This pattern covers development workflow session logging and tracking. For database/user application sessions, see [Pattern-013: Session Management Pattern](pattern-013-session-management.md).
 
 Development teams need to track progress across complex, multi-step development tasks that span multiple sessions and agents. Without systematic session management, development work lacks accountability, progress tracking, and historical context. The Development Session Management Pattern addresses:
 
@@ -343,9 +343,9 @@ session_manager.complete_session(
 
 ## Related Patterns
 
-- [Pattern-013: Database Session Management Pattern](pattern-013-database-session-management.md) - Database/user application sessions
+- [Pattern-013: Session Management Pattern](pattern-013-session-management.md) - Database/user application sessions
 - [Pattern-010: Cross-Validation Protocol Pattern](pattern-010-cross-validation-protocol.md) - Cross-validation in development sessions
-- [Pattern-008: Multi-Agent Coordination Pattern](pattern-008-multi-agent-coordination.md) - Agent coordination workflows
+- [Pattern-008: DDD Service Layer Pattern](pattern-008-ddd-service-layer.md) - Agent coordination workflows
 
 ## References
 

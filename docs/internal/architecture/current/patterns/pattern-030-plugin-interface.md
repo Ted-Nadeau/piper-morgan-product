@@ -213,7 +213,7 @@ plugins:
 ## Related Patterns
 - [Pattern-028: Intent Classification](pattern-028-intent-classification.md)
 - [Pattern-029: Multi-Agent Coordination](pattern-029-multi-agent-coordination.md)
-- [Pattern-009: MCP Integration](pattern-009-mcp-integration.md)
+- [Pattern-009: GitHub Issue Tracking](pattern-009-github-issue-tracking.md)
 
 ## References
 - Original vision: June 3, 2025 (Clean slate, plugin from day one)
