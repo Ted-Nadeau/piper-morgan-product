@@ -132,3 +132,54 @@ Proposed 5-era model based on data analysis (volume, category ratios, thematic c
 - The Sprint (Feb–Mar 2026): 31 posts — MVP execution
 
 PM approved. Subagent implemented across 6 files (episodes.ts, medium-posts.json, BlogContent, episodes page, BlogPostCard, FeaturedPost). All 275 posts assigned. Backward-compatible aliases kept. Pushed.
+
+### 4:26 PM — cleanup-dev-active skill + first cleanup
+
+Created new skill v1.0 formalizing the triage pattern: inventory → categorize → execute → verify → report. Added note about browser downloads landing in dev/active/.
+
+First cleanup: 23 → 6 files. Archived 14 (PA drafts, proposals, trackers, CSVs, old design artifacts). Deleted 3 duplicates. Remaining: conference talk files, PA workspace, publish-package.
+
+### 4:26 PM — Pattern cross-reference fixes (subagent)
+
+Subagent fixed all 14 broken links across 6 pattern files. All targets verified. Naming drift from renumbering — straightforward link updates plus path prefix corrections for ADR and methodology refs.
+
+### 5:00 PM — Session Wrap
+
+All work committed and pushed to `pa/first-session` branch.
+
+---
+
+## Session Summary
+
+**Duration**: 6:34 AM – 5:00 PM (with account transition gap 6:34-8:32 AM)
+
+**Completed**:
+
+*Website (piper-morgan-website)*:
+- fetch-blog-posts.js: blog-first dedup fix (prevention + cleanup)
+- 4 missing posts added to blog-metadata.csv, all 275 posts locally hosted
+- Bulk PNG→webp image conversion + broken ref fix (213 refs)
+- Date normalization (275 posts to ISO 8601, sort functions hardened)
+- Medium demoted: promo section → credit line, "View original" → footer note
+- 15-episode system replaced with 5-era model (all 275 posts assigned)
+- publish-to-blog skill v0.4 (direct mode, CSV column fix)
+
+*Product repo (piper-morgan-product)*:
+- Mar 26 omnibus corrected (MINIMAL → STANDARD, added Comms 13-piece session)
+- Weekly docs audit #937 completed and closed
+- 14 broken pattern cross-references fixed
+- New skill: cleanup-dev-active v1.0
+- First dev/active cleanup: 23 → 6 files
+- PA introduction memo processed
+- Session log maintained throughout
+
+**Issues closed**: #937
+**Skills created**: cleanup-dev-active v1.0
+**Skills updated**: publish-to-blog v0.4
+
+**Carry forward**:
+- Merge pa/first-session → main and push to origin
+- Weekly Ship on blog (deferred)
+- GitHub label taxonomy review
+- Sprint metadata visibility for agents
+- Draft preview / automation flow discussion

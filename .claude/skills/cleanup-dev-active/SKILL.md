@@ -99,6 +99,8 @@ These types of files belong in dev/active/:
 
 ## What to Archive (Common Accumulations)
 
+**Note**: PM's browser downloads to this folder, so files from other projects (Klatch, etc.) or duplicate downloads with `(1)`, `(2)` suffixes will periodically appear. These are not Piper Morgan work products — archive or delete after confirming with PM.
+
 These commonly pile up and should be moved:
 - Superseded briefing drafts (v0.1 when v0.2 is in docs/briefing/)
 - Onboarding prompts after agent launch is complete
