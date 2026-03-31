@@ -70,7 +70,27 @@ if [ -f "$BRIEFING" ]; then
     fi
 fi
 
-# ─── 4. Role Identity ────────────────────────────────────────────────────────
+# ─── 4. Cross-Pollination Brief ──────────────────────────────────────────────
+XPOLL_BRIEF="$PROJECT_ROOT/docs/briefs/cross-pollination/current.md"
+
+if [ -f "$XPOLL_BRIEF" ]; then
+    NOW_EPOCH=$(date +%s)
+    if stat -f %m "$XPOLL_BRIEF" >/dev/null 2>&1; then
+        BRIEF_EPOCH=$(stat -f %m "$XPOLL_BRIEF")
+    else
+        BRIEF_EPOCH=$(stat -c %Y "$XPOLL_BRIEF")
+    fi
+    BRIEF_AGE=$(( (NOW_EPOCH - BRIEF_EPOCH) / 86400 ))
+    if [ "$BRIEF_AGE" -gt 2 ]; then
+        output+="XPOLL BRIEF: STALE ($BRIEF_AGE days)"$'\n'
+    else
+        output+="XPOLL BRIEF: current.md available"$'\n'
+    fi
+else
+    output+="XPOLL BRIEF: not found"$'\n'
+fi
+
+# ─── 5. Role Identity ────────────────────────────────────────────────────────
 # Default role for this project
 output+="ROLE: Lead Developer (see CLAUDE.md)"$'\n'
 
