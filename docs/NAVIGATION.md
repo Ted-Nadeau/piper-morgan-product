@@ -43,6 +43,11 @@ Each essential briefing includes triggers for loading detailed documentation as 
 - **[Issue Tracking](internal/planning/current/issues.csv)** - Current PM issue status
 - **[Roadmap](internal/planning/roadmap/)** - Strategic planning and milestones
 - **[Backlog Management](internal/planning/current/)** - Priority management and organization
+- **Product Design & Strategy** (`internal/design/`):
+  - [Piper Morgan by Analogy](internal/design/piper-morgan-by-analogy.md) — Positioning: same domain as Jira, different paradigm (Colleague vs Tool)
+  - [Piper Morgan PR/FAQ](internal/design/piper-morgan-prfaq.md) — Working Backwards product narrative (press release + FAQ)
+  - [Questions for Technical System Architect](internal/design/questions-for-technical-system-architect.md) — Architecture review discussion guide
+- **[Suggestions](../suggestions/)** - Pre-issue ideas and change requests (promote to issues when triaged)
 
 ### 🏗️ Architects
 

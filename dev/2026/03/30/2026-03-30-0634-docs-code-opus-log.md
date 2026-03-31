@@ -143,15 +143,23 @@ First cleanup: 23 → 6 files. Archived 14 (PA drafts, proposals, trackers, CSVs
 
 Subagent fixed all 14 broken links across 6 pattern files. All targets verified. Naming drift from renumbering — straightforward link updates plus path prefix corrections for ADR and methodology refs.
 
-### 5:00 PM — Session Wrap
+### 5:00 PM — Interim Wrap
 
-All work committed and pushed to `pa/first-session` branch.
+All work committed and pushed to `pa/first-session` branch. PM reviewing decisions.
+
+### 5:48 PM — CSV date/category corrections
+
+PM cross-referenced Medium publication log with Comms. Found 4 date errors and 2 category swaps in the 4 posts I added earlier (I guessed from RSS instead of checking actual pub dates). Fixed in website CSV, synced, pushed.
+
+### 7:45 PM — Session Close
+
+PM confirmed: all Piper Morgan agents now migrated to new infrastructure (xian@designinproduct.com account, local device faoilean). `pa/first-session` merged to main and pushed to origin.
 
 ---
 
 ## Session Summary
 
-**Duration**: 6:34 AM – 5:00 PM (with account transition gap 6:34-8:32 AM)
+**Duration**: 6:34 AM – 7:45 PM (with account transition gap 6:34-8:32 AM)
 
 **Completed**:
 
@@ -177,8 +185,9 @@ All work committed and pushed to `pa/first-session` branch.
 **Skills created**: cleanup-dev-active v1.0
 **Skills updated**: publish-to-blog v0.4
 
+**Milestone**: All Piper Morgan agents migrated to new infrastructure (xian@designinproduct.com, local device faoilean) as of 7:45 PM.
+
 **Carry forward**:
-- Merge pa/first-session → main and push to origin
 - Weekly Ship on blog (deferred)
 - GitHub label taxonomy review
 - Sprint metadata visibility for agents
