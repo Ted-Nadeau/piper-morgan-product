@@ -1,0 +1,11 @@
+Title	URL	Assignees	Status	Milestone	Sprint	Parent issue	Sub-issues progress
+CONV-LEARN-PREF: Conversational Personality Preference Gathering	https://github.com/mediajunkie/piper-morgan-product/issues/248	mediajunkie	Done	MVP	M3 (MVP Skills)
+INFR-CONFIG-PERF: Establish performance benchmarking framework for configuration system	https://github.com/mediajunkie/piper-morgan-product/issues/143	mediajunkie	Done	MVP	M3 (MVP Skills)	https://github.com/mediajunkie/piper-morgan-product/issues/136
+INFR-AGENT: Multi-Agent Coordinator Operational Deployment	https://github.com/mediajunkie/piper-morgan-product/issues/118	mediajunkie	Product Backlog	MVP	M3 (MVP Skills)
+CONV-MCP-STANDUP: Standup Workflow Skill	https://github.com/mediajunkie/piper-morgan-product/issues/303	mediajunkie	Done	MVP	M3 (MVP Skills)		1 / 1 (100%)
+CONV-UX-DESIGN: Unified Design System & Token Migration	https://github.com/mediajunkie/piper-morgan-product/issues/312	mediajunkie	Product Backlog	MVP	M3 (MVP Skills)
+CONV-MCP-LIBRARY: Core Skills Library Implementation	https://github.com/mediajunkie/piper-morgan-product/issues/315	mediajunkie	Product Backlog	MVP	M3 (MVP Skills)
+CANONICAL-#9: Enhance priority queries with real priority data	https://github.com/mediajunkie/piper-morgan-product/issues/496	mediajunkie	Product Backlog	MVP	M3 (MVP Skills)
+CANONICAL-#10: Enhance focus guidance with calendar + projects + priorities synthesis	https://github.com/mediajunkie/piper-morgan-product/issues/497	mediajunkie	Product Backlog	MVP	M3 (MVP Skills)
+MUX-LIFECYCLE-UI-A: Morning Standup lifecycle indicator integration	https://github.com/mediajunkie/piper-morgan-product/issues/704	mediajunkie	Product Backlog	MVP	M3 (MVP Skills)	https://github.com/mediajunkie/piper-morgan-product/issues/703
+MUX-FEATURES-VIEW: Create Features View with Lifecycle	https://github.com/mediajunkie/piper-morgan-product/issues/716	mediajunkie	Product Backlog	Fast Follow	M3 (MVP Skills)

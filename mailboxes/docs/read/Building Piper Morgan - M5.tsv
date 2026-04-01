@@ -1,0 +1,12 @@
+Title	URL	Assignees	Status	Milestone	Sprint	Parent issue	Sub-issues progress
+FLY-VERIFY: Implement Three-Tier Verification Pyramid	https://github.com/mediajunkie/piper-morgan-product/issues/146	mediajunkie	Product Backlog	MVP	M5 (MVP Polish)
+FLY-VERIFY-HAND: Implement Mandatory Handoff Protocol with Verification	https://github.com/mediajunkie/piper-morgan-product/issues/147	mediajunkie	Product Backlog	MVP	M5 (MVP Polish)
+FLY-VERIFY-CONFIG: Extract Configuration Layer from Mandatory Handoff Protocol	https://github.com/mediajunkie/piper-morgan-product/issues/148	mediajunkie	Product Backlog	MVP	M5 (MVP Polish)
+CONV-FEAT-PROJ: Project Portfolio Awareness	https://github.com/mediajunkie/piper-morgan-product/issues/100	mediajunkie	Product Backlog	MVP	M5 (MVP Polish)
+CONV-FEAT-TIME:Temporal Context System	https://github.com/mediajunkie/piper-morgan-product/issues/101	mediajunkie	Product Backlog	MVP	M5 (MVP Polish)
+CONV-FEAT-PRIOR: Priority Calculation Engine	https://github.com/mediajunkie/piper-morgan-product/issues/103	mediajunkie	Product Backlog	MVP	M5 (MVP Polish)
+CONV-UX-SLACK: Interactive Slack Standup Features	https://github.com/mediajunkie/piper-morgan-product/issues/244	mediajunkie	Product Backlog	MVP	M5 (MVP Polish)
+RESEARCH-TOKENS-THINKING: Investigate Thinking Token Optimization for Chain of Drafts	https://github.com/mediajunkie/piper-morgan-product/issues/272	mediajunkie	Product Backlog	MVP	M5 (MVP Polish)
+INFRA-MIGRATION-ROLLBACK - Comprehensive Database Migration Rollback Testing	https://github.com/mediajunkie/piper-morgan-product/issues/338	mediajunkie	Product Backlog	MVP	M5 (MVP Polish)
+CORE-UX-AUTH-PHASE2: Registration, Password Reset, and Security Polish	https://github.com/mediajunkie/piper-morgan-product/issues/441	mediajunkie	Product Backlog	MVP	M5 (MVP Polish)
+FLY-COORD-TREES: Git Worktrees for Multi-Agent Coordination	https://github.com/mediajunkie/piper-morgan-product/issues/463	mediajunkie	Product Backlog	MVP	M5 (MVP Polish)

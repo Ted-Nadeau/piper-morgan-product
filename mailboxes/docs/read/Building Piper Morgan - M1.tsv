@@ -1,0 +1,31 @@
+Title	URL	Assignees	Status	Milestone	Sprint	Parent issue	Sub-issues progress
+SEC-ENCRYPT-ATREST: Implement Encryption at Rest for Sensitive Data	https://github.com/mediajunkie/piper-morgan-product/issues/358	mediajunkie	Blocked	MVP	M1 (MVP Foundation)
+BUG-TEST-ASYNC: AsyncSessionFactory causes event loop conflicts in performance tests	https://github.com/mediajunkie/piper-morgan-product/issues/247	mediajunkie	Product Backlog	MVP	M1 (MVP Foundation)	https://github.com/mediajunkie/piper-morgan-product/issues/227
+TEST-QUALITY: Test Reliability for Production Confidence	https://github.com/mediajunkie/piper-morgan-product/issues/190	mediajunkie	Product Backlog	MVP	M1 (MVP Foundation)	https://github.com/mediajunkie/piper-morgan-product/issues/189
+TEST-SMOKE-E2E: Create core user journey smoke tests	https://github.com/mediajunkie/piper-morgan-product/issues/352	mediajunkie	Product Backlog	MVP	M1 (MVP Foundation)	https://github.com/mediajunkie/piper-morgan-product/issues/341
+CONV-MCP-MEASURE: Token Measurement & Baseline Infrastructure	https://github.com/mediajunkie/piper-morgan-product/issues/306	mediajunkie	Done	MVP	M1 (MVP Foundation)
+BUG-HEALTH-UTC: Health Endpoint Should Return UTC Timestamps with Timezone Marker	https://github.com/mediajunkie/piper-morgan-product/issues/245	mediajunkie	Done	MVP	M1 (MVP Foundation)
+BUG-TEST-CONFIG:  Fix test_error_handling_with_invalid_config	https://github.com/mediajunkie/piper-morgan-product/issues/239	mediajunkie	Done	MVP	M1 (MVP Foundation)
+UX-POLISH: Polish Sprint - Week 1 & 2 Implementation (7 Features)	https://github.com/mediajunkie/piper-morgan-product/issues/316	mediajunkie	Done	MVP	M1 (MVP Foundation)
+MVP-UX-QUICK: 5 Quick Wins	https://github.com/mediajunkie/piper-morgan-product/issues/301	mediajunkie	Done	MVP	M1 (MVP Foundation)
+TEST-SMOKE-BUG-BUS: Smoke test collection fails with ChromaDB/numpy Bus error on macOS	https://github.com/mediajunkie/piper-morgan-product/issues/275	mediajunkie	Done	MVP	M1 (MVP Foundation)	https://github.com/mediajunkie/piper-morgan-product/issues/273
+INFR-DATA: Repository Pattern & Dependency Cleanup	https://github.com/mediajunkie/piper-morgan-product/issues/308	mediajunkie	Done	MVP	M1 (MVP Foundation)
+CORE-CONFIG-PIPER: PIPER.md Lightweight Configuration System	https://github.com/mediajunkie/piper-morgan-product/issues/305	mediajunkie	Done	MVP	M1 (MVP Foundation)
+CONV-UX-NAV: Global Navigation & Wayfinding	https://github.com/mediajunkie/piper-morgan-product/issues/307	mediajunkie	Done	MVP	M1 (MVP Foundation)
+UX-TRANCHE3 - Production-Ready Polish & Accessibility Infrastructure	https://github.com/mediajunkie/piper-morgan-product/issues/317	mediajunkie	Done	MVP	M1 (MVP Foundation)
+DOCUMENTATION-STORED-PROCS: Document Application-Layer Stored Procedures Pattern (ADR)	https://github.com/mediajunkie/piper-morgan-product/issues/332	mediajunkie	Done	MVP	M1 (MVP Foundation)
+CORE-LEARN-PHASE-3: Implement Roadmap Phase 3 Learning Infrastructure	https://github.com/mediajunkie/piper-morgan-product/issues/372	mediajunkie	Product Backlog	MVP	M1 (MVP Foundation)
+QA: Manual testing for preference detection system	https://github.com/mediajunkie/piper-morgan-product/issues/375	mediajunkie	Product Backlog	MVP	M1 (MVP Foundation)
+INFR-MAINT-REFACTOR: Infrastructure maintenance refactor (as needed)	https://github.com/mediajunkie/piper-morgan-product/issues/385	mediajunkie	Done	MVP	M1 (MVP Foundation)
+EPIC: SEC-RBAC Phases 4-5 - Projects and Files Ownership	https://github.com/mediajunkie/piper-morgan-product/issues/470	mediajunkie	Product Backlog	MVP	M1 (MVP Foundation)
+EPIC: Slack Integration TDD Gaps - OAuth and Spatial Methods	https://github.com/mediajunkie/piper-morgan-product/issues/472	mediajunkie	Product Backlog	MVP	M1 (MVP Foundation)
+SEC-KMS-INTEGRATION: Migrate from environment variable to AWS KMS	https://github.com/mediajunkie/piper-morgan-product/issues/482	mediajunkie	Product Backlog	MVP	M1 (MVP Foundation)
+SEC: Implement actual token revocation on disconnect	https://github.com/mediajunkie/piper-morgan-product/issues/542	mediajunkie	Product Backlog	MVP	M1 (MVP Foundation)
+ARCH: WebSocket Infrastructure for Real-Time Communication	https://github.com/mediajunkie/piper-morgan-product/issues/557	mediajunkie	Product Backlog	MVP	M1 (MVP Foundation)
+BUG-AUTH: settings_integrations using hardcoded 'system' user_id	https://github.com/mediajunkie/piper-morgan-product/issues/696	mediajunkie	Done	MVP	M1 (MVP Foundation)
+BUG-AUTH: intent_service using hardcoded 'default' user_id	https://github.com/mediajunkie/piper-morgan-product/issues/697	mediajunkie	Done	MVP	M1 (MVP Foundation)
+MUX-LIFECYCLE-UI-B: Feature.to_dict() lifecycle wiring	https://github.com/mediajunkie/piper-morgan-product/issues/705	mediajunkie	Product Backlog	MVP	M1 (MVP Foundation)	https://github.com/mediajunkie/piper-morgan-product/issues/703
+MUX-OBJECTS-VIEWS: Objects & Views Discovery Epic	https://github.com/mediajunkie/piper-morgan-product/issues/706	mediajunkie	Product Backlog	MVP	M1 (MVP Foundation)
+MUX-PRODUCT-MODELING: Define Product Concept and Relationships	https://github.com/mediajunkie/piper-morgan-product/issues/717	mediajunkie	Product Backlog	MVP	M1 (MVP Foundation)
+TEST-INFRA: Enable Attention System Time Simulation Tests (3 tests)	https://github.com/mediajunkie/piper-morgan-product/issues/738	mediajunkie	Product Backlog	MVP	M1 (MVP Foundation)
+TEST-FIX: Fix test_response_handler_observability Complex Mocking	https://github.com/mediajunkie/piper-morgan-product/issues/739	mediajunkie	Product Backlog	MVP	M1 (MVP Foundation)

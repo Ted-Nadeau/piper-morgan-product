@@ -1,0 +1,12 @@
+Title	URL	Assignees	Status	Milestone	Sprint	Parent issue	Sub-issues progress
+MUX-CORE-PORTFOLIO-ACROSS: Cross-channel portfolio sharing	https://github.com/mediajunkie/piper-morgan-product/issues/568	mediajunkie	Product Backlog	MVP	M6 - MVP Future	https://github.com/mediajunkie/piper-morgan-product/issues/490
+TECH-DEBT: Add slack_workspaces table for proper team_id → user_id mapping	https://github.com/mediajunkie/piper-morgan-product/issues/760	mediajunkie	Product Backlog	MVP	M6 - MVP Future
+MUX-STANDUP-CONVERSE: LLM-based preference extraction	https://github.com/mediajunkie/piper-morgan-product/issues/558	mediajunkie	Product Backlog	MVP	M6 - MVP Future	https://github.com/mediajunkie/piper-morgan-product/issues/242
+CONV-FEAT-STRAT: Strategic Recommendations	https://github.com/mediajunkie/piper-morgan-product/issues/106	mediajunkie	Product Backlog	MVP	M6 - MVP Future
+CONV-FEAT-ALLOC: Time Allocation Analysis	https://github.com/mediajunkie/piper-morgan-product/issues/104	mediajunkie	Product Backlog	MVP	M6 - MVP Future
+CORE-ETHICS-TUNE: Post-Alpha Ethics Optimization	https://github.com/mediajunkie/piper-morgan-product/issues/241	mediajunkie	Product Backlog	MVP	M6 - MVP Future	https://github.com/mediajunkie/piper-morgan-product/issues/197
+CORE-KEYS-ROTATION-WORKFLOW: Apply Rotation Reminders to Key Management Workflows	https://github.com/mediajunkie/piper-morgan-product/issues/270	mediajunkie	Done	MVP	M6 - MVP Future
+Ted push 01 to ted-branch-02	https://github.com/mediajunkie/piper-morgan-product/pull/450	mediajunkie	Done	MVP	M6 - MVP Future
+FLY-COORD-TREES-2: Phase 3-5 Python Integration (Future)	https://github.com/mediajunkie/piper-morgan-product/issues/465	mediajunkie	Product Backlog	MVP	M6 - MVP Future
+TECH-DEBT: Support alternate issue providers (Jira, Linear, Notion)	https://github.com/mediajunkie/piper-morgan-product/issues/546	mediajunkie	Product Backlog	MVP	M6 - MVP Future
+COMPOSTING-HYBRID-TRIGGER: Add time-based forcing per unihemispheric dreaming guidance	https://github.com/mediajunkie/piper-morgan-product/issues/669	mediajunkie	Product Backlog	MVP	M6 - MVP Future	https://github.com/mediajunkie/piper-morgan-product/issues/436
