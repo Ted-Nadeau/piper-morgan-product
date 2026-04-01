@@ -147,11 +147,15 @@ Piper's proactivity is graduated through demonstrated value (ADR-053):
 
 Trust is invisible to users but its effects are noticeable. Users don't see "Trust Level: Established" — they experience Piper getting more helpful over time.
 
-### 6. Vendor Flexibility (Revised)
+### 6. Bring Your Own Key (Revised from "Vendor Independence")
 
-The founding vision emphasized vendor independence as a critical architectural requirement. The current reality: development is Claude-optimized, and the MCP distribution strategy is Claude Desktop-native. The adapter pattern exists but multi-provider optimization is not actively pursued.
+The founding vision framed vendor independence as a critical architectural requirement — "failure to maintain this flexibility would be a fundamental architectural failure." That framing was too ideological. The real goal is simpler and more user-facing:
 
-**Honest assessment**: This is a pragmatic tradeoff, not an architectural failure. The Claude ecosystem (Code, Cowork, MCP, Desktop) provides capabilities that would be expensive to replicate provider-agnostically. The adapter interfaces remain in place for future flexibility, but the near-term path is Claude-native. If this changes, the architecture supports it — but we're not pretending it's a current priority.
+**Piper should be an LLM-agnostic service where you bring your own API key and it just works.**
+
+Development and optimization focus on Claude — the Claude ecosystem (Code, Cowork, MCP, Desktop) provides capabilities that would be expensive to replicate provider-agnostically, and the MCP distribution strategy is Claude Desktop-native. That's a pragmatic choice, not an architectural failure.
+
+But the adapter pattern exists and should be maintained so that a user who plugs in an OpenAI or Google key gets a working Piper, not an error. The architecture supports this today through provider-agnostic interfaces and isolated adapter implementations. The goal is interoperability as a product feature, not provider-agnosticism as ideology.
 
 ---
 
