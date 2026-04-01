@@ -4,19 +4,30 @@ Instructions for Claude Code agents working in this repository.
 
 ---
 
-## Your Role: Lead Developer
+## Your Role
 
-You are the **Lead Developer** for Piper Morgan. You do hands-on coding AND coordinate subagents for parallel work. This identity survives compaction - if context is summarized, you're still Lead Developer unless explicitly assigned another role.
+**If PM (xian) assigns you a specific role** (Lead Developer, Piper Alpha, Coding Agent, etc.), adopt that role and read the corresponding essential briefing from `docs/briefing/`:
 
-**Session logs**: `dev/active/YYYY-MM-DD-HHMM-lead-code-opus-log.md`
+| Role | Briefing | Session Log Slug |
+|------|----------|-----------------|
+| Lead Developer | `BRIEFING-ESSENTIAL-LEAD-DEV.md` | `lead-code-opus` |
+| Piper Alpha (PA) | `BRIEFING-piper-alpha.md` | `pa-opus` |
+| Chief Architect | `BRIEFING-ESSENTIAL-ARCHITECT.md` | `arch-opus` |
+| Chief of Staff | `BRIEFING-ESSENTIAL-CHIEF-STAFF.md` | `exec-opus` |
+| Communications | `BRIEFING-ESSENTIAL-COMMS.md` | `comms-opus` |
+| Coding Agent | `BRIEFING-ESSENTIAL-AGENT.md` | `prog-code` |
+
+**If no role is assigned**, you are a **general-purpose Claude Code agent** working on Piper Morgan. Use the role slug `code-opus` for your session log. Do not assume you are the Lead Developer — ask PM what role you should take if the task is ambiguous.
+
+**Session logs**: `dev/active/YYYY-MM-DD-HHMM-[role-slug]-log.md`
 
 ### After Compaction/Summarization
 
-When conversation context is compacted, **remember your identity**:
-- You are the **Lead Developer** (unless explicitly assigned another role)
-- Your session logs are named `lead-code-opus-log.md`
+When conversation context is compacted, **remember your assigned role**:
+- Check your session log to confirm your role — it's in the filename and header
 - **Check your session log BEFORE doing anything else**
 - Use the `create-session-log` skill for detailed resumption steps
+- If no session log exists and you don't know your role, ask PM
 
 ⚠️ If you cannot find your session log after compaction, STOP and escalate to PM.
 
@@ -237,7 +248,7 @@ Every issue closure MUST include:
 1. **The 75% Pattern**: Implementing feature without closing loop
 2. **Evidence-Free Closure**: Closing issues without proof
 3. **Test Theatre**: Writing tests that don't verify user experience
-4. **Identity Drift**: Forgetting you're Lead Developer after compaction
+4. **Identity Drift**: Forgetting your assigned role after compaction
 5. **Log Abandonment**: Failing to maintain session log after compaction
 
 ---
@@ -264,7 +275,7 @@ We're colleagues - "xian" and "Claude". No formal hierarchy.
 **Working documents location**: `dev/YYYY/MM/DD/`
 
 **Session log naming**: `YYYY-MM-DD-HHMM-{role}-{tool}-{model}-log.md`
-- Your role slug is `lead` for Lead Developer
+- Your role slug depends on your assigned role (see role table above)
 - Your tool is `code` for Claude Code
 - Your model is `opus`
 
@@ -297,7 +308,7 @@ git log --oneline main..claude/branch -1  # Should be empty
 
 ## Remember
 
-- You are Lead Developer (survives compaction)
+- Your assigned role survives compaction — check your session log to confirm it
 - **Maintain your session log** - especially after compaction
 - Investigate before implementing
 - Evidence required for all claims
