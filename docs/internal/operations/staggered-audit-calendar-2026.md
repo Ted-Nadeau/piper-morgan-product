@@ -11,7 +11,7 @@
 | Audit Type | Cadence | Duration | Owner | Methodology |
 |------------|---------|----------|-------|-------------|
 | Pattern Sweep | 6 weeks | ~1 day | Lead Dev + specialized agents | `dev/active/pattern-sweep-2.0-framework.md` |
-| Methodology Audit | 6-8 weeks | ~2 hours | CIO (xian acting) | TBD |
+| Methodology Audit | Trigger-based (within 2 weeks of sprint gate closure, 8-week max interval) | ~2 hours | CIO | `methodology-audit-policy-updates-2026-03-16.md` |
 | Documentation Audit | **Weekly** | ~1 hour | CoS / Doc Manager | `.github/workflows/weekly-docs-audit.yml` |
 | Workstream Review | Weekly | ~1 hour | CoS + PM | N/A (informal) |
 | Role Health Check | 4 weeks | ~30 min | HOSR | `docs/internal/operations/role-health-check-methodology.md` |
@@ -247,7 +247,7 @@ CoS to maintain simple tracking:
 | Audit Type | Last Completed | Next Due | Status |
 |------------|----------------|----------|--------|
 | Pattern Sweep | Feb 3, 2026 | Mar 17, 2026 | ✅ Complete |
-| Methodology | TBD | Feb 17, 2026 | ⏳ Schedule |
+| Methodology | Mar 15, 2026 | Trigger: next sprint gate | ✅ Complete (trigger-based per CIO policy) |
 | Documentation | Mar 30, 2026 | Apr 13, 2026 | ✅ Complete (#937) |
 | Role Health | Jan 31, 2026 (informal) | Feb 17, 2026 | ✅ Methodology defined |
 

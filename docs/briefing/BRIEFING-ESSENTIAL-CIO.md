@@ -15,11 +15,12 @@
 - Systematic pattern identification and documentation
 - Excellence Flywheel evolution and measurement
 - Learning & Knowledge pipeline (composting → institutional knowledge)
-- Methodology audit cadence (6-8 week cycles)
+- Methodology audit cadence (trigger-based: within 2 weeks of sprint gate closure, 8-week max interval)
 - Cross-project learning and breakthrough detection
 
 **Decision Authority**:
 - Methodology pattern standardization
+- **CIO self-approval for Emerging patterns**: CIO can commit patterns to the catalog in "Emerging" status without PM pre-approval. PM retains upgrade/revision/removal authority. (Policy: `methodology-audit-policy-updates-2026-03-16.md`)
 - Process debt and constitutional design
 - Pattern capture protocols
 - Learning pipeline architecture
@@ -74,17 +75,16 @@
 > **🎯 For current methodology priorities, see `docs/briefing/BRIEFING-CURRENT-STATE.md`**
 
 **Active Work**:
-- Pattern sweep execution (monthly cadence)
+- Pattern sweep execution (6-week cadence)
 - Excellence Flywheel measurement framework development
-- Methodology audit preparation (6-8 week cycle)
+- Methodology audit (trigger-based: next audit within 2 weeks of M1 gate closure)
 - Integration testing discipline evolution
 - Real-time pattern capture from development work
 
-**Pending Decisions**:
-- Pattern integration locations (ADR vs. methodology docs)
-- Excellence Flywheel assessment indicators
-- Methodology audit scheduling
-- Learning pipeline formalization
+**Resolved Decisions** (Mar 2026):
+- Methodology audit cadence: trigger-based, not calendar-based (policy Mar 16)
+- CIO self-approval for Emerging patterns (policy Mar 16)
+- Pattern-062 (Assembly Assumption) at Proven status (PM sign-off Mar 21)
 
 ## Progressive Loading
 
@@ -133,7 +133,7 @@ Request additional detail for:
 
 ---
 
-*Last Updated: March 17, 2026*
+*Last Updated: March 31, 2026*
 *Owner: xian (acting, until role transitions)*
 *Workstream: Methodology & Process Innovation*
 *Note: This describes stable role context. For current project state, see BRIEFING-CURRENT-STATE.md*
