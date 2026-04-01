@@ -98,5 +98,5 @@ external/ted-multichat/
 .serena/project.yml
 .serena/memories/working-docs/
 
-# Agent mailboxes — track active inboxes/sent, ignore archived reads
-mailboxes/*/read/
+# Agent mailboxes — fully tracked for cross-machine sync
+# (Previously ignored read/ but this prevented syncing mail state across devices)
