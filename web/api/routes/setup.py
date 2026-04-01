@@ -9,6 +9,7 @@ Issue #390: ALPHA-SETUP-UI Phase 1.1 - Backend API
 
 import asyncio
 import os
+import subprocess
 import uuid
 from datetime import datetime, timezone
 from typing import Dict, Optional
@@ -50,6 +51,9 @@ class SystemCheckResponse(BaseModel):
     redis_ready: bool = Field(description="Redis accessible on port 6379")
     chromadb_ready: bool = Field(description="ChromaDB accessible on port 8000")
     temporal_ready: bool = Field(description="Temporal accessible on port 7233 (optional)")
+    database_migrated: bool = Field(
+        default=False, description="Database schema is up to date (migrations applied)"
+    )
     all_required_ready: bool = Field(description="All required services ready (excludes Temporal)")
     message: str = Field(description="Human-readable status message")
 
@@ -259,6 +263,58 @@ async def get_setup_status():
         )
 
 
+async def ensure_database_migrated() -> bool:
+    """
+    Check for pending migrations and auto-apply them if needed.
+
+    This ensures the web-based setup wizard works on a fresh database
+    without requiring the user to manually run alembic. Returns True
+    if the database schema is up to date after this call.
+    """
+    try:
+        from services.infrastructure.migration_checker import check_pending_migrations
+
+        pending = await check_pending_migrations()
+        if not pending:
+            logger.debug("database_migration_check", status="up_to_date")
+            return True
+
+        logger.info(
+            "database_migrations_pending",
+            count=len(pending),
+            action="auto_applying",
+        )
+
+        # Run alembic upgrade head as a subprocess
+        # This is the same approach used by scripts/setup_wizard.py
+        project_root = os.path.dirname(
+            os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        )
+        result = await asyncio.to_thread(
+            subprocess.run,
+            ["python", "-m", "alembic", "upgrade", "head"],
+            capture_output=True,
+            text=True,
+            timeout=60,
+            cwd=project_root,
+        )
+
+        if result.returncode == 0:
+            logger.info("database_migrations_applied", output=result.stdout.strip())
+            return True
+        else:
+            logger.error(
+                "database_migration_failed",
+                returncode=result.returncode,
+                stderr=result.stderr.strip(),
+            )
+            return False
+
+    except Exception as e:
+        logger.error("database_migration_error", error=str(e))
+        return False
+
+
 @router.post("/check-system", response_model=SystemCheckResponse)
 async def check_system():
     """
@@ -284,12 +340,20 @@ async def check_system():
             return_exceptions=False,
         )
 
+        # If Postgres is reachable, auto-apply any pending migrations
+        # so the schema is ready before the user reaches account creation
+        db_migrated = False
+        if postgres_ok:
+            db_migrated = await ensure_database_migrated()
+
         # All required services must be ready (Temporal is optional)
         all_required = docker_ok and postgres_ok and redis_ok and chromadb_ok
 
         # Build status message
         if all_required:
-            if temporal_ok:
+            if not db_migrated:
+                message = "Services ready but database migration failed — check logs"
+            elif temporal_ok:
                 message = "All services ready"
             else:
                 message = "Core services ready (Temporal optional)"
@@ -311,6 +375,7 @@ async def check_system():
             redis_ready=redis_ok,
             chromadb_ready=chromadb_ok,
             temporal_ready=temporal_ok,
+            database_migrated=db_migrated,
             all_required_ready=all_required,
             message=message,
         )
