@@ -10,7 +10,7 @@ Canonical slug-to-role mapping. Used by `/deliver-mail` skill for routing valida
 | ppm | Principal Product Manager | web | Sprint planning, roadmap |
 | comms | Communications Chief | web | Blog, narrative, editorial calendar |
 | cio | Chief Innovation Officer | web | Methodology, patterns |
-| hosr | Head of Sapient Resources | web | Agent welfare, human network |
+| host | Head of Sapient Trust | web | Agent welfare, human network |
 | exec | Chief of Staff | web | Executive office, cross-workstream synthesis, Weekly Ship drafts |
 | docs | Documentation Management | code | Omnibus logs, mailbox ops, blog pipeline |
 | pa | Piper Alpha | code | PM assistant, standup synthesis, meeting prep, document review |

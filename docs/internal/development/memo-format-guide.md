@@ -10,7 +10,7 @@ memo-YYYY-MM-DD-from-{sender}-to-{recipient}[-cc-{slug1}[-{slug2}...]].md
 
 **Examples**:
 - `memo-2026-03-19-from-lead-to-arch-cc-cxo-ppm.md`
-- `memo-2026-03-19-from-docs-to-hosr.md`
+- `memo-2026-03-19-from-docs-to-host.md`
 - `memo-2026-03-19-from-arch-to-docs-cc-lead.md`
 
 **Rules**:

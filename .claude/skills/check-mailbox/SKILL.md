@@ -26,7 +26,7 @@ Use this skill:
 ls mailboxes/{your-role-slug}/inbox/
 ```
 
-**Role slugs**: `arch`, `cio`, `lead`, `comms`, `ppm`, `cxo`, `hosr`, `docs`, `exec`, `spec`
+**Role slugs**: `arch`, `cio`, `lead`, `comms`, `ppm`, `cxo`, `host`, `docs`, `exec`, `spec`
 
 **If empty**: Note "Mailbox empty" in session log and proceed with assigned work.
 
@@ -145,4 +145,4 @@ After checking mailbox:
 
 - **Mailbox system docs**: `mailboxes/README.md`
 - **Message format**: See README for full header spec
-- **Role slugs**: `arch`, `cio`, `ceo`, `lead`, `comms`, `ppm`, `cxo`, `hosr`, `exec`, `spec`, `docs`
+- **Role slugs**: `arch`, `cio`, `ceo`, `lead`, `comms`, `ppm`, `cxo`, `host`, `exec`, `spec`, `docs`

@@ -43,7 +43,7 @@ PM visits each of the 6 leadership roles and requests a workstream review memo f
 | Chief Experience Officer | cxo | Design decisions, UX quality |
 | Chief Architect | arch | Engineering, ADRs, infrastructure |
 | Chief Innovation Officer | cio | Methodology, patterns, innovation |
-| Head of Sapient Resources | hosr | Human network, agent welfare, AX |
+| Head of Sapient Trust | host | Human network, agent welfare, AX |
 | Communications Chief | comms | Publications, editorial calendar |
 
 PM provides the coverage window dates explicitly (e.g., "Fri Mar 13 to Thu Mar 19") and asks each role to read the relevant omnibus logs before writing.

@@ -99,7 +99,7 @@ For each log, extract:
 - **Documentation Management** or **docs-code** — omnibus, mailbox, blog pipeline
 - **Chief Architect** — ADRs, architecture
 - **Chief of Staff** — cross-workstream synthesis
-- **HOSR** — agent welfare, human network
+- **HOST** — agent welfare, human network
 - **Communications Chief** — blog, narrative
 - **CXO** — UX testing, Colleague Test
 - **CIO** — methodology, patterns

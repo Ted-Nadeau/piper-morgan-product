@@ -63,7 +63,7 @@ Wait for PM confirmation. If PM says no new downloads, skip to Phase 2.
 
 **Step 1**: Read `mailboxes/DIRECTORY.md` to identify web-environment roles.
 
-**Step 2**: For each web-environment role (arch, cxo, ppm, comms, cio, hosr, cos, exec), check their `inbox/` for files that are NOT in their `inbox/MANIFEST.md` yet (undelivered) OR files that appear in the manifest but haven't been confirmed delivered to the web agent.
+**Step 2**: For each web-environment role (arch, cxo, ppm, comms, cio, host, cos, exec), check their `inbox/` for files that are NOT in their `inbox/MANIFEST.md` yet (undelivered) OR files that appear in the manifest but haven't been confirmed delivered to the web agent.
 
 Actually, simplify: scan each web role's `inbox/` for any `.md` files other than `MANIFEST.md`. These are pending items. For each:
 

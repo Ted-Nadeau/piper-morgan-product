@@ -98,7 +98,7 @@ ls dev/active/*$(date +%Y-%m-%d)*{role}*log.md
 | Programmer (subagent) | `prog` | sonnet/haiku |
 | Chief Innovation Officer | `cio` | opus |
 | Chief Experience Officer | `cxo` | opus |
-| Head of Sapient Resources | `hosr` | opus |
+| Head of Sapient Trust | `host` | opus |
 | Product & Project Manager | `ppm` | opus |
 | Executive Summary Agent | `exec` | opus/sonnet |
 | Spec Writer | `spec` | opus |
