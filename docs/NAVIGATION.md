@@ -23,7 +23,7 @@
 - [CXO](briefing/BRIEFING-ESSENTIAL-CXO.md) - 2.5K tokens
 - [CIO](briefing/BRIEFING-ESSENTIAL-CIO.md) - 2.5K tokens
 - [PPM](briefing/BRIEFING-ESSENTIAL-PPM.md) - 2.5K tokens
-- [HoSR](briefing/BRIEFING-ESSENTIAL-HOSR.md) - 2.5K tokens
+- [HOST](briefing/BRIEFING-ESSENTIAL-HOSR.md) - 2.5K tokens
 - [Communications](briefing/BRIEFING-ESSENTIAL-COMMS.md) - 2.5K tokens
 - [Documentation](briefing/BRIEFING-ESSENTIAL-DOCS.md) - 2.5K tokens
 - [Coding Agent](briefing/BRIEFING-ESSENTIAL-AGENT.md) - 2K tokens
