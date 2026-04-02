@@ -36,10 +36,11 @@ jobs:
             Reference: Issue #449 (FLY-MAINT-CLEANUP) established this pattern.
 
             ### Documentation Cleanup
+            - [ ] Run \`/cleanup-dev-active\` skill (or manually triage \`dev/active/\`)
             - [ ] Scan \`docs/\` root for misplaced files
-            - [ ] Check \`dev/active/\` for stale working documents
             - [ ] Review \`docs/to-file/\` queue (if exists)
             - [ ] Verify NAVIGATION.md links are current
+            - [ ] Check briefing freshness (\`docs/briefing/BRIEFING-CURRENT-STATE.md\`)
 
             ### Archive Review
             - [ ] Move deprecated folders to \`archive/\` (gitignored)
@@ -50,6 +51,12 @@ jobs:
             - [ ] Run \`find services/ -type d -not -path '*/__pycache__*' -exec sh -c '[ ! -f "$1/__init__.py" ] && echo "MISSING: $1"' _ {} \\;\`
             - [ ] Check for TODO comments without issue numbers
             - [ ] Review test files for hardcoded data that should be fixtures
+
+            ### Agent Infrastructure
+            - [ ] \`ls mailboxes/*/inbox/\` - Check for undelivered mail
+            - [ ] Review \`.claude/skills/\` for outdated procedures
+            - [ ] Verify \`.claude/hooks/\` are functional
+            - [ ] Check editorial calendar CSV column count consistency
 
             ### Beads Health
             - [ ] \`bd status\` - Check database health
