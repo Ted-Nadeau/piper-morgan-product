@@ -53,3 +53,35 @@
 ### 8:39 AM — Self-correction
 - PM caught me saying "let me know when logs are ready" for an omnibus I'd already completed
 - Lesson: update session log in real time, not retroactively
+
+### ~11:50 AM — Usage limit hit
+- Claude Code usage limit dialog blocked this session for ~7 hours
+- PM unable to raise agents until finding the blocking dialog at ~7:16 PM
+- Klatch agents also affected; Janus and Dispatch were not (inactive during window)
+
+---
+
+## Session Summary
+
+**Duration**: 7:15 AM – 8:39 AM active (then blocked by usage limit until evening)
+
+**Completed:**
+- Ship #036 rendering fix (hashId + HTML content) + title correction
+- Apr 1 omnibus (3 sessions, 3 roles)
+- "The Floor That Wasn't" published (blog + Medium, 4th blog-first canonical)
+- publish-to-blog skill v0.5 (metadata convention, hex hashId, ship workflow)
+- HOST rename (mailbox dir, DIRECTORY.md, NAVIGATION.md, 5 skills, 2 guides)
+- #938 quarterly maintenance: 12/15 items completed
+- Memo to Lead Dev re: TODO triage
+- Session log discipline improvement noted
+
+**Not completed (deferred to Friday):**
+- Mail delivery (PA Vision V2 memos to CXO + PPM via web)
+- Session log wrap-up commit was delayed by usage limit
+
+**Carry forward:**
+- Mail delivery run
+- #938: 3 remaining items (test fixtures review, bd tool, beads)
+- Lead Dev inbox: 4 unread (3 prior + TODO triage memo)
+- Ship backfill (#001-#035) — when time allows
+- Blog display bugs (captions, type size, headings, margins, image cropping, divider)
